@@ -1,0 +1,56 @@
+name: Importar base funcional
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/importar-base.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio destino
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Descargar matriz original
+        run: git clone --depth 1 --branch main https://github.com/sebastiangiampani-create/Matriz-PCI.git /tmp/matriz-original
+
+      - name: Copiar base funcional
+        run: |
+          cp /tmp/matriz-original/app.html ./app.html
+          mkdir -p data assets
+          cp /tmp/matriz-original/data/db*.txt ./data/
+          cp /tmp/matriz-original/data/rest*.txt ./data/
+          cp /tmp/matriz-original/data/school4-seed.json ./data/ 2>/dev/null || true
+          cp /tmp/matriz-original/logo-oficial-v2.svg ./logo-oficial-v2.svg 2>/dev/null || true
+          cp /tmp/matriz-original/logo-escuela-maestros.svg ./logo-escuela-maestros.svg 2>/dev/null || true
+          cp /tmp/matriz-original/assets/logo-escuela-de-maestros.svg ./assets/ 2>/dev/null || true
+          cat > index.html <<'HTML'
+          <!doctype html>
+          <html lang="es">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <title>Matriz PCI Completa</title>
+            <meta http-equiv="refresh" content="0; url=app.html">
+            <script>location.replace('app.html')</script>
+          </head>
+          <body><p>Abriendo <a href="app.html">Matriz PCI Completa</a>…</p></body>
+          </html>
+          HTML
+
+      - name: Publicar archivos importados
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.html index.html data logo-oficial-v2.svg logo-escuela-maestros.svg assets .github/workflows/importar-base.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Publicar base funcional de la Matriz PCI"
+          git push
