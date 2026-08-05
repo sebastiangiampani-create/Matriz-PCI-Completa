@@ -1,0 +1,230 @@
+{
+  "labs": [
+    {
+      "area": "Ciencias Naturales",
+      "number": 1,
+      "name": "Señales de vida",
+      "type": "Obligatorio",
+      "term": 1,
+      "context": "Una sonda trae muestras de otro planeta: hay agua, minerales y algo que cambia de forma con el tiempo. ¿Alcanza para decir que hay vida? Fijar los criterios obliga a preguntarse de qué está hecha la materia, qué intercambia un ser vivo con su entorno y en qué nivel hay que mirar para reconocerlo.",
+      "content_blocks": [
+        "Biología 1.º (alcance pleno): caracterización de los seres vivos; concepto de sistema; los seres vivos como sistemas abiertos; niveles de organización de la materia; unidad y diversidad de funciones y estructuras; el origen de la vida; la continuidad de la vida en las condiciones actuales: teoría celular; concepto general de célula procariota y eucariota.",
+        "Físico-Química 3.º (anticipado, cualitativo): clasificación de los materiales del entorno, solo como criterio de distinción entre materia viva e inerte; el átomo como constituyente de la materia, solo la noción de unidades comunes, sin tabla periódica ni modelos atómicos; introducción al concepto de energía, solo como intercambio con el entorno, sin cuantificación."
+      ]
+    },
+    {
+      "area": "Ciencias Naturales",
+      "number": 2,
+      "name": "Manual de un cuerpo nuevo",
+      "type": "Electivo",
+      "term": 2,
+      "context": "Todo ser vivo se reproduce, y cada especie resuelve de manera distinta el mismo problema: cómo continuar. En los humanos ese mecanismo biológico se cruza con algo que ninguna otra especie enfrenta: decisiones. El cuerpo de la adolescencia cambia más rápido que la información disponible para entenderlo, y entre lo que circula, lo que se supone y lo que se sabe hay que poder distinguir qué está fundado y qué no.",
+      "content_blocks": [
+        "Biología 1.º (alcance pleno): concepto de reproducción en seres vivos; reproducción sexual y asexual; células sexuales y fecundación; sistemas reproductores femenino y masculino, estructuras y funcionamiento; la pubertad y la adolescencia, crecimiento y desarrollo; cambios anatómicos y fisiológicos en distintas etapas vitales; reflexión sobre los cambios corporales y la responsabilidad individual y de la pareja en el cuidado del cuerpo y la salud reproductiva; promoción de la salud sexual y reproductiva; prácticas de prevención y cuidado; métodos anticonceptivos; infecciones de transmisión sexual; el embarazo adolescente; la gestación, el embarazo, el parto y el puerperio; desarrollo embrionario en humanos.",
+        "Físico-Química 3.º (anticipado, fenomenológico): propiedades fisicoquímicas del agua, solo en tanto sostienen los procesos del cuerpo, sin estructura molecular ni fuerzas intermoleculares."
+      ]
+    },
+    {
+      "area": "Ciencias Naturales",
+      "number": 3,
+      "name": "El árbol de las mil ramas",
+      "type": "Obligatorio",
+      "term": 3,
+      "context": "Millones de especies distintas, y todas con el mismo tipo de célula y el mismo código. La diversidad y la unidad parecen contradecirse, y explicarlas al mismo tiempo exige una teoría que dé cuenta del cambio. El laboratorio reconstruye cómo se llegó a esa explicación y por qué desplazó a las anteriores.",
+      "content_blocks": [
+        "Biología 1.º (alcance pleno): biodiversidad, aspectos evolutivos; árboles de parentesco entre los seres vivos; la diversidad biológica como consecuencia de la evolución; relaciones de parentesco entre los seres vivos; clasificación actual en tres dominios y su relación con clasificaciones anteriores; grandes adquisiciones evolutivas de bacterias, hongos, plantas y animales; árboles filogenéticos; clasificación biológica basada en parentescos; importancia de la preservación de la diversidad.",
+        "Biología 2.º (alcance pleno): ideas y conceptos centrales sobre la evolución de los seres vivos; historia de las ideas evolutivas; fijismo; explicaciones de Lamarck, Darwin y Wallace; teoría de la selección natural, variabilidad, reproducción diferencial y rol del ambiente; adaptación como resultado del proceso de selección natural.",
+        "Físico-Química 3.º (anticipado, introductorio): procedimientos de las ciencias naturales, solo el enunciado de anticipaciones e hipótesis y la elección de variables relevantes, sin diseño experimental formalizado ni tratamiento de errores."
+      ]
+    },
+    {
+      "area": "Ciencias Naturales",
+      "number": 4,
+      "name": "Viaje de un bocado",
+      "type": "Electivo",
+      "term": 4,
+      "context": "Lo que se come no llega a las células como se come: en el medio hay una serie de transformaciones y transportes que atraviesan todo el organismo. Seguir el recorrido de un alimento obliga a integrar sistemas que suelen estudiarse por separado y a entender qué hace la célula con lo que le llega.",
+      "content_blocks": [
+        "Biología 2.º (alcance pleno): las células como sistemas abiertos; célula eucariota vegetal y animal; compartimentalización, estructuras y funciones comunes y exclusivas; intercambio de sustancias; la nutrición en el nivel celular; nutrición autótrofa y heterótrofa; panorama general de la fotosíntesis; nutrición en el organismo humano; funciones de los sistemas digestivo, respiratorio, circulatorio y excretor; integración de la función de los sistemas con el funcionamiento de las células; comportamientos saludables en relación con la comida: nutrición y trastornos alimentarios durante la adolescencia.",
+        "Físico-Química 3.º (anticipado, cualitativo): modelo cinético de partículas y noción de soluto y solvente, solo para explicar el intercambio de sustancias, sin concentración ni propiedades coligativas."
+      ]
+    },
+    {
+      "area": "Ciencias Naturales",
+      "number": 5,
+      "name": "El mensaje cifrado",
+      "type": "Obligatorio",
+      "term": 5,
+      "context": "«Está en los genes» se dice de casi todo. El laboratorio pone a prueba esa frase: qué se transmite efectivamente, por qué mecanismo, qué margen deja el ambiente y en qué punto la explicación genética deja de explicar. Responderlo exige bajar hasta el nivel molecular y volver a subir hasta la población.",
+      "content_blocks": [
+        "Biología 2.º (alcance pleno): el núcleo celular; los ácidos nucleicos; reproducción a nivel celular, diferencias entre mitosis y meiosis; mecanismos hereditarios; noción de cromosoma, gen y alelo; leyes de Mendel; genotipo y fenotipo; dominancia y recesividad; relación entre genes y ambiente; concepto de genoma; infertilidad, nuevas tecnologías reproductivas y fertilización asistida.",
+        "Biología 3.º (alcance pleno): modelo de doble hélice del ADN; relación entre cromosomas, genes, ADN, ARN y proteínas; el concepto de gen; flujo de información genética; replicación del ADN y su relación con la reproducción celular; cambios en la información genética, mutaciones génicas y cromosómicas; problematización en torno al determinismo genético; la población como unidad evolutiva y sus propiedades emergentes; fuentes de variabilidad genética; procesos de cambio evolutivo en las poblaciones: selección natural, mutaciones, migraciones, deriva genética; concepto de especie y especiación.",
+        "Físico-Química 3.º (alcance pleno): el átomo como constituyente de la materia; tabla periódica; clasificación de los elementos químicos, elemento químico y molécula; noción de reacción química, reactivos y productos."
+      ]
+    },
+    {
+      "area": "Ciencias Naturales",
+      "number": 6,
+      "name": "El margen estrecho",
+      "type": "Electivo",
+      "term": 6,
+      "context": "Todo sistema vivo funciona dentro de un margen estrecho. Un cuerpo sostiene su temperatura interna dentro de un grado; un ecosistema, su composición; la atmósfera, un rango térmico que depende de una estrella que está a ocho minutos luz. Fuera de ese margen el sistema deja de funcionar: cinco veces en la historia de la Tierra el rango planetario se rompió y desapareció la mayor parte de las especies, y cada vez lo que sobrevivió dio lugar a algo nuevo, incluida la rama de la que venimos. El laboratorio investiga qué mecanismos sostienen esos márgenes en escalas que van de la neurona al Sistema Solar, y qué ocurre cuando fallan.",
+      "content_blocks": [
+        "Biología 3.º (alcance pleno): el funcionamiento integrado del organismo y el concepto de homeostasis; características generales de los sistemas nervioso y endocrino; hormonas, mecanismos de acción y funciones; procesamiento sensorial y respuesta motora; la neurona; la respuesta inmunitaria; niveles de organización: individuos, poblaciones, comunidades, biomas; influencia de los factores abióticos en la dinámica de los ecosistemas; estructura y dinámica de poblaciones, parámetros e interacciones entre individuos; comunidades y factores que afectan la diversidad; flujo de energía y ciclos de la materia; modelos tróficos, cadenas y redes; ecología urbana; tiempo geológico; extinciones masivas; radiaciones adaptativas; principales transiciones en la historia de la vida; biodiversidad actual; evolución humana: características de los primates, modelos sobre la evolución de los homínidos, relación entre naturaleza y cultura en la evolución de nuestra especie.",
+        "Físico-Química 3.º (alcance pleno): diferencia entre calor y temperatura; introducción al concepto de energía; equilibrio térmico y principio cero de la termodinámica; radiación, conducción y convección, y generación de corrientes verticales en la atmósfera; energía intercambiada durante el cambio de fase y calor latente; trazado y estudio de una curva de enfriamiento; punto de fusión y de ebullición del agua dulce y del agua salada; soluciones, concepto de soluto y solvente, solución diluida, concentrada y saturada; propiedades coligativas; modelo cinético de partículas y estudio del cambio de fase desde ese modelo; propiedades fisicoquímicas del agua —densidad, capacidad calorífica, tensión superficial, punto crítico, conductividad eléctrica, solvente universal— y estructura de la molécula de agua; fuerzas intermoleculares; el agua como recurso natural, agua potable, aguas servidas, contaminación y depuración; composición química de la atmósfera y el aire como mezcla de gases; óxidos, ácidos y bases y su participación en la dinámica del ambiente; oxidación, fotosíntesis y ciclo del carbono; caracterización de las entidades físico-químicas involucradas en el efecto invernadero; modelos cosmológicos; el Sistema Solar y la galaxia; ubicación de la Tierra en el Sistema Solar; el papel de la radiación solar en el surgimiento y la persistencia de la vida; origen de la energía solar; reacciones nucleares de fisión y fusión y reacciones nucleares en las estrellas; distinción entre escalas micro, macro y astronómicas; procedimientos de la experimentación, anticipaciones e hipótesis, elección de variables; mediciones, tipos de errores y estimación de resultados; graficación y aproximación de datos por curvas; distinción entre magnitud y unidad, Sistema Internacional de Mediciones y Sistema de Medidas Legal Argentino; elaboración de informes de laboratorio."
+      ]
+    },
+    {
+      "area": "Ciencias Naturales",
+      "number": 7,
+      "name": "Nada se pierde, algo se desperdicia",
+      "type": "Obligatorio",
+      "term": 7,
+      "context": "La energía no se pierde, pero siempre se aprovecha una parte. Entender por qué exige poder anticipar cuantitativamente cómo evoluciona un sistema y qué se transforma en cada paso. El laboratorio trabaja sobre dispositivos y procesos reales para medir esa diferencia entre lo disponible y lo aprovechado.",
+      "content_blocks": [
+        "Física 4.º (alcance pleno): concepto de energía y diferentes tipos de energía; rapidez y masa; movimientos con velocidad o aceleración constante; detección de las variables para describir un movimiento; gráficos que describen movimientos y trayectorias; modelización matemática de movimientos sencillos; movimiento oscilatorio, estiramiento y constante elástica, obtención experimental de la ley de Hooke; energía potencial gravitatoria y campo gravitatorio; ley de inercia, ley de masa y ley de interacciones; desplazamiento y trabajo; aprovechamiento de la energía cinética y potencial gravitatoria; potencia, rendimiento y eficiencia; determinaciones cualitativas y cuantitativas; errores en la medición; los modelos en ciencias y su adecuación empírica; elección de las variables relevantes.",
+        "Físico-Química 3.º (alcance pleno): equivalente mecánico del calor; los procesos del ambiente como potenciales fuentes de energía: radiación solar, movimiento de masas de aire, ríos de deshielo."
+      ]
+    },
+    {
+      "area": "Ciencias Naturales",
+      "number": 8,
+      "name": "Ocho minutos de viaje",
+      "type": "Electivo",
+      "term": 8,
+      "context": "La luz se comporta como onda en unos experimentos y como partícula en otros, y ninguna de las dos descripciones alcanza sola. Al mismo tiempo, de esa radiación depende que una celda fotovoltaica produzca electricidad y que la atmósfera retenga calor. El laboratorio trabaja sobre un objeto que obliga a discutir hasta dónde llega un modelo científico.",
+      "content_blocks": [
+        "Física 4.º (alcance pleno): la luz como onda; longitud de onda, frecuencia y amplitud; la luz como radiación electromagnética; proceso fotoeléctrico y celdas fotovoltaicas; dualidad de la naturaleza de la luz; la velocidad de la luz como constante universal y como límite de la transmisión de señales de interacción; introducción a la Teoría de la Relatividad, su contexto histórico, experimentos notables y predicciones; impacto de la nueva teoría en los avances tecnológicos actuales, el GPS; las ondas electromagnéticas como modelo científico, con sus alcances y sus limitaciones.",
+        "Físico-Química 3.º (alcance pleno): distinción entre radiación UV, visible e IR; introducción al análisis del espectro electromagnético; procesos físico-químicos vinculados al efecto invernadero."
+      ]
+    },
+    {
+      "area": "Ciencias Naturales",
+      "number": 9,
+      "name": "La receta de las cosas",
+      "type": "Electivo",
+      "term": 9,
+      "context": "Los materiales que sostienen la vida cotidiana son el resultado de decisiones sobre cómo combinar átomos. El laboratorio va de la estructura de la materia hasta esas decisiones: por qué un material tiene las propiedades que tiene, qué pasa cuando dos sustancias reaccionan, cuánta energía se libera o se absorbe, a qué velocidad ocurre y cuánto producto sale realmente al final.",
+      "content_blocks": [
+        "Química 5.º (alcance pleno): mezclas y sustancias, átomos, moléculas e iones; estados de la materia y cambios de estado; constantes físicas como método de identificación; leyes de los gases ideales; interacciones entre partículas y afinidad química; formas físicas y químicas de expresar la concentración; solubilidad y curvas de solubilidad; equilibrio dinámico soluto-solvente; soluciones acuosas de ácidos y bases, ionización, concepto de pH e indicadores; modelo atómico actual según la mecánica cuántica, niveles de energía y orbitales; tabla periódica y distribución de electrones; propiedades periódicas; uniones iónica, covalente y metálica; número de oxidación y electronegatividad; formuleo y nomenclatura; polaridad de los enlaces y geometría molecular; fuerzas de atracción intermoleculares; óxidos, hidróxidos, ácidos y sales; ecuaciones químicas y ley de conservación de la masa; reacciones de neutralización y redox; combustiones; reacciones endotérmicas y exotérmicas; velocidad de reacción y factores que la modifican; catalizadores y enzimas; reversibilidad de las reacciones; mol, volumen molar, masa molar y molaridad; estequiometría, reactivo limitante, rendimiento y pureza; cálculos de pH; procedimientos de experimentación y normas de seguridad en el laboratorio.",
+        "Biología (redundancia): las enzimas como catalizadores biológicos y las reacciones químicas en los organismos, retomadas de L4 y L6 y explicadas ahora por su mecanismo químico."
+      ]
+    },
+    {
+      "area": "Ciencias Sociales",
+      "number": 1,
+      "name": "La invención de quedarse",
+      "type": "Obligatorio",
+      "term": 1,
+      "context": "Durante casi toda su historia la humanidad se movió. Cuando algunos grupos empezaron a quedarse, apareció todo lo demás: excedente, autoridad, escritura, desigualdad. Pero quedarse también tiene un costo: quien se asienta transforma el ambiente que lo sostiene, y esa transformación no se detuvo nunca. El laboratorio pregunta qué hizo posible ese cambio, qué formas de poder trajo consigo y qué problemas ambientales abrió, desde la primera aldea hasta el cambio climático.",
+      "content_blocks": [
+        "Historia 1.º: las aldeas, cambios y continuidades en las formas de autoridad y la división social del trabajo; los primeros Estados en Oriente, Egipto: formas de gobierno, los funcionarios y la especialización del poder, la producción agrícola y la administración del excedente, sistemas de escritura; en América, chavín u olmecas: religión y política, sistema teocrático.",
+        "Geografía 1.º: el asentamiento de la población, la puesta en valor de los recursos naturales y la construcción histórica de los ambientes; recursos renovables y no renovables; diversos ambientes y los componentes naturales del ambiente, relaciones básicas entre litosfera, hidrosfera, atmósfera y biosfera; las formas de relieve; factores climáticos y variedades climáticas básicas; los distintos tipos de biomas; los mares y océanos y las aguas continentales; problemáticas ambientales vinculadas al manejo de los recursos naturales; el cambio climático; la pérdida de biodiversidad; problemáticas ambientales vinculadas a fenómenos extremos de la naturaleza y tecnológicos; situaciones sociales de riesgo y vulnerabilidad.",
+        "Formación Ética y Ciudadana 1.º: modos de ejercicio del poder, democracias y autoritarismos; la democracia como forma de gobierno; la participación en la democracia."
+      ]
+    },
+    {
+      "area": "Ciencias Sociales",
+      "number": 2,
+      "name": "La lista de los que cuentan",
+      "type": "Electivo",
+      "term": 2,
+      "context": "Atenas se llamaba democracia con la mayoría de su población excluida. Roma tenía ciudadanos y esclavos. El feudalismo organizaba estamentos cerrados. En cada caso alguien queda adentro y alguien afuera, y la frontera se corre con el tiempo. El laboratorio rastrea ese corrimiento hasta hoy, incluyendo quiénes son contados y quiénes no en las estadísticas actuales.",
+      "content_blocks": [
+        "Historia 1.º: los Estados mediterráneos, Grecia: las polis, Esparta y Atenas, la democracia ateniense, la sociedad estamental, patronazgo y esclavismo; Roma: la república como sistema político, la expansión territorial, parentesco y patronazgo, manifestaciones culturales y religiosas, crisis y desintegración del imperio; los Estados en la Tardo Antigüedad: el Imperio romano de Oriente, los reinos romano-germánicos, Carlomagno, califatos y emiratos islámicos; los Estados en la Edad Media: el Estado feudal en Europa occidental, el renacimiento urbano y comercial, el nacimiento de la burguesía y el capitalismo, las corporaciones y los gremios, la crisis del siglo XIV.",
+        "Formación Ética y Ciudadana 1.º: de las libertades a los derechos civiles y el movimiento de ampliación de derechos; las normas como resultado de procesos históricos, sociales, políticos y económicos; la Constitución nacional y los tratados de derechos humanos como norma superior; la persona y su dignidad como fundamento de los derechos; de habitantes a ciudadanos; la igualdad y sus significados: igualdad ante la ley, de trato y de oportunidades; la sociedad y la cultura como lugares de la diversidad; identidades individuales y grupales como construcción histórica y social; reconocimiento y valoración de identidades y proyectos de vida; la autonomía en la toma de decisiones; la violencia y el maltrato en los vínculos, recursos y redes de protección.",
+        "Geografía 1.º: aspectos demográficos de la población, distribución, estructura y dinámica; indicadores demográficos básicos; las problemáticas demográficas y migratorias y las políticas estatales; población económicamente activa y pasiva."
+      ]
+    },
+    {
+      "area": "Ciencias Sociales",
+      "number": 3,
+      "name": "Dos mapas sobre el mismo suelo",
+      "type": "Obligatorio",
+      "term": 3,
+      "context": "En 1492 se encuentran dos sistemas de organización social que no se conocían. Lo que sigue no es solo una conquista militar: es la construcción de un territorio nuevo, de una sociedad jerarquizada por origen y de una idea de «otro» que sigue operando. El laboratorio analiza esos tres procesos juntos.",
+      "content_blocks": [
+        "Historia 2.º: humanismo y renacimiento; la Reforma protestante y su expansión, la Contrarreforma; el Estado inca: organización de las formas de gobierno, de la sociedad y de la economía; la llegada de los españoles a América; la conquista en el Río de la Plata, la fundación de Buenos Aires y el gobierno de las ciudades, los cabildos; el sistema colonial en la organización política, económica y social; mestizaje social, político, económico y cultural en América.",
+        "Geografía 2.º: el mapa político mundial y los Estados como unidades político-territoriales construidas históricamente; atributos y formas de organización política y administrativa de los territorios; problemáticas y conflictos interestatales e intraestatales por la apropiación de territorios y recursos.",
+        "Formación Ética y Ciudadana 2.º: la discriminación, los prejuicios y los estereotipos que le dan origen; tipos de discriminación; protección contra los actos discriminatorios y sanciones; etnocentrismo, racismo y xenofobia; la convivencia entre grupos y culturas diferentes: la diversidad y las desigualdades."
+      ]
+    },
+    {
+      "area": "Ciencias Sociales",
+      "number": 4,
+      "name": "Cadenas para el rey",
+      "type": "Electivo",
+      "term": 4,
+      "context": "Un rey que se dice elegido por Dios no tiene por qué rendir cuentas. En menos de dos siglos esa idea se derrumba y aparecen constituciones, parlamentos y poderes que se controlan entre sí. Al mismo tiempo la industria concentra gente en ciudades, y lo que pasa en el campo cambia para poder alimentarlas: ambos movimientos son la misma transformación vista desde dos lugares. El laboratorio pregunta cómo se inventaron los mecanismos que todavía usamos para limitar el poder, si alcanzan, y cómo se reorganizó el territorio mientras tanto.",
+      "content_blocks": [
+        "Historia 2.º: la centralización monárquica, el origen divino de la monarquía, el mercantilismo; los límites al absolutismo en Inglaterra, la monarquía parlamentaria; la Ilustración, principales ideas y representantes; las reformas borbónicas en América y la creación del Virreinato del Río de la Plata; la Revolución Industrial: la fábrica, la burguesía industrial y los obreros; las revoluciones políticas, la Revolución francesa y sus efectos políticos, económicos, sociales y culturales en Europa y en América.",
+        "Formación Ética y Ciudadana 2.º: la forma de gobierno y de Estado de la Argentina en la Constitución nacional; la organización federal del Estado argentino; la división de poderes, su composición y funciones; el sistema de partidos, el sufragio y el sistema electoral; las normas y los derechos como productos de acuerdos políticos y sociales; el proceso de sanción de las leyes; supremacía de la Constitución nacional, garantías y mecanismos constitucionales de protección de derechos; amparo individual y colectivo, hábeas data y hábeas corpus; el diálogo, la negociación y la mediación como herramientas de abordaje de los conflictos; la convivencia y el conflicto en el grupo de pares, la escuela y la comunidad.",
+        "Geografía 2.º: criterios cuantitativos y cualitativos para diferenciar y caracterizar espacios urbanos y rurales; indicadores demográficos, jurídico-administrativos, funcionales y culturales; los procesos de urbanización en el siglo XX; transformaciones urbanas de las últimas décadas, nuevos usos del suelo urbano y nuevas configuraciones espaciales; las actividades rurales tradicionales y los cambios en las producciones agropecuarias para el mercado; las innovaciones tecnológicas, científicas y organizacionales en las producciones agropecuaria, forestal y minera."
+      ]
+    },
+    {
+      "area": "Ciencias Sociales",
+      "number": 5,
+      "name": "Un país sin manual",
+      "type": "Obligatorio",
+      "term": 5,
+      "context": "Después de la independencia no había Estado: había territorios en disputa, ejércitos propios y ninguna autoridad común. Construirlo llevó setenta años de guerras y acuerdos, y ocurrió dentro de un mundo donde las potencias se repartían África y Asia. El laboratorio analiza qué hace falta para que un Estado exista, se organice, se financie y logre que le reconozcan autoridad, y compara ese proceso con las discusiones actuales sobre qué debe hacer el Estado y con qué plata.",
+      "content_blocks": [
+        "Historia 3.º: las invasiones inglesas; primeros gobiernos en el Río de la Plata; expansión continental de las guerras revolucionarias, campañas libertadoras de San Martín y Bolívar; restauración conservadora en Europa continental; revoluciones liberales y nacionales; la formación del Estado argentino y la organización de los Estados provinciales; Rosas y la Confederación Argentina; la Segunda Revolución Industrial, un nuevo impulso a la industrialización; la Paz Armada, la rivalidad internacional, tensiones y alianzas; la expansión imperialista de finales del siglo XIX, el colonialismo en África y Asia; la Constitución nacional 1853-1860; la relación de los caudillos con el gobierno nacional; la República conservadora en la Argentina (1880-1916); el desarrollo agrícola-ganadero argentino; políticas migratorias y su impacto social, clases medias y clase obrera; la organización de partidos políticos, la Unión Cívica Radical, el Partido Socialista, el anarquismo; la ley electoral Sáenz Peña de 1912.",
+        "Formación Ética y Ciudadana 3.º: el rol del Estado en vinculación con la sociedad y la economía; las políticas públicas y su financiamiento; mecanismos de participación directa y de control popular, y mecanismos específicos de participación popular en la Ciudad Autónoma de Buenos Aires; concepciones acerca del Estado, elementos y tipos de Estado; constitucionalismo liberal y social, reformas constitucionales; la incorporación de los derechos humanos a la Constitución nacional; los derechos sociales, económicos y culturales como resultado de reivindicaciones sociales y políticas; los derechos y la distribución de recursos: el presupuesto y sus funciones.",
+        "Economía 3.º: la economía como ciencia social; niveles de análisis económicos, microeconomía y macroeconomía; los sectores de la economía, primario, secundario y terciario, y sus capacidades de generar valor; los agentes económicos y el circuito económico simple, el flujo circular del ingreso; los factores productivos y el valor agregado, perspectivas clásicas y neoclásicas; las políticas fiscales y la redistribución del ingreso; el gasto público, su impacto social y económico; los recursos del Estado, tributos y contribuciones a la seguridad social; impuestos progresivos, regresivos y proporcionales; la estructura impositiva argentina; impuesto, tasa y contribución especial; el presupuesto nacional como plan de gobierno; las funciones y objetivos económicos del Estado como regulador y promotor; evolución del pensamiento en materia de intervención estatal."
+      ]
+    },
+    {
+      "area": "Ciencias Sociales",
+      "number": 6,
+      "name": "Quién sostiene todo esto",
+      "type": "Electivo",
+      "term": 6,
+      "context": "Detrás de cualquier modelo económico hay gente trabajando, un territorio que se transforma y alguien que queda afuera del reparto. El laboratorio desarma esa trama: quién produce y en qué condiciones, cómo se fija un precio y cómo se mide una economía, qué le cuesta al ambiente sostener ese nivel de producción, y qué mecanismos —de género, de origen, de capacidad, de imagen— dejan a ciertas personas en peor posición para negociar su lugar. La pregunta no es qué produce un país sino quién carga con el costo de que lo produzca.",
+      "content_blocks": [
+        "Geografía 3.º: la actual división territorial y social del trabajo en el mundo; la centralidad política y económica de Estados Unidos y la dependencia de América latina; el lugar de los países y regiones americanos en los principales flujos económicos, de información y capitales, de personas y bienes; la participación de los Estados en organismos supranacionales; los principales bloques en América latina; distribución, estructura y dinámica demográfica a distintas escalas; población urbana y rural; las diferentes transiciones demográficas; comportamientos demográficos diferenciados y censos nacionales de población; migraciones pasadas y presentes en la Argentina y políticas migratorias; la población económicamente activa y la ocupación por sectores de la economía; trabajo y empleo, condiciones laborales y de vida, indicadores de empleo y calidad de vida; los sectores productivos en América latina y América anglosajona, contrastes entre sectores tradicionales e innovadores; las problemáticas ambientales más relevantes a escala regional y local, el manejo de los recursos, contaminación del agua y del aire, desertificación, deforestación, erosión y degradación de los suelos; tecnologías constructivas, conservacionistas y destructivas; las tensiones entre tiempo ecológico y tiempo económico; problemáticas asociadas a situaciones de riesgo: inundaciones y sequías, tornados y huracanes, terremotos y vulcanismo.",
+        "Economía 3.º: características generales de la economía de mercado; las funciones de oferta y demanda y el equilibrio de mercado; estructuras de mercado: competencia perfecta, monopolio, oligopolio y competencia monopolística; la empresa, sus objetivos y su función social; la función de producción; los costos de producción, fijos, variables y medios; la actividad económica y su medición; indicadores de distribución del ingreso, riqueza y desarrollo humano; el Producto Bruto Interno; el dinero y las formas que ha adoptado en la historia, sus funciones; la moneda de curso legal, su cotización y las divisas; el rol del Banco Central y las políticas monetarias; los bancos y la creación secundaria del dinero; la inflación y su impacto sobre los niveles de precios y salarios; el crédito al consumo y a las actividades productivas.",
+        "Formación Ética y Ciudadana 3.º: las funciones del trabajo: identitaria, económica, de socialización; el mundo del trabajo y sus posibilidades, empleo público y privado, emprendedorismo, trabajo profesional, artesanal, social y empresarial; los roles de género a lo largo de la historia y las desigualdades de género; los vínculos de cuidado y protección, las funciones y tipos de familia y su protección en las leyes y las políticas públicas; la construcción de ideales y la cultura de la imagen y su impacto en el cuidado de la salud; la protección de la persona en situaciones de vulnerabilidad, violencia de género y trata de personas, recursos y redes de protección; las políticas públicas y la acción positiva como mecanismos de compensación y promoción de la igualdad; la protección de personas con discapacidad."
+      ]
+    },
+    {
+      "area": "Ciencias Sociales",
+      "number": 7,
+      "name": "Con la ley en la mano",
+      "type": "Obligatorio",
+      "term": 7,
+      "context": "El siglo XX argentino alterna gobiernos elegidos y golpes de Estado, y en el mundo produce dos guerras y genocidios planificados desde el propio Estado. Nada de eso ocurrió por fuera de la ley: en muchos casos se hizo con leyes. El laboratorio investiga qué condiciones permiten que un orden democrático se interrumpa, y qué mecanismos se construyeron después para que no vuelva a pasar.",
+      "content_blocks": [
+        "Historia 4.º: la Primera Guerra Mundial y sus efectos en la Argentina; los gobiernos radicales; la crisis mundial de 1929 y sus consecuencias en la Argentina; la crisis de la década del treinta y la Segunda Guerra Mundial; la Alemania nazi y los genocidios; reacciones frente a la crisis mundial, el Estado interventor y sus nuevas funciones sociales y económicas en la Argentina y el continente americano; la industrialización en la Argentina, la sustitución de importaciones; migraciones internas y crecimiento de la urbanización; las presidencias de Perón (1946-1955), las relaciones entre el Estado, los trabajadores y los empresarios, industrialización, mercado interno y cambio social; la democracia tutelada en el contexto del surgimiento del Tercer Mundo y la Revolución cubana; el fin del Estado de bienestar, la crisis del petróleo, nuevas ideas económicas y el desempleo; dictaduras en América del Sur, terrorismo de Estado; las reformas estructurales y político-institucionales, el plan de convertibilidad, la reforma de la Constitución de 1994; el gobierno de la Alianza, el derrumbe de la convertibilidad y la crisis del 2001.",
+        "Formación Ética y Ciudadana 4.º: la legitimidad del poder político y su dinámica institucional; el funcionamiento del gobierno republicano y representativo; Estado de derecho e interrupciones al orden democrático, los golpes de Estado; la autonomía de la Ciudad de Buenos Aires; la distribución de recursos económicos, la coparticipación federal; partidos políticos, grupos de interés y medios de comunicación; disenso, consenso, negociación y acuerdos; el concepto de derechos humanos y su distinción de otros derechos; la protección internacional de los derechos humanos, el sistema interamericano y el internacional; crímenes de lesa humanidad.",
+        "Geografía 4.º: la conformación histórica del territorio y de los niveles de organización político-territorial del Estado argentino; la formación territorial del Estado argentino y el mapa político actual; las relaciones y articulaciones políticas entre los niveles nacional, provincial y municipal en relación con problemáticas territoriales específicas; la gestión de la Ciudad Autónoma de Buenos Aires."
+      ]
+    },
+    {
+      "area": "Ciencias Sociales",
+      "number": 8,
+      "name": "Del suelo al bolsillo",
+      "type": "Electivo",
+      "term": 8,
+      "context": "La soja, el litio, el software, el turismo: lo que la Argentina produce define dónde vive la gente, qué trabajos hay y qué se puede comprar. Del otro lado de esa cadena hay alguien que consume, y que a los diecisiete años ya es a la vez consumidor, futuro trabajador y sujeto de derechos, sin que esas tres cosas le hayan sido explicadas juntas. El laboratorio recorre la cadena desde el territorio hasta el bolsillo y termina en una pregunta personal: qué se compra, qué se trabaja, qué cuida uno de sí y qué lugar elige ocupar en ese mapa cuando termina la escuela.",
+      "content_blocks": [
+        "Geografía 4.º: la posición de la Argentina en el capitalismo global, territorio y sectores económicos dinámicos, principales flujos desde y hacia la Argentina; la influencia del transporte y las comunicaciones en la integración y fragmentación de los territorios, cambios y proyectos recientes en la Argentina y en el Mercosur; los espacios rurales tradicionales e innovadores, permanencias y cambios productivos, tecnológicos y organizacionales, los mercados de las producciones; las crisis de las economías regionales y las políticas estatales en relación con la producción rural; los procesos de agriculturización, sojización y pampeanización; los sectores minero, pesquero y forestal; transformaciones recientes en ciudades medianas y grandes y su impacto en la morfología, la dinámica y la jerarquía urbanas; la organización de los espacios urbanos argentinos en el marco de la reestructuración capitalista; el Aglomerado Gran Buenos Aires, el Gran Rosario o el Gran Córdoba; las ciudades intermedias, su crecimiento reciente y la variedad de funciones; las ciudades pequeñas, los pueblos y sus áreas de influencia; la producción industrial y de servicios en el producto bruto interno.",
+        "Formación Ética y Ciudadana 4.º: la regulación del empleo y la asimetría del mercado de trabajo; las normas laborales y el orden público laboral; derechos y obligaciones de trabajadores y empleadores; los marcadores identitarios, la edad, los consumos culturales, el género; los cambios en las representaciones sobre la niñez y la adolescencia; los adolescentes como grupo de consumidores y como sujetos de derecho; prácticas del cuidado y protección de la salud; consumos y prácticas que afectan la salud, drogas legales e ilegales, tabaco y alcohol; accesibilidad a los recursos en materia de salud; la construcción del proyecto de vida: la continuidad de los estudios, la inserción en el mundo del trabajo, maternidad y paternidad responsables.",
+        "Redundancia con alcance ampliado: la industrialización por sustitución de importaciones y el fin del Estado de bienestar, retomados de L7 y leídos ahora desde la estructura productiva; el PBI, los sectores de la economía y los indicadores de empleo, retomados de L5 y L6 con datos actuales."
+      ]
+    },
+    {
+      "area": "Ciencias Sociales",
+      "number": 9,
+      "name": "La caja de herramientas",
+      "type": "Electivo",
+      "term": 9,
+      "context": "Después de cuatro años analizando sociedades, Estados y economías, quedan preguntas que ninguna de esas disciplinas responde por sí sola: qué es una persona, con qué criterio se decide que una acción está bien, con qué fundamento se sostiene que todos tienen derechos y qué hace justa o injusta una manera de organizar la vida en común. El laboratorio cierra el recorrido poniendo a discusión los supuestos sobre los que se apoyó todo lo anterior, y lo hace leyendo a los autores que los formularon.",
+      "content_blocks": [
+        "Filosofía 5.º: lo humano y sus distintas concepciones; la dimensión corpórea de la existencia; la reflexión sobre la propia existencia, construcción de sí mismo e identidad; la ética, principales rasgos y discusiones; la libertad; distintas formulaciones de la ética: del bien, del deber, de la utilidad; teorías éticas contemporáneas; actores sociales, diversidad cultural y organización social; tolerancia y respeto; los derechos humanos; teorías del Estado y la justicia; la identidad del pensamiento filosófico argentino y latinoamericano, principales corrientes y autores; lectura y análisis de bibliografía primaria; escritura argumentativa.",
+        "Redundancia con alcance ampliado: los derechos humanos, retomados de L2, L5 y L7 y ahora fundamentados filosóficamente en lugar de descriptos normativamente; las teorías del Estado, retomadas de L5 y comparadas conceptualmente."
+      ]
+    }
+  ]
+}
