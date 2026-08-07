@@ -12,14 +12,20 @@
     return {start:Math.max(1,Math.min(10,start)),end:Math.max(1,Math.min(10,end))};
   }
 
+  function hoursForTerm(group,term){
+    const fallback=Math.max(0,Number(group.weeklyHours??group.hours??0)||0);
+    if(group.hoursMode==='per_term')return Math.max(0,Number(group.hoursByTerm?.[term]??fallback)||0);
+    return fallback;
+  }
+
   function calculate(w){
     const terms=Array.from({length:10},(_,i)=>({term:i+1,hours:0,spaces:0,missingHours:0}));
     const annualErrors=[];
     Object.entries(w.app?.areas||{}).forEach(([area,data])=>{
       (data.groups||[]).forEach((group,index)=>{
         const r=range(w,area,index,group);
-        const hours=Math.max(0,Number(group.weeklyHours||group.hours||0));
         for(let term=r.start;term<=r.end;term++){
+          const hours=hoursForTerm(group,term);
           terms[term-1].hours+=hours;
           terms[term-1].spaces+=1;
           if(hours===0)terms[term-1].missingHours+=1;
@@ -57,7 +63,7 @@
       const s=status(item.hours,item.missingHours);
       return `<div class="hour-card ${s.cls}"><b>C${item.term} · ${item.hours} h</b><small>${s.label}</small><small>${item.spaces} espacios</small></div>`;
     }).join('');
-    panel.innerHTML=`<div class="hour-title"><strong>Validación horaria por cuatrimestre</strong><span>Referencia provisoria: ${TARGET_HOURS} h</span></div><div class="hour-grid">${cards}</div><div class="hour-note">La validación compara la carga registrada en cada cuatrimestre. Los espacios sin horas se marcan como pendientes. ${result.annualErrors.length?`Hay ${result.annualErrors.length} troncal(es) que no ocupan correctamente dos cuatrimestres.`:'Las troncales anuales respetan dos cuatrimestres.'}</div>`;
+    panel.innerHTML=`<div class="hour-title"><strong>Validación horaria por cuatrimestre</strong><span>Objetivo: ${TARGET_HOURS} HC en cada cuatrimestre</span></div><div class="hour-grid">${cards}</div><div class="hour-note">Cada cuatrimestre se valida por separado. Si un espacio ocupa C1 y C2, puede registrar cargas distintas; por ejemplo, C1=9 y C2=5 deja C2 pendiente. ${result.annualErrors.length?`Hay ${result.annualErrors.length} troncal(es) que no ocupan correctamente dos cuatrimestres.`:'Las troncales anuales respetan dos cuatrimestres.'}</div>`;
   }
 
   function watch(){
