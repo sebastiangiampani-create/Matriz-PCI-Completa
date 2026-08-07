@@ -16,13 +16,14 @@
   function schoolName(code){const item=SCHOOLS.find(x=>x.code===code);return names()[code]||item?.fallback||code}
   function activeCode(){return localStorage.getItem(ACTIVE_KEY)||''}
   function stateKey(code){return STATE_PREFIX+code}
-  function emptyState(){return JSON.stringify({areas:{},current:null,schemaVersion:6})}
+  function emptyState(){return JSON.stringify({areas:{},current:null,schemaVersion:7})}
   function currentAppState(){return localStorage.getItem('pciAppV2')||emptyState()}
   function hasMeaningfulState(raw){try{const value=JSON.parse(raw||'{}');return !!Object.keys(value?.areas||{}).length}catch{return false}}
   function saveActiveSnapshot(){const code=activeCode();if(!code)return;localStorage.setItem(stateKey(code),currentAppState())}
   function setName(code,value){const all=names(),clean=String(value||'').trim();if(clean)all[code]=clean;else delete all[code];localStorage.setItem(NAMES_KEY,JSON.stringify(all));decorateFrame();renderOverlay()}
 
   function selectSchool(code){
+    if(!SCHOOLS.some(item=>item.code===code))return;
     const previous=activeCode();
     if(previous)saveActiveSnapshot();
     const existing=localStorage.getItem(stateKey(code));
@@ -39,13 +40,22 @@
     const active=activeCode();
     overlay.querySelector('[data-school-list]').innerHTML=SCHOOLS.map(item=>{
       const name=schoolName(item.code),selected=active===item.code;
-      return `<article class="school-card ${selected?'selected':''}" data-school-card="${item.code}">
-        <button type="button" class="school-open" data-school-open="${item.code}"><strong>${item.code}</strong><span>${escapeHtml(name)}</span>${selected?'<em>PCI activo</em>':''}</button>
+      return `<article class="school-card ${selected?'selected':''}" data-school-card="${item.code}" tabindex="0" role="button" aria-label="Entrar a ${item.code} ${escapeHtml(name)}">
+        <div class="school-open"><strong>${item.code}</strong><span>${escapeHtml(name)}</span>${selected?'<em>PCI activo</em>':''}</div>
         <label>Nombre de la escuela<input data-school-name="${item.code}" value="${escapeHtml(name)}" aria-label="Nombre de ${item.code}"></label>
+        <button type="button" class="school-enter" data-school-open="${item.code}">Entrar</button>
       </article>`;
     }).join('');
-    overlay.querySelectorAll('[data-school-open]').forEach(button=>button.onclick=()=>selectSchool(button.dataset.schoolOpen));
-    overlay.querySelectorAll('[data-school-name]').forEach(input=>input.onchange=()=>setName(input.dataset.schoolName,input.value));
+    overlay.querySelectorAll('[data-school-card]').forEach(card=>{
+      card.onclick=event=>{if(event.target.closest('input,button,label'))return;selectSchool(card.dataset.schoolCard)};
+      card.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectSchool(card.dataset.schoolCard)}};
+    });
+    overlay.querySelectorAll('[data-school-open]').forEach(button=>button.onclick=event=>{event.stopPropagation();selectSchool(button.dataset.schoolOpen)});
+    overlay.querySelectorAll('[data-school-name]').forEach(input=>{
+      input.onclick=event=>event.stopPropagation();
+      input.onkeydown=event=>event.stopPropagation();
+      input.onchange=()=>setName(input.dataset.schoolName,input.value);
+    });
   }
 
   function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -57,12 +67,12 @@
     const style=document.createElement('style');
     style.textContent=`
       .school-overlay{position:fixed;inset:0;z-index:20000;background:#f4f7f8ee;backdrop-filter:blur(8px);display:none;overflow:auto;padding:24px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#15374a}
-      .school-overlay.open{display:block}.school-shell{width:min(920px,100%);margin:4vh auto;background:#fff;border:1px solid #dbe5e8;border-radius:24px;padding:22px;box-shadow:0 24px 70px #15374a26}.school-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:18px}.school-head h1{margin:0;font-size:1.55rem}.school-head p{margin:5px 0 0;color:#687985}.school-close{border:0;border-radius:12px;padding:9px 12px;font-weight:900;background:#e7edef;color:#15374a}.school-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.school-card{border:2px solid #dbe5e8;border-radius:17px;padding:10px;background:#fff}.school-card.selected{border-color:#83ded3}.school-open{width:100%;border:0;background:#f8fbfb;border-radius:13px;padding:14px;text-align:left;color:#15374a}.school-open strong{display:block;font-size:.8rem;color:#167557}.school-open span{display:block;font-size:1.05rem;font-weight:900;margin-top:3px}.school-open em{display:inline-block;margin-top:7px;padding:4px 7px;border-radius:999px;background:#e5f6ef;color:#167557;font-size:.7rem;font-style:normal;font-weight:900}.school-card label{display:grid;gap:5px;font-size:.73rem;font-weight:850;margin-top:9px}.school-card input{width:100%;border:1px solid #dbe5e8;border-radius:10px;padding:9px;background:#fff}.school-help{margin-top:15px;padding:11px;border-radius:12px;background:#edf5f6;color:#536b77;font-size:.8rem}@media(max-width:650px){.school-overlay{padding:10px}.school-list{grid-template-columns:1fr}.school-shell{margin:1vh auto;padding:14px}}
+      .school-overlay.open{display:block}.school-shell{width:min(920px,100%);margin:4vh auto;background:#fff;border:1px solid #dbe5e8;border-radius:24px;padding:22px;box-shadow:0 24px 70px #15374a26}.school-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:18px}.school-head h1{margin:0;font-size:1.55rem}.school-head p{margin:5px 0 0;color:#687985}.school-close{border:0;border-radius:12px;padding:9px 12px;font-weight:900;background:#e7edef;color:#15374a}.school-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.school-card{border:2px solid #dbe5e8;border-radius:17px;padding:10px;background:#fff;cursor:pointer;transition:.15s}.school-card:hover,.school-card:focus{border-color:#83ded3;box-shadow:0 7px 20px #15374a18;outline:none}.school-card.selected{border-color:#83ded3}.school-open{width:100%;background:#f8fbfb;border-radius:13px;padding:14px;text-align:left;color:#15374a}.school-open strong{display:block;font-size:.8rem;color:#167557}.school-open span{display:block;font-size:1.05rem;font-weight:900;margin-top:3px}.school-open em{display:inline-block;margin-top:7px;padding:4px 7px;border-radius:999px;background:#e5f6ef;color:#167557;font-size:.7rem;font-style:normal;font-weight:900}.school-card label{display:grid;gap:5px;font-size:.73rem;font-weight:850;margin-top:9px;cursor:default}.school-card input{width:100%;border:1px solid #dbe5e8;border-radius:10px;padding:9px;background:#fff}.school-enter{width:100%;margin-top:10px;border:0;border-radius:11px;padding:10px 12px;background:#15374a;color:#fff;font-weight:900;cursor:pointer}.school-help{margin-top:15px;padding:11px;border-radius:12px;background:#edf5f6;color:#536b77;font-size:.8rem}@media(max-width:650px){.school-overlay{padding:10px}.school-list{grid-template-columns:1fr}.school-shell{margin:1vh auto;padding:14px}}
     `;
     document.head.appendChild(style);
     overlay=document.createElement('section');
     overlay.className='school-overlay';
-    overlay.innerHTML=`<div class="school-shell"><div class="school-head"><div><h1>Seleccionar PCI institucional</h1><p>Cada escuela conserva su propia matriz y sus propios agrupamientos.</p></div><button class="school-close" type="button" data-school-close>Cerrar</button></div><div class="school-list" data-school-list></div><div class="school-help">Los códigos PCI-101 a PCI-104 quedan fijos. Los nombres de escuela pueden editarse sin modificar la matriz curricular.</div></div>`;
+    overlay.innerHTML=`<div class="school-shell"><div class="school-head"><div><h1>Seleccionar PCI institucional</h1><p>Elegí una escuela para ingresar a su matriz.</p></div><button class="school-close" type="button" data-school-close ${activeCode()?'':'hidden'}>Cerrar</button></div><div class="school-list" data-school-list></div><div class="school-help">Hacé clic en cualquier parte de la tarjeta o en “Entrar”. Los códigos PCI-101 a PCI-104 quedan fijos.</div></div>`;
     document.body.appendChild(overlay);
     overlay.querySelector('[data-school-close]').onclick=closeOverlay;
     return overlay;
