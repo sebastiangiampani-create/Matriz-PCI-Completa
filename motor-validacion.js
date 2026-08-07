@@ -8,7 +8,7 @@
   function hoursForTerm(group,term){const fallback=Math.max(0,Number(group.weeklyHours??group.hours??0)||0);return group.hoursMode==='per_term'?Math.max(0,Number(group.hoursByTerm?.[term]??fallback)||0):fallback}
   function level(group){const [start]=range(group);return Number(group.level)||Math.ceil(start/2)}
   function isAnnual(group){const [start,end]=range(group);return end-start===1&&Math.ceil(start/2)===Math.ceil(end/2)}
-  function kind(item){const text=normalize(`${item.group.type||''} ${item.group.name||''} ${item.area}`);if(text.includes('proyecto de vinculacion')||text.includes('vinculacion'))return 'proyecto';if(text.includes('laboratorio'))return 'laboratorio';if(text.includes('taller'))return 'taller';return 'otro'}
+  function kind(item){const text=normalize(`${item.group.kind||''} ${item.group.type||''} ${item.group.name||''}`);if(text.includes('proyecto')&&text.includes('vinculacion'))return 'proyecto';if(text.includes('laboratorio'))return 'laboratorio';if(text.includes('taller'))return 'taller';return 'otro'}
   function planRows(w){if(Array.isArray(w.PCI_STUDY_PLAN))return w.PCI_STUDY_PLAN;try{return JSON.parse(localStorage.getItem('pciStudyPlanV1')||'[]')}catch{return []}}
   function targetHours(w,item){
     const plan=planRows(w),lvl=level(item.group);if(!plan.length)return null;
@@ -44,19 +44,29 @@
       expected.forEach(term=>{if(!slot.terms.some(x=>x.term===term))warnings.push(`Nivel ${slot.level}: C${term} no tiene espacios registrados para validar.`)});
     });
 
-    const oriented=all.map(item=>({...item,kind:kind(item)})).filter(item=>item.group.component==='formacion_orientada'||kind(item)!=='otro');
+    const orientationName=String(w.app?.orientation?.name||'').trim();
+    const oriented=all.map(item=>({...item,kind:kind(item)})).filter(item=>item.group.component==='formacion_orientada');
     const workshops=oriented.filter(item=>item.kind==='taller');
     const labs=oriented.filter(item=>item.kind==='laboratorio');
     const projects=oriented.filter(item=>item.kind==='proyecto');
+    if(oriented.length&&!orientationName)issues.push('Formación Orientada: falta definir el nombre de la orientación.');
     if(workshops.length!==3)issues.push(`Formación Orientada: hay ${workshops.length} talleres; deben ser 3.`);
     if(labs.length!==3)issues.push(`Formación Orientada: hay ${labs.length} laboratorios; deben ser 3.`);
     if(projects.length!==1)issues.push(`Formación Orientada: debe existir un único Proyecto de Vinculación; actualmente hay ${projects.length}.`);
-    projects.forEach(item=>{if(level(item.group)!==5)issues.push('Proyecto de Vinculación: debe ubicarse en Nivel 5.');if(!isAnnual(item.group))issues.push('Proyecto de Vinculación: debe ser anual dentro del Nivel 5.')});
+    oriented.forEach(item=>{
+      if(orientationName&&String(item.group.orientation||'').trim()!==orientationName)warnings.push(`${item.group.name}: no está vinculado a la orientación institucional seleccionada.`);
+      if((item.kind==='laboratorio'||item.kind==='taller')&&!(item.group.subjects||[]).length)warnings.push(`${item.group.name}: todavía no tiene materias NES vinculadas.`);
+    });
+    projects.forEach(item=>{
+      if(level(item.group)!==5)issues.push('Proyecto de Vinculación: debe ubicarse en Nivel 5.');
+      if(!isAnnual(item.group))issues.push('Proyecto de Vinculación: debe ser anual dentro del Nivel 5.');
+      if(!(item.group.linkedSpaces||[]).length)issues.push('Proyecto de Vinculación: debe articular al menos un taller o laboratorio orientado.');
+    });
 
     const coverageText=w.document.getElementById('coveragePanel')?.textContent||'';
     if(coverageText&&/\b[1-9]\d* pendientes\b/.test(coverageText))warnings.push('Cobertura curricular: todavía hay contenidos priorizados pendientes.');
 
-    return {issues:[...new Set(issues)],warnings:[...new Set(warnings)],levelStatus,workshops:workshops.length,labs:labs.length,projects:projects.length,ready:issues.length===0,hasPlan:plan.length>0};
+    return {issues:[...new Set(issues)],warnings:[...new Set(warnings)],levelStatus,workshops:workshops.length,labs:labs.length,projects:projects.length,ready:issues.length===0,hasPlan:plan.length>0,orientationName};
   }
 
   function render(){
@@ -69,7 +79,7 @@
     }
     const result=validate(w);
     const levelCards=result.levelStatus.map(slot=>`<div class="validation-level"><strong>Nivel ${slot.level}</strong>${slot.terms.length?slot.terms.map(x=>`<small>C${x.term} · ${x.name}: ${x.actual} HC${x.target!=null?` / ${x.target} normativas`:' / objetivo pendiente'}</small>`).join(''):'<small>Sin espacios para validar</small>'}</div>`).join('');
-    panel.innerHTML=`<div class="validation-head"><div><strong>Validación institucional</strong><div>${result.issues.length} errores · ${result.warnings.length} advertencias</div></div><span class="validation-light ${result.ready?'ok':'bad'}">${result.ready?'PCI habilitado':'PCI no publicable'}</span></div><div class="validation-levels">${levelCards}</div><div><strong>Base normativa:</strong> ${result.hasPlan?'Plan de Estudios cargado':'pendiente de carga'}</div><div><strong>Formación Orientada:</strong> ${result.workshops}/3 talleres · ${result.labs}/3 laboratorios · ${result.projects}/1 proyecto de vinculación</div>${result.issues.length?`<div class="validation-sub">Errores</div><ul class="validation-list">${result.issues.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}${result.warnings.length?`<div class="validation-sub">Advertencias</div><ul class="validation-list">${result.warnings.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}`;
+    panel.innerHTML=`<div class="validation-head"><div><strong>Validación institucional</strong><div>${result.issues.length} errores · ${result.warnings.length} advertencias</div></div><span class="validation-light ${result.ready?'ok':'bad'}">${result.ready?'PCI habilitado':'PCI no publicable'}</span></div><div class="validation-levels">${levelCards}</div><div><strong>Base normativa:</strong> ${result.hasPlan?'Plan de Estudios cargado':'pendiente de carga'}</div><div><strong>Formación Orientada${result.orientationName?` · ${result.orientationName}`:''}:</strong> ${result.workshops}/3 talleres · ${result.labs}/3 laboratorios · ${result.projects}/1 proyecto de vinculación</div>${result.issues.length?`<div class="validation-sub">Errores</div><ul class="validation-list">${result.issues.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}${result.warnings.length?`<div class="validation-sub">Advertencias</div><ul class="validation-list">${result.warnings.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}`;
   }
 
   function watch(){clearInterval(timer);timer=setInterval(()=>{try{render()}catch(error){console.error('Motor de validación:',error)}},900)}
