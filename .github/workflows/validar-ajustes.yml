@@ -1,0 +1,53 @@
+name: Validar ajustes PCI
+
+on:
+  push:
+    branches:
+      - ajustes-matriz-agosto
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Ejecutar pruebas del modelo
+        run: npm test
+
+      - name: Verificar sintaxis JavaScript
+        run: |
+          node --check app.js
+          node --check pci-model.js
+          node --check pci-model-overrides.js
+          node --check matrix-details.js
+
+      - name: Instalar Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Ejecutar prueba funcional en navegador
+        run: node tests/browser-smoke.mjs
+
+      - name: Guardar capturas de la prueba
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-prueba-pci
+          path: test-artifacts
+          if-no-files-found: ignore
+          retention-days: 7
