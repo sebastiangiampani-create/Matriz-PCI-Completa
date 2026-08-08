@@ -16,9 +16,22 @@ function ensureStyles() {
     .matrix-detail-box{padding:11px;border-radius:12px;background:#f5f9f9}.matrix-detail-box strong{display:block;margin-bottom:4px;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em}
     .matrix-detail-box p{margin:0;color:var(--ink-soft,#425c68);line-height:1.45}.matrix-content-list{display:grid;gap:8px;margin-top:12px}
     .matrix-content-row{padding:10px 11px;border:1px solid var(--line,#d6e2e5);border-radius:11px;background:#fff}.matrix-content-row small{display:block;margin-bottom:4px;color:var(--muted,#6a7b84);font-weight:800}.matrix-content-row p{margin:0;line-height:1.42}
+    .site-credit{width:min(1180px,calc(100% - 32px));margin:30px auto 18px;padding-top:16px;border-top:1px solid var(--line,#d6e2e5);text-align:center;color:var(--muted,#6a7b84);font-size:.78rem;font-weight:750}
+    .site-credit strong{color:var(--ink,#15374a)}
     @media(max-width:720px){.matrix-detail-grid{grid-template-columns:1fr}.matrix-detail-head{display:block}.matrix-detail-actions{margin-top:10px}}
   `;
   document.head.appendChild(style);
+}
+
+function ensureCreatorCredit() {
+  if (document.getElementById('creatorCredit')) return;
+  ensureStyles();
+  const credit = document.createElement('footer');
+  credit.id = 'creatorCredit';
+  credit.className = 'site-credit no-print';
+  credit.setAttribute('aria-label', 'Créditos');
+  credit.innerHTML = '© 2026 · Creado por <strong>Sebastián Giampani</strong>';
+  document.body.appendChild(credit);
 }
 
 function ensurePanel() {
@@ -118,15 +131,18 @@ document.addEventListener('click', (event) => {
 const observer = new MutationObserver(() => {
   const panel = document.getElementById('matrixDetailsPanel');
   if (panel && panel.parentElement && !document.getElementById('matrixGrid')) panel.remove();
+  ensureCreatorCredit();
   tuneRepeatableContentUi();
   tuneStructureStatus();
 });
 observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
 window.addEventListener('DOMContentLoaded', () => {
+  ensureCreatorCredit();
   tuneRepeatableContentUi();
   tuneStructureStatus();
 });
 setTimeout(() => {
+  ensureCreatorCredit();
   tuneRepeatableContentUi();
   tuneStructureStatus();
 }, 0);
