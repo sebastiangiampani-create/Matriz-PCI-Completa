@@ -18,6 +18,9 @@ function ensureStyles() {
     .matrix-content-row{padding:10px 11px;border:1px solid var(--line,#d6e2e5);border-radius:11px;background:#fff}.matrix-content-row small{display:block;margin-bottom:4px;color:var(--muted,#6a7b84);font-weight:800}.matrix-content-row p{margin:0;line-height:1.42}
     .site-credit{width:min(1180px,calc(100% - 32px));margin:30px auto 18px;padding-top:16px;border-top:1px solid var(--line,#d6e2e5);text-align:center;color:var(--muted,#6a7b84);font-size:.78rem;font-weight:750}
     .site-credit strong{color:var(--ink,#15374a)}
+    @media(max-width:820px){
+      .matrix-header{position:static!important;top:auto!important}
+    }
     @media(max-width:720px){.matrix-detail-grid{grid-template-columns:1fr}.matrix-detail-head{display:block}.matrix-detail-actions{margin-top:10px}}
   `;
   document.head.appendChild(style);
@@ -117,6 +120,20 @@ function tuneStructureStatus() {
   status.innerHTML = status.innerHTML.replace('simultaneidad en C6 y C7', 'simultaneidad en C5 y C6');
 }
 
+function protectEditorControls() {
+  const selector = 'input, select, textarea, button, a, label';
+  document.querySelectorAll('.group-card').forEach((card) => {
+    card.querySelectorAll(selector).forEach((control) => {
+      if (control.dataset.pciEditorProtected === '1') return;
+      control.dataset.pciEditorProtected = '1';
+      const stopCardSelection = (event) => event.stopPropagation();
+      control.addEventListener('pointerdown', stopCardSelection);
+      control.addEventListener('mousedown', stopCardSelection);
+      control.addEventListener('touchstart', stopCardSelection, { passive: true });
+    });
+  });
+}
+
 document.addEventListener('dragend', (event) => {
   if (event.target?.closest?.('[data-matrix-group]')) ignoreClickUntil = Date.now() + 160;
 }, true);
@@ -135,15 +152,18 @@ const observer = new MutationObserver(() => {
   ensureCreatorCredit();
   tuneRepeatableContentUi();
   tuneStructureStatus();
+  protectEditorControls();
 });
 observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
 window.addEventListener('DOMContentLoaded', () => {
   ensureCreatorCredit();
   tuneRepeatableContentUi();
   tuneStructureStatus();
+  protectEditorControls();
 });
 setTimeout(() => {
   ensureCreatorCredit();
   tuneRepeatableContentUi();
   tuneStructureStatus();
+  protectEditorControls();
 }, 0);
