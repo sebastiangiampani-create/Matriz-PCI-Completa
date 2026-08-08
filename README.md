@@ -1,25 +1,37 @@
 # Matriz PCI · Escuela Muestra
 
-Aplicación web para construir y revisar un Programa Curricular Institucional sobre la base curricular priorizada.
+Reconstrucción de la matriz institucional a partir de la Escuela 4 funcional de la plataforma PCI.
 
-## Capacidades principales
+## Alcance actual
 
-- organización de contenidos en niveles, laboratorios, talleres y otros formatos pedagógicos;
-- matriz completa C1–C10;
-- contenidos reutilizables en más de un espacio cuando la propuesta pedagógica lo requiere;
-- laboratorios de Ciencias Sociales con simultaneidad doble en C5 y C6;
-- detalle desplegable de cada espacio directamente desde la matriz;
-- tabla de control, exportación CSV e impresión/PDF;
-- acceso independiente y guardado online para cuatro escuelas;
-- pruebas automáticas del modelo y prueba funcional de navegador con capturas.
+- estructura completa C1–C10;
+- cinco niveles anuales en las áreas troncales;
+- 10 laboratorios de Ciencias Naturales;
+- 12 laboratorios de Ciencias Sociales con simultaneidad doble en C5 y C6;
+- talleres de Artes, Tecnologías y Educación Física;
+- otros formatos pedagógicos configurables;
+- contenidos curriculares reutilizables en más de un espacio;
+- matriz completa con movimiento temporal y detalle desplegable de contenidos;
+- cuatro escuelas institucionales con guardado independiente;
+- exportación y tabla de control;
+- interfaz responsive para escritorio y dispositivos móviles.
+
+## Ajustes móviles verificados
+
+- la cabecera Área / C1–C10 queda en el flujo de la matriz y ya no tapa la primera fila de Lengua y Literatura;
+- los selectores de Otros formatos pedagógicos conservan la interacción nativa en celular;
+- tocar un selector no vuelve a seleccionar ni reconstruir la tarjeta del agrupamiento;
+- se verificó la edición de formato, carácter, duración y nivel anual.
 
 ## Validación
 
-Antes de fusionar a `main`, la rama `ajustes-matriz-agosto` ejecuta GitHub Actions con:
+La rama de ajustes incluye:
 
 - 17 pruebas unitarias del modelo;
-- verificación de sintaxis JavaScript;
-- prueba funcional en Chromium sobre la plataforma, el acceso institucional y la matriz completa.
+- validación de sintaxis JavaScript;
+- prueba funcional automatizada en Chromium de escritorio;
+- prueba funcional automatizada en viewport móvil con interacción táctil;
+- capturas de la plataforma, acceso institucional, matriz y editor de otros formatos.
 
 ## Autoría
 
