@@ -12,6 +12,7 @@ import {
   locationsForContent,
   migrateState,
   moveContents,
+  moveGroupToTerm,
   removeContent,
   setOtherDuration,
   sourceAreaFor,
@@ -64,6 +65,9 @@ let app = migrateState(readStoredState());
 let currentArea = app.current && AREA_CONFIG[app.current] ? app.current : null;
 let selectedGroupId = null;
 let selectedContentIds = new Set();
+let selectedMatrixGroupId = null;
+let draggedMatrixGroupId = null;
+let matrixJustDragged = false;
 let toastTimer = null;
 
 function readStoredState() {
@@ -674,6 +678,127 @@ function groupLanes(groups) {
     });
 }
 
+function movableMatrixGroups() {
+  return AREA_ORDER.flatMap((area) => app.areas[area].groups
+    .filter((group) => group.kind !== 'trunk')
+    .map((group) => ({ area, group })));
+}
+
+function renderMatrixMoveTools() {
+  const movable = movableMatrixGroups();
+  if (!movable.some(({ group }) => group.id === selectedMatrixGroupId)) {
+    selectedMatrixGroupId = movable[0]?.group.id ?? null;
+  }
+  $('matrixSpaceSelect').innerHTML = AREA_ORDER.map((area) => {
+    const groups = movable.filter((item) => item.area === area);
+    if (!groups.length) return '';
+    return `<optgroup label="${escapeHtml(area)}">${groups.map(({ group }) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.name)} · ${escapeHtml(temporalLabel(group))}</option>`).join('')}</optgroup>`;
+  }).join('');
+  $('matrixTermSelect').innerHTML = TERM_LABELS.map((label, index) => `<option value="${index + 1}">${label}</option>`).join('');
+  if (selectedMatrixGroupId) $('matrixSpaceSelect').value = selectedMatrixGroupId;
+  syncMatrixDestination();
+}
+
+function syncMatrixDestination() {
+  const found = selectedMatrixGroupId ? findGroup(app, selectedMatrixGroupId) : null;
+  $('matrixTermSelect').disabled = !found;
+  $('matrixMove').disabled = !found;
+  $('matrixEdit').disabled = !found;
+  if (found?.group.startTerm) $('matrixTermSelect').value = String(found.group.startTerm);
+}
+
+function relocateMatrixGroup(groupId, term) {
+  const found = findGroup(app, groupId);
+  if (!found) return;
+  try {
+    const { group, swapped } = moveGroupToTerm(app, groupId, term);
+    selectedMatrixGroupId = group.id;
+    persist();
+    renderMatrix();
+    toast(swapped
+      ? `${group.name} pasó a C${group.startTerm}; ${swapped.name} ocupó su lugar anterior`
+      : `${group.name} se movió a ${temporalLabel(group)}`);
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+function matrixTermAtPointer(row, clientX) {
+  const cells = [...row.querySelectorAll('[data-matrix-term]')];
+  const exact = cells.find((cell) => {
+    const rect = cell.getBoundingClientRect();
+    return clientX >= rect.left && clientX <= rect.right;
+  });
+  if (exact) return Number(exact.dataset.matrixTerm);
+  const first = cells[0]?.getBoundingClientRect();
+  const last = cells.at(-1)?.getBoundingClientRect();
+  if (!first || !last) return 1;
+  const width = Math.max(1, last.right - first.left);
+  return Math.min(10, Math.max(1, Math.floor(((clientX - first.left) / width) * 10) + 1));
+}
+
+function highlightMatrixTerm(row, term) {
+  document.querySelectorAll('.matrix-background.drop-target').forEach((cell) => cell.classList.remove('drop-target'));
+  row.querySelector(`[data-matrix-term="${term}"]`)?.classList.add('drop-target');
+}
+
+function bindMatrixMovement() {
+  document.querySelectorAll('[data-matrix-group]').forEach((button) => {
+    const groupId = button.dataset.matrixGroup;
+    const found = findGroup(app, groupId);
+    button.addEventListener('pointerdown', () => {
+      if (found?.group.kind === 'trunk') return;
+      selectedMatrixGroupId = groupId;
+      $('matrixSpaceSelect').value = groupId;
+      syncMatrixDestination();
+    });
+    button.addEventListener('click', () => {
+      if (matrixJustDragged) return;
+      openArea(button.dataset.matrixArea, groupId);
+    });
+    if (found?.group.kind === 'trunk') return;
+    button.addEventListener('dragstart', (event) => {
+      draggedMatrixGroupId = groupId;
+      selectedMatrixGroupId = groupId;
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('application/x-pci-space', groupId);
+      event.dataTransfer.setData('text/plain', groupId);
+    });
+    button.addEventListener('dragend', () => {
+      draggedMatrixGroupId = null;
+      document.querySelectorAll('.matrix-background.drop-target').forEach((cell) => cell.classList.remove('drop-target'));
+      matrixJustDragged = true;
+      setTimeout(() => { matrixJustDragged = false; }, 80);
+    });
+  });
+
+  document.querySelectorAll('[data-matrix-row-area]').forEach((row) => {
+    row.addEventListener('dragover', (event) => {
+      const found = draggedMatrixGroupId ? findGroup(app, draggedMatrixGroupId) : null;
+      if (!found || found.area !== row.dataset.matrixRowArea) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      highlightMatrixTerm(row, matrixTermAtPointer(row, event.clientX));
+    });
+    row.addEventListener('dragleave', (event) => {
+      if (event.relatedTarget && row.contains(event.relatedTarget)) return;
+      row.querySelectorAll('.matrix-background.drop-target').forEach((cell) => cell.classList.remove('drop-target'));
+    });
+    row.addEventListener('drop', (event) => {
+      event.preventDefault();
+      const groupId = draggedMatrixGroupId
+        || event.dataTransfer.getData('application/x-pci-space')
+        || event.dataTransfer.getData('text/plain');
+      const found = findGroup(app, groupId);
+      if (!found || found.area !== row.dataset.matrixRowArea) {
+        toast('Los espacios se reubican dentro de su misma área.');
+        return;
+      }
+      relocateMatrixGroup(groupId, matrixTermAtPointer(row, event.clientX));
+    });
+  });
+}
+
 function renderMatrix() {
   $('matrixTitle').textContent = `Matriz completa · ${app.schoolName}`;
   $('matrixLegend').innerHTML = [
@@ -682,27 +807,26 @@ function renderMatrix() {
     ['Taller', AREA_COLORS.Tecnologías],
     ['Otro formato', AREA_COLORS['Otros formatos pedagógicos']],
   ].map(([label, color]) => `<span style="background:${color}42">${label}</span>`).join('');
+  renderMatrixMoveTools();
 
   const header = `<div class="matrix-header"><div>Área</div>${TERM_LABELS.map((term) => `<div>${term}</div>`).join('')}</div>`;
   const rows = AREA_ORDER.map((area) => {
     const positioned = groupLanes(app.areas[area].groups);
     const lanes = Math.max(1, ...positioned.map((item) => item.lane));
-    const background = TERM_LABELS.map((_, index) => `<div class="matrix-background" style="grid-column:${index + 2};grid-row:1 / ${lanes + 1}"></div>`).join('');
+    const background = TERM_LABELS.map((_, index) => `<div class="matrix-background" data-matrix-term="${index + 1}" style="grid-column:${index + 2};grid-row:1 / ${lanes + 1}"></div>`).join('');
     const spaces = positioned.map(({ group, lane }) => `
-      <button class="matrix-space" type="button" data-matrix-area="${escapeHtml(area)}" data-matrix-group="${escapeHtml(group.id)}" style="grid-column:${group.startTerm + 1} / ${group.endTerm + 2};grid-row:${lane};--space-color:${AREA_COLORS[area]}">
+      <button class="matrix-space ${group.kind === 'trunk' ? 'locked' : 'movable'}" type="button" draggable="${group.kind !== 'trunk'}" data-matrix-area="${escapeHtml(area)}" data-matrix-group="${escapeHtml(group.id)}" title="${group.kind === 'trunk' ? 'Nivel anual fijo · clic para editar' : 'Arrastrar para mover · clic para editar'}" style="grid-column:${group.startTerm + 1} / ${group.endTerm + 2};grid-row:${lane};--space-color:${AREA_COLORS[area]}">
         <strong>${escapeHtml(group.name)}</strong>
         <small>${escapeHtml(temporalLabel(group))} · ${group.items.length} contenidos${group.kind === 'other' ? ` · ${escapeHtml(group.formatType)}` : ''}</small>
       </button>`).join('');
     return `
-      <div class="matrix-area-row" style="grid-template-rows:repeat(${lanes}, minmax(84px, auto))">
+      <div class="matrix-area-row" data-matrix-row-area="${escapeHtml(area)}" style="grid-template-rows:repeat(${lanes}, minmax(84px, auto))">
         <div class="matrix-area-name" style="grid-column:1;grid-row:1 / ${lanes + 1}">${escapeHtml(area)}</div>
         ${background}${spaces}
       </div>`;
   }).join('');
   $('matrixGrid').innerHTML = header + rows;
-  document.querySelectorAll('[data-matrix-group]').forEach((button) => {
-    button.addEventListener('click', () => openArea(button.dataset.matrixArea, button.dataset.matrixGroup));
-  });
+  bindMatrixMovement();
 }
 
 function printScreen(screenId) {
@@ -741,6 +865,15 @@ function bindEvents() {
   $('exportCsv').addEventListener('click', downloadControlCsv);
   $('printControl').addEventListener('click', () => printScreen('control'));
   $('printMatrix').addEventListener('click', () => printScreen('matrix'));
+  $('matrixSpaceSelect').addEventListener('change', (event) => {
+    selectedMatrixGroupId = event.target.value;
+    syncMatrixDestination();
+  });
+  $('matrixMove').addEventListener('click', () => relocateMatrixGroup(selectedMatrixGroupId, Number($('matrixTermSelect').value)));
+  $('matrixEdit').addEventListener('click', () => {
+    const found = selectedMatrixGroupId ? findGroup(app, selectedMatrixGroupId) : null;
+    if (found) openArea(found.area, found.group.id);
+  });
 }
 
 async function start() {

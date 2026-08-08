@@ -13,7 +13,7 @@ Reconstrucción de la matriz institucional a partir de la Escuela 4 funcional de
 - selección individual y múltiple, arrastre y reasignación de contenidos sin duplicarlos;
 - alternativa táctil para celulares mediante selección y botón **Mover**;
 - tabla de control completa, filtros de pendientes, impresión/PDF y descarga CSV compatible con Excel;
-- matriz completa C1–C10 con acceso directo a la edición de cada espacio;
+- matriz completa C1–C10 con arrastre temporal, alternativa táctil y acceso directo a la edición de cada espacio;
 - guardado local inmediato y sincronización online de Escuela Muestra en la fila histórica `school_id=4`.
 
 ## Campos de cada espacio

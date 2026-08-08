@@ -5,6 +5,7 @@ import {
   AREA_CONFIG,
   migrateState,
   moveContents,
+  moveGroupToTerm,
   setOtherDuration,
   termsForLevel,
   validateStructure,
@@ -141,4 +142,32 @@ test('la migración reconoce la ubicación temporal y sinopsis de formatos anter
   assert.deepEqual([format.startTerm, format.endTerm], [5, 6]);
   assert.equal(format.synopsis, 'Sinopsis ya guardada');
   assert.deepEqual(format.items, ['c10']);
+});
+
+test('mover un laboratorio natural intercambia posiciones y conserva C1-C10', () => {
+  const state = migrateState({});
+  const first = state.areas['Ciencias Naturales'].groups[0];
+  const fifth = state.areas['Ciencias Naturales'].groups[4];
+  const result = moveGroupToTerm(state, first.id, 5);
+  assert.equal(first.startTerm, 5);
+  assert.equal(fifth.startTerm, 1);
+  assert.equal(result.swapped.id, fifth.id);
+  assert.deepEqual(validateStructure(state), []);
+});
+
+test('mover un laboratorio social conserva los dos simultáneos C6 y C7', () => {
+  const state = migrateState({});
+  const first = state.areas['Ciencias Sociales'].groups.find((group) => group.startTerm === 1);
+  moveGroupToTerm(state, first.id, 6);
+  assert.equal(state.areas['Ciencias Sociales'].groups.filter((group) => group.startTerm === 6).length, 2);
+  assert.equal(state.areas['Ciencias Sociales'].groups.filter((group) => group.startTerm === 1).length, 1);
+  assert.deepEqual(validateStructure(state), []);
+});
+
+test('mover un formato anual desde C6 lo ajusta al nivel C5-C6', () => {
+  const state = migrateState({});
+  const other = addOtherFormat(state);
+  setOtherDuration(other, 'annual', 1);
+  moveGroupToTerm(state, other.id, 6);
+  assert.deepEqual([other.startTerm, other.endTerm], [5, 6]);
 });
