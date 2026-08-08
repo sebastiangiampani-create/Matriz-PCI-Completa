@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#15374a">
+  <title>Escuela Muestra · Matriz PCI</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f3f7f7;color:#15374a}body{display:flex;flex-direction:column}.top{position:relative;z-index:20;display:flex;align-items:center;gap:9px;min-height:68px;padding:9px 12px;background:#fff;border-bottom:1px solid #d6e2e5;flex-wrap:wrap}.logo{width:170px;height:46px;object-fit:contain;object-position:left}.title{margin-right:auto;font-weight:900}.status{font-size:.82rem;font-weight:850;color:#6a7b84}.status.ok{color:#126e65}.status.bad{color:#b3314d}.button{min-height:40px;padding:9px 12px;color:#15374a;text-decoration:none;border:0;border-radius:12px;background:#e7edef;font:850 .86rem inherit;cursor:pointer}.button.primary{color:#fff;background:#15374a}.button.accent{background:#83ded3}.frame{display:block;width:100%;flex:1;border:0;background:#f3f7f7}.gate{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:18px;background:#f3f7f7}.gate.hidden{display:none}.card{width:min(580px,100%);padding:clamp(22px,5vw,38px);border:1px solid #d6e2e5;border-radius:26px;background:#fff;box-shadow:0 24px 64px #15374a24}.card img{width:min(330px,82vw);height:62px;object-fit:contain;object-position:left}.eyebrow{margin:22px 0 6px;color:#126e65;font-size:.75rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.card h1{margin:0 0 8px;font-size:clamp(2.2rem,8vw,4.3rem);letter-spacing:-.05em}.card p{color:#6a7b84;line-height:1.5}.field{display:block;margin:18px 0 10px}.field span{display:block;margin-bottom:5px;font-size:.8rem;font-weight:850}.field input{width:100%;padding:13px;border:1px solid #d6e2e5;border-radius:13px;color:#15374a;font:900 1rem inherit;letter-spacing:.06em}.field input:focus{outline:3px solid #83ded355;border-color:#126e65}.enter{width:100%;padding:13px}.message{min-height:22px;margin:10px 0 0!important;color:#b3314d!important;font-size:.86rem;font-weight:800}.note{font-size:.82rem}.noscript{padding:16px;color:#b3314d;background:#ffe9ee}@media(max-width:820px){.top{align-items:flex-start}.logo{width:145px}.title{font-size:.84rem}.status{order:5;width:100%}.top .optional{display:none}.top .button{padding:8px 9px;font-size:.76rem}}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <img class="logo" src="logo-oficial-v2.svg?v=20260807" alt="Escuela de Maestros">
+    <div class="title">Matriz PCI · Escuela Muestra</div>
+    <span id="status" class="status">Esperando ingreso</span>
+    <a class="button optional" href="plataforma.html">← Escuelas</a>
+    <button id="openControl" class="button accent optional" type="button">Tabla de control</button>
+    <button id="openMatrix" class="button optional" type="button">Matriz completa</button>
+    <button id="saveNow" class="button primary" type="button">Guardar online</button>
+  </header>
+  <iframe id="appFrame" class="frame" title="Matriz PCI de Escuela Muestra"></iframe>
+
+  <section id="gate" class="gate">
+    <form id="gateForm" class="card">
+      <img src="logo-oficial-v2.svg?v=20260807" alt="Escuela de Maestros">
+      <p class="eyebrow">Escuela 4 · espacio de construcción</p>
+      <h1>Escuela Muestra</h1>
+      <p>Ingresá para trabajar sobre la matriz completa. Este acceso conserva online los cambios realizados.</p>
+      <label class="field"><span>Código de edición</span><input id="editCode" value="PCI-404" autocomplete="off" autocapitalize="characters" required></label>
+      <button id="enterButton" class="button primary enter" type="submit">Ingresar a Escuela Muestra</button>
+      <p id="gateMessage" class="message" role="alert"></p>
+      <p class="note">Código del modelo de muestra: <strong>PCI-404</strong>.</p>
+    </form>
+  </section>
+  <noscript><div class="noscript">Necesitás habilitar JavaScript para usar la matriz.</div></noscript>
+
+  <script>
+    const SUPA_URL = 'https://agmebsotbuurbnldxewf.supabase.co';
+    const SUPA_KEY = 'sb_publishable_L74-lwkMH_4vsTXHCEQ7tw_fYQui0WT';
+    const HEADERS = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json' };
+    const frame = document.getElementById('appFrame');
+    const gate = document.getElementById('gate');
+    const status = document.getElementById('status');
+    const gateMessage = document.getElementById('gateMessage');
+    let syncTimer = null;
+    let lastSaved = '';
+    let saving = false;
+
+    function setStatus(text, state = '') {
+      status.textContent = text;
+      status.className = `status ${state}`;
+    }
+
+    async function getSchoolRow() {
+      const response = await fetch(`${SUPA_URL}/rest/v1/pci_proposals?school_id=eq.4&select=school_id,data,edit_code`, { headers: HEADERS });
+      if (!response.ok) throw new Error('No se pudo consultar la escuela.');
+      const rows = await response.json();
+      if (!rows.length) throw new Error('La Escuela Muestra todavía no existe en la base online.');
+      return rows[0];
+    }
+
+    async function patchState(data) {
+      const response = await fetch(`${SUPA_URL}/rest/v1/pci_proposals?school_id=eq.4`, {
+        method: 'PATCH',
+        headers: { ...HEADERS, Prefer: 'return=minimal' },
+        body: JSON.stringify({ data, updated_at: new Date().toISOString() }),
+      });
+      if (!response.ok) throw new Error('La base online rechazó el guardado.');
+    }
+
+    async function waitForApp() {
+      for (let attempt = 0; attempt < 120; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 120));
+        try {
+          const api = frame.contentWindow.PCIApp;
+          if (api?.getData()?.length) return api;
+        } catch {}
+      }
+      throw new Error('La matriz tardó demasiado en cargar. Actualizá la página e intentá nuevamente.');
+    }
+
+    function normalize(value) {
+      return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    }
+
+    function significantWords(value) {
+      return new Set(normalize(value).split(' ').filter((word) => word.length > 3));
+    }
+
+    function overlap(left, right) {
+      const a = significantWords(left);
+      const b = significantWords(right);
+      if (!a.size || !b.size) return 0;
+      let matches = 0;
+      a.forEach((word) => { if (b.has(word)) matches += 1; });
+      return matches / Math.min(a.size, b.size);
+    }
+
+    async function buildInitialState() {
+      localStorage.setItem('pciAppV2', '{}');
+      frame.src = `app.html?v=school-seed-${Date.now()}`;
+      const api = await waitForApp();
+      const curriculum = api.getData();
+      const seed = await fetch('data/school4-seed.json?v=20260807').then((response) => {
+        if (!response.ok) throw new Error('No se pudo cargar el modelo inicial.');
+        return response.json();
+      });
+      const state = { schemaVersion: 10, schoolName: 'Escuela Muestra', areas: {}, current: null };
+      for (const area of ['Ciencias Naturales', 'Ciencias Sociales']) {
+        state.areas[area] = {
+          closed: false,
+          groups: seed.labs.filter((lab) => lab.area === area).map((lab) => {
+            const source = lab.content_blocks.join(' ');
+            const items = curriculum.filter((content) => content.area === area).filter((content) => {
+              const text = normalize(content.text);
+              return text.length > 18 && (normalize(source).includes(text) || overlap(source, content.text) >= .82);
+            }).map((content) => content.id);
+            return {
+              name: lab.name,
+              kind: 'laboratory',
+              objective: 'A definir por la institución',
+              synopsis: '',
+              context: lab.context,
+              type: lab.type,
+              elective: lab.type === 'Electivo',
+              startTerm: Number(lab.term),
+              endTerm: Number(lab.term),
+              items,
+              sourceContent: lab.content_blocks,
+            };
+          }),
+        };
+      }
+      return state;
+    }
+
+    async function saveCurrentState({ forceStatus = false } = {}) {
+      if (saving) return;
+      const raw = localStorage.getItem('pciAppV2') || '';
+      if (!raw || (!forceStatus && raw === lastSaved)) return;
+      saving = true;
+      setStatus('Guardando…');
+      try {
+        await patchState(JSON.parse(raw));
+        lastSaved = raw;
+        setStatus('Guardado online', 'ok');
+      } catch (error) {
+        console.error(error);
+        setStatus('Error al guardar', 'bad');
+        if (forceStatus) throw error;
+      } finally {
+        saving = false;
+      }
+    }
+
+    function startSync() {
+      clearInterval(syncTimer);
+      syncTimer = setInterval(() => saveCurrentState(), 900);
+    }
+
+    async function openSchool(row) {
+      setStatus('Cargando matriz…');
+      let data = row.data && typeof row.data === 'object' ? row.data : {};
+      const empty = !data.areas || Object.keys(data.areas).length === 0;
+      if (empty) data = await buildInitialState();
+      const raw = JSON.stringify(data);
+      localStorage.setItem('pciAppV2', raw);
+      lastSaved = raw;
+      frame.src = `app.html?v=school-cloud-${Date.now()}`;
+      const api = await waitForApp();
+      const migrated = localStorage.getItem('pciAppV2') || raw;
+      if (empty || migrated !== raw) {
+        await patchState(JSON.parse(migrated));
+        lastSaved = migrated;
+      }
+      setStatus('Conectado · guardado automático', 'ok');
+      startSync();
+      const requestedView = new URLSearchParams(window.location.search).get('view');
+      if (requestedView === 'matrix') api.openMatrix();
+      if (requestedView === 'control') api.openControl();
+    }
+
+    async function enter(event) {
+      event.preventDefault();
+      gateMessage.textContent = '';
+      const button = document.getElementById('enterButton');
+      button.disabled = true;
+      button.textContent = 'Verificando…';
+      try {
+        const row = await getSchoolRow();
+        const supplied = document.getElementById('editCode').value.trim();
+        if (supplied !== String(row.edit_code || '').trim()) {
+          gateMessage.textContent = 'El código no es correcto. Revisalo e intentá nuevamente.';
+          return;
+        }
+        gate.classList.add('hidden');
+        await openSchool(row);
+      } catch (error) {
+        console.error(error);
+        gate.classList.remove('hidden');
+        gateMessage.textContent = error.message || 'No se pudo abrir la escuela.';
+        setStatus('Sin conexión', 'bad');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Ingresar a Escuela Muestra';
+      }
+    }
+
+    function callApp(method) {
+      const api = frame.contentWindow?.PCIApp;
+      if (!api?.[method]) {
+        gateMessage.textContent = 'Esperá a que termine de cargar la matriz.';
+        return;
+      }
+      api[method]();
+    }
+
+    document.getElementById('gateForm').addEventListener('submit', enter);
+    document.getElementById('openControl').addEventListener('click', () => callApp('openControl'));
+    document.getElementById('openMatrix').addEventListener('click', () => callApp('openMatrix'));
+    document.getElementById('saveNow').addEventListener('click', async () => {
+      try {
+        await saveCurrentState({ forceStatus: true });
+        setStatus('Guardado online', 'ok');
+      } catch {}
+    });
+    window.addEventListener('online', () => saveCurrentState());
+    window.addEventListener('offline', () => setStatus('Sin conexión · cambios locales', 'bad'));
+  </script>
+</body>
+</html>
