@@ -41,7 +41,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Ejecutar prueba funcional en navegador
-        run: node tests/browser-smoke.mjs
+        run: node tests/browser-smoke-v2.mjs
 
       - name: Guardar capturas de la prueba
         if: always()
