@@ -31,9 +31,16 @@ try {
   const page = await context.newPage();
   const browserErrors = [];
 
-  page.on('pageerror', (error) => browserErrors.push(`pageerror: ${error.message}`));
+  page.on('pageerror', (error) => {
+    const message = `pageerror: ${error.message}`;
+    browserErrors.push(message);
+    console.error(message);
+  });
   page.on('console', (message) => {
-    if (message.type() === 'error') browserErrors.push(`console: ${message.text()}`);
+    if (message.type() !== 'error') return;
+    const text = `console: ${message.text()}`;
+    browserErrors.push(text);
+    console.error(text);
   });
 
   await page.goto(`${BASE_URL}/plataforma.html`, { waitUntil: 'networkidle' });
@@ -53,7 +60,13 @@ try {
   await page.screenshot({ path: `${ARTIFACTS}/02-acceso-escuela-1.png`, fullPage: true });
 
   await page.goto(`${BASE_URL}/app.html`, { waitUntil: 'networkidle' });
-  await page.waitForSelector('#loading', { state: 'detached', timeout: 45_000 });
+  await page.waitForTimeout(8_000);
+  if (await page.locator('#loading').count()) {
+    const loadingText = await page.locator('#loading').innerText();
+    await page.screenshot({ path: `${ARTIFACTS}/03-error-carga.png`, fullPage: true });
+    throw new Error(`La matriz no terminó de cargar. Mensaje visible: ${loadingText}. Errores: ${browserErrors.join(' | ')}`);
+  }
+
   await page.waitForFunction(() => document.querySelector('#structureStatus')?.textContent.includes('C5 y C6'));
   assert.equal(await page.locator('.site-credit').count(), 1, 'La matriz debe mostrar la autoría.');
   assert.match(await page.locator('#coverageHint').textContent(), /más de un espacio/);
@@ -66,7 +79,7 @@ try {
   await page.waitForSelector('#matrixDetailsPanel:not([hidden])');
   assert.equal(await page.locator('#matrixDetailsPanel .matrix-content-list').count(), 1);
   assert.equal(await page.locator('[data-matrix-detail-edit]').count(), 1);
-  await page.screenshot({ path: `${ARTIFACTS}/03-matriz-detalle.png`, fullPage: true });
+  await page.screenshot({ path: `${ARTIFACTS}/04-matriz-detalle.png`, fullPage: true });
 
   assert.deepEqual(browserErrors, [], `Errores detectados en navegador:\n${browserErrors.join('\n')}`);
   console.log('Smoke test de navegador completado correctamente.');
