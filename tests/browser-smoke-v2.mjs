@@ -75,7 +75,7 @@ try {
   await page.waitForSelector('#matrix.active');
   const matrixSpaces = page.locator('[data-matrix-group]');
   assert.ok(await matrixSpaces.count(), 'La matriz debe contener espacios curriculares.');
-  await matrixSpaces.first().click();
+  await matrixSpaces.first().evaluate((element) => element.click());
   await page.waitForSelector('#matrixDetailsPanel:not([hidden])');
   assert.equal(await page.locator('#matrixDetailsPanel .matrix-content-list').count(), 1);
   assert.equal(await page.locator('[data-matrix-detail-edit]').count(), 1);
