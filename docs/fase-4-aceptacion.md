@@ -26,8 +26,10 @@ Ejecutar `npm test` y exigir cero fallas.
 6. Cambiar un laboratorio entre Obligatorio y Electivo y verificar que el carácter se conserva al recargar.
 7. Crear un Seminario, Proyecto y Ateneo; probar duración cuatrimestral y anual en distintos niveles.
 8. Abrir la tabla de control, filtrar pendientes, exportar CSV e imprimir/guardar PDF.
-9. Abrir la matriz completa y verificar C1–C10, los cinco niveles, los 10 laboratorios naturales, los 12 sociales y la simultaneidad C6/C7.
-10. Editar desde la matriz, guardar, recargar y volver a ingresar desde otro dispositivo; los cambios deben persistir online.
+9. Abrir la matriz completa y arrastrar un laboratorio a otro cuatrimestre: debe intercambiarse con el laboratorio de destino sin romper la cobertura ni la simultaneidad C6/C7.
+10. Mover un taller y un formato pedagógico tanto por arrastre como mediante el selector móvil; la tarjeta debe aparecer en el nuevo C1–C10.
+11. Verificar los cinco niveles, los 10 laboratorios naturales, los 12 sociales y la simultaneidad C6/C7.
+12. Editar desde la matriz, guardar, recargar y volver a ingresar desde otro dispositivo; los cambios deben persistir online.
 
 ## Límite explícito
 

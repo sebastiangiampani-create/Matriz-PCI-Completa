@@ -313,6 +313,45 @@ export function removeContent(state, groupId, contentId) {
   target.group.items = target.group.items.filter((id) => id !== String(contentId));
 }
 
+export function moveGroupToTerm(state, groupId, requestedTerm) {
+  const found = findGroup(state, groupId);
+  if (!found) throw new Error('El espacio que querés mover no existe.');
+  const term = safeTerm(requestedTerm);
+  if (!term) throw new Error('El cuatrimestre de destino no es válido.');
+  const { area, group } = found;
+  if (group.kind === 'trunk') {
+    throw new Error('Los niveles troncales son anuales y mantienen su par de cuatrimestres.');
+  }
+  if (group.startTerm === term && (group.duration !== 'annual' || group.level === levelForTerm(term))) {
+    return { group, swapped: null };
+  }
+
+  if (group.kind === 'other' && group.duration === 'annual') {
+    setOtherDuration(group, 'annual', levelForTerm(term));
+    return { group, swapped: null };
+  }
+
+  let swapped = null;
+  if (group.kind === 'laboratory') {
+    const groups = state.areas[area].groups;
+    const capacity = AREA_CONFIG[area].terms.filter((configuredTerm) => configuredTerm === term).length;
+    const targetGroups = groups.filter(
+      (candidate) => candidate.id !== group.id && candidate.startTerm === term,
+    );
+    if (targetGroups.length >= capacity) {
+      swapped = targetGroups[0];
+      Object.assign(swapped, {
+        startTerm: group.startTerm,
+        endTerm: group.startTerm,
+        level: levelForTerm(group.startTerm),
+      });
+    }
+  }
+
+  Object.assign(group, { startTerm: term, endTerm: term, level: levelForTerm(term) });
+  return { group, swapped };
+}
+
 export function deleteOtherFormat(state, groupId) {
   const groups = state.areas['Otros formatos pedagógicos'].groups;
   const index = groups.findIndex((group) => group.id === groupId);

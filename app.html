@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#15374a">
   <title>Escuela Muestra · Matriz PCI</title>
-  <link rel="stylesheet" href="app.css?v=20260807-1">
+  <link rel="stylesheet" href="app.css?v=20260808-2">
 </head>
 <body>
   <div id="loading" class="loading" role="status" aria-live="polite">
@@ -153,13 +153,23 @@
           <button class="text-button" type="button" data-screen-link="overview">← Volver al PCI</button>
           <p class="eyebrow">Trayectoria C1–C10</p>
           <h1 id="matrixTitle">Matriz completa del PCI</h1>
-          <p class="lead">Los espacios anuales ocupan los dos cuatrimestres de su nivel. En Sociales se visualizan los laboratorios simultáneos de C6 y C7.</p>
+          <p class="lead">Arrastrá laboratorios, talleres y otros formatos para cambiar su momento. También podés usar el selector, especialmente en celular. Las troncales permanecen fijas en su nivel anual.</p>
         </div>
         <div class="button-row no-print">
           <button id="printMatrix" class="button primary" type="button">Imprimir / PDF</button>
         </div>
       </div>
       <div id="matrixLegend" class="legend"></div>
+      <div class="matrix-move-tools no-print">
+        <div>
+          <strong>Mover un espacio</strong>
+          <small>Los laboratorios intercambian posición para conservar la cobertura obligatoria.</small>
+        </div>
+        <label><span>Espacio</span><select id="matrixSpaceSelect"></select></label>
+        <label><span>Destino</span><select id="matrixTermSelect"></select></label>
+        <button id="matrixMove" class="button accent" type="button">Mover</button>
+        <button id="matrixEdit" class="button secondary" type="button">Editar</button>
+      </div>
       <div class="matrix-scroll">
         <div id="matrixGrid" class="matrix-grid"></div>
       </div>
@@ -167,6 +177,6 @@
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="app.js?v=20260807-1"></script>
+  <script type="module" src="app.js?v=20260808-2"></script>
 </body>
 </html>
