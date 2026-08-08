@@ -86,6 +86,17 @@ function openDetails(groupId) {
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+function tuneRepeatableContentUi() {
+  const hint = document.getElementById('coverageHint');
+  if (hint && hint.textContent !== 'Un mismo contenido puede formar parte de más de un espacio.') {
+    hint.textContent = 'Un mismo contenido puede formar parte de más de un espacio.';
+  }
+  const moveButton = document.getElementById('moveSelected');
+  const countLabel = document.getElementById('selectionCount')?.textContent ?? '';
+  const count = Number.parseInt(countLabel, 10) || 0;
+  if (moveButton) moveButton.textContent = count ? `Asignar ${count}` : 'Asignar seleccionados';
+}
+
 document.addEventListener('dragend', (event) => {
   if (event.target?.closest?.('[data-matrix-group]')) ignoreClickUntil = Date.now() + 160;
 }, true);
@@ -101,5 +112,8 @@ document.addEventListener('click', (event) => {
 const observer = new MutationObserver(() => {
   const panel = document.getElementById('matrixDetailsPanel');
   if (panel && panel.parentElement && !document.getElementById('matrixGrid')) panel.remove();
+  tuneRepeatableContentUi();
 });
-observer.observe(document.documentElement, { childList: true, subtree: true });
+observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+window.addEventListener('DOMContentLoaded', tuneRepeatableContentUi);
+setTimeout(tuneRepeatableContentUi, 0);
