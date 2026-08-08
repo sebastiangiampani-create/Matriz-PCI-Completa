@@ -107,7 +107,8 @@ function tuneRepeatableContentUi() {
   const moveButton = document.getElementById('moveSelected');
   const countLabel = document.getElementById('selectionCount')?.textContent ?? '';
   const count = Number.parseInt(countLabel, 10) || 0;
-  if (moveButton) moveButton.textContent = count ? `Asignar ${count}` : 'Asignar seleccionados';
+  const desiredLabel = count ? `Asignar ${count}` : 'Asignar seleccionados';
+  if (moveButton && moveButton.textContent !== desiredLabel) moveButton.textContent = desiredLabel;
 }
 
 function tuneStructureStatus() {
