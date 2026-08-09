@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#15374a">
   <title>Escuela Muestra · Matriz PCI</title>
-  <link rel="stylesheet" href="app.css?v=20260808-2">
+  <link rel="stylesheet" href="app.css?v=20260808-3">
+  <script type="importmap">{"imports":{"./pci-model.js":"./pci-model-overrides.js"}}</script>
 </head>
 <body>
   <div id="loading" class="loading" role="status" aria-live="polite">
@@ -73,7 +74,7 @@
       <div class="coverage-card">
         <div>
           <strong id="coverageLabel">0 de 0 contenidos ubicados</strong>
-          <span id="coverageHint">Cada contenido se ubica una sola vez en su bolsa.</span>
+          <span id="coverageHint">Un mismo contenido puede formar parte de más de un espacio.</span>
         </div>
         <div class="progress-track" aria-hidden="true"><span id="coverageBar"></span></div>
       </div>
@@ -110,7 +111,7 @@
               <strong id="selectionCount">0 seleccionados</strong>
               <small id="selectionTarget">Elegí un espacio de destino</small>
             </div>
-            <button id="moveSelected" class="button primary" type="button" disabled>Mover seleccionados</button>
+            <button id="moveSelected" class="button primary" type="button" disabled>Asignar seleccionados</button>
           </div>
         </aside>
 
@@ -125,7 +126,7 @@
           <button class="text-button" type="button" data-screen-link="overview">← Volver al PCI</button>
           <p class="eyebrow">Seguimiento de cobertura</p>
           <h1 id="controlTitle">Tabla de control</h1>
-          <p class="lead">Cada fila muestra el contenido curricular y el espacio donde quedó ubicado.</p>
+          <p class="lead">Cada fila muestra el contenido curricular y todos los espacios donde quedó ubicado.</p>
         </div>
         <div class="button-row no-print">
           <button id="exportCsv" class="button accent" type="button">Descargar para Excel</button>
@@ -153,7 +154,7 @@
           <button class="text-button" type="button" data-screen-link="overview">← Volver al PCI</button>
           <p class="eyebrow">Trayectoria C1–C10</p>
           <h1 id="matrixTitle">Matriz completa del PCI</h1>
-          <p class="lead">Arrastrá laboratorios, talleres y otros formatos para cambiar su momento. También podés usar el selector, especialmente en celular. Las troncales permanecen fijas en su nivel anual.</p>
+          <p class="lead">Arrastrá laboratorios, talleres y otros formatos para cambiar su momento. Tocá un espacio para desplegar sus contenidos y usá “Editar espacio” cuando quieras modificarlo.</p>
         </div>
         <div class="button-row no-print">
           <button id="printMatrix" class="button primary" type="button">Imprimir / PDF</button>
@@ -177,6 +178,7 @@
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="app.js?v=20260808-2"></script>
+  <script type="module" src="app.js?v=20260808-3"></script>
+  <script type="module" src="matrix-details.js?v=20260808-1"></script>
 </body>
 </html>
