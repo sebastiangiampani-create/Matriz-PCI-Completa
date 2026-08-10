@@ -5,7 +5,7 @@ export const AREA_HOUR_SUBJECTS = Object.freeze({
   'Matemática': Object.freeze(['matematica']),
   'Lenguas Adicionales': Object.freeze(['lenguas-adicionales']),
   'Ciencias Sociales': Object.freeze(['fec', 'geografia', 'historia', 'economia', 'filosofia']),
-  'Ciencias Naturales': Object.freeze(['ciencias-naturales']),
+  'Ciencias Naturales': Object.freeze(['biologia', 'fisico-quimica', 'fisica', 'quimica']),
   'Artes': Object.freeze(['artes']),
   'Tecnologías': Object.freeze(['tecnologia-informacion']),
   'Educación Física': Object.freeze(['educacion-fisica']),
