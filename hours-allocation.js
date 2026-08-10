@@ -192,7 +192,8 @@ export function groupsForTerm(plan, state, hoursState, term) {
       allowedSubjectIds: allowedSubjectIdsForGroup(plan, area, group),
       automatic: automaticTrunkHours(plan, area, group),
       allocations: { ...(hoursState?.allocations?.[group.id] ?? {}) },
-    }));
+    }))
+    .filter((item) => !(item.area === 'Artes' && item.allowedSubjectIds.length === 0));
 }
 
 export function levelOverview(plan, state, hoursState, level) {
