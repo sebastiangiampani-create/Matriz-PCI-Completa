@@ -57,7 +57,7 @@ test('C1 puede cerrar 36/36 distribuyendo contenedores sin mezclar Tutoría con 
     ['sociales-c1', 'fec', 2],
     ['sociales-c1', 'geografia', 3],
     ['sociales-c1', 'historia', 4],
-    ['naturales-c1', 'ciencias-naturales', 4],
+    ['naturales-c1', 'biologia', 4],
     ['artes-c1', 'artes', 3],
     ['tec-c1', 'tecnologia-informacion', 2],
     ['ef-c1', 'educacion-fisica', 3],
@@ -67,7 +67,7 @@ test('C1 puede cerrar 36/36 distribuyendo contenedores sin mezclar Tutoría con 
   const status = termHourStatus(plan, state, hours, 1);
   assert.equal(status.totalAssigned, 36);
   assert.equal(status.complete, true);
-  assert.equal(status.subjects.find((row) => row.id === 'ciencias-naturales').assigned, 4);
+  assert.equal(status.subjects.find((row) => row.id === 'biologia').assigned, 4);
   assert.equal(status.subjects.find((row) => row.id === 'tecnologia-informacion').assigned, 2);
   assert.equal(status.subjects.find((row) => row.id === 'tutoria').assigned, 1);
 });
@@ -129,7 +129,7 @@ test('una asignación anual consume la misma carga semanal en ambos cuatrimestre
   assert.equal(termHourStatus(plan, state, hours, 2).subjects.find((row) => row.id === 'tutoria').assigned, 1);
 });
 
-test('Ciencias Naturales conserva C10 y se traba en 4 horas en Nivel 5', () => {
+test('Ciencias Naturales conserva C10 y Química se traba en 4 horas en Nivel 5', () => {
   const state = {
     areas: {
       'Ciencias Naturales': { groups: [group('naturales-c10', 'laboratory', 5, 10)] },
@@ -140,7 +140,19 @@ test('Ciencias Naturales conserva C10 y se traba en 4 horas en Nivel 5', () => {
   assert.equal(active.length, 1);
   assert.equal(active[0].area, 'Ciencias Naturales');
   assert.equal(active[0].group.startTerm, 10);
-  const result = setGroupSubjectHoursCapped(plan, state, hours, 'naturales-c10', 'ciencias-naturales', 10);
+  assert.deepEqual(active[0].allowedSubjectIds, ['quimica']);
+  const result = setGroupSubjectHoursCapped(plan, state, hours, 'naturales-c10', 'quimica', 10);
   assert.equal(result.maximum, 4);
   assert.equal(result.hours, 4);
+});
+
+test('C5 ofrece Biología y Físico-Química con presupuesto total de 7 horas', () => {
+  const state = {
+    areas: {
+      'Ciencias Naturales': { groups: [group('naturales-c5', 'laboratory', 3, 5)] },
+    },
+  };
+  const active = groupsForTerm(plan, state, normalizeHoursState({}), 5);
+  assert.deepEqual(active[0].allowedSubjectIds, ['biologia', 'fisico-quimica']);
+  assert.equal(termHourStatus(plan, state, normalizeHoursState({}), 5).totalBudget, 32);
 });
