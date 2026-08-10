@@ -131,6 +131,13 @@ try {
   await page.evaluate(() => window.PCIApp.openOverview());
   await page.click('#overviewMatrix');
   await page.waitForSelector('#matrix.active');
+  const desktopHeaderBox = await page.locator('.matrix-header').boundingBox();
+  const desktopFirstRowBox = await page.locator('.matrix-area-row').first().boundingBox();
+  assert.ok(desktopHeaderBox && desktopFirstRowBox, 'La matriz web debe renderizar cabecera y primera fila.');
+  assert.ok(
+    desktopFirstRowBox.y >= desktopHeaderBox.y + desktopHeaderBox.height - 1,
+    'La cabecera Área/C1-C10 no debe solaparse con la primera fila en web.',
+  );
   const matrixSpaces = page.locator('[data-matrix-group]');
   assert.ok(await matrixSpaces.count(), 'La matriz debe contener espacios curriculares.');
   await matrixSpaces.first().evaluate((element) => element.click());
