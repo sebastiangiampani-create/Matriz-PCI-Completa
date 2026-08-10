@@ -2,8 +2,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  groupsForTerm,
+  maxAssignableHours,
   normalizeHoursState,
   setGroupSubjectHours,
+  setGroupSubjectHoursCapped,
   termHourStatus,
 } from '../hours-allocation.js';
 
@@ -78,6 +81,27 @@ test('Tecnología comparte presupuesto entre Talleres y Otros formatos', () => {
   assert.equal(row.status, 'over');
 });
 
+test('la carga interactiva se traba en el máximo disponible de la materia', () => {
+  const state = stateForLevelOne();
+  const hours = normalizeHoursState({});
+  setGroupSubjectHours(hours, 'tec-c1', 'tecnologia-informacion', 1.5);
+  assert.equal(maxAssignableHours(plan, state, hours, 'otro-c1', 'tecnologia-informacion'), 0.5);
+  const result = setGroupSubjectHoursCapped(plan, state, hours, 'otro-c1', 'tecnologia-informacion', 4);
+  assert.deepEqual(result, { requested: 4, maximum: 0.5, hours: 0.5, clamped: true });
+  const row = termHourStatus(plan, state, hours, 1).subjects.find((subject) => subject.id === 'tecnologia-informacion');
+  assert.equal(row.assigned, 2);
+  assert.equal(row.status, 'ok');
+});
+
+test('el máximo cambia según el nivel del espacio', () => {
+  const state = { areas: { Artes: { groups: [group('artes-c7', 'workshop', 4, 7)] } } };
+  const hours = normalizeHoursState({});
+  const result = setGroupSubjectHoursCapped(plan, state, hours, 'artes-c7', 'artes', 10);
+  assert.equal(result.maximum, 2);
+  assert.equal(result.hours, 2);
+  assert.equal(termHourStatus(plan, state, hours, 7).subjects.find((row) => row.id === 'artes').assigned, 2);
+});
+
 test('una asignación anual consume la misma carga semanal en ambos cuatrimestres', () => {
   const state = stateForLevelOne();
   state.areas['Otros formatos pedagógicos'].groups[0] = group('tutoria-anual', 'other', 1, 1, 2);
@@ -85,4 +109,16 @@ test('una asignación anual consume la misma carga semanal en ambos cuatrimestre
   setGroupSubjectHours(hours, 'tutoria-anual', 'tutoria', 1);
   assert.equal(termHourStatus(plan, state, hours, 1).subjects.find((row) => row.id === 'tutoria').assigned, 1);
   assert.equal(termHourStatus(plan, state, hours, 2).subjects.find((row) => row.id === 'tutoria').assigned, 1);
+});
+
+test('Ciencias Naturales conserva su espacio de C10 aunque todavía no tenga horas en el plan', () => {
+  const state = {
+    areas: {
+      'Ciencias Naturales': { groups: [group('naturales-c10', 'laboratory', 5, 10)] },
+    },
+  };
+  const active = groupsForTerm(plan, state, normalizeHoursState({}), 10);
+  assert.equal(active.length, 1);
+  assert.equal(active[0].area, 'Ciencias Naturales');
+  assert.equal(active[0].group.startTerm, 10);
 });
