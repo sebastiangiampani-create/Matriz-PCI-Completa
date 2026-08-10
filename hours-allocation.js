@@ -12,6 +12,8 @@ export const AREA_HOUR_SUBJECTS = Object.freeze({
   'Otros formatos pedagógicos': Object.freeze(['tecnologia-informacion', 'tutoria']),
 });
 
+const OTHER_FORMAT_TECH_LEVELS = new Set([3, 4]);
+const OTHER_FORMAT_TUTOR_LEVELS = new Set([1, 2]);
 const EPSILON = 1e-6;
 
 function numberOrZero(value) {
@@ -29,6 +31,13 @@ function findGroup(state, groupId) {
   return allGroups(state).find(({ group }) => group.id === groupId) ?? null;
 }
 
+function subjectAllowedByAreaLevel(area, subjectId, level) {
+  if (area !== 'Otros formatos pedagógicos') return true;
+  if (subjectId === 'tecnologia-informacion') return OTHER_FORMAT_TECH_LEVELS.has(level);
+  if (subjectId === 'tutoria') return OTHER_FORMAT_TUTOR_LEVELS.has(level);
+  return true;
+}
+
 export function activeTermsForGroup(group) {
   const start = Number(group?.startTerm);
   const end = Number(group?.endTerm ?? start);
@@ -44,7 +53,10 @@ export function groupIsActiveInTerm(group, term) {
 export function allowedSubjectIdsForGroup(plan, area, group) {
   const level = Number(group?.level) || levelForTerm(group?.startTerm);
   const ids = AREA_HOUR_SUBJECTS[area] ?? [];
-  return ids.filter((subjectId) => subjectHours(plan, subjectId, level) !== null);
+  return ids.filter((subjectId) =>
+    subjectAllowedByAreaLevel(area, subjectId, level)
+      && subjectHours(plan, subjectId, level) !== null,
+  );
 }
 
 export function normalizeHoursState(raw = {}) {
@@ -146,6 +158,7 @@ export function termHourStatus(plan, state, hoursState, term) {
 export function maxAssignableHours(plan, state, hoursState, groupId, subjectId) {
   const found = findGroup(state, groupId);
   if (!found || found.group.kind === 'trunk') return 0;
+  if (!allowedSubjectIdsForGroup(plan, found.area, found.group).includes(subjectId)) return 0;
   const terms = activeTermsForGroup(found.group);
   if (!terms.length) return 0;
   const current = allocationForGroupSubject(hoursState, groupId, subjectId);
