@@ -1,0 +1,25 @@
+{
+  "unit": "horas semanales",
+  "semesterRule": "La carga semanal del nivel se repite completa en cada cuatrimestre del nivel; no se divide entre ambos cuatrimestres.",
+  "levelTerms": {
+    "1": [1, 2],
+    "2": [3, 4],
+    "3": [5, 6],
+    "4": [7, 8],
+    "5": [9, 10]
+  },
+  "subjects": [
+    {"id":"lengua-literatura","name":"Lengua y Literatura","type":"Formación General","hours":{"1":5,"2":5,"3":4,"4":4,"5":4}},
+    {"id":"matematica","name":"Matemática","type":"Formación General","hours":{"1":5,"2":5,"3":4,"4":4,"5":4}},
+    {"id":"lenguas-adicionales","name":"Lenguas Adicionales","type":"Formación General","hours":{"1":4,"2":4,"3":3,"4":3,"5":3}},
+    {"id":"educacion-fisica","name":"Educación Física","type":"Formación General","hours":{"1":3,"2":3,"3":3,"4":3,"5":3}},
+    {"id":"artes","name":"Artes","type":"Formación General","hours":{"1":3,"2":3,"3":null,"4":2,"5":null}},
+    {"id":"tecnologia-informacion","name":"Tecnología de la Información","type":"Formación General","hours":{"1":2,"2":2,"3":2,"4":2,"5":null}},
+    {"id":"fec","name":"FEC","type":"Formación General","hours":{"1":2,"2":2,"3":2,"4":2,"5":null}},
+    {"id":"geografia","name":"Geografía","type":"Formación General","hours":{"1":3,"2":3,"3":2,"4":2,"5":null}},
+    {"id":"historia","name":"Historia","type":"Formación General","hours":{"1":4,"2":4,"3":2,"4":2,"5":null}},
+    {"id":"filosofia","name":"Filosofía","type":"Formación General","hours":{"1":null,"2":null,"3":null,"4":null,"5":2}},
+    {"id":"economia","name":"Economía","type":"Formación General","hours":{"1":null,"2":null,"3":3,"4":null,"5":null}},
+    {"id":"tutoria","name":"Tutoría","type":"Formación General","hours":{"1":1,"2":1,"3":null,"4":null,"5":null}}
+  ]
+}
