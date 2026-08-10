@@ -30,6 +30,7 @@ async function waitForApp(page, browserErrors, screenshotName) {
     throw new Error(`La matriz no terminó de cargar. Mensaje visible: ${loadingText}. Errores: ${browserErrors.join(' | ')}`);
   }
   await page.waitForFunction(() => document.querySelector('#structureStatus')?.textContent.includes('C5 y C6'));
+  await page.waitForFunction(() => window.PCIApp?.getData?.().filter((item) => item.area === 'Tutoría').length === 35);
 }
 
 function collectBrowserErrors(page) {
@@ -78,7 +79,56 @@ try {
   await waitForApp(page, browserErrors, '03-error-carga.png');
   assert.equal(await page.locator('.site-credit').count(), 1, 'La matriz debe mostrar la autoría.');
   assert.match(await page.locator('#coverageHint').textContent(), /más de un espacio/);
+  assert.equal(
+    await page.evaluate(() => window.PCIApp.getData().filter((item) => item.area === 'Tutoría').length),
+    35,
+    'Deben cargarse los 35 contenidos de Tutoría.',
+  );
 
+  await page.evaluate(() => window.PCIApp.openArea('Artes'));
+  await page.waitForSelector('#board.active');
+  await page.waitForFunction(() => document.querySelector('#boardAlert')?.textContent.includes('Regla curricular de Artes'));
+  assert.equal(await page.locator('[data-pci-art-language]').count(), 3, 'Artes debe ofrecer tres lenguajes para elegir dos.');
+  await page.locator('[data-pci-art-language="Artes Visuales"]').check();
+  await page.locator('[data-pci-art-language="Música"]').check();
+  await page.waitForFunction(() => document.querySelector('[data-pci-art-language="Teatro"]')?.disabled === true);
+  assert.deepEqual(
+    await page.evaluate(() => window.PCIApp.getState().curriculumRules.artLanguages),
+    ['Artes Visuales', 'Música'],
+  );
+  assert.match(await page.locator('#coverageHint').textContent(), /tres ejes/);
+  await page.screenshot({ path: `${ARTIFACTS}/03-artes-regla-curricular.png`, fullPage: true });
+
+  await page.evaluate(() => window.PCIApp.openArea('Educación Física'));
+  await page.waitForFunction(() => document.querySelector('#boardAlert')?.textContent.includes('Regla curricular de Educación Física'));
+  for (const label of ['Deportes abiertos', 'Deportes cerrados / Atletismo', 'Gimnasia en sus diferentes expresiones', 'Gimnasia para la formación corporal', 'Juegos']) {
+    assert.match(await page.locator('#boardAlert').textContent(), new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+  assert.match(await page.locator('#coverageHint').textContent(), /validación se hace por núcleos/);
+  await page.screenshot({ path: `${ARTIFACTS}/04-educacion-fisica-regla-curricular.png`, fullPage: true });
+
+  await page.evaluate(() => window.PCIApp.openArea('Otros formatos pedagógicos'));
+  await page.waitForSelector('#board.active');
+  if (!(await page.locator('.group-card').count())) {
+    await page.click('#addOther');
+  }
+  await page.waitForSelector('.group-card.selected');
+  await page.waitForSelector('#subjectFilter option[value="Tutoría"]');
+  await page.locator('#subjectFilter').selectOption('Tutoría');
+  await page.waitForSelector('[data-pci-assign-tutor]');
+  assert.equal(await page.locator('[data-pci-assign-tutor]').count(), 35, 'La bolsa de Otros formatos debe mostrar los 35 contenidos de Tutoría.');
+  await page.locator('[data-pci-assign-tutor]').first().click();
+  await page.waitForFunction(() => window.PCIApp.getState().areas['Otros formatos pedagógicos'].groups.some((group) => group.items.some((id) => id.startsWith('tutoria-'))));
+  const tutorState = await page.evaluate(() => {
+    const group = window.PCIApp.getState().areas['Otros formatos pedagógicos'].groups.find((candidate) => candidate.items.some((id) => id.startsWith('tutoria-')));
+    return { level: group.level, startTerm: group.startTerm, tutorIds: group.items.filter((id) => id.startsWith('tutoria-')) };
+  });
+  assert.equal(tutorState.level, 1);
+  assert.equal(tutorState.startTerm, 1);
+  assert.equal(tutorState.tutorIds.length, 1);
+  await page.screenshot({ path: `${ARTIFACTS}/05-tutoria-otros-formatos.png`, fullPage: true });
+
+  await page.evaluate(() => window.PCIApp.openOverview());
   await page.click('#overviewMatrix');
   await page.waitForSelector('#matrix.active');
   const matrixSpaces = page.locator('[data-matrix-group]');
@@ -87,7 +137,7 @@ try {
   await page.waitForSelector('#matrixDetailsPanel:not([hidden])');
   assert.equal(await page.locator('#matrixDetailsPanel .matrix-content-list').count(), 1);
   assert.equal(await page.locator('[data-matrix-detail-edit]').count(), 1);
-  await page.screenshot({ path: `${ARTIFACTS}/04-matriz-detalle.png`, fullPage: true });
+  await page.screenshot({ path: `${ARTIFACTS}/06-matriz-detalle.png`, fullPage: true });
 
   assert.deepEqual(browserErrors, [], `Errores detectados en navegador de escritorio:\n${browserErrors.join('\n')}`);
   await context.close();
@@ -100,7 +150,7 @@ try {
   });
   const mobile = await mobileContext.newPage();
   const mobileErrors = collectBrowserErrors(mobile);
-  await waitForApp(mobile, mobileErrors, '05-error-carga-mobile.png');
+  await waitForApp(mobile, mobileErrors, '07-error-carga-mobile.png');
 
   await mobile.click('#overviewMatrix');
   await mobile.waitForSelector('#matrix.active');
@@ -111,7 +161,7 @@ try {
     firstRowBox.y >= headerBox.y + headerBox.height - 1,
     'La cabecera Área/C1-C10 no debe tapar Lengua y Literatura.',
   );
-  await mobile.screenshot({ path: `${ARTIFACTS}/05-matriz-mobile-sin-solapamiento.png`, fullPage: true });
+  await mobile.screenshot({ path: `${ARTIFACTS}/07-matriz-mobile-sin-solapamiento.png`, fullPage: true });
 
   await mobile.evaluate(() => window.PCIApp.openArea('Otros formatos pedagógicos'));
   await mobile.waitForSelector('#board.active');
@@ -163,7 +213,7 @@ try {
     startTerm: 3,
     endTerm: 4,
   });
-  await mobile.screenshot({ path: `${ARTIFACTS}/06-otros-formatos-mobile.png`, fullPage: true });
+  await mobile.screenshot({ path: `${ARTIFACTS}/08-otros-formatos-mobile.png`, fullPage: true });
 
   assert.deepEqual(mobileErrors, [], `Errores detectados en navegador móvil:\n${mobileErrors.join('\n')}`);
   await mobileContext.close();
