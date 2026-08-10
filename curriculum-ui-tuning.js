@@ -164,8 +164,11 @@ function removeOtherMarkers() {
   const card = document.querySelector('.coverage-card');
   if (card) {
     delete card.dataset.pciOtherCoverage;
-    delete card.dataset.pciTechLabel;
-    delete card.dataset.pciTutorLabel;
+    const labels = card.querySelector(':scope > div:first-child');
+    if (labels) {
+      delete labels.dataset.pciTechLabel;
+      delete labels.dataset.pciTutorLabel;
+    }
   }
   const meta = $('bagMeta');
   if (meta) {
@@ -191,7 +194,8 @@ function updateOtherCoverage() {
   const overviewCard = document.querySelector(`.area-card[data-area="${CSS.escape(OTHER_AREA)}"]`);
   if (overviewCard) {
     overviewCard.dataset.pciOtherCard = '1';
-    overviewCard.dataset.pciOtherSummary = `Tecnologías ${techAssigned}/${techRows.length} · Tutoría ${tutorAssigned}/${tutorRows.length}`;
+    const summary = overviewCard.querySelector('footer > div');
+    if (summary) summary.dataset.pciOtherSummary = `Tecnologías ${techAssigned}/${techRows.length} · Tutoría ${tutorAssigned}/${tutorRows.length}`;
   }
 
   if (current.current !== OTHER_AREA) {
@@ -202,8 +206,11 @@ function updateOtherCoverage() {
   const coverage = document.querySelector('.coverage-card');
   if (coverage) {
     coverage.dataset.pciOtherCoverage = '1';
-    coverage.dataset.pciTechLabel = `Tecnologías · ${techAssigned}/${techRows.length} contenidos utilizados · bolsa compartida con Talleres de Tecnologías`;
-    coverage.dataset.pciTutorLabel = `Tutoría · ${tutorAssigned}/${tutorRows.length} contenidos ubicados · solo Nivel 1 y Nivel 2 (C1–C4)`;
+    const labels = coverage.querySelector(':scope > div:first-child');
+    if (labels) {
+      labels.dataset.pciTechLabel = `Tecnologías · ${techAssigned}/${techRows.length} contenidos utilizados · bolsa compartida con Talleres de Tecnologías`;
+      labels.dataset.pciTutorLabel = `Tutoría · ${tutorAssigned}/${tutorRows.length} contenidos ubicados · solo Nivel 1 y Nivel 2 (C1–C4)`;
+    }
   }
 
   const map = assignmentMap(current);
