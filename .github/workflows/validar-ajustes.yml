@@ -40,6 +40,7 @@ jobs:
           node --check curriculum-ui.js
           node --check curriculum-ui-tuning.js
           node --check hours-model.js
+          node --check hours-allocation.js
 
       - name: Instalar Playwright
         run: |
@@ -47,7 +48,9 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Ejecutar prueba funcional en navegador
-        run: node tests/browser-smoke-v2.mjs
+        run: |
+          node tests/browser-smoke-v2.mjs
+          node tests/hours-browser-smoke.mjs
 
       - name: Guardar capturas de la prueba
         if: always()
