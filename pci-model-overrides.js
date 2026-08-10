@@ -5,6 +5,7 @@ export * from './pci-model.js?base=20260808';
 const SOCIAL_TERMS = [1, 2, 3, 4, 5, 5, 6, 6, 7, 8, 9, 10];
 const LEGACY_SOCIAL_TERMS = [1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 9, 10];
 const DUP_MARK = '@@PCI_DUP@@';
+const ART_LANGUAGES = ['Artes Visuales', 'Música', 'Teatro'];
 
 export const AREA_CONFIG = {
   ...base.AREA_CONFIG,
@@ -83,6 +84,14 @@ function decodeAssignments(state) {
   }
 }
 
+function normalizeCurriculumRules(rawRules = {}) {
+  const artLanguages = [...new Set(
+    (Array.isArray(rawRules.artLanguages) ? rawRules.artLanguages : [])
+      .filter((language) => ART_LANGUAGES.includes(language)),
+  )].slice(0, 2);
+  return { artLanguages };
+}
+
 export function migrateState(rawState = {}) {
   const prepared = clone(rawState);
   const social = prepared?.areas?.['Ciencias Sociales']?.groups ?? [];
@@ -98,6 +107,7 @@ export function migrateState(rawState = {}) {
 
   const migratedSocial = state.areas['Ciencias Sociales'].groups;
   mapTermsByOccurrence(migratedSocial, LEGACY_SOCIAL_TERMS, SOCIAL_TERMS);
+  state.curriculumRules = normalizeCurriculumRules(prepared.curriculumRules);
   return state;
 }
 
