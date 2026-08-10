@@ -13,6 +13,7 @@
     {"id":"matematica","name":"Matemática","type":"Formación General","hours":{"1":5,"2":5,"3":4,"4":4,"5":4}},
     {"id":"lenguas-adicionales","name":"Lenguas Adicionales","type":"Formación General","hours":{"1":4,"2":4,"3":3,"4":3,"5":3}},
     {"id":"educacion-fisica","name":"Educación Física","type":"Formación General","hours":{"1":3,"2":3,"3":3,"4":3,"5":3}},
+    {"id":"ciencias-naturales-area","name":"Ciencias Naturales","type":"Referencia de área","hours":{"1":null,"2":null,"3":null,"4":null,"5":null}},
     {"id":"biologia","name":"Biología","type":"Formación General","hours":{"1":4,"2":4,"3":3,"4":null,"5":null}},
     {"id":"fisico-quimica","name":"Físico-Química","type":"Formación General","hours":{"1":null,"2":null,"3":4,"4":null,"5":null}},
     {"id":"fisica","name":"Física","type":"Formación General","hours":{"1":null,"2":null,"3":null,"4":3,"5":null}},
