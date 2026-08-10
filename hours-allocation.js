@@ -25,6 +25,10 @@ function allGroups(state) {
   );
 }
 
+function findGroup(state, groupId) {
+  return allGroups(state).find(({ group }) => group.id === groupId) ?? null;
+}
+
 export function activeTermsForGroup(group) {
   const start = Number(group?.startTerm);
   const end = Number(group?.endTerm ?? start);
@@ -136,6 +140,45 @@ export function termHourStatus(plan, state, hoursState, term) {
     totalBalance,
     complete: budgetSubjects.every((subject) => subject.status === 'ok'),
     subjects: budgetSubjects,
+  };
+}
+
+export function maxAssignableHours(plan, state, hoursState, groupId, subjectId) {
+  const found = findGroup(state, groupId);
+  if (!found || found.group.kind === 'trunk') return 0;
+  const terms = activeTermsForGroup(found.group);
+  if (!terms.length) return 0;
+  const current = allocationForGroupSubject(hoursState, groupId, subjectId);
+  let maximum = Infinity;
+
+  for (const term of terms) {
+    const level = levelForTerm(term);
+    const subjectBudget = subjectHours(plan, subjectId, level);
+    if (subjectBudget === null) return 0;
+    const status = termHourStatus(plan, state, hoursState, term);
+    const row = status?.subjects?.find((subject) => subject.id === subjectId);
+    if (!status || !row) return 0;
+
+    const assignedByOthers = Math.max(0, row.assigned - current);
+    const subjectRemaining = Math.max(0, subjectBudget - assignedByOthers);
+    const totalAssignedWithoutCurrent = Math.max(0, status.totalAssigned - current);
+    const levelRemaining = Math.max(0, status.totalBudget - totalAssignedWithoutCurrent);
+    maximum = Math.min(maximum, subjectRemaining, levelRemaining);
+  }
+
+  return Number.isFinite(maximum) ? Math.max(0, maximum) : 0;
+}
+
+export function setGroupSubjectHoursCapped(plan, state, hoursState, groupId, subjectId, value) {
+  const requested = numberOrZero(value);
+  const maximum = maxAssignableHours(plan, state, hoursState, groupId, subjectId);
+  const hours = Math.min(requested, maximum);
+  setGroupSubjectHours(hoursState, groupId, subjectId, hours);
+  return {
+    requested,
+    maximum,
+    hours,
+    clamped: requested > maximum + EPSILON,
   };
 }
 
