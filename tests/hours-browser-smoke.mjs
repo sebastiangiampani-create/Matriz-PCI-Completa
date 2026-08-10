@@ -1,0 +1,79 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdir } from 'node:fs/promises';
+import { chromium } from 'playwright';
+
+const PORT = 4174;
+const BASE_URL = `http://127.0.0.1:${PORT}`;
+const ARTIFACTS = 'test-artifacts';
+const server = spawn('python3', ['-m', 'http.server', String(PORT), '--bind', '127.0.0.1'], { stdio: 'inherit' });
+
+async function waitForServer() {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    try {
+      const response = await fetch(`${BASE_URL}/fase5-horas.html`);
+      if (response.ok) return;
+    } catch {}
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error('El servidor local de Fase 5 no respondió a tiempo.');
+}
+
+await mkdir(ARTIFACTS, { recursive: true });
+let browser;
+try {
+  await waitForServer();
+  browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+
+  await page.goto(`${BASE_URL}/fase5-horas.html`, { waitUntil: 'networkidle' });
+  await page.evaluate(() => {
+    localStorage.removeItem('pciHoursV1');
+    localStorage.setItem('pciAppV2', JSON.stringify({
+      schoolName: 'Prueba Fase 5',
+      areas: {
+        'Otros formatos pedagógicos': {
+          groups: [{
+            id: 'otro-tutoria-prueba', kind: 'other', name: 'Tutoría de prueba', duration: 'quarterly',
+            level: 1, startTerm: 1, endTerm: 1, formatType: 'Proyecto', type: 'Obligatorio', items: [],
+          }],
+        },
+      },
+    }));
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+
+  assert.match(await page.locator('#summary').innerText(), /32 h/);
+  assert.match(await page.locator('#summary').innerText(), /14 h/);
+  assert.match(await page.locator('#missingPlanNote').innerText(), /Ciencias Naturales/);
+
+  const tutoriaRow = page.locator('[data-status-subject="tutoria"]');
+  assert.match(await tutoriaRow.innerText(), /1 h/);
+  assert.match(await tutoriaRow.innerText(), /0 h/);
+
+  await page.locator('[data-hour-group="otro-tutoria-prueba"][data-hour-subject="tutoria"]').fill('1');
+  assert.match(await tutoriaRow.innerText(), /Cerrado/);
+
+  const allTechInputs = page.locator('[data-hour-subject="tecnologia-informacion"]');
+  assert.ok(await allTechInputs.count() >= 2, 'C1 debe permitir repartir Tecnología entre Talleres y Otros formatos.');
+  await allTechInputs.nth(0).fill('1');
+  await allTechInputs.nth(1).fill('1');
+  assert.match(await page.locator('[data-status-subject="tecnologia-informacion"]').innerText(), /2 h.*2 h/s);
+
+  await page.locator('[data-term="5"]').click();
+  assert.match(await page.locator('#summary').innerText(), /25 h/);
+  assert.equal(
+    await page.locator('.group-card .area-label', { hasText: 'Ciencias Sociales' }).count(),
+    2,
+    'C5 debe mostrar dos laboratorios de Ciencias Sociales simultáneos.',
+  );
+
+  await page.screenshot({ path: `${ARTIFACTS}/09-fase5-carga-horaria.png`, fullPage: true });
+  assert.deepEqual(errors, [], `Errores de navegador en Fase 5:\n${errors.join('\n')}`);
+} finally {
+  await browser?.close();
+  server.kill('SIGTERM');
+}
