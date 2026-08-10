@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - ajustes-matriz-agosto
+      - desarrollo-v2
   pull_request:
     branches:
       - main
@@ -34,6 +35,9 @@ jobs:
           node --check pci-model.js
           node --check pci-model-overrides.js
           node --check matrix-details.js
+          node --check curriculum-rules.js
+          node --check curriculum-ui.js
+          node --check curriculum-ui-tuning.js
 
       - name: Instalar Playwright
         run: |

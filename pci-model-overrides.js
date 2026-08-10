@@ -5,6 +5,7 @@ export * from './pci-model.js?base=20260808';
 const SOCIAL_TERMS = [1, 2, 3, 4, 5, 5, 6, 6, 7, 8, 9, 10];
 const LEGACY_SOCIAL_TERMS = [1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 9, 10];
 const DUP_MARK = '@@PCI_DUP@@';
+const ART_LANGUAGES = ['Artes Visuales', 'Música', 'Teatro'];
 
 export const AREA_CONFIG = {
   ...base.AREA_CONFIG,
@@ -83,6 +84,18 @@ function decodeAssignments(state) {
   }
 }
 
+function normalizeCurriculumRules(rawRules = {}) {
+  const artLanguages = [...new Set(
+    (Array.isArray(rawRules.artLanguages) ? rawRules.artLanguages : [])
+      .filter((language) => ART_LANGUAGES.includes(language)),
+  )].slice(0, 2);
+  return { artLanguages };
+}
+
+function hasTutoria(group) {
+  return (group?.items ?? []).some((id) => String(id).startsWith('tutoria-'));
+}
+
 export function migrateState(rawState = {}) {
   const prepared = clone(rawState);
   const social = prepared?.areas?.['Ciencias Sociales']?.groups ?? [];
@@ -98,6 +111,7 @@ export function migrateState(rawState = {}) {
 
   const migratedSocial = state.areas['Ciencias Sociales'].groups;
   mapTermsByOccurrence(migratedSocial, LEGACY_SOCIAL_TERMS, SOCIAL_TERMS);
+  state.curriculumRules = normalizeCurriculumRules(prepared.curriculumRules);
   return state;
 }
 
@@ -109,6 +123,15 @@ export function moveContents(state, targetGroupId, contentIds) {
   return target.group;
 }
 
+export function setOtherDuration(group, duration, placement) {
+  const targetLevel = duration === 'annual'
+    ? Math.min(5, Math.max(1, Number(placement) || 1))
+    : base.levelForTerm(Number(placement) || 1);
+  if (hasTutoria(group) && targetLevel > 2) return group;
+  base.setOtherDuration(group, duration, placement);
+  return group;
+}
+
 export function moveGroupToTerm(state, groupId, requestedTerm) {
   const found = base.findGroup(state, groupId);
   if (!found) throw new Error('El espacio que querés mover no existe.');
@@ -118,6 +141,9 @@ export function moveGroupToTerm(state, groupId, requestedTerm) {
   }
 
   const { area, group } = found;
+  if (group.kind === 'other' && hasTutoria(group) && base.levelForTerm(term) > 2) {
+    throw new Error('Tutoría solo puede ubicarse en Nivel 1 o Nivel 2 (C1-C4).');
+  }
   if (group.kind !== 'laboratory' || area !== 'Ciencias Sociales') {
     return base.moveGroupToTerm(state, groupId, term);
   }

@@ -103,8 +103,10 @@ function openDetails(groupId) {
 }
 
 function tuneRepeatableContentUi() {
+  const specialAreas = new Set(['Artes', 'Educación Física', 'Otros formatos pedagógicos']);
+  const currentArea = window.PCIApp?.getState?.()?.current;
   const hint = document.getElementById('coverageHint');
-  if (hint && hint.textContent !== 'Un mismo contenido puede formar parte de más de un espacio.') {
+  if (!specialAreas.has(currentArea) && hint && hint.textContent !== 'Un mismo contenido puede formar parte de más de un espacio.') {
     hint.textContent = 'Un mismo contenido puede formar parte de más de un espacio.';
   }
   const moveButton = document.getElementById('moveSelected');
