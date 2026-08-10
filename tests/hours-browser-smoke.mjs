@@ -48,7 +48,8 @@ try {
 
   assert.match(await page.locator('#summary').innerText(), /32 h/);
   assert.match(await page.locator('#summary').innerText(), /14 h/);
-  assert.match(await page.locator('#missingPlanNote').innerText(), /Ciencias Naturales/);
+  assert.match(await page.locator('#missingPlanNote').innerText(), /10 laboratorios/);
+  assert.match(await page.locator('#missingPlanNote').innerText(), /C10/);
 
   const tutoriaRow = page.locator('[data-status-subject="tutoria"]');
   assert.match(await tutoriaRow.innerText(), /1 h/);
@@ -59,9 +60,11 @@ try {
 
   const allTechInputs = page.locator('[data-hour-subject="tecnologia-informacion"]');
   assert.ok(await allTechInputs.count() >= 2, 'C1 debe permitir repartir Tecnología entre Talleres y Otros formatos.');
-  await allTechInputs.nth(0).fill('1');
-  await allTechInputs.nth(1).fill('1');
+  await allTechInputs.nth(0).fill('1.5');
+  await allTechInputs.nth(1).fill('4');
+  assert.equal(await allTechInputs.nth(1).inputValue(), '0.5', 'El segundo campo debe trabarse en el saldo disponible de 0,5 h.');
   assert.match(await page.locator('[data-status-subject="tecnologia-informacion"]').innerText(), /2 h.*2 h/s);
+  assert.doesNotMatch(await page.locator('[data-status-subject="tecnologia-informacion"]').innerText(), /Excede/);
 
   await page.locator('[data-term="5"]').click();
   assert.match(await page.locator('#summary').innerText(), /25 h/);
@@ -70,6 +73,11 @@ try {
     2,
     'C5 debe mostrar dos laboratorios de Ciencias Sociales simultáneos.',
   );
+
+  await page.locator('[data-term="10"]').click();
+  const naturalC10 = page.locator('.group-card', { has: page.locator('.area-label', { hasText: 'Ciencias Naturales' }) });
+  assert.equal(await naturalC10.count(), 1, 'C10 debe conservar un laboratorio de Ciencias Naturales.');
+  assert.match(await naturalC10.innerText(), /Laboratorio 10/);
 
   await page.screenshot({ path: `${ARTIFACTS}/09-fase5-carga-horaria.png`, fullPage: true });
   assert.deepEqual(errors, [], `Errores de navegador en Fase 5:\n${errors.join('\n')}`);
