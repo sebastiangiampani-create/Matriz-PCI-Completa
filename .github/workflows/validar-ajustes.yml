@@ -37,6 +37,7 @@ jobs:
           node --check matrix-details.js
           node --check curriculum-rules.js
           node --check curriculum-ui.js
+          node --check curriculum-ui-tuning.js
 
       - name: Instalar Playwright
         run: |
