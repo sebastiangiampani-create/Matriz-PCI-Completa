@@ -36,10 +36,20 @@ try {
       schoolName: 'Prueba Fase 5',
       areas: {
         'Otros formatos pedagógicos': {
-          groups: [{
-            id: 'otro-tutoria-prueba', kind: 'other', name: 'Tutoría de prueba', duration: 'quarterly',
-            level: 1, startTerm: 1, endTerm: 1, formatType: 'Proyecto', type: 'Obligatorio', items: [],
-          }],
+          groups: [
+            {
+              id: 'otro-tutoria-prueba', kind: 'other', name: 'Tutoría de prueba', duration: 'quarterly',
+              level: 1, startTerm: 1, endTerm: 1, formatType: 'Proyecto', type: 'Obligatorio', items: [],
+            },
+            {
+              id: 'otro-tecnologia-n3', kind: 'other', name: 'Proyecto tecnológico N3', duration: 'quarterly',
+              level: 3, startTerm: 5, endTerm: 5, formatType: 'Proyecto', type: 'Obligatorio', items: [],
+            },
+            {
+              id: 'otro-n5', kind: 'other', name: 'Otro formato N5', duration: 'quarterly',
+              level: 5, startTerm: 10, endTerm: 10, formatType: 'Ateneo', type: 'Electivo', items: [],
+            },
+          ],
         },
       },
     }));
@@ -62,13 +72,16 @@ try {
   await page.locator('[data-hour-group="otro-tutoria-prueba"][data-hour-subject="tutoria"]').fill('1');
   assert.match(await tutoriaRow.innerText(), /Cerrado/);
 
-  const allTechInputs = page.locator('[data-hour-subject="tecnologia-informacion"]');
-  assert.ok(await allTechInputs.count() >= 2, 'C1 debe permitir repartir Tecnología entre Talleres y Otros formatos.');
-  await allTechInputs.nth(0).fill('1.5');
-  await allTechInputs.nth(1).fill('4');
-  assert.equal(await allTechInputs.nth(1).inputValue(), '0.5', 'El segundo campo debe trabarse en el saldo disponible de 0,5 h.');
+  const c1TechInputs = page.locator('[data-hour-subject="tecnologia-informacion"]');
+  assert.equal(await c1TechInputs.count(), 1, 'En Nivel 1 Tecnología debe aparecer solo en Talleres de Tecnologías, no en Otros formatos.');
+  assert.equal(
+    await page.locator('[data-hour-group="otro-tutoria-prueba"][data-hour-subject="tecnologia-informacion"]').count(),
+    0,
+    'Otros formatos de Nivel 1 no debe permitir Tecnología.',
+  );
+  await c1TechInputs.fill('10');
+  assert.equal(await c1TechInputs.inputValue(), '2', 'Tecnología N1 debe respetar sus 2 h desde Talleres de Tecnologías.');
   assert.match(await page.locator('[data-status-subject="tecnologia-informacion"]').innerText(), /2 h.*2 h/s);
-  assert.doesNotMatch(await page.locator('[data-status-subject="tecnologia-informacion"]').innerText(), /Excede/);
 
   await page.locator('[data-term="5"]').click();
   assert.match(await page.locator('#summary').innerText(), /32 h/);
@@ -91,6 +104,15 @@ try {
   assert.equal(await biologyC5.inputValue(), '3', 'Biología N3 debe trabarse en 3 h.');
   assert.equal(await fqC5.inputValue(), '4', 'Físico-Química N3 debe trabarse en 4 h.');
 
+  const c5TechInputs = page.locator('[data-hour-subject="tecnologia-informacion"]');
+  assert.ok(await c5TechInputs.count() >= 2, 'En Nivel 3 Tecnología puede repartirse entre Talleres y Otros formatos.');
+  const otherTechC5 = page.locator('[data-hour-group="otro-tecnologia-n3"][data-hour-subject="tecnologia-informacion"]');
+  assert.equal(await otherTechC5.count(), 1, 'Otros formatos de Nivel 3 debe permitir Tecnología.');
+  await c5TechInputs.nth(0).fill('1.5');
+  await otherTechC5.fill('4');
+  assert.equal(await otherTechC5.inputValue(), '0.5', 'El Otro formato de N3 debe trabarse en el saldo tecnológico disponible.');
+  assert.match(await page.locator('[data-status-subject="tecnologia-informacion"]').innerText(), /2 h.*2 h/s);
+
   await page.locator('[data-term="7"]').click();
   assert.match(await page.locator('#summary').innerText(), /27 h/);
   const physicsC7 = page.locator('[data-hour-subject="fisica"]');
@@ -104,6 +126,11 @@ try {
     await page.locator('.group-card .area-label', { hasText: 'Artes' }).count(),
     0,
     'Artes no debe mostrarse en Nivel 5 porque no tiene carga horaria.',
+  );
+  assert.equal(
+    await page.locator('[data-hour-group="otro-n5"][data-hour-subject="tecnologia-informacion"]').count(),
+    0,
+    'Otros formatos de Nivel 5 no debe permitir Tecnología.',
   );
   const naturalC10 = page.locator('.group-card', { has: page.locator('.area-label', { hasText: 'Ciencias Naturales' }) });
   assert.equal(await naturalC10.count(), 1, 'C10 debe conservar un laboratorio de Ciencias Naturales.');
