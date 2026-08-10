@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  allowedSubjectIdsForGroup,
   groupsForTerm,
   maxAssignableHours,
   normalizeHoursState,
@@ -72,27 +73,39 @@ test('C1 puede cerrar 36/36 distribuyendo contenedores sin mezclar Tutoría con 
   assert.equal(status.subjects.find((row) => row.id === 'tutoria').assigned, 1);
 });
 
-test('Tecnología comparte presupuesto entre Talleres y Otros formatos', () => {
-  const state = stateForLevelOne();
-  const hours = normalizeHoursState({});
-  setGroupSubjectHours(hours, 'tec-c1', 'tecnologia-informacion', 1.5);
-  setGroupSubjectHours(hours, 'otro-c1', 'tecnologia-informacion', 1);
-  const row = termHourStatus(plan, state, hours, 1).subjects.find((subject) => subject.id === 'tecnologia-informacion');
-  assert.equal(row.budget, 2);
-  assert.equal(row.assigned, 2.5);
-  assert.equal(row.status, 'over');
+test('Otros formatos permite Tutoría en N1-N2 y Tecnología solo en N3-N4', () => {
+  const area = 'Otros formatos pedagógicos';
+  assert.deepEqual(allowedSubjectIdsForGroup(plan, area, group('otro-n1', 'other', 1, 1)), ['tutoria']);
+  assert.deepEqual(allowedSubjectIdsForGroup(plan, area, group('otro-n2', 'other', 2, 3)), ['tutoria']);
+  assert.deepEqual(allowedSubjectIdsForGroup(plan, area, group('otro-n3', 'other', 3, 5)), ['tecnologia-informacion']);
+  assert.deepEqual(allowedSubjectIdsForGroup(plan, area, group('otro-n4', 'other', 4, 7)), ['tecnologia-informacion']);
+  assert.deepEqual(allowedSubjectIdsForGroup(plan, area, group('otro-n5', 'other', 5, 9)), []);
 });
 
-test('la carga interactiva se traba en el máximo disponible de la materia', () => {
-  const state = stateForLevelOne();
+test('Tecnología comparte presupuesto con Otros formatos únicamente en Nivel 3 o 4', () => {
+  const state = {
+    areas: {
+      Tecnologías: { groups: [group('tec-c5', 'workshop', 3, 5)] },
+      'Otros formatos pedagógicos': { groups: [group('otro-c5', 'other', 3, 5)] },
+    },
+  };
   const hours = normalizeHoursState({});
-  setGroupSubjectHours(hours, 'tec-c1', 'tecnologia-informacion', 1.5);
-  assert.equal(maxAssignableHours(plan, state, hours, 'otro-c1', 'tecnologia-informacion'), 0.5);
-  const result = setGroupSubjectHoursCapped(plan, state, hours, 'otro-c1', 'tecnologia-informacion', 4);
+  setGroupSubjectHours(hours, 'tec-c5', 'tecnologia-informacion', 1.5);
+  assert.equal(maxAssignableHours(plan, state, hours, 'otro-c5', 'tecnologia-informacion'), 0.5);
+  const result = setGroupSubjectHoursCapped(plan, state, hours, 'otro-c5', 'tecnologia-informacion', 4);
   assert.deepEqual(result, { requested: 4, maximum: 0.5, hours: 0.5, clamped: true });
-  const row = termHourStatus(plan, state, hours, 1).subjects.find((subject) => subject.id === 'tecnologia-informacion');
+  const row = termHourStatus(plan, state, hours, 5).subjects.find((subject) => subject.id === 'tecnologia-informacion');
   assert.equal(row.assigned, 2);
   assert.equal(row.status, 'ok');
+});
+
+test('Tecnología queda bloqueada en Otros formatos de Nivel 1', () => {
+  const state = stateForLevelOne();
+  const hours = normalizeHoursState({});
+  assert.equal(maxAssignableHours(plan, state, hours, 'otro-c1', 'tecnologia-informacion'), 0);
+  const result = setGroupSubjectHoursCapped(plan, state, hours, 'otro-c1', 'tecnologia-informacion', 2);
+  assert.equal(result.hours, 0);
+  assert.equal(result.clamped, true);
 });
 
 test('el máximo cambia según el nivel del espacio', () => {
