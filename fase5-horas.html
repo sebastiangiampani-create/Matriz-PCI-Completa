@@ -45,7 +45,7 @@
     </div>
     <section id="groups" class="groups"></section>
 
-    <p class="helper">Tecnología de la Información comparte un único presupuesto entre Talleres de Tecnologías y Otros formatos. Tutoría tiene su propia cuenta y solo se distribuye desde Otros formatos pedagógicos. Los campos admiten incrementos de 0,5 h y bloquean automáticamente cualquier valor que supere el máximo disponible.</p>
+    <p class="helper">En Otros formatos pedagógicos, Tutoría se distribuye solo en Nivel 1 y Nivel 2. Tecnología de la Información se habilita allí únicamente en Nivel 3 y Nivel 4, donde comparte el mismo presupuesto con Talleres de Tecnologías. En Nivel 1, Nivel 2 y Nivel 5 no se ofrece Tecnología dentro de Otros formatos. Los campos admiten incrementos de 0,5 h y bloquean automáticamente cualquier valor que supere el máximo disponible.</p>
   </main>
 
   <script type="module">
@@ -68,7 +68,7 @@
     const formatHours = (value) => Number.isInteger(Number(value)) ? String(Number(value)) : Number(value).toFixed(1).replace('.', ',');
     const HOURS_KEY = 'pciHoursV1';
 
-    const plan = await fetch('./data/plan-horas.json?v=20260810-2').then((response) => {
+    const plan = await fetch('./data/plan-horas.json?v=20260810-3').then((response) => {
       if (!response.ok) throw new Error('No se pudo cargar el plan horario.');
       return response.json();
     });
@@ -146,6 +146,8 @@
         }).join('')}</div>`;
       } else if (area === 'Ciencias Naturales') {
         body = '<div class="warning-row">Ciencias Naturales conserva su laboratorio en este cuatrimestre. Falta incorporar su carga oficial al plan para que consuma presupuesto horario.</div>';
+      } else if (area === 'Otros formatos pedagógicos') {
+        body = '<div class="warning-row">En este nivel no hay una materia habilitada para cargar horas desde Otros formatos pedagógicos.</div>';
       } else {
         body = '<div class="warning-row">Este espacio no tiene una materia del plan con carga horaria disponible en este nivel.</div>';
       }
@@ -187,9 +189,10 @@
       $('groupsTitle').textContent = `Espacios activos en C${currentTerm}`;
       $('groups').innerHTML = groups.length ? groups.map(renderGroupCard).join('') : '<div class="card empty">No hay espacios ubicados en este cuatrimestre.</div>';
       bindHourInputs();
-      const hasNaturalPlan = plan.subjects.some((subject) => /natur/i.test(subject.name));
+      const naturalSubjectIds = new Set(['biologia', 'fisico-quimica', 'fisica', 'quimica']);
+      const hasNaturalPlan = plan.subjects.some((subject) => naturalSubjectIds.has(subject.id));
       $('missingPlanNote').hidden = hasNaturalPlan;
-      if (!hasNaturalPlan) $('missingPlanNote').innerHTML = '<strong>Ciencias Naturales:</strong> la estructura mantiene 10 laboratorios, uno por cada C1–C10, incluido el Laboratorio 10 en C10. La planilla horaria recibida todavía no trae su carga oficial, por eso no se suma al presupuesto hasta definir ese dato.';
+      if (!hasNaturalPlan) $('missingPlanNote').innerHTML = '<strong>Ciencias Naturales:</strong> la estructura mantiene 10 laboratorios, uno por cada C1–C10, incluido el Laboratorio 10 en C10. Falta incorporar la carga oficial de Biología, Físico-Química, Física y Química.';
     }
 
     function render() {
