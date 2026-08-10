@@ -20,6 +20,11 @@ function ensureStyles() {
   const style = document.createElement('style');
   style.id = 'curriculumUiTuningStyles';
   style.textContent = `
+    .matrix-header {
+      position: static !important;
+      top: auto !important;
+    }
+
     .pci-tutoria-item {
       grid-template-columns: minmax(0, 1fr) !important;
       cursor: default;
