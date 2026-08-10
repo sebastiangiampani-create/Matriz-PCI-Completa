@@ -92,6 +92,10 @@ function normalizeCurriculumRules(rawRules = {}) {
   return { artLanguages };
 }
 
+function hasTutoria(group) {
+  return (group?.items ?? []).some((id) => String(id).startsWith('tutoria-'));
+}
+
 export function migrateState(rawState = {}) {
   const prepared = clone(rawState);
   const social = prepared?.areas?.['Ciencias Sociales']?.groups ?? [];
@@ -119,6 +123,15 @@ export function moveContents(state, targetGroupId, contentIds) {
   return target.group;
 }
 
+export function setOtherDuration(group, duration, placement) {
+  const targetLevel = duration === 'annual'
+    ? Math.min(5, Math.max(1, Number(placement) || 1))
+    : base.levelForTerm(Number(placement) || 1);
+  if (hasTutoria(group) && targetLevel > 2) return group;
+  base.setOtherDuration(group, duration, placement);
+  return group;
+}
+
 export function moveGroupToTerm(state, groupId, requestedTerm) {
   const found = base.findGroup(state, groupId);
   if (!found) throw new Error('El espacio que querés mover no existe.');
@@ -128,6 +141,9 @@ export function moveGroupToTerm(state, groupId, requestedTerm) {
   }
 
   const { area, group } = found;
+  if (group.kind === 'other' && hasTutoria(group) && base.levelForTerm(term) > 2) {
+    throw new Error('Tutoría solo puede ubicarse en Nivel 1 o Nivel 2 (C1-C4).');
+  }
   if (group.kind !== 'laboratory' || area !== 'Ciencias Sociales') {
     return base.moveGroupToTerm(state, groupId, term);
   }
