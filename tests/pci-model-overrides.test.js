@@ -4,6 +4,7 @@ import {
   migrateState,
   moveContents,
   moveGroupToTerm,
+  setOtherDuration,
   validateStructure,
 } from '../pci-model-overrides.js';
 
@@ -48,4 +49,36 @@ test('mover un laboratorio social conserva dos espacios en C5 y dos en C6', () =
   assert.equal(state.areas['Ciencias Sociales'].groups.filter((group) => group.startTerm === 6).length, 2);
   assert.equal(state.areas['Ciencias Sociales'].groups.filter((group) => group.startTerm === 1).length, 1);
   assert.deepEqual(validateStructure(state), []);
+});
+
+test('un Otro formato con Tutoría no puede salir de Nivel 1 o Nivel 2', () => {
+  const state = migrateState({
+    areas: {
+      'Otros formatos pedagógicos': {
+        groups: [{
+          id: 'tutoria-formato',
+          kind: 'other',
+          duration: 'quarterly',
+          startTerm: 1,
+          endTerm: 1,
+          level: 1,
+          items: ['tutoria-001'],
+        }],
+      },
+    },
+  });
+  const group = state.areas['Otros formatos pedagógicos'].groups[0];
+
+  setOtherDuration(group, 'annual', 3);
+  assert.equal(group.level, 1);
+  assert.equal(group.startTerm, 1);
+  assert.throws(
+    () => moveGroupToTerm(state, group.id, 5),
+    /Tutoría solo puede ubicarse en Nivel 1 o Nivel 2/,
+  );
+
+  setOtherDuration(group, 'annual', 2);
+  assert.equal(group.level, 2);
+  assert.equal(group.startTerm, 3);
+  assert.equal(group.endTerm, 4);
 });
