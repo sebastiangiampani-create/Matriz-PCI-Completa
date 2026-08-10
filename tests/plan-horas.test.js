@@ -26,13 +26,21 @@ test('cada nivel corresponde a dos cuatrimestres consecutivos', () => {
 });
 
 test('la carga semanal del nivel se repite completa en cada cuatrimestre', () => {
-  const expectedTotals = { 1: 32, 2: 32, 3: 25, 4: 24, 5: 16 };
+  const expectedTotals = { 1: 36, 2: 36, 3: 32, 4: 31, 5: 20 };
   for (const [level, terms] of Object.entries(LEVEL_TERMS)) {
     assert.equal(totalLevelHours(plan, level), expectedTotals[level]);
     for (const term of terms) {
       assert.equal(semesterBudget(plan, term).totalHours, expectedTotals[level]);
     }
   }
+});
+
+test('Ciencias Naturales tiene carga en los cinco niveles', () => {
+  assert.equal(subjectHours(plan, 'ciencias-naturales', 1), 4);
+  assert.equal(subjectHours(plan, 'ciencias-naturales', 2), 4);
+  assert.equal(subjectHours(plan, 'ciencias-naturales', 3), 7);
+  assert.equal(subjectHours(plan, 'ciencias-naturales', 4), 7);
+  assert.equal(subjectHours(plan, 'ciencias-naturales', 5), 4);
 });
 
 test('Tutoría integra el plan solo en Nivel 1 y Nivel 2', () => {
