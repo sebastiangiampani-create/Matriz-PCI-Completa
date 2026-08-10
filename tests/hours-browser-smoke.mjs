@@ -46,10 +46,14 @@ try {
   });
   await page.reload({ waitUntil: 'networkidle' });
 
-  assert.match(await page.locator('#summary').innerText(), /32 h/);
+  assert.match(await page.locator('#summary').innerText(), /36 h/);
   assert.match(await page.locator('#summary').innerText(), /14 h/);
-  assert.match(await page.locator('#missingPlanNote').innerText(), /10 laboratorios/);
-  assert.match(await page.locator('#missingPlanNote').innerText(), /C10/);
+  assert.equal(await page.locator('#missingPlanNote').isHidden(), true, 'Naturales ya debe integrar el presupuesto.');
+
+  const naturalC1 = page.locator('[data-hour-subject="ciencias-naturales"]');
+  assert.equal(await naturalC1.count(), 1, 'C1 debe mostrar la carga de Ciencias Naturales.');
+  await naturalC1.fill('10');
+  assert.equal(await naturalC1.inputValue(), '4', 'Naturales N1 debe trabarse en 4 h.');
 
   const tutoriaRow = page.locator('[data-status-subject="tutoria"]');
   assert.match(await tutoriaRow.innerText(), /1 h/);
@@ -67,17 +71,35 @@ try {
   assert.doesNotMatch(await page.locator('[data-status-subject="tecnologia-informacion"]').innerText(), /Excede/);
 
   await page.locator('[data-term="5"]').click();
-  assert.match(await page.locator('#summary').innerText(), /25 h/);
+  assert.match(await page.locator('#summary').innerText(), /32 h/);
   assert.equal(
     await page.locator('.group-card .area-label', { hasText: 'Ciencias Sociales' }).count(),
     2,
     'C5 debe mostrar dos laboratorios de Ciencias Sociales simultáneos.',
   );
+  assert.equal(
+    await page.locator('.group-card .area-label', { hasText: 'Artes' }).count(),
+    0,
+    'Artes no debe mostrarse en Nivel 3 porque no tiene carga horaria.',
+  );
+  const naturalC5 = page.locator('[data-hour-subject="ciencias-naturales"]');
+  assert.equal(await naturalC5.count(), 1);
+  await naturalC5.fill('10');
+  assert.equal(await naturalC5.inputValue(), '7', 'Naturales N3 debe trabarse en 7 h.');
 
   await page.locator('[data-term="10"]').click();
+  assert.match(await page.locator('#summary').innerText(), /20 h/);
+  assert.equal(
+    await page.locator('.group-card .area-label', { hasText: 'Artes' }).count(),
+    0,
+    'Artes no debe mostrarse en Nivel 5 porque no tiene carga horaria.',
+  );
   const naturalC10 = page.locator('.group-card', { has: page.locator('.area-label', { hasText: 'Ciencias Naturales' }) });
   assert.equal(await naturalC10.count(), 1, 'C10 debe conservar un laboratorio de Ciencias Naturales.');
   assert.match(await naturalC10.innerText(), /Laboratorio 10/);
+  const naturalC10Input = naturalC10.locator('[data-hour-subject="ciencias-naturales"]');
+  await naturalC10Input.fill('10');
+  assert.equal(await naturalC10Input.inputValue(), '4', 'Naturales N5 debe trabarse en 4 h.');
 
   await page.screenshot({ path: `${ARTIFACTS}/09-fase5-carga-horaria.png`, fullPage: true });
   assert.deepEqual(errors, [], `Errores de navegador en Fase 5:\n${errors.join('\n')}`);
