@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#15374a">
+  <title>Fase 5 · Carga horaria · PCI</title>
+  <style>
+    :root{--ink:#15374a;--muted:#6a7b84;--line:#d6e2e5;--canvas:#f3f7f7;--paper:#fff;--mint:#83ded3;--mint-soft:#e7f8f5;--gold:#f6c85f}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:var(--canvas);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}.shell{width:min(1180px,100%);margin:auto;padding:28px 16px 70px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:24px}.top a{color:inherit;font-weight:850;text-decoration:none}.tag{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--mint-soft);font-size:.76rem;font-weight:900}.hero,.card{border:1px solid var(--line);border-radius:20px;background:var(--paper);box-shadow:0 14px 34px #15374a10}.hero{padding:24px;margin-bottom:16px}.hero h1{margin:8px 0;font-size:clamp(2rem,5vw,3.5rem);letter-spacing:-.04em}.hero p{max-width:800px;margin:0;color:var(--muted);line-height:1.55}.levels{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:10px;margin:16px 0}.level{padding:16px}.level small{display:block;color:var(--muted);font-weight:800}.level strong{display:block;margin:3px 0;font-size:1.55rem}.level span{font-size:.8rem;font-weight:800}.note{margin:16px 0;padding:14px 16px;border-left:5px solid var(--gold);border-radius:12px;background:#fff8e8;line-height:1.5}.table-card{padding:0;overflow:auto}.table{width:100%;min-width:780px;border-collapse:collapse}.table th,.table td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:center}.table th:first-child,.table td:first-child{text-align:left}.table thead{background:#eaf2f4}.table th{font-size:.8rem}.table td:first-child{font-weight:800}.dash{color:#a0abb0}.footer-note{padding:14px;color:var(--muted);font-size:.82rem}.ok{color:#126e65}@media(max-width:800px){.levels{grid-template-columns:1fr 1fr}.top{align-items:flex-start;flex-direction:column}}@media(max-width:480px){.levels{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top"><a href="app.html">← Volver a la matriz</a><span class="tag">PROTOTIPO · FASE DE PRUEBA</span></div>
+    <section class="hero">
+      <span class="tag">Carga horaria normativa</span>
+      <h1>Plan de estudios por nivel</h1>
+      <p>Esta pantalla todavía no modifica la matriz. Sirve para validar el presupuesto semanal de cada nivel antes de distribuir horas entre troncales, laboratorios, talleres y otros formatos.</p>
+    </section>
+    <div id="levels" class="levels"></div>
+    <div id="rule" class="note"></div>
+    <section class="card table-card">
+      <table class="table">
+        <thead><tr><th>Unidad curricular</th><th>N1 · C1/C2</th><th>N2 · C3/C4</th><th>N3 · C5/C6</th><th>N4 · C7/C8</th><th>N5 · C9/C10</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="footer-note">Los casilleros “—” representan unidades curriculares sin carga en ese nivel. <span class="ok">Tutoría figura con 1 h semanal en N1 y N2.</span></div>
+    </section>
+  </main>
+  <script type="module">
+    import { LEVEL_TERMS, totalLevelHours } from './hours-model.js';
+    const plan = await fetch('./data/plan-horas.json').then((response) => {
+      if (!response.ok) throw new Error('No se pudo cargar el plan horario.');
+      return response.json();
+    });
+    const levels = document.getElementById('levels');
+    for (let level = 1; level <= 5; level += 1) {
+      const terms = LEVEL_TERMS[level];
+      const total = totalLevelHours(plan, level);
+      levels.insertAdjacentHTML('beforeend', `<article class="card level"><small>Nivel ${level}</small><strong>${total} h/sem</strong><span>C${terms[0]}: ${total} h · C${terms[1]}: ${total} h</span></article>`);
+    }
+    document.getElementById('rule').innerHTML = `<strong>Regla de prueba:</strong> ${plan.semesterRule}`;
+    document.getElementById('rows').innerHTML = plan.subjects.map((subject) => `<tr><td>${subject.name}</td>${[1,2,3,4,5].map((level) => Number.isFinite(subject.hours[String(level)]) ? `<td>${subject.hours[String(level)]} h</td>` : '<td class="dash">—</td>').join('')}</tr>`).join('');
+  </script>
+</body>
+</html>
