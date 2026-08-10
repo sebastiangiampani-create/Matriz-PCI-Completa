@@ -5,6 +5,7 @@ on:
     branches:
       - ajustes-matriz-agosto
       - desarrollo-v2
+      - fase5-pruebas
   pull_request:
     branches:
       - main
@@ -38,6 +39,7 @@ jobs:
           node --check curriculum-rules.js
           node --check curriculum-ui.js
           node --check curriculum-ui-tuning.js
+          node --check hours-model.js
 
       - name: Instalar Playwright
         run: |
