@@ -4,43 +4,200 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#15374a">
-  <title>Fase 5 · Carga horaria · PCI</title>
+  <title>Fase 5 · Distribución horaria · PCI</title>
   <style>
-    :root{--ink:#15374a;--muted:#6a7b84;--line:#d6e2e5;--canvas:#f3f7f7;--paper:#fff;--mint:#83ded3;--mint-soft:#e7f8f5;--gold:#f6c85f}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:var(--canvas);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}.shell{width:min(1180px,100%);margin:auto;padding:28px 16px 70px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:24px}.top a{color:inherit;font-weight:850;text-decoration:none}.tag{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--mint-soft);font-size:.76rem;font-weight:900}.hero,.card{border:1px solid var(--line);border-radius:20px;background:var(--paper);box-shadow:0 14px 34px #15374a10}.hero{padding:24px;margin-bottom:16px}.hero h1{margin:8px 0;font-size:clamp(2rem,5vw,3.5rem);letter-spacing:-.04em}.hero p{max-width:800px;margin:0;color:var(--muted);line-height:1.55}.levels{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:10px;margin:16px 0}.level{padding:16px}.level small{display:block;color:var(--muted);font-weight:800}.level strong{display:block;margin:3px 0;font-size:1.55rem}.level span{font-size:.8rem;font-weight:800}.note{margin:16px 0;padding:14px 16px;border-left:5px solid var(--gold);border-radius:12px;background:#fff8e8;line-height:1.5}.table-card{padding:0;overflow:auto}.table{width:100%;min-width:780px;border-collapse:collapse}.table th,.table td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:center}.table th:first-child,.table td:first-child{text-align:left}.table thead{background:#eaf2f4}.table th{font-size:.8rem}.table td:first-child{font-weight:800}.dash{color:#a0abb0}.footer-note{padding:14px;color:var(--muted);font-size:.82rem}.ok{color:#126e65}@media(max-width:800px){.levels{grid-template-columns:1fr 1fr}.top{align-items:flex-start;flex-direction:column}}@media(max-width:480px){.levels{grid-template-columns:1fr}}
+    :root{--ink:#15374a;--ink-soft:#32586b;--muted:#6a7b84;--line:#d6e2e5;--canvas:#f3f7f7;--paper:#fff;--mint:#83ded3;--mint-soft:#e7f8f5;--mint-dark:#126e65;--gold:#f6c85f;--danger:#b3314d;--danger-soft:#ffe9ee;--shadow:0 14px 34px #15374a10}*{box-sizing:border-box}body{margin:0;min-width:320px;color:var(--ink);background:var(--canvas);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}button,input{font:inherit}.shell{width:min(1240px,100%);margin:auto;padding:28px 16px 76px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:24px}.top a{color:inherit;font-weight:850;text-decoration:none}.tag,.pill{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--mint-soft);font-size:.75rem;font-weight:900}.hero,.card,.status-table-wrap{border:1px solid var(--line);border-radius:20px;background:var(--paper);box-shadow:var(--shadow)}.hero{padding:24px;margin-bottom:16px}.hero h1{margin:8px 0;font-size:clamp(2rem,5vw,3.45rem);letter-spacing:-.04em}.hero p{max-width:900px;margin:0;color:var(--muted);line-height:1.55}.level-grid{display:grid;grid-template-columns:repeat(5,minmax(170px,1fr));gap:10px;margin:16px 0}.level-card{padding:15px;text-align:left;border:1px solid var(--line);border-radius:17px;background:white;color:inherit}.level-card:hover{border-color:var(--mint-dark)}.level-card strong{display:block;font-size:1.35rem}.level-card small{color:var(--muted);font-weight:800}.term-dots{display:flex;gap:6px;margin-top:10px}.term-dot{flex:1;padding:5px 6px;border-radius:9px;background:#edf2f3;font-size:.7rem;font-weight:900;text-align:center}.term-dot.ok{color:var(--mint-dark);background:var(--mint-soft)}.term-dot.over{color:var(--danger);background:var(--danger-soft)}.term-bar{display:flex;gap:7px;overflow:auto;margin:16px 0;padding:3px}.term-button{min-width:68px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:white;color:var(--ink);font-weight:900}.term-button.active{border-color:var(--ink);color:white;background:var(--ink)}.summary{display:grid;grid-template-columns:1.4fr repeat(3,minmax(130px,.6fr));gap:10px;margin:0 0 14px}.summary>div{padding:15px}.summary small{display:block;color:var(--muted);font-weight:800}.summary strong{display:block;margin-top:4px;font-size:1.35rem}.summary .state-ok strong{color:var(--mint-dark)}.summary .state-over strong{color:var(--danger)}.section-title{display:flex;justify-content:space-between;gap:12px;align-items:end;margin:24px 0 10px}.section-title h2{margin:0;font-size:1.25rem}.section-title p{margin:0;color:var(--muted);font-size:.82rem}.status-table-wrap{overflow:auto}.status-table{width:100%;min-width:760px;border-collapse:collapse}.status-table th,.status-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:right}.status-table th:first-child,.status-table td:first-child{text-align:left}.status-table th{background:#eaf2f4;font-size:.78rem}.status-table td:first-child{font-weight:850}.status-ok{color:var(--mint-dark);font-weight:900}.status-under{color:#956406;font-weight:900}.status-over{color:var(--danger);font-weight:900}.groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.group-card{padding:16px;min-width:0}.group-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.group-head h3{margin:0 0 3px;font-size:1rem}.group-head small{color:var(--muted)}.area-label{white-space:nowrap}.hour-fields{display:grid;gap:8px;margin-top:12px}.hour-field{display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:10px;align-items:center;padding:9px 10px;border-radius:12px;background:#f7fafa}.hour-field span{min-width:0;font-size:.84rem;font-weight:800}.hour-field input{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:10px;color:var(--ink);background:white;text-align:right;font-weight:900}.hour-field input:focus{outline:3px solid #83ded355;border-color:var(--mint-dark)}.auto-row{margin-top:12px;padding:10px;border-radius:12px;background:var(--mint-soft);font-size:.84rem;line-height:1.4}.warning-row{margin-top:12px;padding:10px;border-radius:12px;background:#fff8e8;color:#75530b;font-size:.82rem;line-height:1.45}.helper{margin:12px 0 0;color:var(--muted);font-size:.78rem;line-height:1.45}.actions{display:flex;gap:8px;flex-wrap:wrap}.button{padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:white;color:var(--ink);font-weight:850}.button.danger{color:var(--danger)}.note{margin:14px 0;padding:12px 14px;border-left:4px solid var(--gold);border-radius:12px;background:#fff8e8;font-size:.82rem;line-height:1.5}.empty{padding:18px;text-align:center;color:var(--muted)}@media(max-width:980px){.level-grid{grid-template-columns:repeat(3,1fr)}.summary{grid-template-columns:1fr 1fr}.groups{grid-template-columns:1fr}}@media(max-width:620px){.top{align-items:flex-start;flex-direction:column}.level-grid{grid-template-columns:1fr 1fr}.summary{grid-template-columns:1fr}.section-title{align-items:flex-start;flex-direction:column}.hour-field{grid-template-columns:1fr 100px}}@media(max-width:430px){.level-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <main class="shell">
-    <div class="top"><a href="app.html">← Volver a la matriz</a><span class="tag">PROTOTIPO · FASE DE PRUEBA</span></div>
+    <div class="top">
+      <a href="app.html">← Volver a la matriz</a>
+      <span class="tag">PROTOTIPO · FASE DE PRUEBA</span>
+    </div>
+
     <section class="hero">
-      <span class="tag">Carga horaria normativa</span>
-      <h1>Plan de estudios por nivel</h1>
-      <p>Esta pantalla todavía no modifica la matriz. Sirve para validar el presupuesto semanal de cada nivel antes de distribuir horas entre troncales, laboratorios, talleres y otros formatos.</p>
+      <span class="tag">Fase 5 · Carga horaria</span>
+      <h1>Distribución de horas del PCI</h1>
+      <p>El plan fija el presupuesto semanal por materia y nivel. Los espacios troncales toman su carga automáticamente; laboratorios, talleres y otros formatos distribuyen el resto sin poder perder de vista el total de cada cuatrimestre.</p>
     </section>
-    <div id="levels" class="levels"></div>
-    <div id="rule" class="note"></div>
-    <section class="card table-card">
-      <table class="table">
-        <thead><tr><th>Unidad curricular</th><th>N1 · C1/C2</th><th>N2 · C3/C4</th><th>N3 · C5/C6</th><th>N4 · C7/C8</th><th>N5 · C9/C10</th></tr></thead>
-        <tbody id="rows"></tbody>
+
+    <div id="levelGrid" class="level-grid"></div>
+    <div id="termBar" class="term-bar" aria-label="Cuatrimestres"></div>
+
+    <section id="summary" class="summary"></section>
+
+    <div class="section-title">
+      <div><h2>Control por materia</h2><p>Presupuesto oficial vs. horas asignadas en el cuatrimestre.</p></div>
+      <div class="actions"><button id="resetHours" class="button danger" type="button">Reiniciar horas de prueba</button></div>
+    </div>
+    <section class="status-table-wrap">
+      <table class="status-table">
+        <thead><tr><th>Materia</th><th>Plan</th><th>Asignadas</th><th>Balance</th><th>Estado</th></tr></thead>
+        <tbody id="statusRows"></tbody>
       </table>
-      <div class="footer-note">Los casilleros “—” representan unidades curriculares sin carga en ese nivel. <span class="ok">Tutoría figura con 1 h semanal en N1 y N2.</span></div>
     </section>
+
+    <div id="missingPlanNote" class="note" hidden></div>
+
+    <div class="section-title">
+      <div><h2 id="groupsTitle">Espacios activos</h2><p>Las horas cargadas en un espacio lo acompañan si ese espacio cambia de cuatrimestre.</p></div>
+    </div>
+    <section id="groups" class="groups"></section>
+
+    <p class="helper">Tecnología de la Información comparte un único presupuesto entre Talleres de Tecnologías y Otros formatos. Tutoría tiene su propia cuenta y solo se distribuye desde Otros formatos pedagógicos. En este prototipo se admiten incrementos de 0,5 h.</p>
   </main>
+
   <script type="module">
-    import { LEVEL_TERMS, totalLevelHours } from './hours-model.js';
-    const plan = await fetch('./data/plan-horas.json').then((response) => {
+    import { migrateState } from './pci-model-overrides.js';
+    import { LEVEL_TERMS } from './hours-model.js';
+    import {
+      allocationForGroupSubject,
+      groupsForTerm,
+      levelOverview,
+      normalizeHoursState,
+      setGroupSubjectHours,
+      termHourStatus,
+    } from './hours-allocation.js';
+
+    const $ = (id) => document.getElementById(id);
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[character]);
+    const formatHours = (value) => Number.isInteger(Number(value)) ? String(Number(value)) : Number(value).toFixed(1).replace('.', ',');
+    const HOURS_KEY = 'pciHoursV1';
+
+    const plan = await fetch('./data/plan-horas.json?v=20260810-2').then((response) => {
       if (!response.ok) throw new Error('No se pudo cargar el plan horario.');
       return response.json();
     });
-    const levels = document.getElementById('levels');
-    for (let level = 1; level <= 5; level += 1) {
-      const terms = LEVEL_TERMS[level];
-      const total = totalLevelHours(plan, level);
-      levels.insertAdjacentHTML('beforeend', `<article class="card level"><small>Nivel ${level}</small><strong>${total} h/sem</strong><span>C${terms[0]}: ${total} h · C${terms[1]}: ${total} h</span></article>`);
+    let appState = migrateState(JSON.parse(localStorage.getItem('pciAppV2') || '{}'));
+    let hoursState = normalizeHoursState(JSON.parse(localStorage.getItem(HOURS_KEY) || '{}'));
+    let currentTerm = 1;
+
+    function saveHours() {
+      localStorage.setItem(HOURS_KEY, JSON.stringify(hoursState));
     }
-    document.getElementById('rule').innerHTML = `<strong>Regla de prueba:</strong> ${plan.semesterRule}`;
-    document.getElementById('rows').innerHTML = plan.subjects.map((subject) => `<tr><td>${subject.name}</td>${[1,2,3,4,5].map((level) => Number.isFinite(subject.hours[String(level)]) ? `<td>${subject.hours[String(level)]} h</td>` : '<td class="dash">—</td>').join('')}</tr>`).join('');
+
+    function statusLabel(row) {
+      if (row.status === 'ok') return '<span class="status-ok">Cerrado ✓</span>';
+      if (row.status === 'over') return `<span class="status-over">Excede ${formatHours(Math.abs(row.balance))} h</span>`;
+      return `<span class="status-under">Faltan ${formatHours(row.balance)} h</span>`;
+    }
+
+    function renderLevels() {
+      $('levelGrid').innerHTML = [1, 2, 3, 4, 5].map((level) => {
+        const statuses = levelOverview(plan, appState, hoursState, level);
+        const budget = statuses[0]?.totalBudget ?? 0;
+        const terms = LEVEL_TERMS[level];
+        return `<button class="level-card" type="button" data-level="${level}">
+          <small>Nivel ${level}</small><strong>${formatHours(budget)} h/sem</strong>
+          <div class="term-dots">${statuses.map((status, index) => `<span class="term-dot ${status.complete ? 'ok' : status.totalBalance < 0 ? 'over' : ''}">C${terms[index]} · ${formatHours(status.totalAssigned)}/${formatHours(status.totalBudget)}</span>`).join('')}</div>
+        </button>`;
+      }).join('');
+      document.querySelectorAll('[data-level]').forEach((button) => button.addEventListener('click', () => {
+        currentTerm = Number(button.dataset.level) * 2 - 1;
+        render();
+      }));
+    }
+
+    function renderTerms() {
+      $('termBar').innerHTML = Array.from({ length: 10 }, (_, index) => {
+        const term = index + 1;
+        return `<button class="term-button ${term === currentTerm ? 'active' : ''}" type="button" data-term="${term}">C${term}</button>`;
+      }).join('');
+      document.querySelectorAll('[data-term]').forEach((button) => button.addEventListener('click', () => {
+        currentTerm = Number(button.dataset.term);
+        render();
+      }));
+    }
+
+    function renderSummary(status) {
+      const balanceClass = status.totalBalance < 0 ? 'state-over' : status.complete ? 'state-ok' : '';
+      const balanceText = status.complete ? 'Cerrado ✓' : status.totalBalance > 0 ? `Faltan ${formatHours(status.totalBalance)} h` : `Excede ${formatHours(Math.abs(status.totalBalance))} h`;
+      $('summary').innerHTML = `
+        <div class="card"><small>Nivel ${status.level} · C${status.term}</small><strong>${status.complete ? 'Carga horaria cerrada' : 'Carga horaria en construcción'}</strong></div>
+        <div class="card"><small>Plan semanal</small><strong>${formatHours(status.totalBudget)} h</strong></div>
+        <div class="card"><small>Asignadas</small><strong>${formatHours(status.totalAssigned)} h</strong></div>
+        <div class="card ${balanceClass}"><small>Balance</small><strong>${balanceText}</strong></div>`;
+    }
+
+    function renderStatus(status) {
+      $('statusRows').innerHTML = status.subjects.map((row) => {
+        const balance = Math.abs(row.balance) < 0.000001 ? '0' : row.balance > 0 ? `+${formatHours(row.balance)}` : `−${formatHours(Math.abs(row.balance))}`;
+        return `<tr data-status-subject="${escapeHtml(row.id)}"><td>${escapeHtml(row.name)}</td><td>${formatHours(row.budget)} h</td><td>${formatHours(row.assigned)} h</td><td>${balance} h</td><td>${statusLabel(row)}</td></tr>`;
+      }).join('');
+    }
+
+    function renderGroupCard(item) {
+      const { area, group, allowedSubjectIds, automatic } = item;
+      const subjectById = new Map(plan.subjects.map((subject) => [subject.id, subject]));
+      const automaticRows = Object.entries(automatic);
+      let body = '';
+      if (automaticRows.length) {
+        body = `<div class="auto-row"><strong>Asignación automática:</strong> ${automaticRows.map(([subjectId, hours]) => `${escapeHtml(subjectById.get(subjectId)?.name ?? subjectId)} ${formatHours(hours)} h`).join(' · ')}</div>`;
+      } else if (allowedSubjectIds.length) {
+        body = `<div class="hour-fields">${allowedSubjectIds.map((subjectId) => {
+          const subject = subjectById.get(subjectId);
+          const value = allocationForGroupSubject(hoursState, group.id, subjectId);
+          return `<label class="hour-field"><span>${escapeHtml(subject?.name ?? subjectId)}</span><input type="number" min="0" step="0.5" inputmode="decimal" value="${value || ''}" placeholder="0" data-hour-group="${escapeHtml(group.id)}" data-hour-subject="${escapeHtml(subjectId)}" aria-label="Horas de ${escapeHtml(subject?.name ?? subjectId)} en ${escapeHtml(group.name)}"></label>`;
+        }).join('')}</div>`;
+      } else if (area === 'Ciencias Naturales') {
+        body = '<div class="warning-row">La planilla de horas cargada no incluye una unidad curricular de Ciencias Naturales para este nivel. Por ahora este espacio no consume presupuesto horario.</div>';
+      } else {
+        body = '<div class="warning-row">Este espacio no tiene una materia del plan con carga horaria disponible en este nivel.</div>';
+      }
+      return `<article class="card group-card" data-hour-card="${escapeHtml(group.id)}">
+        <div class="group-head"><div><h3>${escapeHtml(group.name)}</h3><small>${escapeHtml(group.kind === 'trunk' ? 'Troncal anual' : group.kind === 'laboratory' ? 'Laboratorio' : group.kind === 'workshop' ? 'Taller' : 'Otro formato')} · C${group.startTerm}${group.endTerm !== group.startTerm ? `–C${group.endTerm}` : ''}</small></div><span class="pill area-label">${escapeHtml(area)}</span></div>
+        ${body}
+      </article>`;
+    }
+
+    function bindHourInputs() {
+      document.querySelectorAll('[data-hour-group][data-hour-subject]').forEach((input) => {
+        input.addEventListener('input', () => {
+          setGroupSubjectHours(hoursState, input.dataset.hourGroup, input.dataset.hourSubject, input.value);
+          saveHours();
+          renderLevels();
+          const status = termHourStatus(plan, appState, hoursState, currentTerm);
+          renderSummary(status);
+          renderStatus(status);
+        });
+      });
+    }
+
+    function renderGroups() {
+      const groups = groupsForTerm(plan, appState, hoursState, currentTerm);
+      $('groupsTitle').textContent = `Espacios activos en C${currentTerm}`;
+      $('groups').innerHTML = groups.length ? groups.map(renderGroupCard).join('') : '<div class="card empty">No hay espacios ubicados en este cuatrimestre.</div>';
+      bindHourInputs();
+      const hasNaturalPlan = plan.subjects.some((subject) => /natur/i.test(subject.name));
+      $('missingPlanNote').hidden = hasNaturalPlan;
+      if (!hasNaturalPlan) $('missingPlanNote').innerHTML = '<strong>Dato pendiente del plan:</strong> la planilla recibida no contiene Ciencias Naturales. La validación horaria puede avanzar con el resto de las materias, pero Naturales queda fuera del presupuesto hasta que definamos su carga oficial.';
+    }
+
+    function render() {
+      appState = migrateState(JSON.parse(localStorage.getItem('pciAppV2') || JSON.stringify(appState)));
+      const status = termHourStatus(plan, appState, hoursState, currentTerm);
+      renderLevels();
+      renderTerms();
+      renderSummary(status);
+      renderStatus(status);
+      renderGroups();
+    }
+
+    $('resetHours').addEventListener('click', () => {
+      if (!confirm('¿Reiniciar todas las horas cargadas en este prototipo?')) return;
+      hoursState = normalizeHoursState({});
+      saveHours();
+      render();
+    });
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'pciAppV2') render();
+    });
+
+    render();
   </script>
 </body>
 </html>
