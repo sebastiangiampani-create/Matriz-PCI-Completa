@@ -113,7 +113,7 @@ try {
     await page.click('#addOther');
   }
   await page.waitForSelector('.group-card.selected');
-  await page.waitForSelector('#subjectFilter option[value="Tutoría"]');
+  await page.waitForFunction(() => Boolean(document.querySelector('#subjectFilter option[value="Tutoría"]')));
   await page.locator('#subjectFilter').selectOption('Tutoría');
   await page.waitForSelector('[data-pci-assign-tutor]');
   assert.equal(await page.locator('[data-pci-assign-tutor]').count(), 35, 'La bolsa de Otros formatos debe mostrar los 35 contenidos de Tutoría.');
