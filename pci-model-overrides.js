@@ -1,17 +1,24 @@
-import * as base from './pci-model.js?base=20260808';
+import * as base from './pci-model.js?base=20260813-1';
 
-export * from './pci-model.js?base=20260808';
+export * from './pci-model.js?base=20260813-1';
 
 const SOCIAL_TERMS = [1, 2, 3, 4, 5, 5, 6, 6, 7, 8, 9, 10];
 const LEGACY_SOCIAL_TERMS = [1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 9, 10];
 const DUP_MARK = '@@PCI_DUP@@';
-const ART_LANGUAGES = ['Artes Visuales', 'Música', 'Teatro'];
 
 export const AREA_CONFIG = {
   ...base.AREA_CONFIG,
   'Ciencias Sociales': {
     ...base.AREA_CONFIG['Ciencias Sociales'],
     terms: SOCIAL_TERMS,
+  },
+  Tecnologías: {
+    ...base.AREA_CONFIG.Tecnologías,
+    count: 8,
+  },
+  'Otros formatos pedagógicos': {
+    ...base.AREA_CONFIG['Otros formatos pedagógicos'],
+    sourceArea: 'Otros formatos pedagógicos',
   },
 };
 
@@ -84,16 +91,17 @@ function decodeAssignments(state) {
   }
 }
 
-function normalizeCurriculumRules(rawRules = {}) {
-  const artLanguages = [...new Set(
-    (Array.isArray(rawRules.artLanguages) ? rawRules.artLanguages : [])
-      .filter((language) => ART_LANGUAGES.includes(language)),
-  )].slice(0, 2);
-  return { artLanguages };
+function normalizeCurriculumRules() {
+  return { artLanguages: [] };
 }
 
 function hasTutoria(group) {
   return (group?.items ?? []).some((id) => String(id).startsWith('tutoria-'));
+}
+
+export function sourceAreaFor(area) {
+  if (area === 'Otros formatos pedagógicos') return 'Otros formatos pedagógicos';
+  return base.sourceAreaFor(area);
 }
 
 export function migrateState(rawState = {}) {
@@ -111,7 +119,7 @@ export function migrateState(rawState = {}) {
 
   const migratedSocial = state.areas['Ciencias Sociales'].groups;
   mapTermsByOccurrence(migratedSocial, LEGACY_SOCIAL_TERMS, SOCIAL_TERMS);
-  state.curriculumRules = normalizeCurriculumRules(prepared.curriculumRules);
+  state.curriculumRules = normalizeCurriculumRules();
   return state;
 }
 
