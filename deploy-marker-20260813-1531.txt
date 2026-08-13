@@ -1,0 +1,1 @@
+Forzar nueva publicación de GitHub Pages para incluir el último main y renovar caché de assets.
