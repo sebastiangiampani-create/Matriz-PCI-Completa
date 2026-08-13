@@ -29,7 +29,7 @@ export const AREA_CONFIG = {
     terms: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   },
   Artes: { kind: 'workshop', count: 6, singular: 'Taller', sourceArea: 'Artes' },
-  Tecnologías: { kind: 'workshop', count: 6, singular: 'Taller', sourceArea: 'Tecnologías' },
+  Tecnologías: { kind: 'workshop', count: 8, singular: 'Taller', sourceArea: 'Tecnologías' },
   'Educación Física': {
     kind: 'workshop',
     count: 10,
