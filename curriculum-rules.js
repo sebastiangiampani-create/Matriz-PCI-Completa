@@ -55,43 +55,33 @@ function contentMap(data) {
 }
 
 export function evaluateArts(state, data) {
-  const selectedLanguages = [...new Set(
-    (state?.curriculumRules?.artLanguages ?? []).filter((language) => ART_LANGUAGES.includes(language)),
-  )].slice(0, 2);
   const byId = contentMap(data);
   const groups = state?.areas?.Artes?.groups ?? [];
 
   const workshops = groups.map((group) => {
     const contents = (group.items ?? []).map((id) => byId.get(String(id))).filter(Boolean);
-    const eligible = contents.filter((content) => selectedLanguages.includes(artLanguageForContent(content)));
-    const axes = new Set(eligible.map(artAxisForContent).filter(Boolean));
+    const axes = new Set(contents.map(artAxisForContent).filter(Boolean));
     const missingAxes = ART_AXES.filter((axis) => !axes.has(axis));
-    const unselectedLanguageItems = contents.filter((content) => {
-      const language = artLanguageForContent(content);
-      return language && !selectedLanguages.includes(language);
-    });
     return {
       groupId: group.id,
       groupName: group.name,
       axes: [...axes],
       missingAxes,
-      unselectedLanguageItems,
-      complete: missingAxes.length === 0 && unselectedLanguageItems.length === 0,
+      unselectedLanguageItems: [],
+      complete: missingAxes.length === 0,
     };
   });
 
   const completeWorkshops = workshops.filter((workshop) => workshop.complete).length;
-  const unselectedAssignments = workshops.flatMap((workshop) => workshop.unselectedLanguageItems);
   return {
-    selectedLanguages,
+    // Se conservan estos campos vacíos por compatibilidad con la UI anterior.
+    // La regla vigente ya no selecciona ni restringe lenguajes artísticos.
+    selectedLanguages: [],
     totalWorkshops: groups.length,
     completeWorkshops,
     workshops,
-    unselectedAssignments,
-    complete: selectedLanguages.length === 2
-      && groups.length > 0
-      && completeWorkshops === groups.length
-      && unselectedAssignments.length === 0,
+    unselectedAssignments: [],
+    complete: groups.length > 0 && completeWorkshops === groups.length,
   };
 }
 
