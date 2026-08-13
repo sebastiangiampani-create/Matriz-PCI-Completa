@@ -1,9 +1,13 @@
+import { ART_AXES, artAxisForContent } from './curriculum-rules.js';
+import { AREA_CONFIG, levelForTerm } from './pci-model.js';
+
 const OTHER_AREA = 'Otros formatos pedagógicos';
 const TECH_AREA = 'Tecnologías';
 const TUTOR_AREA = 'Tutoría';
 
 let observer = null;
 let refreshTimer = null;
+let structureApplied = false;
 
 const $ = (id) => document.getElementById(id);
 
@@ -20,77 +24,42 @@ function ensureStyles() {
   const style = document.createElement('style');
   style.id = 'curriculumUiTuningStyles';
   style.textContent = `
-    .matrix-header {
-      position: static !important;
-      top: auto !important;
+    .matrix-header { position: static !important; top: auto !important; }
+
+    .pci-tutoria-item { grid-template-columns: minmax(0, 1fr) !important; cursor: default; }
+    .pci-tutoria-item > div { min-width: 0; width: 100%; }
+    .pci-tutoria-item p { overflow-wrap: break-word; word-break: normal; }
+
+    [data-pci-override-text] { font-size: 0 !important; }
+    [data-pci-override-text]::after {
+      content: attr(data-pci-override-text);
+      font-size: .82rem;
+      line-height: 1.4;
     }
 
-    .pci-tutoria-item {
-      grid-template-columns: minmax(0, 1fr) !important;
-      cursor: default;
-    }
-    .pci-tutoria-item > div {
-      min-width: 0;
-      width: 100%;
-    }
-    .pci-tutoria-item p {
-      overflow-wrap: break-word;
-      word-break: normal;
+    .area-card[data-pci-tech-eight="1"] .pill { font-size: 0 !important; }
+    .area-card[data-pci-tech-eight="1"] .pill::after {
+      content: '8 talleres';
+      font-size: .68rem;
     }
 
-    .coverage-card[data-pci-other-coverage="1"] #coverageLabel,
-    .coverage-card[data-pci-other-coverage="1"] #coverageHint,
-    .coverage-card[data-pci-other-coverage="1"] .progress-track {
-      display: none;
-    }
-    .coverage-card[data-pci-other-coverage="1"] > div:first-child {
-      display: grid;
-      gap: 4px;
-      width: 100%;
-    }
-    .coverage-card[data-pci-other-coverage="1"] > div:first-child::before {
-      content: attr(data-pci-tech-label);
-      color: var(--ink, #15374a);
+    #boardAlert[data-pci-arts-rule="1"] > * { display: none !important; }
+    #boardAlert[data-pci-arts-rule="1"]::before {
+      content: 'Regla curricular de Artes';
+      display: block;
       font-weight: 900;
+      font-size: .84rem;
+      margin-bottom: 4px;
     }
-    .coverage-card[data-pci-other-coverage="1"] > div:first-child::after {
-      content: attr(data-pci-tutor-label);
-      color: var(--ink-soft, #425c68);
-      font-size: .82rem;
-      font-weight: 750;
-    }
-
-    #bagMeta[data-pci-other-bag="1"] {
-      font-size: 0;
-    }
-    #bagMeta[data-pci-other-bag="1"]::before,
-    #bagMeta[data-pci-other-bag="1"]::after {
+    #boardAlert[data-pci-arts-rule="1"]::after {
+      content: attr(data-pci-arts-summary);
       display: block;
-      font-size: .76rem;
-      line-height: 1.35;
-    }
-    #bagMeta[data-pci-other-bag="1"]::before {
-      content: attr(data-pci-tech-bag);
-    }
-    #bagMeta[data-pci-other-bag="1"]::after {
-      content: attr(data-pci-tutor-bag);
-      margin-top: 2px;
+      font-size: .8rem;
+      line-height: 1.4;
+      white-space: normal;
     }
 
-    .area-card[data-pci-other-card="1"] footer > div > strong,
-    .area-card[data-pci-other-card="1"] .mini-progress {
-      display: none;
-    }
-    .area-card[data-pci-other-card="1"] footer > div::before {
-      content: attr(data-pci-other-summary);
-      display: block;
-      color: var(--ink, #15374a);
-      font-size: .82rem;
-      font-weight: 850;
-      line-height: 1.35;
-    }
-
-    #boardAlert[data-pci-compact-rule] {
+    #boardAlert[data-pci-compact-rule="ef"] {
       padding: 9px 12px;
       border-radius: 12px;
       background: #f8fbfb;
@@ -98,153 +67,205 @@ function ensureStyles() {
       font-size: .8rem;
       line-height: 1.35;
     }
-    #boardAlert[data-pci-compact-rule] > strong {
-      font-size: .82rem;
-    }
-    #boardAlert[data-pci-compact-rule] > p:first-of-type {
-      display: none;
-    }
-    #boardAlert[data-pci-compact-rule="ef"] > p:last-of-type {
-      display: none;
-    }
-    #boardAlert[data-pci-compact-rule] .check-row {
-      font-size: .78rem;
-    }
-    #boardAlert[data-pci-compact-rule] .pill {
-      padding: 3px 7px;
-      font-size: .68rem;
-    }
-    #boardAlert[data-pci-compact-rule] p {
-      margin: .25rem 0 !important;
-    }
-    #boardAlert[data-pci-compact-rule="ef"].success {
-      display: none;
-    }
+    #boardAlert[data-pci-compact-rule="ef"] > p:first-of-type,
+    #boardAlert[data-pci-compact-rule="ef"] > p:last-of-type { display: none; }
+    #boardAlert[data-pci-compact-rule="ef"] .pill { padding: 3px 7px; font-size: .68rem; }
+    #boardAlert[data-pci-compact-rule="ef"] p { margin: .25rem 0 !important; }
+    #boardAlert[data-pci-compact-rule="ef"].success { display: none; }
   `;
   document.head.appendChild(style);
 }
 
-function assignmentMap(current) {
-  const map = new Map();
-  for (const areaState of Object.values(current?.areas ?? {})) {
-    for (const group of areaState.groups ?? []) {
-      for (const id of group.items ?? []) {
-        const key = String(id);
-        const locations = map.get(key) ?? [];
-        locations.push(group.id);
-        map.set(key, locations);
-      }
-    }
-  }
-  return map;
+function persistCurrent(current) {
+  localStorage.setItem('pciAppV2', JSON.stringify(current));
+  window.app = current;
+  window.dispatchEvent(new CustomEvent('pci-state-change', { detail: { schemaVersion: current.schemaVersion ?? 10 } }));
 }
 
-function countAssigned(ids, current, allowedAreas) {
-  const assigned = new Set();
-  for (const area of allowedAreas) {
-    for (const group of current?.areas?.[area]?.groups ?? []) {
-      for (const id of group.items ?? []) {
-        const key = String(id);
-        if (ids.has(key)) assigned.add(key);
-      }
-    }
-  }
-  return assigned.size;
-}
-
-function matchesFilters(content, map) {
-  const query = $('contentSearch')?.value.trim().toLocaleLowerCase('es') ?? '';
-  const subject = $('subjectFilter')?.value ?? '';
-  const axis = $('axisFilter')?.value ?? '';
-  const pendingOnly = Boolean($('pendingFilter')?.checked);
-  const haystack = `${content.subject ?? ''} ${content.axis ?? ''} ${content.text ?? ''}`.toLocaleLowerCase('es');
-  const locations = map.get(String(content.id)) ?? [];
-  return (!query || haystack.includes(query))
-    && (!subject || content.subject === subject)
-    && (!axis || content.axis === axis)
-    && (!pendingOnly || !locations.length);
-}
-
-function removeOtherMarkers() {
-  const card = document.querySelector('.coverage-card');
-  if (card) {
-    delete card.dataset.pciOtherCoverage;
-    const labels = card.querySelector(':scope > div:first-child');
-    if (labels) {
-      delete labels.dataset.pciTechLabel;
-      delete labels.dataset.pciTutorLabel;
-    }
-  }
-  const meta = $('bagMeta');
-  if (meta) {
-    delete meta.dataset.pciOtherBag;
-    delete meta.dataset.pciTechBag;
-    delete meta.dataset.pciTutorBag;
-  }
-}
-
-function updateOtherCoverage() {
+function ensureStructuralRules() {
   const current = state();
-  if (!current) return;
-
   const rows = data();
-  const techRows = rows.filter((content) => content.area === TECH_AREA);
-  const tutorRows = rows.filter((content) => content.area === TUTOR_AREA);
-  const techIds = new Set(techRows.map((content) => String(content.id)));
-  const tutorIds = new Set(tutorRows.map((content) => String(content.id)));
+  if (!current || !rows.length) return;
 
-  const techAssigned = countAssigned(techIds, current, [TECH_AREA, OTHER_AREA]);
-  const tutorAssigned = countAssigned(tutorIds, current, [OTHER_AREA]);
+  AREA_CONFIG[TECH_AREA].count = 8;
+  AREA_CONFIG[OTHER_AREA].sourceArea = OTHER_AREA;
 
-  const overviewCard = document.querySelector(`.area-card[data-area="${CSS.escape(OTHER_AREA)}"]`);
-  if (overviewCard) {
-    overviewCard.dataset.pciOtherCard = '1';
-    const summary = overviewCard.querySelector('footer > div');
-    if (summary) summary.dataset.pciOtherSummary = `Tecnologías ${techAssigned}/${techRows.length} · Tutoría ${tutorAssigned}/${tutorRows.length}`;
+  let changed = false;
+  const techGroups = current.areas?.[TECH_AREA]?.groups ?? [];
+  while (techGroups.length < 8) {
+    const index = techGroups.length;
+    const term = index + 1;
+    techGroups.push({
+      id: `tecnologias-workshop-${index + 1}`,
+      kind: 'workshop',
+      name: `Taller ${index + 1}`,
+      objective: '',
+      synopsis: '',
+      context: '',
+      practiceAxis: '',
+      formatType: '',
+      duration: 'quarterly',
+      level: levelForTerm(term),
+      startTerm: term,
+      endTerm: term,
+      type: 'Obligatorio',
+      custom: false,
+      elective: false,
+      items: [],
+    });
+    changed = true;
   }
 
-  if (current.current !== OTHER_AREA) {
-    removeOtherMarkers();
+  current.curriculumRules ??= {};
+  if ((current.curriculumRules.artLanguages ?? []).length) {
+    current.curriculumRules.artLanguages = [];
+    changed = true;
+  }
+
+  const techIds = new Set(rows.filter((content) => content.area === TECH_AREA).map((content) => String(content.id)));
+  for (const group of current.areas?.[OTHER_AREA]?.groups ?? []) {
+    const before = (group.items ?? []).length;
+    group.items = (group.items ?? []).filter((id) => !techIds.has(String(id)));
+    if (group.items.length !== before) changed = true;
+  }
+
+  if (changed) persistCurrent(current);
+  structureApplied = true;
+}
+
+function overrideText(element, text) {
+  if (!element) return;
+  element.dataset.pciOverrideText = text;
+}
+
+function clearOverride(element) {
+  if (element) delete element.dataset.pciOverrideText;
+}
+
+function artsResult() {
+  const current = state();
+  const rows = data();
+  if (!current) return null;
+  const byId = new Map(rows.map((content) => [String(content.id), content]));
+  const groups = current.areas?.Artes?.groups ?? [];
+  const workshops = groups.map((group) => {
+    const axes = new Set(
+      (group.items ?? [])
+        .map((id) => byId.get(String(id)))
+        .filter(Boolean)
+        .map(artAxisForContent)
+        .filter(Boolean),
+    );
+    const missingAxes = ART_AXES.filter((axis) => !axes.has(axis));
+    return { group, missingAxes, complete: missingAxes.length === 0 };
+  });
+  return {
+    workshops,
+    completeWorkshops: workshops.filter((item) => item.complete).length,
+    totalWorkshops: workshops.length,
+  };
+}
+
+function updateArts() {
+  const current = state();
+  const result = artsResult();
+  if (!current || !result) return;
+
+  const card = document.querySelector('.area-card[data-area="Artes"]');
+  const footer = card?.querySelector('footer > div > strong');
+  const percent = result.totalWorkshops ? Math.round((result.completeWorkshops / result.totalWorkshops) * 100) : 0;
+  overrideText(footer, `Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres con los 3 ejes`);
+  const miniBar = card?.querySelector('.mini-progress span');
+  if (miniBar) miniBar.style.width = `${percent}%`;
+
+  if (current.current !== 'Artes') {
+    const alert = $('boardAlert');
+    if (alert) {
+      delete alert.dataset.pciArtsRule;
+      delete alert.dataset.pciArtsSummary;
+    }
     return;
   }
 
-  const coverage = document.querySelector('.coverage-card');
-  if (coverage) {
-    coverage.dataset.pciOtherCoverage = '1';
-    const labels = coverage.querySelector(':scope > div:first-child');
-    if (labels) {
-      labels.dataset.pciTechLabel = `Tecnologías · ${techAssigned}/${techRows.length} contenidos utilizados · bolsa compartida con Talleres de Tecnologías`;
-      labels.dataset.pciTutorLabel = `Tutoría · ${tutorAssigned}/${tutorRows.length} contenidos ubicados · solo Nivel 1 y Nivel 2 (C1–C4)`;
-    }
+  document.querySelectorAll('#contentList .content-item').forEach((item) => { item.hidden = false; });
+  $('subjectFilter')?.querySelectorAll('option').forEach((option) => { option.disabled = false; });
+
+  const missing = result.workshops.filter((item) => !item.complete);
+  const missingText = missing.length
+    ? ` Revisar: ${missing.map((item) => `${item.group.name}: falta ${item.missingAxes.join(', ')}`).join(' · ')}.`
+    : '';
+  const alert = $('boardAlert');
+  if (alert) {
+    alert.hidden = false;
+    alert.dataset.pciArtsRule = '1';
+    alert.dataset.pciArtsSummary = `Cada taller debe incluir Producción, Apreciación y Contextualización. No se seleccionan lenguajes. Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres.${missingText}`;
   }
 
-  const map = assignmentMap(current);
-  const techVisible = techRows.filter((content) => matchesFilters(content, map)).length;
-  const tutorVisible = tutorRows.filter((content) => matchesFilters(content, map)).length;
-  const techPending = techRows.filter((content) => !(map.get(String(content.id))?.length)).length;
-  const tutorPending = tutorRows.filter((content) => !(map.get(String(content.id))?.length)).length;
-  const meta = $('bagMeta');
-  if (meta) {
-    meta.dataset.pciOtherBag = '1';
-    meta.dataset.pciTechBag = `Tecnologías: ${techVisible} visibles · ${techPending} sin ubicar en Talleres/Otros`;
-    meta.dataset.pciTutorBag = `Tutoría: ${tutorVisible} visibles · ${tutorPending} sin ubicar`;
-  }
+  overrideText($('coverageLabel'), `Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres con los 3 ejes`);
+  overrideText($('coverageHint'), 'La cobertura de Artes se valida únicamente por los tres ejes en cada taller: Producción, Apreciación y Contextualización.');
+  const bar = $('coverageBar');
+  if (bar) bar.style.width = `${percent}%`;
 }
 
-function compactRuleAlert() {
+function tutorStats() {
+  const current = state();
+  if (!current) return { total: 0, assigned: 0, pending: 0 };
+  const tutorRows = data().filter((content) => content.area === TUTOR_AREA);
+  const tutorIds = new Set(tutorRows.map((content) => String(content.id)));
+  const assigned = new Set();
+  for (const group of current.areas?.[OTHER_AREA]?.groups ?? []) {
+    for (const id of group.items ?? []) if (tutorIds.has(String(id))) assigned.add(String(id));
+  }
+  return { total: tutorRows.length, assigned: assigned.size, pending: tutorRows.length - assigned.size };
+}
+
+function updateTechnologyAndOther() {
+  const current = state();
+  if (!current) return;
+
+  const techCard = document.querySelector('.area-card[data-area="Tecnologías"]');
+  if (techCard) techCard.dataset.pciTechEight = '1';
+
+  const otherCard = document.querySelector(`.area-card[data-area="${CSS.escape(OTHER_AREA)}"]`);
+  const stats = tutorStats();
+  if (otherCard) {
+    const description = otherCard.querySelector('p');
+    overrideText(description, 'Creá seminarios, proyectos o ateneos y vinculalos con contenidos de Tutoría. Pueden ser cuatrimestrales o anuales.');
+    const footer = otherCard.querySelector('footer > div > strong');
+    overrideText(footer, `Tutoría ${stats.assigned}/${stats.total} contenidos ubicados`);
+    const miniBar = otherCard.querySelector('.mini-progress span');
+    if (miniBar) miniBar.style.width = `${stats.total ? Math.round((stats.assigned / stats.total) * 100) : 0}%`;
+  }
+
+  if (current.current !== OTHER_AREA) return;
+
+  overrideText($('boardDescription'), 'Creá seminarios, proyectos o ateneos con contenidos de Tutoría. Pueden ser cuatrimestrales o anuales.');
+  overrideText($('coverageLabel'), `Tutoría: ${stats.assigned}/${stats.total} contenidos ubicados`);
+  overrideText($('coverageHint'), 'En Otros formatos pedagógicos ya no se muestran contenidos de Tecnologías. Tutoría puede ubicarse únicamente en Nivel 1 y Nivel 2 (C1–C4).');
+  overrideText($('bagMeta'), `Tutoría: ${stats.pending} contenidos pendientes de ubicar`);
+  const bar = $('coverageBar');
+  if (bar) bar.style.width = `${stats.total ? Math.round((stats.assigned / stats.total) * 100) : 0}%`;
+
+  $('subjectFilter')?.querySelectorAll('option').forEach((option) => {
+    if (option.value === TECH_AREA) option.hidden = true;
+  });
+}
+
+function compactEfRule() {
   const current = state();
   const alert = $('boardAlert');
   if (!current || !alert) return;
-  if (current.current === 'Artes') alert.dataset.pciCompactRule = 'arts';
-  else if (current.current === 'Educación Física') alert.dataset.pciCompactRule = 'ef';
+  if (current.current === 'Educación Física') alert.dataset.pciCompactRule = 'ef';
   else delete alert.dataset.pciCompactRule;
 }
 
 function refresh() {
   if (!window.PCIApp?.getState || !data().length) return;
   ensureStyles();
-  updateOtherCoverage();
-  compactRuleAlert();
+  ensureStructuralRules();
+  updateArts();
+  updateTechnologyAndOther();
+  compactEfRule();
 }
 
 function scheduleRefresh() {
@@ -258,6 +279,7 @@ async function start() {
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
   ensureStyles();
+  ensureStructuralRules();
   observer = new MutationObserver(scheduleRefresh);
   observer.observe(document.body, { childList: true, subtree: true });
   window.addEventListener('pci-state-change', scheduleRefresh);
