@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ART_AXES,
-  ART_LANGUAGES,
   EF_NUCLEI,
   evaluateArts,
   evaluatePhysicalEducation,
@@ -12,45 +11,35 @@ function group(id, items = []) {
   return { id, name: id, items };
 }
 
-test('Artes exige exactamente dos lenguajes y los tres ejes en cada taller', () => {
-  const data = [];
-  let id = 1;
-  for (const language of ART_LANGUAGES) {
-    for (const axis of ART_AXES) {
-      data.push({ id: String(id++), area: 'Artes', subject: language, axis: `Eje: ${axis}`, text: `${language} ${axis}` });
-    }
-  }
-  const state = {
-    curriculumRules: { artLanguages: ['Artes Visuales', 'Música'] },
-    areas: {
-      Artes: {
-        groups: [
-          group('Taller 1', ['1', '2', '3']),
-          group('Taller 2', ['4', '5', '6']),
-        ],
-      },
-    },
-  };
-  const result = evaluateArts(state, data);
-  assert.equal(result.complete, true);
-  assert.equal(result.completeWorkshops, 2);
-  assert.deepEqual(result.selectedLanguages, ['Artes Visuales', 'Música']);
-});
-
-test('Artes no cuenta contenidos del tercer lenguaje para completar un eje', () => {
+test('Artes exige los tres ejes en cada taller sin restringir lenguajes', () => {
   const data = [
     { id: 'v-p', area: 'Artes', subject: 'Artes Visuales', axis: 'Eje: Producción', text: '' },
     { id: 'm-a', area: 'Artes', subject: 'Música', axis: 'Eje: Apreciación', text: '' },
     { id: 't-c', area: 'Artes', subject: 'Teatro', axis: 'Eje: Contextualización', text: '' },
   ];
   const state = {
-    curriculumRules: { artLanguages: ['Artes Visuales', 'Música'] },
+    curriculumRules: { artLanguages: ['Artes Visuales'] },
     areas: { Artes: { groups: [group('Taller 1', ['v-p', 'm-a', 't-c'])] } },
   };
   const result = evaluateArts(state, data);
+  assert.equal(result.complete, true);
+  assert.equal(result.completeWorkshops, 1);
+  assert.deepEqual(result.workshops[0].missingAxes, []);
+});
+
+test('Artes marca incompleto un taller cuando falta cualquiera de los tres ejes', () => {
+  const data = [
+    { id: 'p', area: 'Artes', subject: 'Música', axis: 'Eje: Producción', text: '' },
+    { id: 'a', area: 'Artes', subject: 'Teatro', axis: 'Eje: Apreciación', text: '' },
+  ];
+  const state = { areas: { Artes: { groups: [group('Taller 1', ['p', 'a'])] } } };
+  const result = evaluateArts(state, data);
   assert.equal(result.complete, false);
   assert.deepEqual(result.workshops[0].missingAxes, ['Contextualización']);
-  assert.equal(result.unselectedAssignments.length, 1);
+});
+
+test('Artes reconoce exactamente los tres ejes curriculares definidos', () => {
+  assert.deepEqual(ART_AXES, ['Producción', 'Apreciación', 'Contextualización']);
 });
 
 test('Educación Física exige un núcleo obligatorio en cada taller y cubrir los cinco núcleos', () => {
