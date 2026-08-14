@@ -76,12 +76,15 @@
     const missing = capturedExtras
       .map(normalizeExtra)
       .filter((group) => !existingIds.has(String(group.id)));
-    if (!missing.length) return;
 
-    restoring = true;
-    groups.push(...missing);
-    writeState(current, false);
-    restoring = false;
+    if (missing.length) {
+      restoring = true;
+      groups.push(...missing);
+      writeState(current, false);
+      restoring = false;
+    }
+
+    capturedExtras.length = 0;
   }
 
   function selectedArtsTerm() {
