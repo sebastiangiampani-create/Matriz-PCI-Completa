@@ -13,11 +13,19 @@
     frame.addEventListener('load',()=>{
       const doc=frame.contentDocument;
       if(!doc||doc.querySelector('script[data-planes-media-demo]'))return;
-      const script=doc.createElement('script');
-      script.type='module';
-      script.src='planes-media-print-demo.js?v=20260814-2';
-      script.dataset.planesMediaDemo='1';
-      doc.body.appendChild(script);
+
+      const branding=doc.createElement('script');
+      branding.src='plan-model-branding.js?v=20260814-1';
+      branding.dataset.planModelBrandingLoader='1';
+      doc.body.appendChild(branding);
+
+      branding.addEventListener('load',()=>{
+        const script=doc.createElement('script');
+        script.type='module';
+        script.src='planes-media-print-demo.js?v=20260814-3';
+        script.dataset.planesMediaDemo='1';
+        doc.body.appendChild(script);
+      });
     });
   </script>
 </body>
