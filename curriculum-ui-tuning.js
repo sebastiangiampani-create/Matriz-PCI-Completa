@@ -1,9 +1,10 @@
-import { ART_AXES, artAxisForContent } from './curriculum-rules.js';
+import { ART_AXES, artAxisForContent, artLanguageForContent } from './curriculum-rules.js';
 import { AREA_CONFIG, levelForTerm } from './pci-model.js';
 
 const OTHER_AREA = 'Otros formatos pedagógicos';
 const TECH_AREA = 'Tecnologías';
 const TUTOR_AREA = 'Tutoría';
+const ARTS_REQUIRED_TERMS = [1, 2, 3, 4, 7, 8];
 
 let observer = null;
 let refreshTimer = null;
@@ -55,8 +56,8 @@ function ensureStyles() {
       content: attr(data-pci-arts-summary);
       display: block;
       font-size: .8rem;
-      line-height: 1.4;
-      white-space: normal;
+      line-height: 1.45;
+      white-space: pre-line;
     }
 
     #boardAlert[data-pci-compact-rule="ef"] {
@@ -142,6 +143,17 @@ function clearOverride(element) {
   if (element) delete element.dataset.pciOverrideText;
 }
 
+function hasDifferentLanguagesAcrossWorkshops(workshops) {
+  for (let left = 0; left < workshops.length; left += 1) {
+    for (let right = left + 1; right < workshops.length; right += 1) {
+      const leftLanguages = workshops[left].languages ?? [];
+      const rightLanguages = workshops[right].languages ?? [];
+      if (leftLanguages.some((first) => rightLanguages.some((second) => first !== second))) return true;
+    }
+  }
+  return false;
+}
+
 function artsResult() {
   const current = state();
   const rows = data();
@@ -149,21 +161,63 @@ function artsResult() {
   const byId = new Map(rows.map((content) => [String(content.id), content]));
   const groups = current.areas?.Artes?.groups ?? [];
   const workshops = groups.map((group) => {
-    const axes = new Set(
-      (group.items ?? [])
-        .map((id) => byId.get(String(id)))
-        .filter(Boolean)
-        .map(artAxisForContent)
-        .filter(Boolean),
-    );
+    const contents = (group.items ?? [])
+      .map((id) => byId.get(String(id)))
+      .filter(Boolean);
+    const axes = new Set(contents.map(artAxisForContent).filter(Boolean));
+    const languages = new Set(contents.map(artLanguageForContent).filter(Boolean));
     const missingAxes = ART_AXES.filter((axis) => !axes.has(axis));
-    return { group, missingAxes, complete: missingAxes.length === 0 };
+    return {
+      group,
+      languages: [...languages],
+      missingAxes,
+      complete: missingAxes.length === 0,
+    };
   });
+
+  const termRules = ARTS_REQUIRED_TERMS.map((term) => {
+    const termWorkshops = workshops.filter((item) => Number(item.group.startTerm) === term);
+    const workshopsWithLanguage = termWorkshops.filter((item) => item.languages.length > 0);
+    const languages = [...new Set(termWorkshops.flatMap((item) => item.languages))];
+    const differentLanguages = hasDifferentLanguagesAcrossWorkshops(workshopsWithLanguage);
+    return {
+      term,
+      workshops: termWorkshops,
+      workshopCount: termWorkshops.length,
+      workshopsWithLanguage: workshopsWithLanguage.length,
+      languages,
+      differentLanguages,
+      complete: termWorkshops.length >= 2
+        && workshopsWithLanguage.length >= 2
+        && differentLanguages,
+    };
+  });
+
+  const completeWorkshops = workshops.filter((item) => item.complete).length;
+  const completeTerms = termRules.filter((item) => item.complete).length;
   return {
     workshops,
-    completeWorkshops: workshops.filter((item) => item.complete).length,
+    completeWorkshops,
     totalWorkshops: workshops.length,
+    termRules,
+    completeTerms,
+    totalRequiredTerms: ARTS_REQUIRED_TERMS.length,
+    complete: workshops.length > 0
+      && completeWorkshops === workshops.length
+      && completeTerms === ARTS_REQUIRED_TERMS.length,
   };
+}
+
+function artsTermStatus(rule) {
+  const languageText = rule.languages.length ? rule.languages.join(' + ') : 'sin lenguaje identificado';
+  if (rule.complete) return `C${rule.term} ✓ ${rule.workshopCount} talleres · ${languageText}`;
+  if (rule.workshopCount < 2) {
+    return `C${rule.term} ⚠ ${rule.workshopCount}/2 talleres · ${languageText}`;
+  }
+  if (rule.workshopsWithLanguage < 2) {
+    return `C${rule.term} ⚠ faltan contenidos para identificar el lenguaje en al menos 2 talleres`;
+  }
+  return `C${rule.term} ⚠ los talleres deben incluir contenidos de al menos 2 lenguajes diferentes · ${languageText}`;
 }
 
 function updateArts() {
@@ -171,10 +225,16 @@ function updateArts() {
   const result = artsResult();
   if (!current || !result) return;
 
+  const axesRatio = result.totalWorkshops ? result.completeWorkshops / result.totalWorkshops : 0;
+  const termsRatio = result.totalRequiredTerms ? result.completeTerms / result.totalRequiredTerms : 0;
+  const percent = Math.round(Math.min(axesRatio, termsRatio) * 100);
+
   const card = document.querySelector('.area-card[data-area="Artes"]');
   const footer = card?.querySelector('footer > div > strong');
-  const percent = result.totalWorkshops ? Math.round((result.completeWorkshops / result.totalWorkshops) * 100) : 0;
-  overrideText(footer, `Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres con los 3 ejes`);
+  overrideText(
+    footer,
+    `Cumplimiento: ${result.completeTerms}/${result.totalRequiredTerms} cuatrimestres obligatorios · ${result.completeWorkshops}/${result.totalWorkshops} talleres con los 3 ejes`,
+  );
   const miniBar = card?.querySelector('.mini-progress span');
   if (miniBar) miniBar.style.width = `${percent}%`;
 
@@ -190,19 +250,28 @@ function updateArts() {
   document.querySelectorAll('#contentList .content-item').forEach((item) => { item.hidden = false; });
   $('subjectFilter')?.querySelectorAll('option').forEach((option) => { option.disabled = false; });
 
-  const missing = result.workshops.filter((item) => !item.complete);
-  const missingText = missing.length
-    ? ` Revisar: ${missing.map((item) => `${item.group.name}: falta ${item.missingAxes.join(', ')}`).join(' · ')}.`
-    : '';
+  const missingAxes = result.workshops.filter((item) => !item.complete);
+  const axesText = missingAxes.length
+    ? `\nEjes a revisar: ${missingAxes.map((item) => `${item.group.name} (falta ${item.missingAxes.join(', ')})`).join(' · ')}`
+    : '\nEjes: todos los talleres incluyen Producción, Apreciación y Contextualización.';
+  const termText = result.termRules.map(artsTermStatus).join('\n');
+
   const alert = $('boardAlert');
   if (alert) {
     alert.hidden = false;
+    alert.className = `notice ${result.complete ? 'success' : 'warning'}`;
     alert.dataset.pciArtsRule = '1';
-    alert.dataset.pciArtsSummary = `Cada taller debe incluir Producción, Apreciación y Contextualización. No se seleccionan lenguajes. Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres.${missingText}`;
+    alert.dataset.pciArtsSummary = `En C1, C2, C3, C4, C7 y C8 debe haber al menos 2 talleres de Artes con contenidos de lenguajes artísticos diferentes. C5, C6, C9 y C10 no tienen esta exigencia. Cada taller debe incluir Producción, Apreciación y Contextualización.\n${termText}${axesText}`;
   }
 
-  overrideText($('coverageLabel'), `Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres con los 3 ejes`);
-  overrideText($('coverageHint'), 'La cobertura de Artes se valida únicamente por los tres ejes en cada taller: Producción, Apreciación y Contextualización.');
+  overrideText(
+    $('coverageLabel'),
+    `Cumplimiento: ${result.completeTerms}/${result.totalRequiredTerms} cuatrimestres obligatorios · ${result.completeWorkshops}/${result.totalWorkshops} talleres con los 3 ejes`,
+  );
+  overrideText(
+    $('coverageHint'),
+    'Artes exige 2 talleres con lenguajes diferentes en C1, C2, C3, C4, C7 y C8. Además, cada taller debe cubrir Producción, Apreciación y Contextualización.',
+  );
   const bar = $('coverageBar');
   if (bar) bar.style.width = `${percent}%`;
 }
