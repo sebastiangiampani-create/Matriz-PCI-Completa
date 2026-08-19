@@ -67,7 +67,10 @@ function refreshVisiblePlanNames(groupId) {
     const plan = found.group.plansBimestrales[number - 1];
     const card = button.closest('.pci-plan-card');
     const title = card?.querySelector('p');
-    if (title && plan) title.textContent = plan.name || automaticPlanName(found.group, number);
+    if (title && plan) {
+      const desired = plan.name || automaticPlanName(found.group, number);
+      if (title.textContent !== desired) title.textContent = desired;
+    }
   });
 
   const nameInput = shell.querySelector('[data-plan-field="name"]');
@@ -81,6 +84,7 @@ function refreshVisiblePlanNames(groupId) {
 }
 
 let activePlanGroupId = null;
+let refreshQueued = false;
 
 function resolveGroupIdFromClick(target) {
   const matrixButton = target.closest?.('[data-open-bimestral-plans]');
@@ -90,22 +94,32 @@ function resolveGroupIdFromClick(target) {
   return null;
 }
 
+function queueRefresh() {
+  if (!activePlanGroupId || refreshQueued) return;
+  refreshQueued = true;
+  requestAnimationFrame(() => {
+    refreshQueued = false;
+    if (!activePlanGroupId) return;
+    normalizePlanNames(activePlanGroupId);
+    refreshVisiblePlanNames(activePlanGroupId);
+  });
+}
+
 document.addEventListener('click', (event) => {
   const groupId = resolveGroupIdFromClick(event.target);
   if (groupId) {
     activePlanGroupId = groupId;
     normalizePlanNames(groupId);
-    setTimeout(() => {
-      normalizePlanNames(groupId);
-      refreshVisiblePlanNames(groupId);
-    }, 0);
+    queueRefresh();
     return;
   }
 
   if (event.target.closest?.('[data-open-plan]') && activePlanGroupId) {
     normalizePlanNames(activePlanGroupId);
-    setTimeout(() => refreshVisiblePlanNames(activePlanGroupId), 0);
+    queueRefresh();
   }
+
+  if (event.target.closest?.('[data-plans-close]')) activePlanGroupId = null;
 }, true);
 
 document.addEventListener('input', (event) => {
@@ -122,9 +136,5 @@ document.addEventListener('input', (event) => {
   plan.autoNameSource = found.group.name;
 }, true);
 
-const planNameObserver = new MutationObserver(() => {
-  if (!activePlanGroupId) return;
-  normalizePlanNames(activePlanGroupId);
-  refreshVisiblePlanNames(activePlanGroupId);
-});
+const planNameObserver = new MutationObserver(() => queueRefresh());
 planNameObserver.observe(document.documentElement, { childList: true, subtree: true });
