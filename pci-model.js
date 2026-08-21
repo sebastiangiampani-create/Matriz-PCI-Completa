@@ -382,3 +382,36 @@ export function deleteOtherFormat(state, groupId) {
   const index = groups.findIndex((group) => group.id === groupId);
   if (index >= 0) groups.splice(index, 1);
 }
+
+export function matrixSlots(state) {
+  return allGroups(state).flatMap(({ area, group }) => {
+    if (!group.startTerm || !group.endTerm) return [];
+    return Array.from({ length: group.endTerm - group.startTerm + 1 }, (_, offset) => ({
+      area,
+      term: group.startTerm + offset,
+      group,
+    }));
+  });
+}
+
+export function validateStructure(state) {
+  const errors = [];
+  const naturalTerms = state.areas['Ciencias Naturales'].groups.map((group) => group.startTerm);
+  const socialTerms = state.areas['Ciencias Sociales'].groups.map((group) => group.startTerm);
+  if (naturalTerms.length !== 10 || TERM_LABELS.some((_, index) => !naturalTerms.includes(index + 1))) {
+    errors.push('Ciencias Naturales debe tener 10 laboratorios con cobertura C1-C10.');
+  }
+  const socialExpected = [1, 2, 3, 4, 5, 6, 6, 7, 7, 8, 9, 10];
+  if (JSON.stringify([...socialTerms].sort((a, b) => a - b)) !== JSON.stringify(socialExpected)) {
+    errors.push('Ciencias Sociales debe tener 12 laboratorios, con simultaneidad en C6 y C7.');
+  }
+  for (const area of AREA_ORDER.filter((name) => AREA_CONFIG[name].kind === 'trunk')) {
+    state.areas[area].groups.forEach((group, index) => {
+      const expected = termsForLevel(index + 1);
+      if (group.startTerm !== expected[0] || group.endTerm !== expected[1]) {
+        errors.push(`${area}: el Nivel ${index + 1} debe ocupar C${expected[0]}-C${expected[1]}.`);
+      }
+    });
+  }
+  return errors;
+}
