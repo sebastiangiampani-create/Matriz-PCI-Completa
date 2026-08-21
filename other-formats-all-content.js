@@ -1,6 +1,6 @@
 const OTHER_AREA = 'Otros formatos pedagógicos';
 const $ = (id) => document.getElementById(id);
-const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const selected = new Set();
 let applying = false;
 
@@ -18,10 +18,18 @@ function allLocations(contentId) {
   if (!app?.areas) return out;
   for (const [area, areaState] of Object.entries(app.areas)) {
     for (const group of areaState?.groups ?? []) {
-      if ((group.items ?? []).includes(String(contentId))) out.push({ area, name: group.name });
+      if ((group.items ?? []).map(String).includes(String(contentId))) out.push({ area, name: group.name });
     }
   }
   return out;
+}
+function globallyAssignedIds() {
+  const ids = new Set();
+  const app = state();
+  for (const areaState of Object.values(app?.areas ?? {})) {
+    for (const group of areaState?.groups ?? []) for (const id of group.items ?? []) ids.add(String(id));
+  }
+  return ids;
 }
 function otherAssignedIds() {
   return new Set(otherGroups().flatMap((group) => group.items ?? []).map(String));
@@ -34,9 +42,9 @@ function ensureAreaFilter() {
   label.id = 'otherAreaFilterWrap';
   label.innerHTML = '<span>Área curricular</span><select id="otherAreaFilter"><option value="">Todas las áreas</option></select>';
   pair.before(label);
-  const areas = [...new Set(data().map((row) => row.area))].sort((a,b) => a.localeCompare(b,'es'));
+  const areas = [...new Set(data().map((row) => row.area))].sort((a, b) => a.localeCompare(b, 'es'));
   $('otherAreaFilter').innerHTML = '<option value="">Todas las áreas</option>' + areas.map((area) => `<option value="${esc(area)}">${esc(area)}</option>`).join('');
-  $('otherAreaFilter').addEventListener('change', render);
+  $('otherAreaFilter').addEventListener('change', () => { syncFilters(); render(); });
 }
 function ensureBar() {
   let bar = $('otherSelectionBar');
@@ -52,10 +60,27 @@ function ensureBar() {
   if (original) original.style.display = 'none';
 }
 function restoreStandardBag() {
+  selected.clear();
   $('otherAreaFilterWrap')?.remove();
   $('otherSelectionBar')?.remove();
   const original = document.querySelector('#contentBag .selection-bar');
   if (original) original.style.display = '';
+}
+function syncFilters() {
+  const area = $('otherAreaFilter')?.value ?? '';
+  const rows = data().filter((row) => !area || row.area === area);
+  const currentSubject = $('subjectFilter')?.value ?? '';
+  const currentAxis = $('axisFilter')?.value ?? '';
+  const subjects = [...new Set(rows.map((row) => row.subject))].sort((a, b) => a.localeCompare(b, 'es'));
+  const axes = [...new Set(rows.map((row) => row.axis).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+  if ($('subjectFilter')) {
+    $('subjectFilter').innerHTML = '<option value="">Todas</option>' + subjects.map((value) => `<option value="${esc(value)}">${esc(value)}</option>`).join('');
+    $('subjectFilter').value = subjects.includes(currentSubject) ? currentSubject : '';
+  }
+  if ($('axisFilter')) {
+    $('axisFilter').innerHTML = '<option value="">Todos</option>' + axes.map((value) => `<option value="${esc(value)}">${esc(value)}</option>`).join('');
+    $('axisFilter').value = axes.includes(currentAxis) ? currentAxis : '';
+  }
 }
 function filteredRows() {
   const query = ($('contentSearch')?.value ?? '').trim().toLocaleLowerCase('es');
@@ -66,53 +91,82 @@ function filteredRows() {
   const assignedOther = otherAssignedIds();
   return data().filter((content) => {
     const haystack = `${content.area} ${content.subject} ${content.axis} ${content.text}`.toLocaleLowerCase('es');
-    return (!query || haystack.includes(query)) && (!area || content.area === area) && (!subject || content.subject === subject) && (!axis || content.axis === axis) && (!pendingOnly || !assignedOther.has(String(content.id)));
+    return (!query || haystack.includes(query))
+      && (!area || content.area === area)
+      && (!subject || content.subject === subject)
+      && (!axis || content.axis === axis)
+      && (!pendingOnly || !assignedOther.has(String(content.id)));
   });
 }
-function syncFilters() {
-  const rows = data().filter((row) => !$('otherAreaFilter')?.value || row.area === $('otherAreaFilter').value);
-  const subject = $('subjectFilter')?.value ?? '';
-  const axis = $('axisFilter')?.value ?? '';
-  const subjects = [...new Set(rows.map((row) => row.subject))].sort((a,b) => a.localeCompare(b,'es'));
-  const axes = [...new Set(rows.map((row) => row.axis).filter(Boolean))].sort((a,b) => a.localeCompare(b,'es'));
-  if ($('subjectFilter')) {
-    $('subjectFilter').innerHTML = '<option value="">Todas</option>' + subjects.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
-    if (subjects.includes(subject)) $('subjectFilter').value = subject;
-  }
-  if ($('axisFilter')) {
-    $('axisFilter').innerHTML = '<option value="">Todos</option>' + axes.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
-    if (axes.includes(axis)) $('axisFilter').value = axis;
-  }
+function patchOverviewCoverage() {
+  if (!$('overview')?.classList.contains('active')) return;
+  const rows = data();
+  if (!rows.length) return;
+  const global = globallyAssignedIds();
+  const other = otherAssignedIds();
+  document.querySelectorAll('.area-card[data-area]').forEach((card) => {
+    const area = card.dataset.area;
+    let total = 0;
+    let assigned = 0;
+    let label = 'contenidos ubicados';
+    if (area === OTHER_AREA) {
+      total = rows.length;
+      assigned = other.size;
+      label = 'contenidos utilizados';
+    } else {
+      const source = rows.filter((row) => row.area === area);
+      total = source.length;
+      assigned = source.filter((row) => global.has(String(row.id))).length;
+    }
+    const strong = card.querySelector('footer strong');
+    const bar = card.querySelector('.mini-progress span');
+    if (strong) strong.textContent = `${assigned} / ${total} ${label}`;
+    if (bar) bar.style.width = `${total ? Math.round((assigned / total) * 100) : 0}%`;
+  });
 }
 function render() {
   if (!isOtherOpen() || applying) return;
   applying = true;
   try {
-    ensureAreaFilter(); ensureBar(); syncFilters();
+    ensureAreaFilter();
+    ensureBar();
     const rows = filteredRows();
     const assignedOther = otherAssignedIds();
     const total = data().length;
     const assigned = assignedOther.size;
     if ($('coverageLabel')) $('coverageLabel').textContent = `${assigned} de ${total} contenidos utilizados en otros formatos`;
-    if ($('coverageBar')) $('coverageBar').style.width = `${total ? Math.round(assigned / total * 100) : 0}%`;
+    if ($('coverageBar')) $('coverageBar').style.width = `${total ? Math.round((assigned / total) * 100) : 0}%`;
     if ($('coverageHint')) $('coverageHint').textContent = 'Podés elegir contenidos de cualquier área. Un contenido puede usarse también en otros espacios; para la cobertura se cuenta una sola vez.';
     if ($('boardDescription')) $('boardDescription').textContent = 'Creá seminarios, proyectos o ateneos y elegí contenidos de todas las áreas curriculares. Pueden ser cuatrimestrales o anuales.';
     if ($('bagMeta')) $('bagMeta').textContent = `${rows.length} visibles · ${total - assigned} todavía no usados en otros formatos`;
     if ($('contentList')) $('contentList').innerHTML = rows.length ? rows.map((content) => {
       const locations = allLocations(content.id);
       const checked = selected.has(String(content.id));
-      return `<article class="content-item ${checked ? 'selected' : ''} ${locations.length ? 'assigned' : ''}" data-other-content-id="${esc(content.id)}"><input type="checkbox" tabindex="-1" ${checked ? 'checked' : ''} aria-hidden="true"><div><small>${esc(content.area)} · ${esc(content.subject)} · ${esc(content.axis || 'Sin eje / bloque')}</small><p>${esc(content.text)}</p>${locations.length ? `<span class="content-location">En ${esc(locations.map((x) => x.name).join(' · '))}</span>` : '<span class="content-location pending-text">Todavía no asignado</span>'}</div></article>`;
+      return `<article class="content-item ${checked ? 'selected' : ''} ${locations.length ? 'assigned' : ''}" draggable="true" data-other-content-id="${esc(content.id)}"><input type="checkbox" tabindex="-1" ${checked ? 'checked' : ''} aria-hidden="true"><div><small>${esc(content.area)} · ${esc(content.subject)} · ${esc(content.axis || 'Sin eje / bloque')}</small><p>${esc(content.text)}</p>${locations.length ? `<span class="content-location">En ${esc(locations.map((location) => location.name).join(' · '))}</span>` : '<span class="content-location pending-text">Todavía no asignado</span>'}</div></article>`;
     }).join('') : '<div class="empty-state">No hay contenidos que coincidan con estos filtros.</div>';
-    document.querySelectorAll('[data-other-content-id]').forEach((item) => item.addEventListener('click', () => {
-      const id = item.dataset.otherContentId;
-      if (selected.has(id)) selected.delete(id); else selected.add(id);
-      render();
-    }));
+    document.querySelectorAll('[data-other-content-id]').forEach((item) => {
+      item.addEventListener('click', () => {
+        const id = item.dataset.otherContentId;
+        if (selected.has(id)) selected.delete(id); else selected.add(id);
+        render();
+      });
+      item.addEventListener('dragstart', (event) => {
+        const id = item.dataset.otherContentId;
+        event.dataTransfer.effectAllowed = 'copy';
+        event.dataTransfer.setData('text/plain', id);
+        event.dataTransfer.setData('application/x-pci-content', id);
+      });
+    });
     const target = selectedGroup();
     if ($('otherSelectionCount')) $('otherSelectionCount').textContent = `${selected.size} seleccionado${selected.size === 1 ? '' : 's'}`;
     if ($('otherSelectionTarget')) $('otherSelectionTarget').textContent = target ? `Destino: ${target.name}` : 'Creá o elegí un formato de destino';
-    if ($('otherAssign')) { $('otherAssign').disabled = !selected.size || !target; $('otherAssign').textContent = selected.size ? `Asignar ${selected.size}` : 'Asignar seleccionados'; }
-  } finally { applying = false; }
+    if ($('otherAssign')) {
+      $('otherAssign').disabled = !selected.size || !target;
+      $('otherAssign').textContent = selected.size ? `Asignar ${selected.size}` : 'Asignar seleccionados';
+    }
+  } finally {
+    applying = false;
+  }
 }
 function assign() {
   const target = selectedGroup();
@@ -127,14 +181,23 @@ function assign() {
   window.PCIApp?.openArea?.(OTHER_AREA, target.id);
   setTimeout(render, 0);
 }
-['contentSearch','subjectFilter','axisFilter','pendingFilter'].forEach((id) => document.addEventListener(id === 'contentSearch' ? 'input' : 'change', (event) => {
-  if (event.target?.id === id && isOtherOpen()) setTimeout(render, 0);
-}, true));
+['contentSearch', 'subjectFilter', 'axisFilter', 'pendingFilter'].forEach((id) => {
+  document.addEventListener(id === 'contentSearch' ? 'input' : 'change', (event) => {
+    if (event.target?.id === id && isOtherOpen()) setTimeout(render, 0);
+  }, true);
+});
 document.addEventListener('click', (event) => {
   if (event.target?.closest?.('[data-area="Otros formatos pedagógicos"], [data-group-id], [data-mobile-step]')) setTimeout(render, 0);
 });
-const observer = new MutationObserver(() => {
-  if (isOtherOpen()) setTimeout(render, 0); else restoreStandardBag();
+window.addEventListener('pci-state-change', () => {
+  if (isOtherOpen()) setTimeout(render, 0);
+  setTimeout(patchOverviewCoverage, 0);
 });
-observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
-setTimeout(render, 0);
+const boardObserver = new MutationObserver(() => {
+  if (isOtherOpen()) setTimeout(() => { syncFilters(); render(); }, 0);
+  else restoreStandardBag();
+});
+if ($('board')) boardObserver.observe($('board'), { attributes: true, attributeFilter: ['class'] });
+const overviewObserver = new MutationObserver(() => setTimeout(patchOverviewCoverage, 0));
+if ($('overview')) overviewObserver.observe($('overview'), { attributes: true, attributeFilter: ['class'] });
+setTimeout(() => { if (isOtherOpen()) { syncFilters(); render(); } patchOverviewCoverage(); }, 0);
