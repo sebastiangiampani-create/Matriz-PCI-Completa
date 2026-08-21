@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  addOtherFormat,
   migrateState,
   moveContents,
   moveGroupToTerm,
@@ -24,6 +25,21 @@ test('un contenido puede formar parte de más de un espacio', () => {
   moveContents(state, second.id, ['contenido-1']);
   assert.deepEqual(first.items, ['contenido-1']);
   assert.deepEqual(second.items, ['contenido-1']);
+});
+
+test('Otros formatos puede recibir contenidos de cualquier área sin quitarlos del espacio original', () => {
+  const state = migrateState({});
+  const math = state.areas.Matemática.groups[0];
+  const natural = state.areas['Ciencias Naturales'].groups[0];
+  const other = addOtherFormat(state);
+
+  moveContents(state, math.id, ['matematica-contenido']);
+  moveContents(state, natural.id, ['naturales-contenido']);
+  moveContents(state, other.id, ['matematica-contenido', 'naturales-contenido']);
+
+  assert.deepEqual(math.items, ['matematica-contenido']);
+  assert.deepEqual(natural.items, ['naturales-contenido']);
+  assert.deepEqual(other.items, ['matematica-contenido', 'naturales-contenido']);
 });
 
 test('la migración conserva un mismo contenido asignado a distintos espacios', () => {

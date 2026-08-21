@@ -47,7 +47,7 @@ const AREA_DESCRIPTIONS = {
   trunk: 'Cinco niveles anuales. Cada nivel ocupa dos cuatrimestres consecutivos y no puede cruzar de año.',
   laboratory: 'Editá cada laboratorio y mové contenidos desde la bolsa. La ubicación temporal se controla sobre C1–C10.',
   workshop: 'Definí la práctica, producto o eje de cada taller y ubicá sus contenidos en C1–C10.',
-  other: 'Creá seminarios, proyectos o ateneos con contenidos de Tecnologías. Pueden ser cuatrimestrales o anuales.',
+  other: 'Creá seminarios, proyectos o ateneos y elegí contenidos de cualquier área curricular. Pueden ser cuatrimestrales o anuales.',
 };
 
 const $ = (id) => document.getElementById(id);
@@ -129,6 +129,7 @@ function showScreen(name) {
 }
 
 function sourceContents(area) {
+  if (area === 'Otros formatos pedagógicos') return DATA;
   const source = sourceAreaFor(area);
   return DATA.filter((content) => content.area === source);
 }
@@ -152,6 +153,11 @@ function assignmentMap() {
 function coverageFor(area) {
   const contents = sourceContents(area);
   const ids = new Set(contents.map((content) => content.id));
+  if (area === 'Otros formatos pedagógicos') {
+    const assignments = assignmentMap();
+    const assigned = [...ids].filter((id) => assignments.has(id)).length;
+    return { assigned, total: contents.length };
+  }
   const assigned = new Set(
     groupsForSource(sourceAreaFor(area)).flatMap(({ group }) => group.items.filter((id) => ids.has(id))),
   );
@@ -175,6 +181,7 @@ function renderOverview() {
     const groups = app.areas[area].groups;
     const coverage = coverageFor(area);
     const percent = coverage.total ? Math.round((coverage.assigned / coverage.total) * 100) : 0;
+    const coverageLabel = config.kind === 'other' ? 'contenidos cubiertos en el PCI' : 'contenidos ubicados';
     const groupLabel = config.kind === 'trunk'
       ? `${groups.length} niveles anuales`
       : config.kind === 'laboratory'
@@ -191,7 +198,7 @@ function renderOverview() {
         </div>
         <footer>
           <div>
-            <strong>${coverage.assigned} / ${coverage.total} contenidos ubicados</strong>
+            <strong>${coverage.assigned} / ${coverage.total} ${coverageLabel}</strong>
             <div class="mini-progress"><span style="width:${percent}%"></span></div>
           </div>
           <strong aria-hidden="true">→</strong>
@@ -271,10 +278,12 @@ function populateBagFilters() {
 function renderCoverage() {
   const coverage = coverageFor(currentArea);
   const percent = coverage.total ? Math.round((coverage.assigned / coverage.total) * 100) : 0;
-  $('coverageLabel').textContent = `${coverage.assigned} de ${coverage.total} contenidos ubicados`;
+  $('coverageLabel').textContent = currentArea === 'Otros formatos pedagógicos'
+    ? `${coverage.assigned} de ${coverage.total} contenidos cubiertos en todo el PCI`
+    : `${coverage.assigned} de ${coverage.total} contenidos ubicados`;
   $('coverageBar').style.width = `${percent}%`;
   $('coverageHint').textContent = currentArea === 'Otros formatos pedagógicos'
-    ? 'Comparte la bolsa de Tecnologías: mover un contenido lo reasigna sin duplicarlo.'
+    ? 'Podés elegir contenidos de cualquier área. La cobertura cuenta cada contenido curricular una sola vez, esté ubicado en el espacio que esté.'
     : 'Mover un contenido lo reasigna: nunca se duplica ni se elimina de la base.';
 }
 
@@ -338,9 +347,12 @@ function assignedItems(group) {
   return group.items.map((id) => {
     const content = DATA.find((item) => item.id === id);
     if (!content) return '';
+    const meta = currentArea === 'Otros formatos pedagógicos'
+      ? `${content.area} · ${content.subject} · ${content.axis || 'Sin eje / bloque'}`
+      : `${content.subject} · ${content.axis || 'Sin eje / bloque'}`;
     return `
       <article class="assigned-item" draggable="true" data-content-id="${escapeHtml(id)}">
-        <div><small>${escapeHtml(content.subject)} · ${escapeHtml(content.axis || 'Sin eje / bloque')}</small><p>${escapeHtml(content.text)}</p></div>
+        <div><small>${escapeHtml(meta)}</small><p>${escapeHtml(content.text)}</p></div>
         <button class="remove-content" type="button" data-remove-content="${escapeHtml(id)}" aria-label="Quitar contenido">×</button>
       </article>`;
   }).join('');
@@ -352,7 +364,7 @@ function renderGroups() {
     $('groups').innerHTML = `
       <div class="card empty-state">
         <h2>Todavía no hay otros formatos</h2>
-        <p>Creá un seminario, proyecto o ateneo y después mové contenidos de Tecnologías.</p>
+        <p>Creá un seminario, proyecto o ateneo y después elegí contenidos de cualquier área curricular.</p>
         <button class="button accent" type="button" data-empty-add>＋ Crear el primero</button>
       </div>`;
     document.querySelector('[data-empty-add]')?.addEventListener('click', createOtherFormat);
@@ -511,25 +523,33 @@ function renderContents() {
   const assignments = assignmentMap();
   const visible = source.filter((content) => {
     const location = assignments.get(content.id) ?? [];
-    const haystack = `${content.subject} ${content.axis} ${content.text}`.toLocaleLowerCase('es');
+    const haystack = `${content.area} ${content.subject} ${content.axis} ${content.text}`.toLocaleLowerCase('es');
     return (!query || haystack.includes(query))
       && (!subject || content.subject === subject)
       && (!axis || content.axis === axis)
       && (!pendingOnly || !location.length);
   });
   const pending = source.filter((content) => !(assignments.get(content.id)?.length)).length;
-  $('bagMeta').textContent = `${visible.length} visibles · ${pending} pendientes`;
+  $('bagMeta').textContent = currentArea === 'Otros formatos pedagógicos'
+    ? `${visible.length} visibles · ${pending} pendientes en todo el PCI`
+    : `${visible.length} visibles · ${pending} pendientes`;
   $('contentList').innerHTML = visible.length
     ? visible.map((content) => {
         const locations = assignments.get(content.id) ?? [];
         const selected = selectedContentIds.has(content.id);
+        const meta = currentArea === 'Otros formatos pedagógicos'
+          ? `${content.area} · ${content.subject} · ${content.axis || 'Sin eje / bloque'}`
+          : `${content.subject} · ${content.axis || 'Sin eje / bloque'}`;
+        const locationText = locations.map((location) => currentArea === 'Otros formatos pedagógicos'
+          ? `${location.groupName} · ${location.area}`
+          : location.groupName).join(' · ');
         return `
           <article class="content-item ${selected ? 'selected' : ''} ${locations.length ? 'assigned' : ''}" draggable="true" data-content-id="${escapeHtml(content.id)}">
             <input type="checkbox" tabindex="-1" ${selected ? 'checked' : ''} aria-hidden="true">
             <div>
-              <small>${escapeHtml(content.subject)} · ${escapeHtml(content.axis || 'Sin eje / bloque')}</small>
+              <small>${escapeHtml(meta)}</small>
               <p>${escapeHtml(content.text)}</p>
-              ${locations.length ? `<span class="content-location">En ${escapeHtml(locations.map((location) => location.groupName).join(' · '))}</span>` : '<span class="content-location pending-text">Pendiente</span>'}
+              ${locations.length ? `<span class="content-location">En ${escapeHtml(locationText)}</span>` : '<span class="content-location pending-text">Pendiente</span>'}
             </div>
           </article>`;
       }).join('')
