@@ -30,7 +30,6 @@ jobs:
         run: npm test
 
       - name: Verificar sintaxis JavaScript
-        if: always()
         run: |
           node --check app.js
           node --check pci-model.js
@@ -46,8 +45,11 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Ejecutar prueba funcional en navegador
+      - name: Ejecutar regresión de nombres de planes
         if: always()
+        run: node tests/plan-names-regression.mjs
+
+      - name: Ejecutar prueba funcional en navegador
         run: node tests/browser-smoke-v2.mjs
 
       - name: Guardar capturas de la prueba
