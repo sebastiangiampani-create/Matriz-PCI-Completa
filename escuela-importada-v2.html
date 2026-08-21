@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#15374a">
+<title>PCI · Escuela</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f3f7f7;color:#15374a}body{display:flex;flex-direction:column}.top{display:flex;align-items:center;gap:12px;min-height:68px;padding:10px 14px;background:#fff;border-bottom:1px solid #d6e2e5}.logo{width:220px;height:48px;object-fit:contain;object-position:left}.title{margin-right:auto;font-weight:900}.mode{padding:7px 11px;border-radius:999px;background:#e7f8f5;color:#126e65;font-size:.76rem;font-weight:900}.button{padding:9px 12px;border:0;border-radius:11px;background:#e7edef;color:#15374a;text-decoration:none;font-weight:850}.frame{display:block;width:100%;flex:1;border:0;background:#f3f7f7}.notice{padding:8px 14px;background:#15374a;color:#fff;font-size:.8rem;text-align:center}@media(max-width:720px){.logo{width:145px}.title{font-size:.82rem}.mode{display:none}}
+</style>
+</head>
+<body>
+<header class="top">
+<img class="logo" src="logo-oficial-v2.svg" alt="Escuela de Maestros">
+<div id="title" class="title">Matriz PCI</div>
+<span id="modeBadge" class="mode"></span>
+<a class="button" href="portal-pci-v3.html">← Volver</a>
+</header>
+<div id="notice" class="notice"></div>
+<iframe id="appFrame" class="frame" title="Matriz PCI"></iframe>
+<script>
+const params=new URLSearchParams(location.search);
+const SCHOOL_ID=params.get('school')||'importada';
+const SCHOOL_NAME=params.get('name')||'Escuela';
+const MODE=params.get('mode')==='view'?'view':'edit';
+const STORAGE_KEY=`pciImportedState:${SCHOOL_ID}`;
+const frame=document.getElementById('appFrame');
+
+document.title=`${SCHOOL_NAME} · PCI`;
+document.getElementById('title').textContent=`Matriz PCI · ${SCHOOL_NAME}`;
+document.getElementById('modeBadge').textContent=MODE==='view'?'Modo consulta':'Modo edición';
+document.getElementById('notice').textContent=MODE==='view'?'Consulta del PCI de la institución':'Edición del PCI de la institución · guardado de prueba en este navegador';
+
+let initial=localStorage.getItem(STORAGE_KEY);
+if(!initial){initial=JSON.stringify({schemaVersion:10,schoolName:SCHOOL_NAME,areas:{},current:null});}
+try{const state=JSON.parse(initial);state.schoolName=SCHOOL_NAME;initial=JSON.stringify(state);}catch{initial=JSON.stringify({schemaVersion:10,schoolName:SCHOOL_NAME,areas:{},current:null});}
+localStorage.setItem('pciAppV2',initial);
+frame.src=`app.html?v=imported-${encodeURIComponent(SCHOOL_ID)}-${Date.now()}`;
+
+let last='';
+const sync=setInterval(()=>{
+  try{
+    const raw=localStorage.getItem('pciAppV2');
+    if(!raw||raw===last)return;
+    const state=JSON.parse(raw);
+    if(state.schoolName!==SCHOOL_NAME)return;
+    last=raw;
+    if(MODE==='edit')localStorage.setItem(STORAGE_KEY,raw);
+  }catch{}
+},700);
+
+frame.addEventListener('load',()=>{
+  if(MODE!=='view')return;
+  try{
+    const doc=frame.contentDocument;
+    const style=doc.createElement('style');
+    style.textContent='input,textarea,select,[contenteditable="true"],button[data-action],.group-editor,.selection-bar,#addOther,#moveSelected{pointer-events:none!important}.top-actions,.matrix-move-tools,.button-row.no-print{opacity:.75}';
+    doc.head.appendChild(style);
+    doc.addEventListener('beforeinput',e=>e.preventDefault(),true);
+    doc.addEventListener('change',e=>{if(e.target.matches('input,textarea,select')){e.preventDefault();e.stopImmediatePropagation();}},true);
+  }catch{}
+});
+window.addEventListener('beforeunload',()=>clearInterval(sync));
+</script>
+</body>
+</html>
