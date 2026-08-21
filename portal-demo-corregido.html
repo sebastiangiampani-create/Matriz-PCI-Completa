@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Secundaria PCI · Demo corregida</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f7f7}iframe{display:block;width:100%;height:100%;border:0}</style>
+</head>
+<body>
+<iframe id="demoFrame" src="portal-demo-seguro.html?v=20260821-3" title="Secundaria PCI"></iframe>
+<script>
+const frame=document.getElementById('demoFrame');
+frame.addEventListener('load',()=>{
+  try{
+    const doc=frame.contentDocument;
+    if(doc.getElementById('portalDemoFixes'))return;
+    const script=doc.createElement('script');
+    script.id='portalDemoFixes';
+    script.src='portal-demo-fixes.js?v=20260821-1';
+    doc.body.appendChild(script);
+  }catch(error){console.error(error);}
+});
+</script>
+</body>
+</html>
