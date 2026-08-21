@@ -234,34 +234,15 @@ export function migrateState(rawState = {}) {
 
 function deduplicateAssignments(state) {
   const seenBySource = new Map();
-  const assignedOutsideOther = new Set();
-  const otherGroups = [];
-
   for (const { area, group } of allGroups(state)) {
-    if (area === 'Otros formatos pedagógicos') {
-      otherGroups.push(group);
-      continue;
-    }
     const sourceArea = sourceAreaFor(area);
     const seen = seenBySource.get(sourceArea) ?? new Set();
     group.items = group.items.filter((id) => {
-      const key = String(id);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      assignedOutsideOther.add(key);
+      if (seen.has(id)) return false;
+      seen.add(id);
       return true;
     });
     seenBySource.set(sourceArea, seen);
-  }
-
-  const seenOther = new Set(assignedOutsideOther);
-  for (const group of otherGroups) {
-    group.items = group.items.filter((id) => {
-      const key = String(id);
-      if (seenOther.has(key)) return false;
-      seenOther.add(key);
-      return true;
-    });
   }
 }
 
@@ -317,15 +298,9 @@ export function moveContents(state, targetGroupId, contentIds) {
   const sourceArea = sourceAreaFor(target.area);
   const ids = uniqueIds(contentIds);
   const allowed = new Set(ids);
-  const otherArea = 'Otros formatos pedagógicos';
-  const movingToOther = target.area === otherArea;
-  const movingFromOther = allGroups(state).some(({ area, group }) =>
-    area === otherArea && group.items.some((id) => allowed.has(String(id))),
-  );
-  const moveAcrossAllAreas = movingToOther || movingFromOther;
 
   for (const { area, group } of allGroups(state)) {
-    if (!moveAcrossAllAreas && sourceAreaFor(area) !== sourceArea) continue;
+    if (sourceAreaFor(area) !== sourceArea) continue;
     group.items = group.items.filter((id) => !allowed.has(String(id)));
   }
   target.group.items.push(...ids.filter((id) => !target.group.items.includes(id)));
