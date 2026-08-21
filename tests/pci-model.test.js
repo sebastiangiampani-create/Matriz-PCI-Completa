@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   addOtherFormat,
+  AREA_CONFIG,
   migrateState,
   moveContents,
   moveGroupToTerm,
@@ -84,42 +85,31 @@ test('la migración reconoce termStart y normaliza clases antiguas', () => {
   assert.deepEqual(group.items, ['natural-4']);
 });
 
-test('otros formatos recibe contenidos de cualquier área y permite devolverlos sin duplicar', () => {
+test('mover contenidos reasigna sin duplicar dentro de la misma bolsa', () => {
   const state = migrateState({});
-  const [techFirst, techSecond] = state.areas.Tecnologías.groups;
-  const [mathFirst] = state.areas.Matemática.groups;
-  techFirst.items = ['tec-1', 'tec-2'];
-  mathFirst.items = ['mat-1'];
-
-  moveContents(state, techSecond.id, ['tec-1', 'tec-2']);
-  assert.deepEqual(techFirst.items, []);
-  assert.deepEqual(techSecond.items, ['tec-1', 'tec-2']);
+  const [first, second] = state.areas.Tecnologías.groups;
+  first.items = ['c1', 'c2'];
+  moveContents(state, second.id, ['c1', 'c2']);
+  assert.deepEqual(first.items, []);
+  assert.deepEqual(second.items, ['c1', 'c2']);
 
   const other = addOtherFormat(state);
-  moveContents(state, other.id, ['tec-1', 'mat-1']);
-  assert.deepEqual(techSecond.items, ['tec-2']);
-  assert.deepEqual(mathFirst.items, []);
-  assert.deepEqual(other.items, ['tec-1', 'mat-1']);
-
-  moveContents(state, mathFirst.id, ['mat-1']);
-  assert.deepEqual(other.items, ['tec-1']);
-  assert.deepEqual(mathFirst.items, ['mat-1']);
+  moveContents(state, other.id, ['c1']);
+  assert.deepEqual(second.items, ['c2']);
+  assert.deepEqual(other.items, ['c1']);
+  assert.equal(AREA_CONFIG['Otros formatos pedagógicos'].sourceArea, 'Tecnologías');
 });
 
-test('la migración conserva bolsas normales y evita duplicados dentro de otros formatos', () => {
+test('la migración elimina duplicados previos sin afectar otras bolsas', () => {
   const state = migrateState({
     areas: {
       Tecnologías: { groups: [{ items: ['c1'] }, { items: ['c1', 'c2'] }] },
       Artes: { groups: [{ items: ['c1'] }] },
-      'Otros formatos pedagógicos': {
-        groups: [{ id: 'otro-1', kind: 'other', items: ['c1', 'c3'] }],
-      },
     },
   });
   assert.deepEqual(state.areas.Tecnologías.groups[0].items, ['c1']);
   assert.deepEqual(state.areas.Tecnologías.groups[1].items, ['c2']);
   assert.deepEqual(state.areas.Artes.groups[0].items, ['c1']);
-  assert.deepEqual(state.areas['Otros formatos pedagógicos'].groups[0].items, ['c3']);
 });
 
 test('un formato anual siempre ocupa un nivel completo', () => {
