@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#15374a">
+<title>PCI · Escuela</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f3f7f7;color:#15374a}body{display:flex;flex-direction:column}.top{display:flex;align-items:center;gap:12px;min-height:64px;padding:9px 14px;background:#fff;border-bottom:1px solid #d6e2e5}.top img{width:190px;height:44px;object-fit:contain;object-position:left}.title{margin-right:auto;font-weight:900}.mode{padding:6px 10px;border-radius:999px;background:#e7f8f5;color:#126e65;font-size:.76rem;font-weight:900}.button{padding:9px 12px;border:0;border-radius:11px;background:#e7edef;color:#15374a;text-decoration:none;font-weight:850;cursor:pointer}.frame{display:block;width:100%;flex:1;border:0;background:#f3f7f7}.notice{position:fixed;left:50%;bottom:18px;z-index:50;transform:translateX(-50%);max-width:min(760px,92vw);padding:10px 14px;border-radius:12px;background:#15374a;color:#fff;font-size:.82rem;box-shadow:0 12px 30px #15374a30}@media(max-width:720px){.top img{width:135px}.title{font-size:.8rem}.mode{display:none}}
+</style>
+</head>
+<body>
+<header class="top"><img src="logo-oficial-v2.svg" alt="Escuela de Maestros"><div id="title" class="title">PCI</div><span id="modeBadge" class="mode"></span><a class="button" href="portal-demo-corregido.html">← Volver</a></header>
+<iframe id="frame" class="frame" title="Matriz PCI"></iframe>
+<div id="notice" class="notice"></div>
+<script>
+const p=new URLSearchParams(location.search);const id=p.get('school')||'preview';const name=p.get('name')||'Escuela';const mode=p.get('mode')==='view'?'view':'edit';
+document.title=`${name} · PCI`;document.getElementById('title').textContent=`Matriz PCI · ${name}`;document.getElementById('modeBadge').textContent=mode==='view'?'Modo consulta':'Modo edición';document.getElementById('notice').textContent=mode==='view'?'Vista de consulta: los cambios están bloqueados en esta demostración.':'Vista de edición de prueba: los cambios quedan solo en este navegador hasta conectar el backend de escuelas reales.';
+const backup=localStorage.getItem('pciAppV2');sessionStorage.setItem('pci_preview_backup',backup===null?'__NULL__':backup);
+const key=`pciImportedPreview:${id}`;let saved=localStorage.getItem(key);if(!saved){saved=JSON.stringify({schemaVersion:10,schoolName:name,areas:{},current:null});localStorage.setItem(key,saved);}else{try{const s=JSON.parse(saved);s.schoolName=name;saved=JSON.stringify(s);}catch{}}
+localStorage.setItem('pciAppV2',saved);
+const frame=document.getElementById('frame');frame.src=`app.html?v=imported-preview-${encodeURIComponent(id)}-${Date.now()}`;
+function persist(){const raw=localStorage.getItem('pciAppV2');if(raw)localStorage.setItem(key,raw);}
+setInterval(persist,1200);
+function protectReadOnly(){if(mode!=='view')return;try{const doc=frame.contentDocument;if(!doc)return;const blocker=(e)=>{const t=e.target;if(t.closest?.('[data-screen-link],#brandHome,#backOverview,#overviewControl,#overviewMatrix,#printControl,#printMatrix'))return;e.preventDefault();e.stopImmediatePropagation();};['input','change','submit','drop','dragstart'].forEach(type=>doc.addEventListener(type,blocker,true));doc.addEventListener('click',e=>{const t=e.target;if(t.closest?.('input,textarea,select,[contenteditable="true"],button:not([data-screen-link]):not(#brandHome):not(#backOverview):not(#overviewControl):not(#overviewMatrix):not(#printControl):not(#printMatrix)'))blocker(e);},true);doc.querySelectorAll('input,textarea,select,[contenteditable="true"]').forEach(el=>{el.disabled=true;el.setAttribute('contenteditable','false');});}catch(err){console.warn(err);}}
+frame.addEventListener('load',()=>setTimeout(protectReadOnly,500));
+window.addEventListener('beforeunload',()=>{persist();const b=sessionStorage.getItem('pci_preview_backup');if(b==='__NULL__')localStorage.removeItem('pciAppV2');else if(b!==null)localStorage.setItem('pciAppV2',b);sessionStorage.removeItem('pci_preview_backup');});
+</script>
+</body></html>
