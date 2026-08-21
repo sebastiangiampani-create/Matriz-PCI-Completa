@@ -58,24 +58,10 @@
     return (window.schools || schools || []).find((s) => String(s.id) === String(id));
   }
 
-  function showDemoSchool(school, mode) {
+  function openSchool(school, mode) {
     if (!school) return;
-    const existing = document.getElementById('demoSchoolModal');
-    if (existing) existing.remove();
-    const modal = document.createElement('div');
-    modal.id = 'demoSchoolModal';
-    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:rgba(21,55,74,.45)';
-    modal.innerHTML = `
-      <div style="width:min(620px,100%);padding:24px;border-radius:22px;background:#fff;box-shadow:0 24px 70px #15374a40">
-        <div style="font-size:.75rem;font-weight:900;color:#126e65;text-transform:uppercase;letter-spacing:.08em">Vista de demostración</div>
-        <h2 style="margin:8px 0 4px">${esc(school.name)}</h2>
-        <p style="margin:0 0 14px;color:#6a7b84">CUE: ${esc(school.cue || '—')}</p>
-        <p style="line-height:1.5">En producción, este botón abrirá el PCI propio de esta escuela en modo <strong>${mode === 'edit' ? 'edición' : 'consulta'}</strong>. En esta rama no se crea todavía un PCI real para las escuelas importadas, para no tocar las escuelas muestra ni publicar credenciales.</p>
-        <div style="display:flex;gap:8px;justify-content:flex-end"><button class="button primary" type="button" data-close-demo>Cerrar</button></div>
-      </div>`;
-    document.body.appendChild(modal);
-    modal.querySelector('[data-close-demo]').onclick = () => modal.remove();
-    modal.onclick = (event) => { if (event.target === modal) modal.remove(); };
+    const params = new URLSearchParams({ school: school.id, name: school.name, mode });
+    window.open(`escuela-importada-preview.html?${params.toString()}`, '_blank', 'noopener');
   }
 
   document.addEventListener('click', async (event) => {
@@ -83,11 +69,11 @@
     if (!row) return;
     const school = findSchoolFromRow(row);
     if (event.target.closest('[data-demo-open]')) {
-      showDemoSchool(school, 'edit');
+      openSchool(school, 'edit');
       return;
     }
     if (event.target.closest('[data-demo-view]')) {
-      showDemoSchool(school, 'view');
+      openSchool(school, 'view');
       return;
     }
     if (event.target.closest('[data-demo-copy]')) {
