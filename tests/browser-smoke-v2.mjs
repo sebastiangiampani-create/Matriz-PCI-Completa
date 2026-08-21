@@ -99,6 +99,60 @@ try {
   assert.match(await page.locator('#coverageHint').textContent(), /tres ejes/);
   await page.screenshot({ path: `${ARTIFACTS}/03-artes-regla-curricular.png`, fullPage: true });
 
+  const planGroup = page.locator('.group-card').first();
+  const planGroupId = await planGroup.getAttribute('data-group-id');
+  const originalGroupName = await planGroup.locator('[data-field="name"]').inputValue();
+  const renamedGroup = `${originalGroupName} · regresión`;
+  const customPlanName = 'Plan personalizado · regresión';
+
+  await planGroup.locator('[data-pci-plan-entry] button').click();
+  await page.waitForSelector('#pciPlansBackdrop:not([hidden])');
+  assert.ok(
+    await page.locator('.pci-plan-card p').first().textContent().then((name) => name.includes(originalGroupName)),
+    'El nombre automático del plan debe incluir el nombre del agrupamiento.',
+  );
+
+  await page.locator('[data-open-plan="1"]').click();
+  await page.locator('[data-plan-field="name"]').fill(customPlanName);
+  await page.locator('#pciPlanForm button[type="submit"]').click();
+  await page.waitForSelector('.pci-plan-grid');
+  assert.equal(await page.locator('.pci-plan-card p').first().textContent(), customPlanName, 'La edición manual del nombre debe conservarse.');
+  await page.locator('[data-plans-close]').click();
+  await page.waitForSelector('#pciPlansBackdrop', { state: 'hidden' });
+
+  const renamedCard = page.locator(`[data-group-id="${planGroupId}"]`);
+  await renamedCard.locator('[data-field="name"]').fill(renamedGroup);
+  await renamedCard.locator('[data-pci-plan-entry] button').click();
+  await page.waitForSelector('#pciPlansBackdrop:not([hidden])');
+  const visiblePlanNames = await page.locator('.pci-plan-card p').allTextContents();
+  assert.equal(visiblePlanNames[0], customPlanName, 'Renombrar el agrupamiento no debe pisar un nombre manual.');
+  assert.ok(
+    visiblePlanNames.slice(1).every((name) => name.includes(renamedGroup)),
+    'Los nombres automáticos deben sincronizarse con el nuevo nombre del agrupamiento.',
+  );
+
+  await page.evaluate(async () => {
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    window.__pciPlanNameMutations = 0;
+    const shell = document.getElementById('pciPlansShell');
+    const observer = new MutationObserver((records) => { window.__pciPlanNameMutations += records.length; });
+    observer.observe(shell, { childList: true, subtree: true, characterData: true });
+    window.__pciPlanNameObserver = observer;
+  });
+  await page.waitForTimeout(300);
+  assert.equal(
+    await page.evaluate(() => window.__pciPlanNameMutations),
+    0,
+    'La vista estable de planes no debe seguir generando mutaciones (regresión del bucle).',
+  );
+
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('#pciPlansBackdrop', { state: 'hidden' });
+  await renamedCard.locator('[data-pci-plan-entry] button').click();
+  await page.waitForSelector('#pciPlansBackdrop:not([hidden])');
+  await page.locator('[data-plans-close]').click();
+  await page.waitForSelector('#pciPlansBackdrop', { state: 'hidden' });
+
   await page.evaluate(() => window.PCIApp.openArea('Educación Física'));
   await page.waitForFunction(() => document.querySelector('#boardAlert')?.textContent.includes('Regla curricular de Educación Física'));
   for (const label of ['Deportes abiertos', 'Deportes cerrados / Atletismo', 'Gimnasia en sus diferentes expresiones', 'Gimnasia para la formación corporal', 'Juegos']) {
