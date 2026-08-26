@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Matriz PCI Tecnica</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="topbar no-print">
+    <strong>PCI Tecnica · 6 niveles · C1-C12</strong>
+    <nav class="nav">
+      <button class="btn" data-screen="overview">Inicio</button>
+      <button class="btn" data-screen="control">Tabla de control</button>
+      <button class="btn primary" data-screen="matrix">Matriz completa</button>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section id="overview" class="screen active">
+      <div class="hero">
+        <div>
+          <p class="muted">Aplicacion independiente para escuelas tecnicas</p>
+          <h1 id="overviewTitle">Escuela Tecnica</h1>
+          <p class="lead">Seis niveles, doce periodos y estructura curricular propia. La base de contenidos priorizados se incorporara en una etapa posterior.</p>
+        </div>
+        <label class="school-field">Nombre visible de la escuela
+          <input id="schoolName" value="Escuela Tecnica" maxlength="120">
+        </label>
+      </div>
+      <div class="notice">Los dos talleres especiales quedan creados como pendientes de definicion temporal hasta confirmar su modalidad.</div>
+      <div class="section-head"><div><h2>Estructura curricular tecnica</h2><p class="muted">Selecciona un area para editar sus espacios.</p></div></div>
+      <div id="areaGrid" class="area-grid"></div>
+    </section>
+
+    <section id="board" class="screen">
+      <div class="section-head">
+        <div><button class="btn" data-screen="overview">Volver</button><h1 id="boardTitle"></h1><p id="boardDescription" class="lead"></p></div>
+      </div>
+      <div class="card">
+        <strong id="coverageLabel">0 de 0 contenidos ubicados</strong>
+        <div class="progress"><span id="coverageBar" style="width:0%"></span></div>
+      </div>
+      <div class="workspace" style="margin-top:16px">
+        <aside class="card content-bag">
+          <h2>Bolsa de contenidos</h2>
+          <p id="bagMeta" class="muted"></p>
+          <div class="filters">
+            <input id="contentSearch" type="search" placeholder="Buscar contenido, materia o eje">
+            <select id="contentArea"><option value="">Todas las areas</option></select>
+            <select id="contentSubject"><option value="">Todas las materias</option></select>
+            <select id="contentAxis"><option value="">Todos los ejes</option></select>
+          </div>
+          <div id="contentList" class="content-list"></div>
+          <div style="margin-top:12px">
+            <strong id="selectionCount">0 seleccionados</strong>
+            <p id="selectionTarget" class="muted">Elegi un espacio de destino.</p>
+            <button id="assignSelected" class="btn primary" disabled>Asignar seleccionados</button>
+          </div>
+        </aside>
+        <div id="groups" class="group-list"></div>
+      </div>
+    </section>
+
+    <section id="control" class="screen">
+      <div class="section-head"><div><button class="btn" data-screen="overview">Volver</button><h1>Tabla de control</h1><p class="lead">Cada contenido muestra el espacio tecnico donde esta asignado.</p></div><button id="exportCsv" class="btn primary no-print">Descargar CSV</button></div>
+      <div class="report-filters no-print">
+        <input id="controlSearch" type="search" placeholder="Buscar contenido o espacio">
+        <select id="controlArea"><option value="">Todas las areas</option></select>
+        <select id="controlStatus"><option value="">Todos</option><option value="pending">Pendientes</option><option value="assigned">Asignados</option></select>
+        <button id="printControl" class="btn">Imprimir</button>
+      </div>
+      <p id="controlCount" class="muted"></p>
+      <div class="table-wrap"><table><thead><tr><th>Area</th><th>Materia</th><th>Eje</th><th>Contenido priorizado</th><th>Espacio asignado</th></tr></thead><tbody id="controlRows"></tbody></table></div>
+    </section>
+
+    <section id="matrix" class="screen">
+      <div class="section-head"><div><button class="btn" data-screen="overview">Volver</button><h1>Matriz Tecnica C1-C12</h1><p class="lead">Los espacios no anuales pueden moverse entre periodos. Los anuales mantienen el par correspondiente a cada nivel.</p></div><button id="printMatrix" class="btn no-print">Imprimir</button></div>
+      <div class="matrix-tools no-print">
+        <select id="matrixGroup"></select>
+        <select id="matrixPeriod"></select>
+        <button id="moveMatrix" class="btn primary">Mover</button>
+        <span></span>
+      </div>
+      <div class="matrix-scroll"><table id="matrixTable" class="matrix"></table></div>
+      <div id="pendingWorkshops" class="notice" style="margin-top:14px"></div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
