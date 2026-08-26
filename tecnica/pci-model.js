@@ -1,4 +1,5 @@
 export const PERIODS = Array.from({ length: 12 }, (_, index) => index + 1);
+export const INTEGRATION_PERIODS = PERIODS.slice(0, 8);
 
 export const LEVELS = Array.from({ length: 6 }, (_, index) => ({
   number: index + 1,
@@ -17,8 +18,20 @@ export const AREA_CONFIG = {
   'Lengua y Literatura': { kind: 'annual', count: 6, singular: 'Nivel' },
   Matematica: { kind: 'annual', count: 6, singular: 'Nivel' },
   'Lenguas Adicionales': { kind: 'annual', count: 6, singular: 'Nivel' },
-  'Ciencias Naturales': { kind: 'integration', count: 6, singular: 'Espacio de Integracion' },
-  'Ciencias Sociales': { kind: 'integration', count: 8, singular: 'Espacio de Integracion' },
+  'Ciencias Naturales': {
+    kind: 'integration',
+    count: 6,
+    singular: 'Espacio de Integracion',
+    defaultPeriods: [1, 2, 3, 4, 5, 6],
+    allowedPeriods: INTEGRATION_PERIODS,
+  },
+  'Ciencias Sociales': {
+    kind: 'integration',
+    count: 8,
+    singular: 'Espacio de Integracion',
+    defaultPeriods: INTEGRATION_PERIODS,
+    allowedPeriods: INTEGRATION_PERIODS,
+  },
   'Educacion Fisica': {
     kind: 'formative',
     count: 12,
@@ -55,6 +68,13 @@ export function levelForPeriod(period) {
 export function periodsForLevel(levelNumber) {
   const level = LEVELS.find((item) => item.number === Number(levelNumber));
   return level ? [level.startPeriod, level.endPeriod] : [1, 2];
+}
+
+export function allowedPeriodsForGroup(group) {
+  const config = AREA_CONFIG[group?.area];
+  return Array.isArray(config?.allowedPeriods) && config.allowedPeriods.length
+    ? [...config.allowedPeriods]
+    : [...PERIODS];
 }
 
 function createGroup(area, index) {
@@ -96,7 +116,7 @@ function createGroup(area, index) {
 
 export function createInitialState() {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     profile: 'tecnica',
     schoolName: 'Escuela Tecnica',
     currentArea: null,
@@ -142,7 +162,10 @@ export function migrateState(raw = {}) {
         Object.assign(merged, { startPeriod: null, endPeriod: null, level: null });
       } else {
         const p = Number(merged.startPeriod);
-        const safePeriod = Number.isInteger(p) && p >= 1 && p <= 12 ? p : template.startPeriod;
+        const allowedPeriods = Array.isArray(config.allowedPeriods) && config.allowedPeriods.length
+          ? config.allowedPeriods
+          : PERIODS;
+        const safePeriod = Number.isInteger(p) && allowedPeriods.includes(p) ? p : template.startPeriod;
         Object.assign(merged, {
           startPeriod: safePeriod,
           endPeriod: safePeriod,
@@ -192,7 +215,13 @@ export function moveGroupToPeriod(state, groupId, period) {
   if (target.group.kind === 'annual') throw new Error('Los espacios anuales mantienen sus dos periodos por nivel.');
   if (target.group.pendingDefinition) throw new Error('Este taller esta pendiente de definicion y todavia no tiene ubicacion temporal.');
   const value = Number(period);
-  if (!Number.isInteger(value) || value < 1 || value > 12) throw new Error('Periodo invalido.');
+  const allowedPeriods = allowedPeriodsForGroup(target.group);
+  if (!Number.isInteger(value) || !allowedPeriods.includes(value)) {
+    if (target.group.kind === 'integration') {
+      throw new Error('Los Espacios de Integracion se pueden ubicar solamente entre C1 y C8.');
+    }
+    throw new Error('Periodo invalido.');
+  }
   Object.assign(target.group, {
     startPeriod: value,
     endPeriod: value,
