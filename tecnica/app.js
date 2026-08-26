@@ -3,6 +3,7 @@ import {
   AREA_ORDER,
   PERIODS,
   allGroups,
+  allowedPeriodsForGroup,
   assignContents,
   createInitialState,
   findGroup,
@@ -61,7 +62,10 @@ async function loadContents() {
 function areaDescription(area) {
   const config = AREA_CONFIG[area];
   if (config.kind === 'annual') return '6 niveles anuales, cada uno ocupa dos periodos.';
-  if (config.kind === 'integration') return `${config.count} Espacios de Integracion, con cualidad Obligatorio/Electivo y ubicacion C1-C12.`;
+  if (config.kind === 'integration') {
+    const initial = area === 'Ciencias Naturales' ? 'C1-C6' : 'C1-C8';
+    return `${config.count} Espacios de Integracion, inicialmente distribuidos en ${initial}, con cualidad Obligatorio/Electivo y movimiento permitido entre C1-C8.`;
+  }
   if (config.kind === 'formative') return `${config.count} Espacios Formativos con ubicacion C1-C12.`;
   return 'Taller especial pendiente de confirmar modalidad y duracion.';
 }
@@ -154,7 +158,7 @@ function groupFields(group) {
   const isIntegration = group.kind === 'integration';
   const isFormative = group.kind === 'formative';
   const movable = group.kind !== 'annual' && !group.pendingDefinition;
-  const periodOptions = PERIODS.map((period) => `<option value="${period}" ${group.startPeriod === period ? 'selected' : ''}>C${period}</option>`).join('');
+  const periodOptions = allowedPeriodsForGroup(group).map((period) => `<option value="${period}" ${group.startPeriod === period ? 'selected' : ''}>C${period}</option>`).join('');
   return `<div class="editor-grid">
     <label class="full">Nombre<input data-field="name" value="${esc(group.name)}"></label>
     ${group.kind !== 'annual' ? `<label>Cualidad<select data-field="type"><option ${group.type === 'Obligatorio' ? 'selected' : ''}>Obligatorio</option><option ${group.type === 'Electivo' ? 'selected' : ''}>Electivo</option></select></label>` : ''}
@@ -223,6 +227,18 @@ function renderControl() {
   $('controlRows').innerHTML = rows.length ? rows.map(({ item, locations }) => `<tr><td>${esc(item.area)}</td><td>${esc(item.subject)}</td><td>${esc(item.axis)}</td><td>${esc(item.content)}</td><td>${locations.length ? locations.map((location) => esc(`${location.area} · ${location.groupName}`)).join('<br>') : '<span class="muted">Pendiente</span>'}</td></tr>`).join('') : '<tr><td colspan="5" class="muted">La base de contenidos Tecnica aun no fue cargada.</td></tr>';
 }
 
+function syncMatrixPeriodOptions() {
+  const group = findGroup(state, $('matrixGroup').value)?.group;
+  const allowed = group ? allowedPeriodsForGroup(group) : PERIODS;
+  const previous = Number($('matrixPeriod').value);
+  $('matrixPeriod').innerHTML = allowed.map((period) => `<option value="${period}">C${period}</option>`).join('');
+  if (group?.startPeriod && allowed.includes(group.startPeriod)) {
+    $('matrixPeriod').value = String(group.startPeriod);
+  } else if (allowed.includes(previous)) {
+    $('matrixPeriod').value = String(previous);
+  }
+}
+
 function renderMatrix() {
   const slots = matrixSlots(state);
   const header = '<tr><th>Area / espacio</th>' + PERIODS.map((period) => `<th>C${period}</th>`).join('') + '</tr>';
@@ -240,7 +256,7 @@ function renderMatrix() {
   const previous = groupSelect.value;
   groupSelect.innerHTML = movable.map(({ area, group }) => `<option value="${esc(group.id)}">${esc(area)} · ${esc(group.name)}</option>`).join('');
   if (movable.some(({ group }) => group.id === previous)) groupSelect.value = previous;
-  $('matrixPeriod').innerHTML = PERIODS.map((period) => `<option value="${period}">C${period}</option>`).join('');
+  syncMatrixPeriodOptions();
 
   const pending = allGroups(state).filter(({ group }) => group.pendingDefinition).map(({ area, group }) => `${area}: ${group.name}`);
   $('pendingWorkshops').textContent = pending.length ? `Talleres pendientes de definicion temporal: ${pending.join(' · ')}` : '';
@@ -352,6 +368,7 @@ $('assignSelected').addEventListener('click', () => {
 
 $('contentSearch').addEventListener('input', renderContentBag);
 $('controlSearch').addEventListener('input', renderControl);
+$('matrixGroup').addEventListener('change', syncMatrixPeriodOptions);
 $('moveMatrix').addEventListener('click', () => {
   const groupId = $('matrixGroup').value;
   if (!groupId) return;
