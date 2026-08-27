@@ -23,14 +23,14 @@ function customItems(group) {
   return group.customItems;
 }
 
-function persistAndRefresh() {
+function persistAndRefresh(groupId = null) {
   const state = getState();
   if (!state) return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   window.app = state;
   window.dispatchEvent(new CustomEvent('pci-state-change', { detail: { schemaVersion: 10 } }));
   const current = state.current;
-  if (current) window.PCIApp?.openArea?.(current);
+  if (current) window.PCIApp?.openArea?.(current, groupId);
 }
 
 function makeCustomId() {
@@ -80,14 +80,14 @@ function addCustomContent(card) {
   if (!text) return input.focus();
   customItems(found.group).push({ id: makeCustomId(), text });
   input.value = '';
-  persistAndRefresh();
+  persistAndRefresh(found.group.id);
 }
 
 function removeCustomContent(card, customId) {
   const found = findGroup(card.dataset.groupId);
   if (!found) return;
   found.group.customItems = customItems(found.group).filter((item) => String(item.id) !== String(customId));
-  persistAndRefresh();
+  persistAndRefresh(found.group.id);
 }
 
 function updateMatrixCustomCounts() {
@@ -97,7 +97,8 @@ function updateMatrixCustomCounts() {
     if (!found || !small) return;
     const count = customItems(found.group).length;
     const base = small.textContent.replace(/ · \d+ otros?$/, '');
-    small.textContent = count ? `${base} · ${count} ${count === 1 ? 'otro' : 'otros'}` : base;
+    const desired = count ? `${base} · ${count} ${count === 1 ? 'otro' : 'otros'}` : base;
+    if (small.textContent !== desired) small.textContent = desired;
   });
 }
 
@@ -107,7 +108,10 @@ function injectMatrixDetailCustomContents() {
   const found = findGroup(panel.dataset.groupId);
   if (!found) return;
   const items = customItems(found.group);
+  const signature = `${panel.dataset.groupId}:${items.map((item) => `${item.id}:${item.text}`).join('|')}`;
+  if (panel.dataset.customSignature === signature) return;
   panel.querySelectorAll('[data-custom-detail]').forEach((node) => node.remove());
+  panel.dataset.customSignature = signature;
   if (!items.length) return;
   const anchor = panel.querySelector('.matrix-content-list');
   if (!anchor) return;
@@ -165,7 +169,7 @@ function handleWorkshopTermChange(event) {
   );
   if (occupied.length >= capacity) assignTerm(occupied[0], origin);
   assignTerm(group, term);
-  persistAndRefresh();
+  persistAndRefresh(group.id);
 }
 
 document.addEventListener('change', handleWorkshopTermChange, true);
