@@ -14,6 +14,7 @@ export const TECHNICAL_PROFILE = {
   periods: 12,
 };
 
+const C1_C6 = [1, 2, 3, 4, 5, 6];
 const C1_C8 = [1, 2, 3, 4, 5, 6, 7, 8];
 const C1_C12 = PERIODS;
 
@@ -73,8 +74,8 @@ export const AREA_CONFIG = {
     count: 6,
     singular: 'Espacio Formativo',
     sourceArea: 'Tecnología de la Representación',
-    defaultTerms: [],
-    allowedTerms: C1_C12,
+    defaultTerms: C1_C6,
+    allowedTerms: C1_C6,
   },
   'Talleres': {
     kind: 'technical-workshop',
@@ -397,6 +398,12 @@ export function validateStructure(state) {
   const arts = state.areas?.['Educación Artística']?.groups ?? [];
   if (arts.length !== 2 || arts.some((group) => ![1, 2].includes(group.startTerm))) {
     errors.push('Educación Artística debe tener 2 Espacios Formativos y ambos deben permanecer en Nivel 1 (C1–C2).');
+  }
+
+  const representation = state.areas?.['Tecnología de la Representación']?.groups ?? [];
+  if (representation.length !== 6) errors.push('Tecnología de la Representación debe tener 6 Espacios Formativos.');
+  if (representation.some((group) => !C1_C6.includes(group.startTerm))) {
+    errors.push('Tecnología de la Representación debe ubicarse únicamente en Niveles 1, 2 y 3 (C1–C6).');
   }
 
   const workshops = state.areas?.Talleres?.groups ?? [];
