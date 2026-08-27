@@ -99,6 +99,34 @@ function hasTutoria(group) {
   return (group?.items ?? []).some((id) => String(id).startsWith('tutoria-'));
 }
 
+function assignQuarter(group, term) {
+  Object.assign(group, {
+    startTerm: term,
+    endTerm: term,
+    level: base.levelForTerm(term),
+  });
+}
+
+function workshopCapacity(area) {
+  return area === 'Artes' ? 2 : 1;
+}
+
+function normalizeWorkshopCapacity(state, area) {
+  const groups = state.areas?.[area]?.groups ?? [];
+  const capacity = workshopCapacity(area);
+  const used = new Map();
+  for (const group of groups) {
+    let term = termOf(group);
+    const occupied = used.get(term) ?? 0;
+    if (!term || term < 1 || term > 10 || occupied >= capacity) {
+      term = base.TERM_LABELS.map((_, index) => index + 1)
+        .find((candidate) => (used.get(candidate) ?? 0) < capacity) ?? 1;
+    }
+    used.set(term, (used.get(term) ?? 0) + 1);
+    assignQuarter(group, term);
+  }
+}
+
 export function sourceAreaFor(area) {
   if (area === 'Otros formatos pedagógicos') return 'Otros formatos pedagógicos';
   return base.sourceAreaFor(area);
@@ -119,6 +147,9 @@ export function migrateState(rawState = {}) {
 
   const migratedSocial = state.areas['Ciencias Sociales'].groups;
   mapTermsByOccurrence(migratedSocial, LEGACY_SOCIAL_TERMS, SOCIAL_TERMS);
+  normalizeWorkshopCapacity(state, 'Artes');
+  normalizeWorkshopCapacity(state, 'Tecnologías');
+  normalizeWorkshopCapacity(state, 'Educación Física');
   state.curriculumRules = normalizeCurriculumRules();
   return state;
 }
@@ -152,6 +183,25 @@ export function moveGroupToTerm(state, groupId, requestedTerm) {
   if (group.kind === 'other' && hasTutoria(group) && base.levelForTerm(term) > 2) {
     throw new Error('Tutoría solo puede ubicarse en Nivel 1 o Nivel 2 (C1-C4).');
   }
+
+  if (group.kind === 'workshop') {
+    if (group.startTerm === term) return { group, swapped: null };
+    const groups = state.areas?.[area]?.groups ?? [];
+    const capacity = workshopCapacity(area);
+    const occupied = groups.filter(
+      (candidate) => candidate.id !== group.id
+        && candidate.kind === 'workshop'
+        && Number(candidate.startTerm) === term,
+    );
+    let swapped = null;
+    if (occupied.length >= capacity) {
+      swapped = occupied[0];
+      assignQuarter(swapped, Number(group.startTerm));
+    }
+    assignQuarter(group, term);
+    return { group, swapped };
+  }
+
   if (group.kind !== 'laboratory' || area !== 'Ciencias Sociales') {
     return base.moveGroupToTerm(state, groupId, term);
   }
@@ -164,13 +214,9 @@ export function moveGroupToTerm(state, groupId, requestedTerm) {
   let swapped = null;
   if (targetGroups.length >= capacity) {
     swapped = targetGroups[0];
-    Object.assign(swapped, {
-      startTerm: group.startTerm,
-      endTerm: group.startTerm,
-      level: base.levelForTerm(group.startTerm),
-    });
+    assignQuarter(swapped, Number(group.startTerm));
   }
-  Object.assign(group, { startTerm: term, endTerm: term, level: base.levelForTerm(term) });
+  assignQuarter(group, term);
   return { group, swapped };
 }
 
@@ -181,6 +227,18 @@ export function validateStructure(state) {
   const socialTerms = state.areas['Ciencias Sociales'].groups.map((group) => group.startTerm).sort((a, b) => a - b);
   if (JSON.stringify(socialTerms) !== JSON.stringify(SOCIAL_TERMS)) {
     errors.push('Ciencias Sociales debe tener 12 laboratorios, con simultaneidad en C5 y C6.');
+  }
+
+  for (const area of ['Tecnologías', 'Educación Física']) {
+    const counts = countsFor(state.areas?.[area]?.groups ?? []);
+    if ([...counts.values()].some((count) => count > 1)) {
+      errors.push(`${area}: debe haber como máximo un taller por cuatrimestre.`);
+    }
+  }
+
+  const artCounts = countsFor(state.areas?.Artes?.groups ?? []);
+  if ([...artCounts.values()].some((count) => count > 2)) {
+    errors.push('Artes: puede haber como máximo dos talleres simultáneos por cuatrimestre.');
   }
   return errors;
 }
