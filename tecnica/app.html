@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#15374a">
   <title>PCI Técnica · Matriz curricular</title>
   <link rel="stylesheet" href="../app.css?v=20260826-1">
-  <link rel="stylesheet" href="app.css?v=20260827-4">
+  <link rel="stylesheet" href="app.css?v=20260827-5">
   <script type="importmap">
   {
     "imports": {
@@ -64,7 +64,7 @@
         <div class="button-row"><button id="openBagMobile" class="button primary mobile-only" type="button">Elegir contenidos</button></div>
       </div>
       <div class="coverage-card">
-        <div><strong id="coverageLabel">0 de 0 contenidos ubicados</strong><span id="coverageHint">Un mismo contenido puede formar parte de más de un espacio.</span></div>
+        <div><strong id="coverageLabel">0 de 0 contenidos ubicados</strong><span id="coverageHint">Cada contenido priorizado cuenta una sola vez, aunque se use en varios espacios. Los contenidos adicionales no computan en cobertura.</span></div>
         <div class="progress-track" aria-hidden="true"><span id="coverageBar"></span></div>
       </div>
       <div id="boardAlert" class="notice warning" hidden></div>
@@ -100,7 +100,7 @@
           <button class="text-button" type="button" data-screen-link="overview">← Volver al PCI</button>
           <p class="eyebrow">Seguimiento de cobertura</p>
           <h1 id="controlTitle">Tabla de control</h1>
-          <p class="lead">Cada fila muestra el contenido curricular y todos los espacios donde quedó ubicado.</p>
+          <p class="lead">Cada fila corresponde a un contenido priorizado. Si se usa en varios espacios, para cobertura cuenta una sola vez. Los contenidos adicionales no integran esta cuenta.</p>
         </div>
         <div class="button-row no-print">
           <button id="exportCsv" class="button accent" type="button">Descargar para Excel</button>
@@ -129,7 +129,7 @@
       </div>
       <div id="matrixLegend" class="legend"></div>
       <div class="matrix-move-tools no-print">
-        <div><strong>Mover un espacio</strong><small>El destino disponible depende de la regla temporal de cada espacio Técnico.</small></div>
+        <div><strong>Mover un espacio</strong><small>Si el destino ya está ocupado por otro espacio del mismo tipo y área, ambos intercambian su cuatrimestre.</small></div>
         <label><span>Espacio</span><select id="matrixSpaceSelect"></select></label>
         <label><span>Destino</span><select id="matrixTermSelect"></select></label>
         <button id="matrixMove" class="button accent" type="button">Mover</button>
@@ -142,7 +142,8 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="content-loader.js?v=20260827-3"></script>
   <script type="module" src="app.js?v=20260827-4"></script>
-  <script type="module" src="matrix-details.js?v=20260826-1"></script>
+  <script type="module" src="matrix-details.js?v=20260827-5"></script>
+  <script type="module" src="custom-contents.js?v=20260827-5"></script>
   <script type="module" src="planes-bimestrales.js?v=20260826-1"></script>
   <script type="module" src="taller-tecnico.js?v=20260827-1"></script>
 </body>
