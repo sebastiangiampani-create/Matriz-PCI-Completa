@@ -18,6 +18,14 @@
   grid-template-columns: minmax(100px, 125px) repeat(12, minmax(0, 1fr));
 }
 
+/* El CSS base usa sticky + top:70px. Dentro del contenedor con scroll eso desplaza
+   el encabezado hacia abajo y superpone la primera fila. Técnica lo mantiene en flujo. */
+.matrix-header {
+  position: relative;
+  top: auto;
+  z-index: 6;
+}
+
 .matrix-header > div {
   min-width: 0;
   padding: 10px 3px;
@@ -169,6 +177,7 @@
   .matrix-grid { width: 100%; min-width: 0; }
   .matrix-header,
   .matrix-area-row { grid-template-columns: 92px repeat(12, minmax(0, 1fr)); }
+  .matrix-header { position: static; top: auto; }
   .matrix-header > div { padding: 5px 2px; font-size: 7px; }
   .matrix-area-name { padding: 5px; font-size: 7px; }
   .matrix-space { padding: 4px; }
