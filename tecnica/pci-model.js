@@ -148,6 +148,14 @@ export function isMovableGroup(group) {
   return allowedTermsForGroup(group).length > 0;
 }
 
+function assignTerm(group, term) {
+  Object.assign(group, {
+    startTerm: term,
+    endTerm: term,
+    level: term ? levelForTerm(term) : null,
+  });
+}
+
 function createGroup(area, index) {
   const config = AREA_CONFIG[area];
   const kind = config.kind;
@@ -192,13 +200,7 @@ function createGroup(area, index) {
   }
 
   const term = config.defaultTerms?.[index] ?? null;
-  if (term) {
-    Object.assign(group, {
-      level: levelForTerm(term),
-      startTerm: term,
-      endTerm: term,
-    });
-  }
+  if (term) assignTerm(group, term);
   return group;
 }
 
@@ -238,6 +240,26 @@ function normalizeLegacyCurrent(value) {
   }
   if (value === 'Taller especial 1' || value === 'Taller especial 2') return 'Talleres';
   return null;
+}
+
+function normalizeUniqueMovableTerms(state, area) {
+  const config = AREA_CONFIG[area];
+  if (!config || !['integration', 'formative'].includes(config.kind)) return;
+  const groups = state.areas?.[area]?.groups ?? [];
+  const allowed = [...(config.allowedTerms ?? PERIODS)];
+  const used = new Set();
+
+  groups.forEach((group, index) => {
+    let term = Number(group.startTerm);
+    if (!allowed.includes(term) || used.has(term)) {
+      const preferred = Number(config.defaultTerms?.[index]);
+      term = allowed.includes(preferred) && !used.has(preferred)
+        ? preferred
+        : (allowed.find((candidate) => !used.has(candidate)) ?? null);
+    }
+    if (term) used.add(term);
+    assignTerm(group, term);
+  });
 }
 
 export function migrateState(raw = {}) {
@@ -283,15 +305,11 @@ export function migrateState(raw = {}) {
       const requested = Number(merged.startTerm);
       const fallback = config.defaultTerms?.[index] ?? null;
       const safeTerm = allowed.includes(requested) ? requested : fallback;
-      Object.assign(merged, {
-        startTerm: safeTerm,
-        endTerm: safeTerm,
-        level: safeTerm ? levelForTerm(safeTerm) : null,
-        duration: 'period',
-        fixed: false,
-      });
+      assignTerm(merged, safeTerm);
+      Object.assign(merged, { duration: 'period', fixed: false });
       return merged;
     });
+    normalizeUniqueMovableTerms(base, area);
   }
 
   return base;
@@ -326,20 +344,36 @@ export function removeContent(state, groupId, contentId) {
 export function moveGroupToTerm(state, groupId, requestedTerm) {
   const target = findGroup(state, groupId);
   if (!target) throw new Error('El espacio que querés mover no existe.');
-  const { group } = target;
+  const { area, group } = target;
   const allowed = allowedTermsForGroup(group);
   if (!allowed.length) throw new Error('Este espacio es anual y mantiene su ubicación fija.');
+
   const term = Number(requestedTerm);
   if (!allowed.includes(term)) {
     const label = allowed.length ? `C${allowed[0]}–C${allowed.at(-1)}` : 'su ubicación anual';
     throw new Error(`Este espacio solo puede ubicarse dentro de ${label}.`);
   }
-  Object.assign(group, {
-    startTerm: term,
-    endTerm: term,
-    level: levelForTerm(term),
-  });
-  return { group, swapped: null };
+
+  const originTerm = Number(group.startTerm);
+  if (originTerm === term) return { group, swapped: null };
+
+  const peers = state.areas?.[area]?.groups ?? [];
+  const occupied = peers.find((candidate) =>
+    candidate.id !== group.id
+    && candidate.kind === group.kind
+    && Number(candidate.startTerm) === term,
+  ) ?? null;
+
+  if (occupied) {
+    const occupiedAllowed = allowedTermsForGroup(occupied);
+    if (!originTerm || !occupiedAllowed.includes(originTerm)) {
+      throw new Error(`C${term} ya está ocupado por ${occupied.name}.`);
+    }
+    assignTerm(occupied, originTerm);
+  }
+
+  assignTerm(group, term);
+  return { group, swapped: occupied };
 }
 
 export function moveGroupToPeriod(state, groupId, period) {
@@ -369,6 +403,11 @@ function sameTerms(groups, expected) {
   return JSON.stringify(actual) === JSON.stringify(wanted);
 }
 
+function hasDuplicateTerms(groups) {
+  const terms = groups.map((group) => Number(group.startTerm)).filter(Boolean);
+  return new Set(terms).size !== terms.length;
+}
+
 export function validateStructure(state) {
   const errors = [];
 
@@ -387,24 +426,29 @@ export function validateStructure(state) {
   const natural = state.areas?.['Ciencias Naturales']?.groups ?? [];
   if (natural.length !== 6) errors.push('Ciencias Naturales debe tener 6 Espacios de Integración.');
   if (natural.some((group) => !C1_C8.includes(group.startTerm))) errors.push('Ciencias Naturales: los Espacios de Integración deben ubicarse entre C1 y C8.');
+  if (hasDuplicateTerms(natural)) errors.push('Ciencias Naturales: debe haber como máximo un Espacio de Integración por cuatrimestre.');
 
   const social = state.areas?.['Ciencias Sociales']?.groups ?? [];
   if (social.length !== 8) errors.push('Ciencias Sociales debe tener 8 Espacios de Integración.');
   if (social.some((group) => !C1_C8.includes(group.startTerm))) errors.push('Ciencias Sociales: los Espacios de Integración deben ubicarse entre C1 y C8.');
+  if (hasDuplicateTerms(social)) errors.push('Ciencias Sociales: debe haber como máximo un Espacio de Integración por cuatrimestre.');
 
   const ef = state.areas?.['Educación Física']?.groups ?? [];
   if (ef.length !== 12 || !sameTerms(ef, C1_C12)) errors.push('Educación Física debe tener 12 Espacios Formativos, uno en cada período C1–C12.');
+  if (hasDuplicateTerms(ef)) errors.push('Educación Física: debe haber como máximo un Espacio Formativo por cuatrimestre.');
 
   const arts = state.areas?.['Educación Artística']?.groups ?? [];
   if (arts.length !== 2 || arts.some((group) => ![1, 2].includes(group.startTerm))) {
     errors.push('Educación Artística debe tener 2 Espacios Formativos y ambos deben permanecer en Nivel 1 (C1–C2).');
   }
+  if (hasDuplicateTerms(arts)) errors.push('Educación Artística: debe haber como máximo un Espacio Formativo por cuatrimestre.');
 
   const representation = state.areas?.['Tecnología de la Representación']?.groups ?? [];
   if (representation.length !== 6) errors.push('Tecnología de la Representación debe tener 6 Espacios Formativos.');
   if (representation.some((group) => !C1_C6.includes(group.startTerm))) {
     errors.push('Tecnología de la Representación debe ubicarse únicamente en Niveles 1, 2 y 3 (C1–C6).');
   }
+  if (hasDuplicateTerms(representation)) errors.push('Tecnología de la Representación: debe haber como máximo un Espacio Formativo por cuatrimestre.');
 
   const workshops = state.areas?.Talleres?.groups ?? [];
   if (workshops.length !== 2) errors.push('Talleres debe tener 2 espacios anuales.');
