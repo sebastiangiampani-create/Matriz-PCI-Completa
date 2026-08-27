@@ -193,6 +193,12 @@ const observer = new MutationObserver((mutations) => {
   const panel = document.getElementById('matrixDetailsPanel');
   const relevant = mutations.some((mutation) => {
     if (panel && (mutation.target === panel || panel.contains(mutation.target))) {
+      const ownInsertion = [...mutation.addedNodes].some((node) =>
+        node.nodeType === 1 && (
+          node.matches?.('[data-custom-detail]') || node.querySelector?.('[data-custom-detail]')
+        ),
+      );
+      if (ownInsertion) return false;
       panel.dataset.customInjectedFor = '';
       return true;
     }
