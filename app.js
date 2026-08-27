@@ -162,6 +162,9 @@ function renderOverview() {
   $('schoolName').value = app.schoolName;
   $('headerSchoolName').textContent = app.schoolName;
   $('overviewTitle').textContent = app.schoolName;
+  document.querySelectorAll('#backOverview, .text-button[data-screen-link="overview"]').forEach((btn) => {
+    btn.textContent = `← ${app.schoolName}`;
+  });
 
   const errors = validateStructure(app);
   const status = $('structureStatus');
@@ -800,7 +803,7 @@ function bindMatrixMovement() {
 }
 
 function renderMatrix() {
-  $('matrixTitle').textContent = `Matriz completa · ${app.schoolName}`;
+  $('matrixTitle').textContent = 'Matriz completa';
   $('matrixLegend').innerHTML = [
     ['Troncal anual', AREA_COLORS['Lengua y Literatura']],
     ['Laboratorio', AREA_COLORS['Ciencias Naturales']],
@@ -847,6 +850,9 @@ function bindEvents() {
     app.schoolName = event.target.value.trimStart() || 'Escuela Muestra';
     $('headerSchoolName').textContent = app.schoolName;
     $('overviewTitle').textContent = app.schoolName;
+    document.querySelectorAll('#backOverview, .text-button[data-screen-link="overview"]').forEach((btn) => {
+      btn.textContent = `← ${app.schoolName}`;
+    });
     persist();
   });
   $('schoolName').addEventListener('change', () => toast('Nombre guardado'));
