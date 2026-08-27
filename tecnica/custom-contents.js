@@ -103,7 +103,8 @@ function removeCustomContent(card, customId) {
 function updateCoverageHint() {
   const hint = document.getElementById('coverageHint');
   if (!hint) return;
-  hint.textContent = 'Cada contenido priorizado cuenta una sola vez, aunque se use en varios espacios. Los contenidos adicionales no computan en cobertura.';
+  const text = 'Cada contenido priorizado cuenta una sola vez, aunque se use en varios espacios. Los contenidos adicionales no computan en cobertura.';
+  if (hint.textContent !== text) hint.textContent = text;
 }
 
 function updateMatrixCustomCounts() {
@@ -112,16 +113,18 @@ function updateMatrixCustomCounts() {
     const small = button.querySelector('small');
     if (!found || !small) return;
     const count = customItems(found.group).length;
-    small.querySelector?.('[data-custom-count]')?.remove?.();
-    const existing = small.textContent.replace(/ · \d+ otros?$/, '');
-    small.textContent = count ? `${existing} · ${count} ${count === 1 ? 'otro' : 'otros'}` : existing;
+    const base = small.textContent.replace(/ · \d+ otros?$/, '');
+    const desired = count ? `${base} · ${count} ${count === 1 ? 'otro' : 'otros'}` : base;
+    if (small.textContent !== desired) small.textContent = desired;
   });
 }
 
 function injectMatrixDetailCustomContents() {
   const panel = document.getElementById('matrixDetailsPanel');
   if (!panel || panel.hidden || !panel.dataset.groupId) return;
+  if (panel.dataset.customInjectedFor === panel.dataset.groupId) return;
   panel.querySelectorAll('[data-custom-detail]').forEach((node) => node.remove());
+  panel.dataset.customInjectedFor = panel.dataset.groupId;
   const found = findGroup(panel.dataset.groupId);
   if (!found) return;
   const items = customItems(found.group);
@@ -146,6 +149,16 @@ function refreshEnhancements() {
   injectMatrixDetailCustomContents();
 }
 
+let refreshQueued = false;
+function queueRefresh() {
+  if (refreshQueued) return;
+  refreshQueued = true;
+  requestAnimationFrame(() => {
+    refreshQueued = false;
+    refreshEnhancements();
+  });
+}
+
 document.addEventListener('click', (event) => {
   const addButton = event.target.closest?.('[data-add-custom]');
   if (addButton) {
@@ -161,7 +174,9 @@ document.addEventListener('click', (event) => {
     event.stopPropagation();
     const card = removeButton.closest('.group-card[data-group-id]');
     if (card) removeCustomContent(card, removeButton.dataset.removeCustom);
+    return;
   }
+  setTimeout(queueRefresh, 0);
 }, true);
 
 document.addEventListener('keydown', (event) => {
@@ -172,9 +187,17 @@ document.addEventListener('keydown', (event) => {
   if (card) addCustomContent(card);
 });
 
-const observer = new MutationObserver(() => requestAnimationFrame(refreshEnhancements));
-observer.observe(document.documentElement, { childList: true, subtree: true });
+const observer = new MutationObserver((mutations) => {
+  const relevant = mutations.some((mutation) => [...mutation.addedNodes].some((node) =>
+    node.nodeType === 1 && (
+      node.matches?.('.group-card, .matrix-grid, #matrixDetailsPanel')
+      || node.querySelector?.('.group-card, .matrix-grid, #matrixDetailsPanel')
+    ),
+  ));
+  if (relevant) queueRefresh();
+});
+observer.observe(document.body, { childList: true, subtree: true });
 
-window.addEventListener('pci-state-change', () => requestAnimationFrame(refreshEnhancements));
-window.addEventListener('DOMContentLoaded', () => requestAnimationFrame(refreshEnhancements));
-setTimeout(refreshEnhancements, 0);
+window.addEventListener('pci-state-change', queueRefresh);
+window.addEventListener('DOMContentLoaded', queueRefresh);
+setTimeout(queueRefresh, 0);
