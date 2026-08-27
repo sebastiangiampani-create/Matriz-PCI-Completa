@@ -122,12 +122,14 @@ function updateMatrixCustomCounts() {
 function injectMatrixDetailCustomContents() {
   const panel = document.getElementById('matrixDetailsPanel');
   if (!panel || panel.hidden || !panel.dataset.groupId) return;
-  if (panel.dataset.customInjectedFor === panel.dataset.groupId) return;
-  panel.querySelectorAll('[data-custom-detail]').forEach((node) => node.remove());
-  panel.dataset.customInjectedFor = panel.dataset.groupId;
   const found = findGroup(panel.dataset.groupId);
   if (!found) return;
   const items = customItems(found.group);
+  const alreadyInjected = panel.dataset.customInjectedFor === panel.dataset.groupId
+    && (!items.length || panel.querySelector('[data-custom-detail]'));
+  if (alreadyInjected) return;
+  panel.querySelectorAll('[data-custom-detail]').forEach((node) => node.remove());
+  panel.dataset.customInjectedFor = panel.dataset.groupId;
   if (!items.length) return;
   const anchor = panel.querySelector('.matrix-content-list');
   if (!anchor) return;
@@ -188,12 +190,19 @@ document.addEventListener('keydown', (event) => {
 });
 
 const observer = new MutationObserver((mutations) => {
-  const relevant = mutations.some((mutation) => [...mutation.addedNodes].some((node) =>
-    node.nodeType === 1 && (
-      node.matches?.('.group-card, .matrix-grid, #matrixDetailsPanel')
-      || node.querySelector?.('.group-card, .matrix-grid, #matrixDetailsPanel')
-    ),
-  ));
+  const panel = document.getElementById('matrixDetailsPanel');
+  const relevant = mutations.some((mutation) => {
+    if (panel && (mutation.target === panel || panel.contains(mutation.target))) {
+      panel.dataset.customInjectedFor = '';
+      return true;
+    }
+    return [...mutation.addedNodes].some((node) =>
+      node.nodeType === 1 && (
+        node.matches?.('.group-card, .matrix-grid, #matrixDetailsPanel')
+        || node.querySelector?.('.group-card, .matrix-grid, #matrixDetailsPanel')
+      ),
+    );
+  });
   if (relevant) queueRefresh();
 });
 observer.observe(document.body, { childList: true, subtree: true });
