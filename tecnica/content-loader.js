@@ -1,11 +1,19 @@
 const ORIGINAL_FETCH = window.fetch.bind(window);
 
 const CONTENT_PARTS = [
-  'ciencias-naturales.json',
-  'ciencias-sociales.json',
-  'educacion-fisica.json',
+  'ciencias-naturales-01.json',
+  'ciencias-naturales-02.json',
+  'ciencias-naturales-03.json',
+  'ciencias-sociales-01.json',
+  'ciencias-sociales-02.json',
+  'ciencias-sociales-03.json',
+  'ciencias-sociales-04.json',
+  'educacion-fisica-01.json',
+  'educacion-fisica-02.json',
   'lengua-literatura.json',
-  'matematica.json',
+  'matematica-01.json',
+  'matematica-02.json',
+  'matematica-03.json',
   'educacion-artistica.json',
   'talleres.json',
   'tecnologia-representacion.json',
