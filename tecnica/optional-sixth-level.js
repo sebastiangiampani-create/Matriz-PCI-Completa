@@ -33,16 +33,8 @@ function enhanceOverview() {
   document.querySelectorAll('.area-card[data-area]').forEach((card) => {
     const area = card.dataset.area;
     if (!OPTIONAL_AREAS.has(area)) return;
-    const groups = current.areas?.[area]?.groups ?? [];
     const badge = card.querySelector('.pill');
-    const description = card.querySelector('p');
-
     if (badge) badge.textContent = '5/6 niveles anuales';
-    if (description) {
-      description.textContent = groups.length === 6
-        ? `Nivel 6 activo en C11–C12. ${areaCoverageNote(area)}`
-        : `La estructura base usa 5 niveles de C1 a C10; C11–C12 quedan libres para un 6.º nivel si la especialidad lo requiere. ${areaCoverageNote(area)}`;
-    }
   });
 }
 
@@ -53,14 +45,8 @@ function enhanceBoard() {
   if (!current || !groupsHost || !OPTIONAL_AREAS.has(area)) return;
 
   const groups = current.areas?.[area]?.groups ?? [];
-  const boardDescription = document.getElementById('boardDescription');
-  if (boardDescription) {
-    boardDescription.textContent = groups.length === 6
-      ? `Agrupamiento de 5/6 niveles: el Nivel 6 está activo en C11–C12. ${areaCoverageNote(area)}`
-      : `Agrupamiento de 5/6 niveles: la estructura base llega hasta C10 y deja C11–C12 vacíos. ${areaCoverageNote(area)}`;
-  }
-
   if (groupsHost.querySelector('[data-optional-sixth-control]')) return;
+
   const control = document.createElement('div');
   control.dataset.optionalSixthControl = '1';
   control.className = 'tech-rule-note optional-sixth-control';
