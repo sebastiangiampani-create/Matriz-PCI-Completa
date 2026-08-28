@@ -66,9 +66,9 @@ function enhanceBoard() {
   control.className = 'tech-rule-note optional-sixth-control';
 
   if (groups.length >= 6) {
-    control.innerHTML = `<div><strong>6.º nivel activo · C11–C12</strong><br><span>${areaCoverageNote(area)}</span></div>`;
+    control.innerHTML = `<div class="optional-sixth-topline"><strong>6.º nivel activo</strong><span class="optional-sixth-status">C11–C12</span></div><div class="optional-sixth-detail">${areaCoverageNote(area)}</div>`;
   } else {
-    control.innerHTML = `<div><strong>6.º nivel opcional</strong><br><span>C11–C12 están libres. Se habilitan sólo si la especialidad lo requiere.</span></div><button class="button accent optional-sixth-button" type="button" data-add-sixth-level>＋ 6.º nivel</button>`;
+    control.innerHTML = `<div class="optional-sixth-topline"><strong>Si la escuela tiene especialidad</strong><button class="button accent optional-sixth-button" type="button" data-add-sixth-level>＋ 6.º nivel</button></div><div class="optional-sixth-detail">C11–C12 están libres y se habilitan sólo cuando corresponda.</div>`;
     control.querySelector('[data-add-sixth-level]')?.addEventListener('click', () => {
       const latest = state();
       if (!latest || !OPTIONAL_AREAS.has(area)) return;
