@@ -122,25 +122,26 @@ function printDocument(ctx, plan, autoPrint = false) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(planTitle)} · ${esc(schoolName)}</title>
 <style>
-@page{size:A4;margin:23mm 14mm 27mm}
-*{box-sizing:border-box}
+@page{size:A4;margin:31mm 14mm 34mm}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 html,body{margin:0;padding:0;background:#fff;color:#20282d;font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;line-height:1.42}
 .sheet{max-width:182mm;margin:auto}
 .letterhead-header,.letterhead-footer{display:block;width:100%;height:auto}
 .screen-tools{display:flex;gap:8px;position:sticky;top:0;z-index:20;padding:10px 14mm;background:#fff;border-bottom:1px solid #ccd6d9}
 .screen-tools button{padding:9px 13px;border:0;border-radius:8px;background:#15374a;color:#fff;font:inherit;font-weight:700;cursor:pointer}
 .screen-tools button.secondary{background:#e8eff1;color:#15374a}
+.print-hint{margin:10px auto 14px;max-width:182mm;padding:10px 12px;border:1px solid #c9d6da;border-radius:8px;background:#f4f8f9;color:#36505b;font-size:9pt}
 .document-title{padding-bottom:9px;border-bottom:2px solid #15374a}
 .kicker{font-size:8.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#66777e}
 h1{margin:5px 0 4px;color:#15374a;font-size:19pt;line-height:1.15}
 .school{margin:0;color:#52646c;font-size:10pt;font-weight:700}
-h2{margin:0 0 8px;padding:7px 9px;background:#eef4f4;border-left:4px solid #15374a;color:#15374a;font-size:12pt;text-transform:uppercase;break-after:avoid-page}
+h2{margin:0 0 8px;padding:7px 9px;background:#eef4f4;border-left:4px solid #15374a;color:#15374a;font-size:12pt;text-transform:uppercase;break-after:avoid-page;page-break-after:avoid}
 .grid{display:grid;grid-template-columns:1fr 1fr;margin-top:14px;border:1px solid #aebcc1;border-bottom:0}
 .cell{padding:8px;border-bottom:1px solid #aebcc1}.cell:nth-child(odd){border-right:1px solid #aebcc1}.cell.full{grid-column:1/-1;border-right:0!important}
 .label{display:block;margin-bottom:4px;color:#52646c;font-size:8.3pt;font-weight:800;text-transform:uppercase;letter-spacing:.03em}
-.section,.stage{margin-top:16px}.box{padding:9px;border:1px solid #b9c6ca;break-inside:avoid-page}.box p{margin:0;overflow-wrap:anywhere}
-.contents{display:grid;gap:6px}.content{padding:7px 8px;border:1px solid #c7d1d4;break-inside:avoid-page}.content small{display:block;margin-bottom:2px;color:#65757c;font-weight:700}.content div{overflow-wrap:anywhere}
-.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.activities{margin-top:9px}.activities>div{min-height:30mm;padding:10px;border:1px solid #9fadba;overflow-wrap:anywhere}
+.section,.stage{margin-top:16px}.box{padding:9px;border:1px solid #b9c6ca;break-inside:avoid-page;page-break-inside:avoid}.box p{margin:0;overflow-wrap:anywhere}
+.contents{display:grid;gap:6px}.content{padding:7px 8px;border:1px solid #c7d1d4;break-inside:avoid-page;page-break-inside:avoid}.content small{display:block;margin-bottom:2px;color:#65757c;font-weight:700}.content div{overflow-wrap:anywhere}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;break-inside:avoid-page;page-break-inside:avoid}.activities{margin-top:9px;break-inside:avoid-page;page-break-inside:avoid}.activities>div{min-height:30mm;padding:10px;border:1px solid #9fadba;overflow-wrap:anywhere}
 @media screen{
   body{padding-bottom:18px}
   .letterhead-header{margin-bottom:14px}
@@ -148,18 +149,21 @@ h2{margin:0 0 8px;padding:7px 9px;background:#eef4f4;border-left:4px solid #1537
   .sheet{padding:0 14mm}
 }
 @media print{
-  .screen-tools{display:none}
+  html,body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .screen-tools,.print-hint{display:none!important}
   .sheet{max-width:none;margin:0}
-  .letterhead-header,.letterhead-footer{position:fixed;left:-14mm;width:210mm;z-index:10}
-  .letterhead-header{top:-23mm}
-  .letterhead-footer{bottom:-27mm}
-  .stage{break-before:auto}
+  .letterhead-header,.letterhead-footer{position:fixed;left:-14mm;width:210mm;z-index:10;object-fit:fill}
+  .letterhead-header{top:-26mm;height:15.3mm}
+  .letterhead-footer{bottom:-28mm;height:18.3mm}
+  .document-title,.grid{break-inside:avoid-page;page-break-inside:avoid}
+  .stage{break-inside:auto;page-break-inside:auto}
 }
-@media(max-width:700px){.grid,.meta{grid-template-columns:1fr}.cell:nth-child(odd){border-right:0}.screen-tools{position:static;padding:10px}.sheet{padding:0 10px}}
+@media(max-width:700px){.grid,.meta{grid-template-columns:1fr}.cell:nth-child(odd){border-right:0}.screen-tools{position:static;padding:10px}.sheet{padding:0 10px}.print-hint{margin:10px}}
 </style>
 </head>
 <body>
 <div class="screen-tools"><button onclick="window.print()">Imprimir / Guardar PDF</button><button class="secondary" onclick="window.close()">Cerrar</button></div>
+<div class="print-hint"><strong>Para un PDF limpio en Chrome:</strong> desactivá “Encabezado y pie de página”. El membrete institucional ya está incluido en cada hoja.</div>
 <img class="letterhead-header" src="${esc(PLAN_HEADER_URL)}" alt="Escuela de Maestros · Secundaria aprende">
 <main class="sheet">
   <header class="document-title"><div class="kicker">${esc(ctx.area)} · Proyecto Curricular Institucional</div><h1>${esc(planTitle)}</h1><p class="school">${esc(schoolName)}</p></header>
@@ -175,7 +179,7 @@ h2{margin:0 0 8px;padding:7px 9px;background:#eef4f4;border-left:4px solid #1537
   ${STAGES.map(([id, label]) => stageHtml(id, label, plan.stages?.[id] ?? {})).join('')}
 </main>
 <img class="letterhead-footer" src="${esc(PLAN_FOOTER_URL)}" alt="Ministerio de Educación · Buenos Aires Ciudad">
-${autoPrint ? '<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),450));<\/script>' : ''}
+${autoPrint ? '<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),650));<\/script>' : ''}
 </body>
 </html>`;
 }
