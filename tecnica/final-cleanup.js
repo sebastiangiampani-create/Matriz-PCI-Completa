@@ -38,3 +38,5 @@ observer.observe(document.documentElement, { childList: true, subtree: true, cha
 window.addEventListener('pci-state-change', queueClean);
 window.addEventListener('DOMContentLoaded', queueClean);
 setTimeout(queueClean, 0);
+
+import('../plan-print.js?v=20260828-1');
