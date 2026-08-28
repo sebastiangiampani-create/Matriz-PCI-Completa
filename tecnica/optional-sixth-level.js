@@ -20,6 +20,13 @@ function currentArea() {
   return state()?.current ?? null;
 }
 
+function areaCoverageNote(area) {
+  if (area === 'Lenguas Adicionales') {
+    return 'La base de contenidos priorizados de Lenguas Adicionales es la misma con 5 o 6 niveles: agregar el 6.º nivel no suma ni duplica contenidos, sólo permite redistribuirlos.';
+  }
+  return 'La cobertura curricular requerida es la misma con 5 o 6 niveles: agregar el 6.º nivel no suma ni duplica contenidos.';
+}
+
 function enhanceOverview() {
   const current = state();
   if (!current) return;
@@ -30,8 +37,8 @@ function enhanceOverview() {
     const description = card.querySelector('p');
     if (description) {
       description.textContent = groups.length === 6
-        ? '6 niveles anuales. El 6.º nivel fue incorporado según la especialidad; la cobertura curricular requerida es la misma.'
-        : '5 niveles anuales. Puede agregarse un 6.º nivel cuando la especialidad lo requiera, sin modificar la cobertura curricular exigida.';
+        ? `6 niveles anuales. Nivel 6 ocupa C11–C12. ${areaCoverageNote(area)}`
+        : `5 niveles anuales de C1 a C10; C11–C12 quedan disponibles para un 6.º nivel si la especialidad lo requiere. ${areaCoverageNote(area)}`;
     }
   });
 }
@@ -46,8 +53,8 @@ function enhanceBoard() {
   const boardDescription = document.getElementById('boardDescription');
   if (boardDescription) {
     boardDescription.textContent = groups.length === 6
-      ? 'Este agrupamiento tiene 6 niveles anuales por requerimiento de la especialidad. La cobertura curricular es la misma que en la estructura de 5 niveles.'
-      : 'Este agrupamiento tiene 5 niveles anuales. Si la especialidad lo requiere, puede incorporarse un 6.º nivel sin aumentar ni modificar la cobertura curricular exigida.';
+      ? `Este agrupamiento tiene 6 niveles anuales: Nivel 6 ocupa C11–C12. ${areaCoverageNote(area)}`
+      : `Este agrupamiento tiene 5 niveles anuales de C1 a C10. C11–C12 quedan vacíos y sólo se ocupan si la especialidad requiere un 6.º nivel. ${areaCoverageNote(area)}`;
   }
 
   if (groupsHost.querySelector('[data-optional-sixth-control]')) return;
@@ -61,9 +68,9 @@ function enhanceBoard() {
   control.style.flexWrap = 'wrap';
 
   if (groups.length >= 6) {
-    control.innerHTML = '<div><strong>6.º nivel incorporado</strong><br><span>Se utiliza cuando la especialidad lo requiere. La cobertura curricular total no cambia.</span></div>';
+    control.innerHTML = `<div><strong>6.º nivel incorporado · C11–C12</strong><br><span>${areaCoverageNote(area)}</span></div>`;
   } else {
-    control.innerHTML = '<div><strong>6.º nivel opcional según especialidad</strong><br><span>Al agregarlo, la cobertura curricular exigida sigue siendo exactamente la misma.</span></div><button class="button accent" type="button" data-add-sixth-level>＋ Agregar 6.º nivel</button>';
+    control.innerHTML = `<div><strong>6.º nivel opcional según especialidad</strong><br><span>La estructura base llega hasta C10 y deja C11–C12 vacíos. ${areaCoverageNote(area)}</span></div><button class="button accent" type="button" data-add-sixth-level>＋ Agregar 6.º nivel</button>`;
     control.querySelector('[data-add-sixth-level]')?.addEventListener('click', () => {
       const latest = state();
       if (!latest || !OPTIONAL_AREAS.has(area)) return;
