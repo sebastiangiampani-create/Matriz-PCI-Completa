@@ -138,3 +138,5 @@ document.addEventListener('input', (event) => {
 
 const planNameObserver = new MutationObserver(() => queueRefresh());
 planNameObserver.observe(document.documentElement, { childList: true, subtree: true });
+
+import('./plan-print.js?v=20260828-1');
