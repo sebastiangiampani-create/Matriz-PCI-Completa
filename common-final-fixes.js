@@ -230,3 +230,5 @@ observer.observe(document.documentElement, { childList: true, subtree: true, cha
 window.addEventListener('pci-state-change', refresh);
 window.addEventListener('DOMContentLoaded', refresh);
 setTimeout(refresh, 0);
+
+import('./area-descriptions.js?v=20260828-1');
