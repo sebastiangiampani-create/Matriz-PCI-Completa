@@ -5,6 +5,9 @@ const STAGES = [
   ['evaluacion', 'Evaluación'],
 ];
 
+const PLAN_HEADER_URL = new URL('./plan-sa-header.svg', import.meta.url).href;
+const PLAN_FOOTER_URL = new URL('./plan-sa-footer.svg', import.meta.url).href;
+
 let activeGroupId = null;
 let activePlanNumber = null;
 
@@ -54,20 +57,14 @@ function currentContext(number = activePlanNumber) {
 }
 
 function kindLabel(group) {
-  const technical = state()?.profile === 'tecnica';
-  if (technical) {
-    return ({
-      trunk: 'Espacio troncal anual',
-      integration: 'Espacio de Integración',
-      formative: 'Espacio Formativo',
-      'technical-workshop': 'Taller anual',
-    })[group.kind] ?? 'Espacio curricular';
-  }
   return ({
     trunk: 'Espacio troncal',
     laboratory: 'Laboratorio / espacio de integración',
     workshop: 'Taller / espacio formativo',
     other: 'Otro formato pedagógico',
+    integration: 'Espacio de Integración',
+    formative: 'Espacio Formativo',
+    'technical-workshop': 'Taller anual',
   })[group.kind] ?? 'Espacio curricular';
 }
 
@@ -125,14 +122,15 @@ function printDocument(ctx, plan, autoPrint = false) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(planTitle)} · ${esc(schoolName)}</title>
 <style>
-@page{size:A4;margin:15mm 14mm 18mm}
+@page{size:A4;margin:23mm 14mm 27mm}
 *{box-sizing:border-box}
-body{margin:0;color:#20282d;font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;line-height:1.42;background:#fff}
-.sheet{max-width:185mm;margin:auto}
-.screen-tools{display:flex;gap:8px;position:sticky;top:0;z-index:5;margin:-15mm -14mm 12mm;padding:10px 14mm;background:#fff;border-bottom:1px solid #ccd6d9}
+html,body{margin:0;padding:0;background:#fff;color:#20282d;font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;line-height:1.42}
+.sheet{max-width:182mm;margin:auto}
+.letterhead-header,.letterhead-footer{display:block;width:100%;height:auto}
+.screen-tools{display:flex;gap:8px;position:sticky;top:0;z-index:20;padding:10px 14mm;background:#fff;border-bottom:1px solid #ccd6d9}
 .screen-tools button{padding:9px 13px;border:0;border-radius:8px;background:#15374a;color:#fff;font:inherit;font-weight:700;cursor:pointer}
 .screen-tools button.secondary{background:#e8eff1;color:#15374a}
-.brand{padding-bottom:9px;border-bottom:2px solid #15374a}
+.document-title{padding-bottom:9px;border-bottom:2px solid #15374a}
 .kicker{font-size:8.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#66777e}
 h1{margin:5px 0 4px;color:#15374a;font-size:19pt;line-height:1.15}
 .school{margin:0;color:#52646c;font-size:10pt;font-weight:700}
@@ -143,15 +141,28 @@ h2{margin:0 0 8px;padding:7px 9px;background:#eef4f4;border-left:4px solid #1537
 .section,.stage{margin-top:16px}.box{padding:9px;border:1px solid #b9c6ca;break-inside:avoid-page}.box p{margin:0;overflow-wrap:anywhere}
 .contents{display:grid;gap:6px}.content{padding:7px 8px;border:1px solid #c7d1d4;break-inside:avoid-page}.content small{display:block;margin-bottom:2px;color:#65757c;font-weight:700}.content div{overflow-wrap:anywhere}
 .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.activities{margin-top:9px}.activities>div{min-height:30mm;padding:10px;border:1px solid #9fadba;overflow-wrap:anywhere}
-.footer{margin-top:18px;padding-top:8px;border-top:1px solid #cbd5d8;color:#7a878d;font-size:8pt}
-@media print{.screen-tools{display:none}.sheet{max-width:none}.stage{break-before:auto}}
-@media(max-width:700px){.grid,.meta{grid-template-columns:1fr}.cell:nth-child(odd){border-right:0}.screen-tools{margin:0 0 12px;padding:10px;position:static}}
+@media screen{
+  body{padding-bottom:18px}
+  .letterhead-header{margin-bottom:14px}
+  .letterhead-footer{margin-top:22px}
+  .sheet{padding:0 14mm}
+}
+@media print{
+  .screen-tools{display:none}
+  .sheet{max-width:none;margin:0}
+  .letterhead-header,.letterhead-footer{position:fixed;left:-14mm;width:210mm;z-index:10}
+  .letterhead-header{top:-23mm}
+  .letterhead-footer{bottom:-27mm}
+  .stage{break-before:auto}
+}
+@media(max-width:700px){.grid,.meta{grid-template-columns:1fr}.cell:nth-child(odd){border-right:0}.screen-tools{position:static;padding:10px}.sheet{padding:0 10px}}
 </style>
 </head>
 <body>
 <div class="screen-tools"><button onclick="window.print()">Imprimir / Guardar PDF</button><button class="secondary" onclick="window.close()">Cerrar</button></div>
+<img class="letterhead-header" src="${esc(PLAN_HEADER_URL)}" alt="Escuela de Maestros · Secundaria aprende">
 <main class="sheet">
-  <header class="brand"><div class="kicker">${esc(ctx.area)} · Proyecto Curricular Institucional</div><h1>${esc(planTitle)}</h1><p class="school">${esc(schoolName)}</p></header>
+  <header class="document-title"><div class="kicker">${esc(ctx.area)} · Proyecto Curricular Institucional</div><h1>${esc(planTitle)}</h1><p class="school">${esc(schoolName)}</p></header>
   <section class="grid">
     <div class="cell"><span class="label">Tipo de espacio</span><strong>${esc(kindLabel(ctx.group))}</strong></div>
     <div class="cell"><span class="label">Nombre del espacio</span><strong>${esc(ctx.group.name)}</strong></div>
@@ -162,9 +173,9 @@ h2{margin:0 0 8px;padding:7px 9px;background:#eef4f4;border-left:4px solid #1537
   <section class="section"><h2>Contenidos</h2><div class="contents">${contents.length ? contents.map((content) => `<article class="content"><small>${esc(content.subject ?? '')}${content.axis ? ` · ${esc(content.axis)}` : ''}</small><div>${esc(content.text ?? '')}</div></article>`).join('') : '<div class="box">Sin contenidos seleccionados.</div>'}</div></section>
   <section class="section"><h2>Objetivos de aprendizaje</h2><div class="box"><p>${String(plan.objectives ?? '').trim() ? br(plan.objectives) : '—'}</p></div></section>
   ${STAGES.map(([id, label]) => stageHtml(id, label, plan.stages?.[id] ?? {})).join('')}
-  <div class="footer">Documento generado desde la Matriz PCI · ${esc(schoolName)}.</div>
 </main>
-${autoPrint ? '<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));<\/script>' : ''}
+<img class="letterhead-footer" src="${esc(PLAN_FOOTER_URL)}" alt="Ministerio de Educación · Buenos Aires Ciudad">
+${autoPrint ? '<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),450));<\/script>' : ''}
 </body>
 </html>`;
 }
