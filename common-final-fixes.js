@@ -232,3 +232,4 @@ window.addEventListener('DOMContentLoaded', refresh);
 setTimeout(refresh, 0);
 
 import('./area-descriptions.js?v=20260828-1');
+import('./common-axis-cleanup.js?v=20260828-1');
