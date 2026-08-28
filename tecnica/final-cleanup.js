@@ -40,3 +40,4 @@ window.addEventListener('DOMContentLoaded', queueClean);
 setTimeout(queueClean, 0);
 
 import('../plan-print.js?v=20260828-2');
+import('../area-descriptions.js?v=20260828-1');
