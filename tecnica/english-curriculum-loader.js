@@ -86,7 +86,8 @@
       .english-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
       .english-filter-grid label>span{display:block;margin:0 0 5px;color:var(--ink-soft);font-size:.78rem;font-weight:850}
       .english-filter-grid select{min-width:0}
-      @media(max-width:520px){.english-filter-grid{grid-template-columns:1fr}}
+      .english-content-filter{grid-column:1/-1}
+      @media(max-width:520px){.english-filter-grid{grid-template-columns:1fr}.english-content-filter{grid-column:auto}}
     `;
     document.head.appendChild(style);
   }
@@ -102,8 +103,7 @@
       block.innerHTML = `
         <label><span>Años</span><select data-english-years><option value="">Todos</option></select></label>
         <label><span>Nivel</span><select data-english-level><option value="">Todos</option></select></label>
-        <label><span>Eje</span><select data-english-axis><option value="">Todos</option></select></label>
-        <label><span>Contenido</span><select data-english-content><option value="">Todos</option></select></label>`;
+        <label class="english-content-filter"><span>Contenido</span><select data-english-content><option value="">Todos</option></select></label>`;
       const pending = filters.querySelector('.check-row');
       filters.insertBefore(block, pending ?? null);
       block.addEventListener('change', applyFilters);
@@ -111,12 +111,10 @@
 
     const years = block.querySelector('[data-english-years]');
     const level = block.querySelector('[data-english-level]');
-    const axis = block.querySelector('[data-english-axis]');
     const content = block.querySelector('[data-english-content]');
     if (!block.dataset.ready && metadata.size) {
       years.innerHTML = '<option value="">Todos</option>' + unique('years').map((value) => option(value)).join('');
       level.innerHTML = '<option value="">Todos</option>' + unique('level').map((value) => option(value)).join('');
-      axis.innerHTML = '<option value="">Todos</option>' + unique('axis').map((value) => option(value)).join('');
       content.innerHTML = '<option value="">Todos</option>' + [...metadata.entries()]
         .map(([id, item]) => option(id, item.text.length > 95 ? `${item.text.slice(0, 92)}…` : item.text))
         .join('');
@@ -145,7 +143,6 @@
     if (!block) return;
     const years = block.querySelector('[data-english-years]')?.value ?? '';
     const level = block.querySelector('[data-english-level]')?.value ?? '';
-    const axis = block.querySelector('[data-english-axis]')?.value ?? '';
     const content = block.querySelector('[data-english-content]')?.value ?? '';
     let visible = 0;
     document.querySelectorAll('#contentList .content-item[data-content-id]').forEach((node) => {
@@ -154,13 +151,12 @@
       const match = item
         && (!years || item.years === years)
         && (!level || item.level === level)
-        && (!axis || item.axis === axis)
         && (!content || id === content);
       node.hidden = !match;
       if (match) visible += 1;
     });
     const meta = document.getElementById('bagMeta');
-    if (meta && (years || level || axis || content)) meta.textContent = `${visible} contenidos visibles con estos filtros`;
+    if (meta && (years || level || content)) meta.textContent = `${visible} contenidos visibles con estos filtros`;
   }
 
   function syncUI() {
@@ -168,8 +164,14 @@
     const active = currentArea() === 'Lenguas Adicionales';
     const block = ensureFilters();
     if (block) block.hidden = !active;
+
     const defaultPair = document.querySelector('#contentBag .filters .filter-pair');
-    if (defaultPair) defaultPair.hidden = active;
+    if (defaultPair) {
+      defaultPair.hidden = false;
+      const axisLabel = defaultPair.querySelector('label:nth-child(2)>span');
+      if (axisLabel) axisLabel.textContent = active ? 'Eje / subeje' : 'Eje / bloque';
+    }
+
     syncResolutionNote(active);
     if (active) applyFilters();
   }
