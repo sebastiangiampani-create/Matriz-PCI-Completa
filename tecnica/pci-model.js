@@ -14,6 +14,12 @@ export const TECHNICAL_PROFILE = {
   periods: 12,
 };
 
+export const OPTIONAL_SIXTH_LEVEL_AREAS = [
+  'Lengua y Literatura',
+  'Matemática',
+  'Lenguas Adicionales',
+];
+
 const C1_C6 = [1, 2, 3, 4, 5, 6];
 const C1_C8 = [1, 2, 3, 4, 5, 6, 7, 8];
 const C1_C12 = PERIODS;
@@ -21,19 +27,25 @@ const C1_C12 = PERIODS;
 export const AREA_CONFIG = {
   'Lengua y Literatura': {
     kind: 'trunk',
-    count: 6,
+    count: 5,
+    maxCount: 6,
+    optionalSixth: true,
     singular: 'Nivel',
     sourceArea: 'Lengua y Literatura',
   },
   'Matemática': {
     kind: 'trunk',
-    count: 6,
+    count: 5,
+    maxCount: 6,
+    optionalSixth: true,
     singular: 'Nivel',
     sourceArea: 'Matemática',
   },
   'Lenguas Adicionales': {
     kind: 'trunk',
-    count: 6,
+    count: 5,
+    maxCount: 6,
+    optionalSixth: true,
     singular: 'Nivel',
     sourceArea: 'Lenguas Adicionales',
   },
@@ -213,17 +225,26 @@ export function createInitialState() {
     areas: Object.fromEntries(
       AREA_ORDER.map((area) => [
         area,
-        { groups: Array.from({ length: AREA_CONFIG[area].count }, (_, index) => createGroup(area, index)) },
+        {
+          groups: Array.from({ length: AREA_CONFIG[area].count }, (_, index) => createGroup(area, index)),
+          ...(AREA_CONFIG[area].optionalSixth ? { optionalSixthLevel: false } : {}),
+        },
       ]),
     ),
   };
 }
 
-function legacyGroups(raw, area) {
-  if (Array.isArray(raw?.areas?.[area]?.groups)) return raw.areas[area].groups;
+function legacyAreaState(raw, area) {
+  if (raw?.areas?.[area]) return raw.areas[area];
   for (const alias of LEGACY_AREA_ALIASES[area] ?? []) {
-    if (Array.isArray(raw?.areas?.[alias]?.groups)) return raw.areas[alias].groups;
+    if (raw?.areas?.[alias]) return raw.areas[alias];
   }
+  return null;
+}
+
+function legacyGroups(raw, area) {
+  const areaState = legacyAreaState(raw, area);
+  if (Array.isArray(areaState?.groups)) return areaState.groups;
   if (area === 'Talleres') {
     return [
       ...(raw?.areas?.['Taller especial 1']?.groups ?? []),
@@ -240,6 +261,29 @@ function normalizeLegacyCurrent(value) {
   }
   if (value === 'Taller especial 1' || value === 'Taller especial 2') return 'Talleres';
   return null;
+}
+
+function meaningfulPlan(plan) {
+  if (!plan || typeof plan !== 'object') return false;
+  if (String(plan.name ?? '').trim()) return true;
+  if (String(plan.synopsis ?? '').trim()) return true;
+  if (String(plan.objectives ?? '').trim()) return true;
+  if (Array.isArray(plan.contentIds) && plan.contentIds.length) return true;
+  return Object.values(plan.stages ?? {}).some((stage) =>
+    Object.values(stage ?? {}).some((value) => Array.isArray(value) ? value.length > 0 : Boolean(String(value ?? '').trim())),
+  );
+}
+
+function meaningfulOptionalLevel(group, levelNumber = 6) {
+  if (!group || typeof group !== 'object') return false;
+  if (Array.isArray(group.items) && group.items.length) return true;
+  if (String(group.objective ?? '').trim()) return true;
+  if (String(group.synopsis ?? '').trim()) return true;
+  if (String(group.context ?? '').trim()) return true;
+  if (String(group.practiceAxis ?? '').trim()) return true;
+  const name = String(group.name ?? '').trim();
+  if (name && name !== `Nivel ${levelNumber}`) return true;
+  return Array.isArray(group.plansBimestrales) && group.plansBimestrales.some(meaningfulPlan);
 }
 
 function normalizeUniqueMovableTerms(state, area) {
@@ -270,7 +314,15 @@ export function migrateState(raw = {}) {
   for (const area of AREA_ORDER) {
     const config = AREA_CONFIG[area];
     const existing = legacyGroups(raw, area);
-    base.areas[area].groups = Array.from({ length: config.count }, (_, index) => {
+    const savedAreaState = legacyAreaState(raw, area);
+    const keepOptionalSixth = Boolean(
+      config.optionalSixth
+      && existing.length >= 6
+      && (savedAreaState?.optionalSixthLevel === true || meaningfulOptionalLevel(existing[5], 6))
+    );
+    const targetCount = config.optionalSixth && keepOptionalSixth ? 6 : config.count;
+
+    base.areas[area].groups = Array.from({ length: targetCount }, (_, index) => {
       const template = createGroup(area, index);
       const saved = existing[index] ?? {};
       const merged = {
@@ -309,10 +361,28 @@ export function migrateState(raw = {}) {
       Object.assign(merged, { duration: 'period', fixed: false });
       return merged;
     });
+
+    if (config.optionalSixth) base.areas[area].optionalSixthLevel = targetCount === 6;
     normalizeUniqueMovableTerms(base, area);
   }
 
   return base;
+}
+
+export function addOptionalSixthLevel(state, area) {
+  const config = AREA_CONFIG[area];
+  if (!config?.optionalSixth) throw new Error('Esta área no admite un sexto nivel opcional.');
+  const areaState = state.areas?.[area];
+  if (!areaState) throw new Error('El área no existe en la propuesta.');
+  if (areaState.groups.length >= (config.maxCount ?? 6)) {
+    areaState.optionalSixthLevel = true;
+    return areaState.groups[5] ?? areaState.groups.at(-1);
+  }
+  while (areaState.groups.length < 6) {
+    areaState.groups.push(createGroup(area, areaState.groups.length));
+  }
+  areaState.optionalSixthLevel = true;
+  return areaState.groups[5];
 }
 
 export function allGroups(state) {
@@ -411,9 +481,9 @@ function hasDuplicateTerms(groups) {
 export function validateStructure(state) {
   const errors = [];
 
-  for (const area of ['Lengua y Literatura', 'Matemática', 'Lenguas Adicionales']) {
+  for (const area of OPTIONAL_SIXTH_LEVEL_AREAS) {
     const groups = state.areas?.[area]?.groups ?? [];
-    if (groups.length !== 6) errors.push(`${area} debe tener 6 niveles anuales.`);
+    if (![5, 6].includes(groups.length)) errors.push(`${area} debe tener 5 niveles anuales o 6 cuando la especialidad lo requiera.`);
     groups.forEach((group, index) => {
       const level = index + 1;
       const [startTerm, endTerm] = termsForLevel(level);
