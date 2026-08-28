@@ -7,8 +7,18 @@
   <title>PCI Técnica · Matriz curricular</title>
   <link rel="stylesheet" href="base.css?v=20260827-final">
   <link rel="stylesheet" href="app.css?v=20260828-optional6-topright">
-  <link rel="stylesheet" href="overview-compact.css?v=20260828-1">
-  <style>#structureStatus.notice.success{display:none!important}</style>
+  <link rel="stylesheet" href="overview-compact.css?v=20260828-2">
+  <style>
+    #structureStatus.notice.success{display:none!important}
+    .site-footer{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:44px 5vw;background:#0d3550;color:#fff;border-radius:30px 30px 0 0}
+    .site-footer .logo-blanco{width:min(220px,50vw);height:auto}
+    .site-footer .footer-right{display:flex;align-items:center;gap:18px}
+    .site-footer .footer-right strong{font-size:1.05rem;font-weight:700}
+    .site-footer .sep{width:1px;height:34px;background:rgba(255,255,255,.45)}
+    .site-footer .footer-right img{height:52px;width:auto}
+    @media(max-width:700px){.site-footer{padding:30px 22px}.site-footer .footer-right{gap:10px;flex-wrap:wrap}.site-footer .footer-right img{height:42px}}
+    @media print{.site-footer{display:none!important}}
+  </style>
   <script type="importmap">
   {
     "imports": {
@@ -141,6 +151,15 @@
     </section>
   </main>
 
+  <footer class="site-footer no-print">
+    <img class="logo-blanco" src="../assets/logo-escuela-maestros-blanco.svg?v=20260827" alt="Escuela de Maestros">
+    <div class="footer-right">
+      <strong>Ministerio de Educación</strong>
+      <span class="sep"></span>
+      <img src="../assets/ba-ciudad-footer.png?v=20260827" alt="Buenos Aires Ciudad">
+    </div>
+  </footer>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="content-loader.js?v=20260827-3"></script>
   <script type="module" src="app.js?v=20260827-4"></script>
@@ -149,6 +168,6 @@
   <script type="module" src="planes-bimestrales.js?v=20260826-1"></script>
   <script type="module" src="taller-tecnico.js?v=20260827-1"></script>
   <script type="module" src="optional-sixth-level.js?v=20260828-4"></script>
-  <script type="module" src="final-cleanup.js?v=20260828-descriptions1"></script>
+  <script type="module" src="final-cleanup.js?v=20260828-descriptions2"></script>
 </body>
 </html>
