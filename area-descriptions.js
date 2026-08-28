@@ -1,15 +1,15 @@
 const COMMON_DESCRIPTIONS = {
-  trunk: 'Cada nivel ocupa un año. Elegí los contenidos de la bolsa curricular y arrastralos al nivel correspondiente.',
-  laboratory: 'Cada laboratorio dura un cuatrimestre. Definí el contexto problematizador y su ubicación temporal. Elegí los contenidos de la bolsa curricular y arrastralos al laboratorio.',
-  workshop: 'Cada taller dura un cuatrimestre. Definí la práctica / producto / eje y su ubicación temporal. Elegí los contenidos de la bolsa curricular y arrastralos al taller.',
-  other: 'Definí el formato pedagógico, su duración y su ubicación temporal. Elegí los contenidos de la bolsa curricular y arrastralos al espacio.',
+  trunk: 'Cada nivel ocupa un año. Elegí y arrastrá contenidos desde la bolsa curricular.',
+  laboratory: 'Dura un cuatrimestre. Definí el contexto problematizador y la ubicación temporal. Elegí y arrastrá contenidos desde la bolsa.',
+  workshop: 'Dura un cuatrimestre. Definí la práctica / producto / eje y la ubicación temporal. Elegí y arrastrá contenidos desde la bolsa.',
+  other: 'Definí el formato pedagógico, la duración y la ubicación temporal. Elegí y arrastrá contenidos desde la bolsa.',
 };
 
 const TECHNICAL_DESCRIPTIONS = {
-  trunk: 'Cada nivel ocupa un año. Elegí los contenidos de la bolsa curricular y arrastralos al nivel correspondiente.',
-  integration: 'Cada Espacio de Integración dura un período. Definí el contexto problematizador y su ubicación temporal. Elegí los contenidos de la bolsa curricular y arrastralos al espacio.',
-  formative: 'Cada Espacio Formativo dura un período. Definí la práctica / producto / eje y su ubicación temporal. Elegí los contenidos de la bolsa curricular y arrastralos al espacio.',
-  'technical-workshop': 'Cada taller ocupa un año en su nivel. Definí la práctica / producto / eje. Elegí los contenidos de la bolsa curricular y arrastralos al taller.',
+  trunk: 'Cada nivel ocupa un año. Elegí y arrastrá contenidos desde la bolsa curricular.',
+  integration: 'Dura un período. Definí el contexto problematizador y la ubicación temporal. Elegí y arrastrá contenidos desde la bolsa.',
+  formative: 'Dura un período. Definí la práctica / producto / eje y la ubicación temporal. Elegí y arrastrá contenidos desde la bolsa.',
+  'technical-workshop': 'Ocupa un año. Definí la práctica / producto / eje. Elegí y arrastrá contenidos desde la bolsa.',
 };
 
 const COMMON_KIND_BY_AREA = {
