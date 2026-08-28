@@ -86,8 +86,7 @@
       .english-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
       .english-filter-grid label>span{display:block;margin:0 0 5px;color:var(--ink-soft);font-size:.78rem;font-weight:850}
       .english-filter-grid select{min-width:0}
-      .english-content-filter{grid-column:1/-1}
-      @media(max-width:520px){.english-filter-grid{grid-template-columns:1fr}.english-content-filter{grid-column:auto}}
+      @media(max-width:520px){.english-filter-grid{grid-template-columns:1fr}}
     `;
     document.head.appendChild(style);
   }
@@ -102,8 +101,7 @@
       block.className = 'english-filter-grid';
       block.innerHTML = `
         <label><span>Años</span><select data-english-years><option value="">Todos</option></select></label>
-        <label><span>Nivel</span><select data-english-level><option value="">Todos</option></select></label>
-        <label class="english-content-filter"><span>Contenido</span><select data-english-content><option value="">Todos</option></select></label>`;
+        <label><span>Nivel</span><select data-english-level><option value="">Todos</option></select></label>`;
       const pending = filters.querySelector('.check-row');
       filters.insertBefore(block, pending ?? null);
       block.addEventListener('change', applyFilters);
@@ -111,13 +109,9 @@
 
     const years = block.querySelector('[data-english-years]');
     const level = block.querySelector('[data-english-level]');
-    const content = block.querySelector('[data-english-content]');
     if (!block.dataset.ready && metadata.size) {
       years.innerHTML = '<option value="">Todos</option>' + unique('years').map((value) => option(value)).join('');
       level.innerHTML = '<option value="">Todos</option>' + unique('level').map((value) => option(value)).join('');
-      content.innerHTML = '<option value="">Todos</option>' + [...metadata.entries()]
-        .map(([id, item]) => option(id, item.text.length > 95 ? `${item.text.slice(0, 92)}…` : item.text))
-        .join('');
       block.dataset.ready = '1';
     }
     return block;
@@ -143,20 +137,17 @@
     if (!block) return;
     const years = block.querySelector('[data-english-years]')?.value ?? '';
     const level = block.querySelector('[data-english-level]')?.value ?? '';
-    const content = block.querySelector('[data-english-content]')?.value ?? '';
     let visible = 0;
     document.querySelectorAll('#contentList .content-item[data-content-id]').forEach((node) => {
       const id = String(node.dataset.contentId ?? '');
       const item = metadata.get(id);
-      const match = item
-        && (!years || item.years === years)
-        && (!level || item.level === level)
-        && (!content || id === content);
+      if (!item) return;
+      const match = (!years || item.years === years) && (!level || item.level === level);
       node.hidden = !match;
       if (match) visible += 1;
     });
     const meta = document.getElementById('bagMeta');
-    if (meta && (years || level || content)) meta.textContent = `${visible} contenidos visibles con estos filtros`;
+    if (meta && (years || level)) meta.textContent = `${visible} contenidos visibles con estos filtros`;
   }
 
   function syncUI() {
