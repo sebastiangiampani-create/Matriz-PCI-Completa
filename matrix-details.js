@@ -58,14 +58,7 @@ function ensureStyles() {
 }
 
 function ensureCreatorCredit() {
-  if (document.getElementById('creatorCredit')) return;
-  ensureStyles();
-  const credit = document.createElement('footer');
-  credit.id = 'creatorCredit';
-  credit.className = 'site-credit no-print';
-  credit.setAttribute('aria-label', 'Créditos');
-  credit.innerHTML = '© 2026 · Creado por <strong>Sebastián Giampani</strong>';
-  document.body.appendChild(credit);
+  document.getElementById('creatorCredit')?.remove();
 }
 
 function closeDetails({ restoreFocus = true } = {}) {

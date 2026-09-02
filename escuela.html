@@ -6,24 +6,16 @@
   <meta name="theme-color" content="#12395c">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><title>Matriz PCI · Escuela</title>
   <style>
-    *{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Archivo,Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f3f7f7;color:#12395c}body{display:flex;flex-direction:column}.top{position:relative;z-index:20;display:flex;align-items:center;gap:9px;min-height:68px;padding:9px 12px;background:#fff;border-bottom:1px solid #d6e2e5;flex-wrap:wrap}.logo{width:170px;height:46px;object-fit:contain;object-position:left}.title{margin-right:auto;font-weight:900}.status{font-size:.82rem;font-weight:850;color:#6a7b84}.status.ok{color:#126e65}.status.bad{color:#b3314d}.button{min-height:40px;padding:9px 12px;color:#12395c;text-decoration:none;border:0;border-radius:12px;background:#e7edef;font:850 .86rem inherit;cursor:pointer}.button.primary{color:#fff;background:#12395c}.button.accent{background:#83ded3}.frame{display:block;width:100%;flex:1;border:0;background:#f3f7f7}.gate{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:18px;background:#f3f7f7}.gate.hidden{display:none}.card{width:min(580px,100%);padding:clamp(22px,5vw,38px);border:1px solid #d6e2e5;border-radius:26px;background:#fff;box-shadow:0 24px 64px #12395c24}.card img{width:min(330px,82vw);height:62px;object-fit:contain;object-position:left}.eyebrow{margin:22px 0 6px;color:#126e65;font-size:.75rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.card h1{margin:0 0 8px;font-size:clamp(2.2rem,8vw,4.3rem);letter-spacing:-.05em}.card p{color:#6a7b84;line-height:1.5}.field{display:block;margin:18px 0 10px}.field span{display:block;margin-bottom:5px;font-size:.8rem;font-weight:850}.field input{width:100%;padding:13px;border:1px solid #d6e2e5;border-radius:13px;color:#12395c;font:900 1rem inherit;letter-spacing:.06em}.field input:focus{outline:3px solid #83ded355;border-color:#126e65}.enter{width:100%;padding:13px}.message{min-height:22px;margin:10px 0 0!important;color:#b3314d!important;font-size:.86rem;font-weight:800}.note{font-size:.82rem}.credit{margin:18px 0 0!important;padding-top:14px;border-top:1px solid #d6e2e5;text-align:center;font-size:.76rem!important;font-weight:750}.credit strong{color:#12395c}.noscript{padding:16px;color:#b3314d;background:#ffe9ee}@media(max-width:820px){.top{align-items:flex-start}.logo{width:145px}.title{font-size:.84rem}.status{order:5;width:100%}.top .optional{display:none}.top .button{padding:8px 9px;font-size:.76rem}}
+    *{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Archivo,Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f3f7f7;color:#12395c}body{display:flex;flex-direction:column}.status{position:fixed;z-index:40;right:14px;bottom:14px;padding:7px 13px;border-radius:999px;background:#fff;border:1px solid #d6e2e5;box-shadow:0 6px 18px #12395c1f;font-size:.76rem;font-weight:850;color:#6a7b84}.status.ok{color:#126e65;border-color:#bfe6df}.status.bad{color:#b3314d;border-color:#f0c3ce}.button{min-height:40px;padding:9px 12px;color:#12395c;text-decoration:none;border:0;border-radius:12px;background:#e7edef;font:850 .86rem inherit;cursor:pointer}.button.primary{color:#fff;background:#12395c}.button.accent{background:#83ded3}.frame{display:block;width:100%;flex:1;border:0;background:#f3f7f7}.gate{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:18px;background:#f3f7f7}.gate.hidden{display:none}.card{width:min(580px,100%);padding:clamp(22px,5vw,38px);border:1px solid #d6e2e5;border-radius:26px;background:#fff;box-shadow:0 24px 64px #12395c24}.card img{width:auto;height:42px;max-width:82vw;object-fit:contain;object-position:left}.eyebrow{margin:22px 0 6px;color:#126e65;font-size:.75rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.card h1{margin:0 0 8px;font-size:clamp(2.2rem,8vw,4.3rem);letter-spacing:-.05em}.card p{color:#6a7b84;line-height:1.5}.field{display:block;margin:18px 0 10px}.field span{display:block;margin-bottom:5px;font-size:.8rem;font-weight:850}.field input{width:100%;padding:13px;border:1px solid #d6e2e5;border-radius:13px;color:#12395c;font:900 1rem inherit;letter-spacing:.06em}.field input:focus{outline:3px solid #83ded355;border-color:#126e65}.enter{width:100%;padding:13px}.message{min-height:22px;margin:10px 0 0!important;color:#b3314d!important;font-size:.86rem;font-weight:800}.note{font-size:.82rem}.credit{margin:18px 0 0!important;padding-top:14px;border-top:1px solid #d6e2e5;text-align:center;font-size:.76rem!important;font-weight:750}.credit strong{color:#12395c}.noscript{padding:16px;color:#b3314d;background:#ffe9ee}@media(max-width:820px){.status{right:10px;bottom:10px;font-size:.7rem}}
   </style>
 </head>
 <body>
-  <header class="top">
-    <img class="logo" src="logo-escuela-maestros.svg?v=20260827" alt="Escuela de Maestros">
-    <div id="headerTitle" class="title">Matriz PCI</div>
-    <span id="status" class="status">Esperando ingreso</span>
-    <a class="button optional" href="plataforma.html">← Escuelas</a>
-    <button id="openControl" class="button accent optional" type="button">Panel de control</button>
-    <button id="openMatrix" class="button optional" type="button">Matriz completa</button>
-    <button id="saveNow" class="button primary" type="button">Guardar online</button>
-  </header>
   <iframe id="appFrame" class="frame" title="Matriz PCI"></iframe>
+  <div id="status" class="status" role="status" aria-live="polite">Esperando ingreso</div>
 
   <section id="gate" class="gate">
     <form id="gateForm" class="card">
-      <img src="logo-escuela-maestros.svg?v=20260827" alt="Escuela de Maestros">
+      <img src="assets/em-logo-header.svg?v=20260902" alt="Escuela de Maestros">
       <p id="gateEyebrow" class="eyebrow">Espacio de construcción</p>
       <h1 id="gateTitle">Escuela</h1>
       <p>Ingresá con el código de edición correspondiente a esta escuela. Cada institución conserva su propia matriz y su propio guardado online.</p>
@@ -31,7 +23,6 @@
       <button id="enterButton" class="button primary enter" type="submit">Ingresar</button>
       <p id="gateMessage" class="message" role="alert"></p>
       <p class="note">Si no conocés el código, consultalo con quien administra esta escuela.</p>
-      <p class="credit">© 2026 · Creado por <strong>Sebastián Giampani</strong></p>
     </form>
   </section>
   <noscript><div class="noscript">Necesitás habilitar JavaScript para usar la matriz.</div></noscript>
@@ -42,7 +33,6 @@
     const FALLBACK_NAMES = {1:'Escuela de muestra 1',2:'Escuela de muestra 2',3:'Escuela de muestra 3',4:'Escuela Muestra'};
     const FALLBACK_NAME = FALLBACK_NAMES[SCHOOL_ID];
     document.title = `${FALLBACK_NAME} · Matriz PCI`;
-    document.getElementById('headerTitle').textContent = `Matriz PCI · ${FALLBACK_NAME}`;
     document.getElementById('gateEyebrow').textContent = `Escuela ${SCHOOL_ID} · espacio de construcción`;
     document.getElementById('gateTitle').textContent = FALLBACK_NAME;
 
@@ -90,7 +80,7 @@
     async function buildInitialState() {
       if (SCHOOL_ID !== 4) return { schemaVersion: 10, schoolName: FALLBACK_NAME, areas: {}, current: null };
       localStorage.setItem('pciAppV2', '{}');
-      frame.src = `app.html?v=school-seed-${Date.now()}`;
+      frame.src = `app.html?v=20260902-school-seed-${Date.now()}`;
       const api = await waitForApp();
       const curriculum = api.getData();
       const seed = await fetch('data/school4-seed.json?v=20260807').then((response) => { if(!response.ok) throw new Error('No se pudo cargar el modelo inicial.'); return response.json(); });
@@ -124,7 +114,7 @@
       if (empty) data = await buildInitialState();
       if (!data.schoolName) data.schoolName = FALLBACK_NAME;
       const raw=JSON.stringify(data); localStorage.setItem('pciAppV2',raw); lastSaved=raw;
-      frame.src=`app.html?v=school-cloud-${SCHOOL_ID}-${Date.now()}`;
+      frame.src=`app.html?v=20260902-school-cloud-${SCHOOL_ID}-${Date.now()}`;
       const api=await waitForApp();
       const migrated=localStorage.getItem('pciAppV2')||raw;
       if(empty||migrated!==raw){await patchState(JSON.parse(migrated));lastSaved=migrated;}
@@ -143,11 +133,7 @@
       finally{button.disabled=false;button.textContent='Ingresar';}
     }
 
-    function callApp(method){const api=frame.contentWindow?.PCIApp;if(!api?.[method]){gateMessage.textContent='Esperá a que termine de cargar la matriz.';return;}api[method]();}
     document.getElementById('gateForm').addEventListener('submit',enter);
-    document.getElementById('openControl').addEventListener('click',()=>callApp('openControl'));
-    document.getElementById('openMatrix').addEventListener('click',()=>callApp('openMatrix'));
-    document.getElementById('saveNow').addEventListener('click',async()=>{try{await saveCurrentState({forceStatus:true});setStatus('Guardado online','ok');}catch{}});
     window.addEventListener('online',()=>saveCurrentState());
     window.addEventListener('offline',()=>setStatus('Sin conexión · cambios locales','bad'));
   </script>
