@@ -3,22 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#15374a">
-  <title>PCI Técnica · Matriz curricular</title>
-  <link rel="stylesheet" href="base.css?v=20260827-final">
+  <meta name="theme-color" content="#12395c">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><title>PCI Técnica · Matriz curricular</title>
+  <link rel="stylesheet" href="base.css?v=20260902-1">
   <link rel="stylesheet" href="app.css?v=20260828-optional6-topright">
   <link rel="stylesheet" href="overview-compact.css?v=20260828-2">
-  <style>
-    #structureStatus.notice.success{display:none!important}
-    .site-footer{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:44px 5vw;background:#0d3550;color:#fff;border-radius:30px 30px 0 0}
-    .site-footer .logo-blanco{width:min(220px,50vw);height:auto}
-    .site-footer .footer-right{display:flex;align-items:center;gap:18px}
-    .site-footer .footer-right strong{font-size:1.05rem;font-weight:700}
-    .site-footer .sep{width:1px;height:34px;background:rgba(255,255,255,.45)}
-    .site-footer .footer-right img{height:52px;width:auto}
-    @media(max-width:700px){.site-footer{padding:30px 22px}.site-footer .footer-right{gap:10px;flex-wrap:wrap}.site-footer .footer-right img{height:42px}}
-    @media print{.site-footer{display:none!important}}
-  </style>
+  <style>#structureStatus.notice.success{display:none!important}</style>
   <script type="importmap">
   {
     "imports": {
@@ -32,22 +23,13 @@
     <div class="loading-card"><span class="spinner" aria-hidden="true"></span><strong>Cargando Matriz Técnica…</strong></div>
   </div>
 
-  <header class="topbar no-print">
-    <button id="brandHome" class="brand-button" type="button" aria-label="Volver al inicio del PCI">
-      <span class="brand-mark">PCI</span>
-      <span><b>Matriz curricular</b><small id="headerSchoolName">Escuela Técnica</small></span>
-    </button>
-    <nav class="top-actions" aria-label="Navegación principal">
-      <button class="button ghost" type="button" onclick="window.top.location.href='../index.html'">Inicio</button>
-      <button class="button ghost" type="button" data-screen-link="control">Tabla de control</button>
-      <button class="button primary" type="button" data-screen-link="matrix">Matriz completa</button>
-    </nav>
-  </header>
+  <header class="site-top no-print"><a class="brand" href="../index.html" target="_top" aria-label="Escuela de Maestros · Inicio"><img src="../assets/em-logo-header.svg?v=20260902" alt="Escuela de Maestros"></a><div class="top-right"><button class="pill-btn" type="button" data-screen-link="control">Tabla de control</button><img class="ba" src="../assets/ba-logo.png?v=20260827" alt="Buenos Aires Ciudad"></div></header>
 
   <main>
     <section id="overview" class="screen active" aria-labelledby="overviewTitle">
       <div class="hero-card">
         <div>
+          <a class="text-button" href="../index.html" target="_top">← Inicio</a>
           <p class="eyebrow">PCI · Escuela Técnica</p>
           <h1 id="overviewTitle">Escuela Técnica</h1>
           <p>Organizá la propuesta curricular técnica en seis niveles y doce períodos, desde C1 hasta C12.</p>
@@ -66,7 +48,7 @@
     </section>
 
     <section id="board" class="screen" aria-labelledby="boardTitle">
-      <div class="section-heading board-heading">
+      <div class="section-heading board-heading hero-band">
         <div>
           <button id="backOverview" class="text-button" type="button">← Volver al PCI</button>
           <p class="eyebrow">Editor de espacios</p>
@@ -107,7 +89,7 @@
     </section>
 
     <section id="control" class="screen" aria-labelledby="controlTitle">
-      <div class="section-heading">
+      <div class="section-heading hero-band">
         <div>
           <button class="text-button" type="button" data-screen-link="overview">← Volver al PCI</button>
           <p class="eyebrow">Seguimiento de cobertura</p>
@@ -130,7 +112,7 @@
     </section>
 
     <section id="matrix" class="screen" aria-labelledby="matrixTitle">
-      <div class="section-heading">
+      <div class="section-heading hero-band">
         <div>
           <button class="text-button" type="button" data-screen-link="overview">← Volver al PCI</button>
           <p class="eyebrow">Trayectoria C1–C12</p>
@@ -151,14 +133,7 @@
     </section>
   </main>
 
-  <footer class="site-footer no-print">
-    <img class="logo-blanco" src="../assets/logo-escuela-maestros-blanco.svg?v=20260827" alt="Escuela de Maestros">
-    <div class="footer-right">
-      <strong>Ministerio de Educación</strong>
-      <span class="sep"></span>
-      <img src="../assets/ba-ciudad-footer.png?v=20260827" alt="Buenos Aires Ciudad">
-    </div>
-  </footer>
+  <footer class="site-footer no-print"><img class="logo-blanco" src="../assets/em-logo-footer.svg?v=20260902" alt="Escuela de Maestros"><img class="ministerio" src="../assets/ministerio-footer.svg?v=20260902" alt="Ministerio de Educación · Buenos Aires Ciudad"></footer>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="content-loader.js?v=20260827-3"></script>

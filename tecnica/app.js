@@ -140,7 +140,6 @@ function groupLabel(config, count) {
 
 function renderOverview() {
   $('schoolName').value = app.schoolName;
-  $('headerSchoolName').textContent = app.schoolName;
   $('overviewTitle').textContent = app.schoolName;
 
   const errors = validateStructure(app);
@@ -781,14 +780,12 @@ function printScreen(screenId) {
 }
 
 function bindEvents() {
-  $('brandHome').addEventListener('click', () => showScreen('overview'));
   document.querySelectorAll('[data-screen-link]').forEach((button) => button.addEventListener('click', () => showScreen(button.dataset.screenLink)));
   $('overviewControl').addEventListener('click', () => showScreen('control'));
   $('overviewMatrix').addEventListener('click', () => showScreen('matrix'));
   $('backOverview').addEventListener('click', () => showScreen('overview'));
   $('schoolName').addEventListener('input', (event) => {
     app.schoolName = event.target.value.trimStart() || 'Escuela Técnica';
-    $('headerSchoolName').textContent = app.schoolName;
     $('overviewTitle').textContent = app.schoolName;
     persist();
   });
