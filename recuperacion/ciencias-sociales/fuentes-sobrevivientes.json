@@ -1,0 +1,73 @@
+{
+  "captured_at": "2026-09-05",
+  "mode": "forensic_read_only",
+  "purpose": "Inventario de estados sobrevivientes útiles para recuperación. No implica que pertenezcan a Escuela 1 o Escuela 2.",
+  "sources": [
+    {
+      "school_id": 3,
+      "school_name": "Modelo Escuela DET",
+      "status": "fragmentos",
+      "groups": [
+        {"term":1,"name":"Laboratorio 2","items":["c276","c613"]},
+        {"term":8,"name":"Otra vez Ricky","items":["c277","c612"]}
+      ],
+      "notes": "El resto de los laboratorios visibles en esta fila son placeholders sin contenidos."
+    },
+    {
+      "school_id": 4,
+      "school_name": "Media 1",
+      "status": "fuente_sustantiva",
+      "frozen_secondary_source": "sebastiangiampani-create/Matriz-PCI · recuperacion/congelada-original-20260804 · data/school4-seed.json",
+      "groups_with_recovered_work": [
+        {"name":"La invención de quedarse","items":["c712","c713","c763","c764","c765","c766","c767","c804","c805","c806","c276"]},
+        {"name":"La lista de los que cuentan","items":["c715","c716","c717","c718","c719","c720","c721","c740","c768","c769","c770","c807","c808","c809","c810","c812","c813","c814","c815","c275"]},
+        {"name":"Dos mapas sobre el mismo suelo","items":["c731","c732","c733","c772","c816","c817","c818","c819","c820","c821"]},
+        {"name":"Cadenas para el rey","items":["c725","c726","c727","c728","c729","c730","c734","c735","c776","c777","c778","c779","c822","c823","c824","c825","c826","c827"]},
+        {"name":"Un país sin manual","items":["c277","c278","c279","c291","c293","c294","c736","c737","c738","c739","c741","c828","c829","c830","c831","c832","c833","c834","c835","c836","c837","c838","c839","c840","c841","c842","c843","c844","c845"]},
+        {"name":"Quién sostiene todo esto","items":["c280","c281","c282","c284","c285","c286","c287","c288","c290","c742","c744","c745","c746","c747","c748","c749","c780","c781","c782","c783","c784","c785","c786","c787","c788","c789"]},
+        {"name":"Con la ley en la mano","items":["c750","c751","c752","c753","c754","c755","c756","c791","c792","c793","c846","c847","c848","c849","c850","c851","c852","c853","c854","c855","c856","c857","c858"]},
+        {"name":"Del suelo al bolsillo","items":["c757","c758","c759","c760","c761","c762","c794","c795","c796","c797","c798","c799","c800","c801","c802","c803"]},
+        {"name":"La caja de herramientas","items":["c612","c615","c617","c619"]}
+      ],
+      "notes": "Los contextos y sourceContent están preservados adicionalmente en la semilla congelada y en el estado actual identificado por hash en estado-supabase-20260905.json."
+    },
+    {
+      "school_id": 1010,
+      "school_name": "A-484 \"Instituto Don Orione\"",
+      "status": "8_agrupamientos_sustantivos",
+      "groups": [
+        {"term":1,"name":"¿Cómo llega el agua a mi vaso? Un viaje a las ciudades del presente","items":["c804","c805","c806","c809","c818","c763","c764","c765","c766","c767","c768","c769","c772","c771","c712","c716","c721"]},
+        {"term":2,"name":"¿Todos los caminos conducen a Roma? Territorios, desplazamientos, pertenencias y formas de vivir juntos en el mundo antiguo y en el presente","items":["c810","c812","c814","c715","c728","c733","c713","c718","c770","c773","c774","c775","c772"]},
+        {"term":3,"name":"¿Por qué unos mandan y otros obedecen?","items":["c712","c713","c714","c725","c726","c727","c771","c772","c807","c808","c813","c805","c811"]},
+        {"term":5,"name":"¿Por qué somos iguales y diferentes? Ideas y pistas para entender cómo construimos nuestra identidad","items":["c806","c807","c715","c719","c782","c785","c771","c763","c816","c819"]},
+        {"term":7,"name":"Argentina, ¿un país de vacas sagradas? Un recorrido por la configuración del MAE y de la ISI en nuestro país","items":["c833","c835","c836","c837","c838","c841","c842","c843","c845","c844","c847","c848","c851","c778","c779","c781","c784","c786","c787","c788","c797","c717","c729","c736","c741","c751","c753","c277"]},
+        {"term":8,"name":"Evolución del mundo del trabajo: desafíos y oportunidades a través del tiempo","items":["c853","c855","c852","c857","c858","c803","c802","c801","c800","c799","c798","c796","c795","c794","c724","c730","c734","c735","c737","c740","c742","c743","c746","c745","c748","c749"]},
+        {"term":9,"name":"¿Puede volver a pasar? Totalitarismos, guerras, memoria y democracia entre el siglo XX y nuestro presente.","items":["c615","c616","c856","c854","c849","c850","c846","c722","c720","c732","c618"]},
+        {"term":10,"name":"¿Por qué pienso lo que pienso?","items":["c612","c613","c614","c615","c617","c619","c731"]}
+      ],
+      "empty_placeholders": [
+        {"term":4,"name":"Laboratorio 8"},
+        {"term":5,"name":"Laboratorio 5"},
+        {"term":6,"name":"Laboratorio 6"},
+        {"term":6,"name":"Laboratorio 7"}
+      ],
+      "notes": "Los ocho agrupamientos sustantivos conservan además contexto problematizador y objetivos extensos en la fila de Supabase consultada en modo solo lectura. Los IDs quedan congelados aquí aun si la fila cambia en el futuro."
+    },
+    {
+      "school_id": 1105,
+      "school_name": "Esc. Técnica Nº 26 DE 06 Confederación Suiza",
+      "status": "estructura_sin_contenidos",
+      "groups": [
+        {"term":1,"name":"Espacio de Integración 1"},
+        {"term":2,"name":"Espacio de Integración 2"},
+        {"term":3,"name":"Espacio de Integración 3"},
+        {"term":4,"name":"Espacio de Integración 4"},
+        {"term":5,"name":"Espacio de Integración 5"},
+        {"term":6,"name":"Espacio de Integración 6"},
+        {"term":7,"name":"Espacio de Integración 7"},
+        {"term":8,"name":"Espacio de Integración 8"}
+      ],
+      "notes": "En el estado recuperado estos espacios no tienen items, contexto ni objetivos."
+    }
+  ]
+}
