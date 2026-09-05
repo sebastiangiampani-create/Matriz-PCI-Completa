@@ -1,0 +1,194 @@
+{
+  "recovery_version": 1,
+  "target": {
+    "school_id": 1,
+    "historical_code": "PCI-101",
+    "historical_updated_at": "2026-08-07T18:36:45.840Z",
+    "status": "reconstruccion_forense_no_importar_automaticamente"
+  },
+  "sources": [
+    "Captura Mapa Curricular Institucional · Escuela 1 · PCI-101 (07/08/2026)",
+    "Captura editor PCI-101 · Matriz 1",
+    "PCI Laboratorios CN CS.docx",
+    "Matriz-PCI:data/school4-seed.json en rama recuperacion/congelada-original-20260804",
+    "Supabase school_id=4 (Media 1) consultado en modo solo lectura como fuente secundaria de IDs/contextos"
+  ],
+  "areas": {
+    "Lengua y Literatura": {
+      "evidence": "directa_en_capturas",
+      "visible_unique_used": 2,
+      "visible_total": 70,
+      "groups": [
+        {
+          "name": "Nivel 1",
+          "level": 1,
+          "termStart": 1,
+          "termEnd": 2,
+          "weeklyHoursStored": 0,
+          "items": ["c878", "c859"],
+          "evidence": "directa",
+          "notes": "La captura muestra 2 contenidos. c878 y c859 se identifican por texto contra la base de contenidos."
+        },
+        {
+          "name": "Nivel 2",
+          "level": 2,
+          "termStart": 3,
+          "termEnd": 4,
+          "weeklyHoursStored": 0,
+          "items": ["c859"],
+          "evidence": "directa",
+          "notes": "La captura muestra 1 contenido y el texto visible corresponde a Lectura de un subgénero narrativo moderno."
+        },
+        {
+          "name": "Nivel 3",
+          "level": 3,
+          "termStart": 5,
+          "termEnd": 6,
+          "weeklyHoursStored": 0,
+          "items": [],
+          "evidence": "directa_parcial",
+          "notes": "C5 visible en el mapa histórico con 0 contenidos."
+        }
+      ]
+    },
+    "Matemática": {
+      "evidence": "directa_parcial",
+      "state": "sin_espacios_en_C1_a_C5_visibles"
+    },
+    "Lenguas Adicionales": {
+      "evidence": "directa_parcial",
+      "state": "sin_espacios_en_C1_a_C5_visibles"
+    },
+    "Ciencias Sociales": {
+      "evidence": "C1_C5_directa; C6_C9_documental_y_fuente_secundaria",
+      "groups": [
+        {
+          "name": "La invención de quedarse",
+          "term": 1,
+          "level": 1,
+          "character": "Obligatorio",
+          "pedagogicalHoursReference": 9,
+          "historicalMapCount": 11,
+          "items": ["c712","c713","c763","c764","c765","c766","c767","c804","c805","c806","c276"],
+          "context": "Durante casi toda su historia la humanidad se movió. Cuando algunos grupos empezaron a quedarse, apareció todo lo demás: excedente, autoridad, escritura, desigualdad. Pero quedarse también tiene un costo: quien se asienta transforma el ambiente que lo sostiene, y esa transformación no se detuvo nunca. El laboratorio pregunta qué hizo posible ese cambio, qué formas de poder trajo consigo y qué problemas ambientales abrió, desde la primera aldea hasta el cambio climático.",
+          "evidence": "muy_alta"
+        },
+        {
+          "name": "La lista de los que cuentan",
+          "term": 2,
+          "level": 1,
+          "character": "Electivo",
+          "pedagogicalHoursReference": 9,
+          "historicalMapCount": 20,
+          "items": ["c715","c716","c717","c718","c719","c720","c721","c740","c768","c769","c770","c807","c808","c809","c810","c812","c813","c814","c815","c275"],
+          "context": "Atenas se llamaba democracia con la mayoría de su población excluida. Roma tenía ciudadanos y esclavos. El feudalismo organizaba estamentos cerrados. En cada caso alguien queda adentro y alguien afuera, y la frontera se corre con el tiempo. El laboratorio rastrea ese corrimiento hasta hoy, incluyendo quiénes son contados y quiénes no en las estadísticas actuales.",
+          "evidence": "muy_alta"
+        },
+        {
+          "name": "Dos mapas sobre el mismo suelo",
+          "term": 3,
+          "level": 2,
+          "character": "Obligatorio",
+          "pedagogicalHoursReference": 9,
+          "historicalMapCount": 10,
+          "items": ["c731","c732","c733","c772","c816","c817","c818","c819","c820","c821"],
+          "context": "En 1492 se encuentran dos sistemas de organización social que no se conocían. Lo que sigue no es solo una conquista militar: es la construcción de un territorio nuevo, de una sociedad jerarquizada por origen y de una idea de «otro» que sigue operando. El laboratorio analiza esos tres procesos juntos.",
+          "evidence": "muy_alta"
+        },
+        {
+          "name": "Cadenas para el rey",
+          "term": 4,
+          "level": 2,
+          "character": "Electivo",
+          "pedagogicalHoursReference": 9,
+          "historicalMapCount": 18,
+          "items": ["c725","c726","c727","c728","c729","c730","c734","c735","c776","c777","c778","c779","c822","c823","c824","c825","c826","c827"],
+          "context": "Un rey que se dice elegido por Dios no tiene por qué rendir cuentas. En menos de dos siglos esa idea se derrumba y aparecen constituciones, parlamentos y poderes que se controlan entre sí. Al mismo tiempo la industria concentra gente en ciudades, y lo que pasa en el campo cambia para poder alimentarlas: ambos movimientos son la misma transformación vista desde dos lugares. El laboratorio pregunta cómo se inventaron los mecanismos que todavía usamos para limitar el poder, si alcanzan, y cómo se reorganizó el territorio mientras tanto.",
+          "evidence": "muy_alta"
+        },
+        {
+          "name": "Un país sin manual",
+          "term": 5,
+          "level": 3,
+          "character": "Obligatorio",
+          "pedagogicalHoursReference": 9,
+          "historicalMapCount": 32,
+          "recoveredItemCount": 29,
+          "missingItemCount": 3,
+          "items": ["c277","c278","c279","c291","c293","c294","c736","c737","c738","c739","c741","c828","c829","c830","c831","c832","c833","c834","c835","c836","c837","c838","c839","c840","c841","c842","c843","c844","c845"],
+          "context": "Después de la independencia no había Estado: había territorios en disputa, ejércitos propios y ninguna autoridad común. Construirlo llevó setenta años de guerras y acuerdos, y ocurrió dentro de un mundo donde las potencias se repartían África y Asia. El laboratorio analiza qué hace falta para que un Estado exista, se organice, se financie y logre que le reconozcan autoridad, y compara ese proceso con las discusiones actuales sobre qué debe hacer el Estado y con qué plata.",
+          "evidence": "directa_para_nombre_y_conteo; secundaria_para_29_ids",
+          "discrepancy": "La captura histórica exige 32 contenidos. No se completan por inferencia los 3 IDs faltantes."
+        },
+        {
+          "name": "Quién sostiene todo esto",
+          "term": 6,
+          "level": 3,
+          "character": "Electivo",
+          "pedagogicalHoursReference": 9,
+          "items": ["c280","c281","c282","c284","c285","c286","c287","c288","c290","c742","c744","c745","c746","c747","c748","c749","c780","c781","c782","c783","c784","c785","c786","c787","c788","c789"],
+          "context": "Detrás de cualquier modelo económico hay gente trabajando, un territorio que se transforma y alguien que queda afuera del reparto. El laboratorio desarma esa trama: quién produce y en qué condiciones, cómo se fija un precio y cómo se mide una economía, qué le cuesta al ambiente sostener ese nivel de producción, y qué mecanismos —de género, de origen, de capacidad, de imagen— dejan a ciertas personas en peor posición para negociar su lugar. La pregunta no es qué produce un país sino quién carga con el costo de que lo produzca.",
+          "evidence": "alta"
+        },
+        {
+          "name": "Con la ley en la mano",
+          "term": 7,
+          "level": 4,
+          "character": "Obligatorio",
+          "pedagogicalHoursReference": 6,
+          "items": ["c750","c751","c752","c753","c754","c755","c756","c791","c792","c793","c846","c847","c848","c849","c850","c851","c852","c853","c854","c855","c856","c857","c858"],
+          "context": "El siglo XX argentino alterna gobiernos elegidos y golpes de Estado, y en el mundo produce dos guerras y genocidios planificados desde el propio Estado. Nada de eso ocurrió por fuera de la ley: en muchos casos se hizo con leyes. El laboratorio investiga qué condiciones permiten que un orden democrático se interrumpa, y qué mecanismos se construyeron después para que no vuelva a pasar.",
+          "evidence": "alta"
+        },
+        {
+          "name": "Del suelo al bolsillo",
+          "term": 8,
+          "level": 4,
+          "character": "Electivo",
+          "pedagogicalHoursReference": 6,
+          "items": ["c757","c758","c759","c760","c761","c762","c794","c795","c796","c797","c798","c799","c800","c801","c802","c803"],
+          "context": "La soja, el litio, el software, el turismo: lo que la Argentina produce define dónde vive la gente, qué trabajos hay y qué se puede comprar. Del otro lado de esa cadena hay alguien que consume, y que a los diecisiete años ya es a la vez consumidor, futuro trabajador y sujeto de derechos, sin que esas tres cosas le hayan sido explicadas juntas. El laboratorio recorre la cadena desde el territorio hasta el bolsillo y termina en una pregunta personal: qué se compra, qué se trabaja, qué cuida uno de sí y qué lugar elige ocupar en ese mapa cuando termina la escuela.",
+          "evidence": "alta"
+        },
+        {
+          "name": "La caja de herramientas",
+          "term": 9,
+          "level": 5,
+          "character": "Electivo",
+          "pedagogicalHoursReference": 2,
+          "items": ["c612","c615","c617","c619"],
+          "context": "Después de cuatro años analizando sociedades, Estados y economías, quedan preguntas que ninguna de esas disciplinas responde por sí sola: qué es una persona, con qué criterio se decide que una acción está bien, con qué fundamento se sostiene que todos tienen derechos y qué hace justa o injusta una manera de organizar la vida en común. El laboratorio cierra el recorrido poniendo a discusión los supuestos sobre los que se apoyó todo lo anterior, y lo hace leyendo a los autores que los formularon.",
+          "evidence": "alta"
+        }
+      ]
+    },
+    "Ciencias Naturales": {
+      "evidence": "C1_C5_nombres_directos; trayectoria_e_ids_documentales_y_fuente_secundaria",
+      "groups": [
+        {"name":"Señales de vida","term":1,"level":1,"character":"Obligatorio","pedagogicalHoursReference":4,"items":["c188","c189","c190","c191","c193","c194","c195","c620","c649","c663"],"evidence":"alta"},
+        {"name":"Manual de un cuerpo nuevo","term":2,"level":1,"character":"Electivo","pedagogicalHoursReference":4,"items":["c199","c200","c201","c202","c203","c204","c205","c207","c208","c209","c673","c682"],"evidence":"alta"},
+        {"name":"El árbol de las mil ramas","term":3,"level":2,"character":"Obligatorio","pedagogicalHoursReference":4,"items":["c192","c196","c210","c211","c214","c215","c216","c217","c218","c220","c221","c258","c702"],"evidence":"alta"},
+        {"name":"Viaje de un bocado","term":4,"level":2,"character":"Electivo","pedagogicalHoursReference":4,"items":["c222","c225","c226","c227","c228","c229","c230","c231","c659","c660"],"evidence":"alta"},
+        {"name":"El mensaje cifrado","term":5,"level":3,"character":"Obligatorio","pedagogicalHoursReference":7,"items":["c234","c235","c236","c237","c240","c241","c243","c244","c246","c247","c248","c249","c250","c251","c252","c253","c665","c668"],"evidence":"alta"},
+        {"name":"El margen estrecho","term":6,"level":3,"character":"Electivo","pedagogicalHoursReference":7,"items":["c255","c256","c257","c259","c260","c261","c262","c263","c264","c266","c268","c269","c270","c272","c274","c648","c651","c652","c654","c655","c656","c657","c658","c661","c666","c667","c675","c676","c677","c679","c681","c683","c684","c693","c694","c695","c696","c697","c698","c699","c701","c1084"],"evidence":"alta"},
+        {"name":"Nada se pierde, algo se desperdicia","term":7,"level":4,"character":"Obligatorio","pedagogicalHoursReference":3,"items":["c621","c623","c624","c625","c627","c628","c629","c631","c632","c633","c634","c642","c644","c646","c687","c688","c689","c691"],"evidence":"alta"},
+        {"name":"Ocho minutos de viaje","term":8,"level":4,"character":"Electivo","pedagogicalHoursReference":3,"items":["c635","c636","c637","c638","c639","c640","c641","c685","c686"],"evidence":"alta"},
+        {"name":"La receta de las cosas","term":9,"level":5,"character":"Electivo","pedagogicalHoursReference":4,"items":["c1079","c1080","c1086","c1087","c1093","c1112","c1119"],"evidence":"alta"}
+      ],
+      "possible_additional_format": {
+        "name": "Lo que se puede y lo que se debe",
+        "term": 10,
+        "description": "Seminario integrado Química-Filosofía",
+        "pedagogicalHoursReference": 6,
+        "evidence": "documental_no_confirmada_como_parte_del_snapshot_PCI101_07_08",
+        "included_in_reconstructed_state": false
+      }
+    }
+  },
+  "unresolved": [
+    "Identificar los 3 IDs faltantes de Un país sin manual para igualar los 32 contenidos visibles en Escuela 1.",
+    "Confirmar por snapshot/PITR el estado exacto de C6-C10 y cualquier simultaneidad de Ciencias Sociales en PCI-101.",
+    "Confirmar si otros formatos pedagógicos observados en capturas posteriores ya pertenecían al snapshot objetivo del 07/08.",
+    "No se inventan datos para áreas que en la evidencia directa figuran sin espacios o fuera del recorte visible."
+  ]
+}
