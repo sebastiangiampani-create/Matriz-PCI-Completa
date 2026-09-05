@@ -1,0 +1,19 @@
+{
+  "captured_at": "2026-09-05",
+  "mode": "read_only",
+  "project": "agmebsotbuurbnldxewf",
+  "notes": [
+    "No se modificó ninguna fila durante esta captura.",
+    "No se guardan claves de edición ni códigos primarios en este archivo.",
+    "Los hashes MD5 corresponden a data::text y permiten detectar cambios posteriores."
+  ],
+  "rows": [
+    {"school_id":1,"current_school_name":"Modelo Escuela DEA","updated_at":"2026-09-04T19:30:48.886Z","data_text_chars":21922,"data_bytes":2565,"data_md5":"7a3c9d9eb70f6367fd1fd2f37c8082ae","historical_target_updated_at":"2026-08-07T18:36:45.840Z","status":"sobrescrita"},
+    {"school_id":2,"current_school_name":"Modelo Escuela DEA","updated_at":"2026-09-04T19:30:45.248Z","data_text_chars":21922,"data_bytes":2565,"data_md5":"7a3c9d9eb70f6367fd1fd2f37c8082ae","historical_target_updated_at":"2026-08-04T17:08:48.523Z","status":"sobrescrita"},
+    {"school_id":3,"current_school_name":"Modelo Escuela DET","updated_at":"2026-08-26T12:58:22.566Z","data_text_chars":23446,"data_bytes":2922,"data_md5":"9dbec82043ac3289ddfa3830590d9010","historical_target_updated_at":"2026-08-03T15:34:38.982Z","status":"con_fragmentos_sobrevivientes"},
+    {"school_id":4,"current_school_name":"Media 1","updated_at":"2026-08-19T18:13:08.862Z","data_text_chars":59329,"data_bytes":23529,"data_md5":"98d942e9c3871c9804ba3955d21c8d41","historical_target_updated_at":"2026-08-08T01:35:58.058Z","status":"fuente_sustantiva_preservada"},
+    {"school_id":1010,"current_school_name":"A-484 Instituto Don Orione","updated_at":"2026-08-27T18:13:12.107Z","data_text_chars":63290,"data_bytes":20581,"data_md5":"060c716252b7956351c9d59dd5e66e25","status":"fuente_sustantiva_preservada"},
+    {"school_id":1105,"current_school_name":"Esc. Técnica Nº 26 DE 06 Confederación Suiza","updated_at":"2026-08-27T18:39:27.793Z","data_text_chars":17936,"data_bytes":2245,"data_md5":"d2bc4796440440343801b1936b42622f","status":"fuente_con_espacios_visibles"}
+  ],
+  "important_finding": "Las filas 1 y 2 tienen actualmente exactamente el mismo hash de data, confirmando que el contenido previo independiente ya no está en esas dos filas actuales."
+}
