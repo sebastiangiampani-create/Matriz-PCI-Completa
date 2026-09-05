@@ -58,6 +58,14 @@ Contiene la recuperación estructurada de:
 
 Snapshot compatible con el esquema histórico de trabajo para poder abrir, comparar o transformar la reconstrucción. **No es una orden de restauración y no debe importarse automáticamente a producción.**
 
+`recuperacion/escuela-1/c5-un-pais-diferencia-32-vs-29.md`
+
+Acota la diferencia del C5 histórico. El mapa de PCI-101 muestra 32 contenidos y la copia sobreviviente conserva 29. Al cruzar el documento pedagógico con el catálogo completo, los tres contenidos históricos faltantes quedan reducidos a un conjunto de seis candidatos comprobados por contenido curricular:
+
+`c275, c276, c292, c295, c296, c740`
+
+Sabemos que **exactamente tres** de esos seis completaban los 32 del snapshot histórico, pero todavía no hay evidencia que permita elegir cuáles tres sin especular.
+
 ### Escuela 2 / PCI-102
 
 `recuperacion/escuela-2/README.md`
@@ -114,7 +122,7 @@ Mapa histórico de PCI-101:
 - C4 — Cadenas para el rey — 18 contenidos;
 - C5 — Un país sin manual — 32 contenidos.
 
-Los cuatro primeros conteos coinciden exactamente con la fuente secundaria preservada y sus IDs. Para `Un país sin manual` se recuperaron 29 IDs frente a los 32 visibles históricamente: **los 3 faltantes permanecen marcados como pendientes y no se inventan.**
+Los cuatro primeros conteos coinciden exactamente con la fuente secundaria preservada y sus IDs. Para `Un país sin manual` se recuperaron 29 IDs frente a los 32 visibles históricamente. El documento curricular completo contiene 35 IDs compatibles con ese laboratorio; comparado con los 29 sobrevivientes, quedan seis candidatos (`c275,c276,c292,c295,c296,c740`) y sabemos que tres de ellos pertenecían al estado de 32. No se eligen por inferencia.
 
 ## Evidencia directa destacada de Escuela 2
 
@@ -127,6 +135,10 @@ Se verificó:
 - capturas del editor de espacios.
 
 El contenido exacto del snapshot del 4/8 todavía necesita una fuente externa histórica para ser afirmado con certeza.
+
+## Búsqueda de exportaciones locales
+
+Se revisaron los archivos JSON/texto accesibles en la Biblioteca para el período de trabajo de agosto. No apareció una exportación identificable de `pciAppV2`, `PCI-101` o `PCI-102`. Los textos pegados del 10/8 corresponden a materiales de planes de aprendizaje, no a snapshots de la matriz. Esto sólo describe las fuentes accesibles durante la recuperación; no demuestra que nunca haya existido otra copia local.
 
 ## Puntos de restauración externos prioritarios
 
@@ -141,7 +153,7 @@ La restauración debe realizarse primero en un entorno aislado o como exportaci�
 
 ## Qué falta para una recuperación exacta al 100 %
 
-1. Los 3 IDs faltantes del C5 histórico de Ciencias Sociales de Escuela 1.
+1. Determinar cuáles tres de `c275,c276,c292,c295,c296,c740` completaban los 32 contenidos históricos de `Un país sin manual`.
 2. El JSON antiguo completo de Escuela 2 / PCI-102.
 3. Confirmación exacta de C6-C10 y simultaneidades de Escuela 1 mediante snapshot histórico, cuando no exista evidencia directa suficiente.
 4. Cualquier dato que haya vivido sólo en una exportación local o en `localStorage` y no haya sido sincronizado antes de la sobrescritura.
