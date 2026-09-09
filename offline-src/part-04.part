@@ -1,0 +1,129 @@
+endLocalAudit(meta.SchoolID, "login_failed", req.FirstName, req.LastName, req.Email)
+		writeError(w, http.StatusUnauthorized, errors.New("clave incorrecta"))
+		return
+	}
+	token := s.newSession(localSession{
+		Role:      "editor",
+		SchoolID:  meta.SchoolID,
+		FirstName: strings.TrimSpace(req.FirstName),
+		LastName:  strings.TrimSpace(req.LastName),
+		Email:     strings.TrimSpace(req.Email),
+	})
+	s.appendLocalAudit(meta.SchoolID, "login_ok", req.FirstName, req.LastName, req.Email)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"token":     token,
+		"role":      "editor",
+		"school_id": meta.SchoolID,
+		"name":      meta.Name,
+		"model":     meta.Model,
+		"identity": map[string]string{
+			"first_name": strings.TrimSpace(req.FirstName),
+			"last_name":  strings.TrimSpace(req.LastName),
+			"email":      strings.TrimSpace(req.Email),
+		},
+	})
+}
+
+func (s *server) handleAdminLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost || !requireLocalMutation(r) {
+		http.Error(w, "Solicitud no permitida", http.StatusMethodNotAllowed)
+		return
+	}
+	var req struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := decodeJSON(r, &req, 1<<20); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	v, err := s.loadVault()
+	if err != nil {
+		writeError(w, http.StatusConflict, errors.New("no hay una copia offline preparada"))
+		return
+	}
+	if !strings.EqualFold(strings.TrimSpace(req.Username), v.Admin.Username) || !verifyCredential(req.Password, v.Admin.Password) {
+		writeError(w, http.StatusUnauthorized, errors.New("credenciales de administracion incorrectas"))
+		return
+	}
+	token := s.newSession(localSession{Role: "admin"})
+	writeJSON(w, http.StatusOK, map[string]any{"token": token, "role": "admin"})
+}
+
+func (s *server) handleState(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		token := r.URL.Query().Get("token")
+		sess, ok := s.session(token)
+		if !ok || sess.Role != "editor" {
+			writeError(w, http.StatusUnauthorized, errors.New("sesion offline invalida o vencida"))
+			return
+		}
+		v, err := s.loadVault()
+		if err != nil {
+			writeError(w, http.StatusConflict, err)
+			return
+		}
+		meta, ok := v.Schools[strconv.Itoa(sess.SchoolID)]
+		if !ok {
+			writeError(w, http.StatusNotFound, errors.New("escuela no disponible"))
+			return
+		}
+		b, err := os.ReadFile(filepath.Join(s.statesDir(), strconv.Itoa(sess.SchoolID)+".json"))
+		if err != nil {
+			b = []byte(`{}`)
+		}
+		var raw json.RawMessage = b
+		writeJSON(w, http.StatusOK, map[string]any{
+			"school_id": meta.SchoolID,
+			"name":      meta.Name,
+			"model":     meta.Model,
+			"data":      raw,
+		})
+	case http.MethodPost:
+		if !requireLocalMutation(r) {
+			http.Error(w, "Solicitud no permitida", http.StatusMethodNotAllowed)
+			return
+		}
+		var req struct {
+			Token string          `json:"token"`
+			Data  json.RawMessage `json:"data"`
+		}
+		if err := decodeJSON(r, &req, 16<<20); err != nil {
+			writeError(w, http.StatusBadRequest, err)
+			return
+		}
+		sess, ok := s.session(req.Token)
+		if !ok || sess.Role != "editor" {
+			writeError(w, http.StatusUnauthorized, errors.New("sesion offline invalida o vencida"))
+			return
+		}
+		if !json.Valid(req.Data) || len(req.Data) > 12<<20 {
+			writeError(w, http.StatusBadRequest, errors.New("estado PCI invalido"))
+			return
+		}
+		if err := s.saveState(sess, req.Data); err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "saved_at": time.Now().UTC().Format(time.RFC3339)})
+	default:
+		http.Error(w, "Metodo no permitido", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *server) saveState(sess localSession, data json.RawMessage) error {
+	s.dataMu.Lock()
+	defer s.dataMu.Unlock()
+	path := filepath.Join(s.statesDir(), strconv.Itoa(sess.SchoolID)+".json")
+	old, _ := os.ReadFile(path)
+	if bytes.Equal(bytes.TrimSpace(old), bytes.TrimSpace(data)) {
+		return nil
+	}
+	if err := os.MkdirAll(s.statesDir(), 0o700); err != nil {
+		return err
+	}
+	if err := writeAtomic(path, data, 0o600); err != nil {
+		return err
+	}
+	return s.appendLocalAuditUnlocked(sess.SchoolID, "state_saved", sess.First
