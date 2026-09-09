@@ -1,0 +1,86 @@
+		for j := range t {
+				t[j] ^= u[j]
+			}
+		}
+		out = append(out, t...)
+	}
+	return out[:keyLen]
+}
+
+func writeAtomic(path string, data []byte, perm fs.FileMode) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, perm); err != nil {
+		return err
+	}
+	_ = os.Remove(path)
+	return os.Rename(tmp, path)
+}
+
+func addDirToZip(zw *zip.Writer, root, prefix string) error {
+	var paths []string
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		paths = append(paths, path)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	sort.Strings(paths)
+	for _, path := range paths {
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		name := filepath.ToSlash(filepath.Join(prefix, rel))
+		f, err := zw.Create(name)
+		if err != nil {
+			return err
+		}
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if _, err := f.Write(b); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func decodeJSON(r *http.Request, dst any, max int64) error {
+	b, err := io.ReadAll(io.LimitReader(r.Body, max+1))
+	if err != nil {
+		return err
+	}
+	if int64(len(b)) > max {
+		return errors.New("solicitud demasiado grande")
+	}
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(dst); err != nil {
+		return err
+	}
+	if dec.More() {
+		return errors.New("JSON invalido")
+	}
+	return nil
+}
+
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(v)
+}
+
+func writeError(w http.ResponseWriter, status int, err error) {
+	writeJSON(w, status, map[string]string{"error": err.Error()})
+}
