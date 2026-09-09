@@ -1,0 +1,155 @@
+)}
+					continue
+				}
+				if len(sr.Data) == 0 || bytes.Equal(bytes.TrimSpace(sr.Data), []byte("null")) {
+					sr.Data = json.RawMessage(`{}`)
+				}
+				editHash, err := makeVerifier(strings.ToUpper(strings.TrimSpace(school.EditCode)))
+				if err != nil {
+					results <- workResult{err: err}
+					continue
+				}
+				primaryHash := credentialVerifier{}
+				if strings.TrimSpace(school.PrimaryCode) != "" {
+					primaryHash, err = makeVerifier(strings.ToUpper(strings.TrimSpace(school.PrimaryCode)))
+					if err != nil {
+						results <- workResult{err: err}
+						continue
+					}
+				}
+				model := school.Model
+				if model != "tecnica" {
+					model = "comun"
+				}
+				results <- workResult{
+					meta: localSchool{
+						SchoolID:    school.SchoolID,
+						Name:        school.Name,
+						CUE:         school.CUE,
+						Email:       school.Email,
+						EntryYear:   school.EntryYear,
+						Model:       model,
+						UpdatedAt:   school.UpdatedAt,
+						EditCode:    editHash,
+						PrimaryCode: primaryHash,
+					},
+					state: sr.Data,
+				}
+			}
+		}()
+	}
+	go func() {
+		for _, school := range list.Schools {
+			select {
+			case jobs <- school:
+			case <-ctx.Done():
+				close(jobs)
+				return
+			}
+		}
+		close(jobs)
+	}()
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	completed := 0
+	for res := range results {
+		if res.err != nil {
+			return nil, res.err
+		}
+		statePath := filepath.Join(tmp, "schools", strconv.Itoa(res.meta.SchoolID)+".json")
+		if err := writeAtomic(statePath, res.state, 0o600); err != nil {
+			return nil, err
+		}
+		vault.Schools[strconv.Itoa(res.meta.SchoolID)] = res.meta
+		completed++
+	}
+	if completed != len(list.Schools) {
+		return nil, fmt.Errorf("la copia quedo incompleta: %d de %d escuelas", completed, len(list.Schools))
+	}
+	vaultBytes, err := json.MarshalIndent(vault, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	if err := writeAtomic(filepath.Join(tmp, "vault.json"), vaultBytes, 0o600); err != nil {
+		return nil, err
+	}
+
+	if err := s.installSnapshot(tmp); err != nil {
+		return nil, err
+	}
+	cleanup = false
+	return map[string]any{
+		"ok":           true,
+		"school_count": len(list.Schools),
+		"snapshot_at":  vault.SnapshotAt,
+	}, nil
+}
+
+func (s *server) remoteCall(ctx context.Context, body any) (json.RawMessage, error) {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, remoteAPI, bytes.NewReader(payload))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(io.LimitReader(resp.Body, 32<<20))
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		var e struct {
+			Error string `json:"error"`
+		}
+		_ = json.Unmarshal(b, &e)
+		if e.Error == "" {
+			e.Error = fmt.Sprintf("respuesta HTTP %d", resp.StatusCode)
+		}
+		return nil, errors.New(e.Error)
+	}
+	return b, nil
+}
+
+func (s *server) handleSchoolLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost || !requireLocalMutation(r) {
+		http.Error(w, "Solicitud no permitida", http.StatusMethodNotAllowed)
+		return
+	}
+	var req struct {
+		SchoolID  int    `json:"school_id"`
+		Code      string `json:"code"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Email     string `json:"email"`
+	}
+	if err := decodeJSON(r, &req, 1<<20); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	v, err := s.loadVault()
+	if err != nil {
+		writeError(w, http.StatusConflict, errors.New("primero prepara o importa una copia offline"))
+		return
+	}
+	meta, ok := v.Schools[strconv.Itoa(req.SchoolID)]
+	if !ok {
+		writeError(w, http.StatusNotFound, errors.New("escuela no disponible en la copia offline"))
+		return
+	}
+	if strings.TrimSpace(req.FirstName) == "" || strings.TrimSpace(req.LastName) == "" || strings.TrimSpace(req.Email) == "" {
+		writeError(w, http.StatusBadRequest, errors.New("completa nombre, apellido y correo electronico"))
+		return
+	}
+	code := strings.ToUpper(strings.TrimSpace(req.Code))
+	if !verifyCredential(code, meta.EditCode) {
+		s.app
