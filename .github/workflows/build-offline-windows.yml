@@ -1,0 +1,74 @@
+name: Build Matriz PCI Offline Windows
+
+on:
+  push:
+    branches:
+      - offline-windows
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+          cache: false
+
+      - name: Assemble offline launcher source
+        shell: bash
+        run: cat offline-src/part-*.part > offline-launcher.go
+
+      - name: Verify Go source
+        shell: bash
+        run: |
+          gofmt -w offline-launcher.go
+          go test ./...
+
+      - name: Run existing model tests
+        shell: bash
+        run: npm test
+
+      - name: Build portable Windows executable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          go build -trimpath -ldflags "-H=windowsgui -s -w" -o dist\Matriz-PCI-Offline.exe .
+          if (!(Test-Path "dist\Matriz-PCI-Offline.exe")) { throw "No se genero el ejecutable" }
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $iscc)) {
+            choco install innosetup --no-progress -y
+          }
+          if (!(Test-Path $iscc)) { throw "No se encontro Inno Setup" }
+          & $iscc "offline-installer.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Fallo Inno Setup" }
+          if (!(Test-Path "release\Matriz-PCI-Offline-Setup.exe")) { throw "No se genero el instalador" }
+
+      - name: Checksums
+        shell: pwsh
+        run: |
+          Get-FileHash dist\Matriz-PCI-Offline.exe -Algorithm SHA256 | Format-List | Out-File release\SHA256.txt
+          Get-FileHash release\Matriz-PCI-Offline-Setup.exe -Algorithm SHA256 | Format-List | Out-File release\SHA256.txt -Append
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Matriz-PCI-Offline-Windows
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            dist/Matriz-PCI-Offline.exe
+            release/Matriz-PCI-Offline-Setup.exe
+            release/SHA256.txt
