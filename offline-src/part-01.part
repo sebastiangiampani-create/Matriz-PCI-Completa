@@ -1,0 +1,136 @@
+
+func pingExisting(addr string) bool {
+	client := &http.Client{Timeout: 900 * time.Millisecond}
+	r, err := client.Get("http://" + addr + "/api/ping")
+	if err != nil {
+		return false
+	}
+	defer r.Body.Close()
+	return r.StatusCode == http.StatusOK && r.Header.Get("X-Matriz-PCI-Offline") == "1"
+}
+
+func openAppWindow(url string) error {
+	if runtime.GOOS == "windows" {
+		candidates := []string{
+			filepath.Join(os.Getenv("ProgramFiles(x86)"), "Microsoft", "Edge", "Application", "msedge.exe"),
+			filepath.Join(os.Getenv("ProgramFiles"), "Microsoft", "Edge", "Application", "msedge.exe"),
+			filepath.Join(os.Getenv("LOCALAPPDATA"), "Microsoft", "Edge", "Application", "msedge.exe"),
+		}
+		for _, candidate := range candidates {
+			if candidate == "" {
+				continue
+			}
+			if _, err := os.Stat(candidate); err == nil {
+				return exec.Command(candidate, "--app="+url, "--start-maximized").Start()
+			}
+		}
+		return exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	}
+	if runtime.GOOS == "darwin" {
+		return exec.Command("open", url).Start()
+	}
+	return exec.Command("xdg-open", url).Start()
+}
+
+func (s *server) routes(mux *http.ServeMux) {
+	mux.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Matriz-PCI-Offline", "1")
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+	})
+	mux.HandleFunc("/api/status", s.handleStatus)
+	mux.HandleFunc("/api/schools", s.handleSchools)
+	mux.HandleFunc("/api/bootstrap", s.handleBootstrap)
+	mux.HandleFunc("/api/login", s.handleSchoolLogin)
+	mux.HandleFunc("/api/admin-login", s.handleAdminLogin)
+	mux.HandleFunc("/api/state", s.handleState)
+	mux.HandleFunc("/api/export", s.handleExport)
+	mux.HandleFunc("/api/import", s.handleImport)
+	mux.HandleFunc("/api/logout", s.handleLogout)
+
+	mux.HandleFunc("/", s.handleStatic)
+}
+
+func (s *server) handleStatic(w http.ResponseWriter, r *http.Request) {
+	if strings.HasPrefix(r.URL.Path, "/api/") {
+		http.NotFound(w, r)
+		return
+	}
+	path := strings.TrimPrefix(r.URL.Path, "/")
+	switch path {
+	case "", "index.html":
+		path = "offline-ui/index.html"
+	case "offline-school.html":
+		path = "offline-ui/school.html"
+	}
+	if strings.Contains(path, "..") {
+		http.Error(w, "Ruta invalida", http.StatusBadRequest)
+		return
+	}
+	data, err := embeddedFiles.ReadFile(path)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if t := mime.TypeByExtension(filepath.Ext(path)); t != "" {
+		w.Header().Set("Content-Type", t)
+	}
+	_, _ = w.Write(data)
+}
+
+func (s *server) currentDir() string { return filepath.Join(s.root, "current") }
+func (s *server) vaultPath() string  { return filepath.Join(s.currentDir(), "vault.json") }
+func (s *server) statesDir() string  { return filepath.Join(s.currentDir(), "schools") }
+
+func (s *server) loadVault() (localVault, error) {
+	b, err := os.ReadFile(s.vaultPath())
+	if err != nil {
+		return localVault{}, err
+	}
+	var v localVault
+	if err := json.Unmarshal(b, &v); err != nil {
+		return localVault{}, err
+	}
+	if v.Version != vaultVersion || len(v.Schools) == 0 {
+		return localVault{}, errors.New("la copia offline no es valida")
+	}
+	return v, nil
+}
+
+func (s *server) handleStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Metodo no permitido", http.StatusMethodNotAllowed)
+		return
+	}
+	v, err := s.loadVault()
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"prepared": false, "school_count": 0})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"prepared":     true,
+		"school_count": v.SchoolCount,
+		"snapshot_at":  v.SnapshotAt,
+		"source":       v.Source,
+	})
+}
+
+func (s *server) handleSchools(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Metodo no permitido", http.StatusMethodNotAllowed)
+		return
+	}
+	v, err := s.loadVault()
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"prepared": false, "schools": []any{}})
+		return
+	}
+	schools := make([]map[string]any, 0, len(v.Schools))
+	for _, meta := range v.Schools {
+		schools = append(schools, map[string]any{
+			"school_id": meta.SchoolID,
+			"name":      meta.Name,
+			"cue":       meta.CUE,
+			"model":     meta.Model,
+		})
+	}
+	sort.Slice(s
