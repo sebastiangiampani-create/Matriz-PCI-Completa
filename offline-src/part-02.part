@@ -1,0 +1,134 @@
+chools, func(i, j int) bool {
+		return strings.ToLower(fmt.Sprint(schools[i]["name"])) < strings.ToLower(fmt.Sprint(schools[j]["name"]))
+	})
+	writeJSON(w, http.StatusOK, map[string]any{"prepared": true, "schools": schools})
+}
+
+func requireLocalMutation(r *http.Request) bool {
+	return r.Header.Get("X-Requested-With") == "MatrizPCI-Offline"
+}
+
+func (s *server) handleBootstrap(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost || !requireLocalMutation(r) {
+		http.Error(w, "Solicitud no permitida", http.StatusMethodNotAllowed)
+		return
+	}
+	var req struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := decodeJSON(r, &req, 1<<20); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	req.Username = strings.TrimSpace(strings.ToLower(req.Username))
+	if req.Username == "" || req.Password == "" {
+		writeError(w, http.StatusBadRequest, errors.New("completa usuario y clave de administracion"))
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 4*time.Minute)
+	defer cancel()
+	result, err := s.bootstrapFromOnline(ctx, req.Username, req.Password)
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (s *server) bootstrapFromOnline(ctx context.Context, username, password string) (map[string]any, error) {
+	loginRaw, err := s.remoteCall(ctx, map[string]any{
+		"action":   "admin-login",
+		"username": username,
+		"password": password,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("no se pudo validar la administracion online: %w", err)
+	}
+	var login struct {
+		Token string `json:"token"`
+		Role  string `json:"role"`
+	}
+	if err := json.Unmarshal(loginRaw, &login); err != nil || login.Token == "" || login.Role != "admin" {
+		return nil, errors.New("la cuenta online no tiene acceso de administracion general")
+	}
+
+	listRaw, err := s.remoteCall(ctx, map[string]any{"action": "list-schools", "token": login.Token})
+	if err != nil {
+		return nil, fmt.Errorf("no se pudo leer el listado de escuelas: %w", err)
+	}
+	var list struct {
+		Schools []remoteSchool `json:"schools"`
+	}
+	if err := json.Unmarshal(listRaw, &list); err != nil {
+		return nil, fmt.Errorf("respuesta de escuelas invalida: %w", err)
+	}
+	if len(list.Schools) == 0 {
+		return nil, errors.New("no se recibieron escuelas para preparar la copia offline")
+	}
+
+	tmp, err := os.MkdirTemp(s.root, "snapshot-")
+	if err != nil {
+		return nil, err
+	}
+	cleanup := true
+	defer func() {
+		if cleanup {
+			_ = os.RemoveAll(tmp)
+		}
+	}()
+	if err := os.MkdirAll(filepath.Join(tmp, "schools"), 0o700); err != nil {
+		return nil, err
+	}
+
+	adminHash, err := makeVerifier(password)
+	if err != nil {
+		return nil, err
+	}
+	vault := localVault{
+		Version:      vaultVersion,
+		CreatedAt:    time.Now().UTC().Format(time.RFC3339),
+		SnapshotAt:   time.Now().UTC().Format(time.RFC3339),
+		Source:       "Matriz-PCI-Completa / Supabase (lectura)",
+		Admin:        localAdmin{Username: username, Password: adminHash},
+		Schools:      make(map[string]localSchool, len(list.Schools)),
+		SchoolCount:  len(list.Schools),
+		ReadOnlySeed: true,
+	}
+
+	type workResult struct {
+		meta  localSchool
+		state json.RawMessage
+		err   error
+	}
+	jobs := make(chan remoteSchool)
+	results := make(chan workResult, len(list.Schools))
+	workerCount := 6
+	if len(list.Schools) < workerCount {
+		workerCount = len(list.Schools)
+	}
+	var wg sync.WaitGroup
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for school := range jobs {
+				if school.EditCode == "" {
+					results <- workResult{err: fmt.Errorf("la escuela %d no tiene clave de edicion disponible", school.SchoolID)}
+					continue
+				}
+				stateRaw, err := s.remoteCall(ctx, map[string]any{
+					"action":    "get-state",
+					"token":     login.Token,
+					"school_id": school.SchoolID,
+				})
+				if err != nil {
+					results <- workResult{err: fmt.Errorf("escuela %d: %w", school.SchoolID, err)}
+					continue
+				}
+				var sr struct {
+					Data json.RawMessage `json:"data"`
+				}
+				if err := json.Unmarshal(stateRaw, &sr); err != nil {
+					results <- workResult{err: fmt.Errorf("escuela %d: estado invalido", school.SchoolID
