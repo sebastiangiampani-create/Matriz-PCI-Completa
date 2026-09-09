@@ -1,0 +1,134 @@
+Name, sess.LastName, sess.Email)
+}
+
+func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Metodo no permitido", http.StatusMethodNotAllowed)
+		return
+	}
+	sess, ok := s.session(r.URL.Query().Get("token"))
+	if !ok || sess.Role != "admin" {
+		writeError(w, http.StatusUnauthorized, errors.New("inicia sesion como administracion offline"))
+		return
+	}
+	v, err := s.loadVault()
+	if err != nil {
+		writeError(w, http.StatusConflict, err)
+		return
+	}
+	filename := "Matriz-PCI-Offline-Backup-" + time.Now().Format("20060102-150405") + ".pci-offline.zip"
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	zw := zip.NewWriter(w)
+	if err := addDirToZip(zw, s.currentDir(), ""); err != nil {
+		_ = zw.Close()
+		return
+	}
+	manifest, _ := json.MarshalIndent(map[string]any{
+		"format":       "Matriz PCI Offline Backup",
+		"version":      vaultVersion,
+		"school_count": v.SchoolCount,
+		"snapshot_at":  v.SnapshotAt,
+		"exported_at":  time.Now().UTC().Format(time.RFC3339),
+	}, "", "  ")
+	f, err := zw.Create("backup-manifest.json")
+	if err == nil {
+		_, _ = f.Write(manifest)
+	}
+	_ = zw.Close()
+}
+
+func (s *server) handleImport(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost || !requireLocalMutation(r) {
+		http.Error(w, "Solicitud no permitida", http.StatusMethodNotAllowed)
+		return
+	}
+	prepared := false
+	if _, err := s.loadVault(); err == nil {
+		prepared = true
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, maxImportBytes)
+	if err := r.ParseMultipartForm(maxImportBytes); err != nil {
+		writeError(w, http.StatusBadRequest, errors.New("el respaldo es demasiado grande o no es valido"))
+		return
+	}
+	if prepared {
+		token := r.FormValue("token")
+		sess, ok := s.session(token)
+		if !ok || sess.Role != "admin" {
+			writeError(w, http.StatusUnauthorized, errors.New("inicia sesion como administracion offline antes de reemplazar la copia"))
+			return
+		}
+	}
+	file, _, err := r.FormFile("backup")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, errors.New("selecciona un archivo de respaldo .pci-offline.zip"))
+		return
+	}
+	defer file.Close()
+	b, err := io.ReadAll(io.LimitReader(file, maxImportBytes))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := s.importSnapshot(b); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	v, _ := s.loadVault()
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "school_count": v.SchoolCount, "snapshot_at": v.SnapshotAt})
+}
+
+func (s *server) importSnapshot(b []byte) error {
+	zr, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
+	if err != nil {
+		return errors.New("el archivo no es un respaldo offline valido")
+	}
+	tmp, err := os.MkdirTemp(s.root, "import-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmp)
+	var total int64
+	for _, zf := range zr.File {
+		name := filepath.Clean(filepath.FromSlash(zf.Name))
+		if name == "." || strings.HasPrefix(name, "..") || filepath.IsAbs(name) || strings.Contains(name, ":") {
+			return errors.New("el respaldo contiene una ruta no permitida")
+		}
+		if strings.HasSuffix(name, "backup-manifest.json") {
+			continue
+		}
+		if zf.FileInfo().IsDir() {
+			if err := os.MkdirAll(filepath.Join(tmp, name), 0o700); err != nil {
+				return err
+			}
+			continue
+		}
+		total += int64(zf.UncompressedSize64)
+		if total > maxImportBytes {
+			return errors.New("el respaldo descomprimido supera el limite permitido")
+		}
+		rc, err := zf.Open()
+		if err != nil {
+			return err
+		}
+		data, err := io.ReadAll(io.LimitReader(rc, maxImportBytes))
+		_ = rc.Close()
+		if err != nil {
+			return err
+		}
+		dest := filepath.Join(tmp, name)
+		if err := os.MkdirAll(filepath.Dir(dest), 0o700); err != nil {
+			return err
+		}
+		if err := writeAtomic(dest, data, 0o600); err != nil {
+			return err
+		}
+	}
+	vaultBytes, err := os.ReadFile(filepath.Join(tmp, "vault.json"))
+	if err != nil {
+		return errors.New("el respaldo no contiene vault.json")
+	}
+	var v localVault
+	if err := json.Unmarshal(vaultBytes, &v); err != nil || v.Version != vaultVersion || len(v.Schools) == 0 {
+		return errors.Ne
