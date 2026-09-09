@@ -1,0 +1,170 @@
+package main
+
+import (
+	"archive/zip"
+	"bytes"
+	"context"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"embed"
+	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"log"
+	"mime"
+	"net"
+	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"sort"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+)
+
+const (
+	appPort          = 38473
+	remoteAPI        = "https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-access"
+	vaultVersion     = 1
+	credentialRounds = 250000
+	maxImportBytes   = 128 << 20
+)
+
+//go:embed *.html *.css *.js *.csv assets data tecnica offline-ui
+var embeddedFiles embed.FS
+
+type credentialVerifier struct {
+	Algorithm  string `json:"algorithm"`
+	Iterations int    `json:"iterations"`
+	Salt       string `json:"salt"`
+	Hash       string `json:"hash"`
+}
+
+type localAdmin struct {
+	Username string             `json:"username"`
+	Password credentialVerifier `json:"password"`
+}
+
+type localSchool struct {
+	SchoolID    int                `json:"school_id"`
+	Name        string             `json:"name"`
+	CUE         string             `json:"cue,omitempty"`
+	Email       string             `json:"email,omitempty"`
+	EntryYear   string             `json:"entry_year,omitempty"`
+	Model       string             `json:"model"`
+	UpdatedAt   string             `json:"updated_at,omitempty"`
+	EditCode    credentialVerifier `json:"edit_code"`
+	PrimaryCode credentialVerifier `json:"primary_code"`
+}
+
+type localVault struct {
+	Version      int                    `json:"version"`
+	CreatedAt    string                 `json:"created_at"`
+	SnapshotAt   string                 `json:"snapshot_at"`
+	Source       string                 `json:"source"`
+	Admin        localAdmin             `json:"admin"`
+	Schools      map[string]localSchool `json:"schools"`
+	SchoolCount  int                    `json:"school_count"`
+	ReadOnlySeed bool                   `json:"read_only_seed"`
+}
+
+type localSession struct {
+	Token     string
+	Role      string
+	SchoolID  int
+	FirstName string
+	LastName  string
+	Email     string
+	ExpiresAt time.Time
+}
+
+type server struct {
+	root       string
+	httpClient *http.Client
+	sessionsMu sync.Mutex
+	sessions   map[string]localSession
+	dataMu     sync.Mutex
+}
+
+type remoteSchool struct {
+	SchoolID    int    `json:"school_id"`
+	Name        string `json:"name"`
+	CUE         string `json:"cue"`
+	Email       string `json:"email"`
+	EntryYear   string `json:"entry_year"`
+	EditCode    string `json:"edit_code"`
+	PrimaryCode string `json:"primary_code"`
+	UpdatedAt   string `json:"updated_at"`
+	Model       string `json:"model"`
+}
+
+func main() {
+	if runtime.GOOS != "windows" {
+		log.Printf("Matriz PCI Offline esta pensada para Windows; ejecutando en modo compatible.")
+	}
+	root, err := os.UserConfigDir()
+	if err != nil {
+		root = "."
+	}
+	root = filepath.Join(root, "MatrizPCIOffline")
+	if err := os.MkdirAll(root, 0o700); err != nil {
+		log.Fatal(err)
+	}
+
+	s := &server{
+		root: root,
+		httpClient: &http.Client{
+			Timeout: 35 * time.Second,
+		},
+		sessions: make(map[string]localSession),
+	}
+
+	addr := fmt.Sprintf("127.0.0.1:%d", appPort)
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		if pingExisting(addr) {
+			_ = openAppWindow("http://" + addr + "/")
+			return
+		}
+		log.Fatalf("No se pudo iniciar Matriz PCI Offline: %v", err)
+	}
+
+	mux := http.NewServeMux()
+	s.routes(mux)
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("Content-Security-Policy", "frame-ancestors 'self'")
+		mux.ServeHTTP(w, r)
+	})
+
+	httpServer := &http.Server{
+		Handler:           h,
+		ReadHeaderTimeout: 8 * time.Second,
+		ReadTimeout:       90 * time.Second,
+		WriteTimeout:      90 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	go func() {
+		if err := httpServer.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("Servidor local finalizado: %v", err)
+		}
+	}()
+
+	url := "http://" + addr + "/"
+	if err := openAppWindow(url); err != nil {
+		log.Printf("No se pudo abrir la ventana automaticamente: %v", err)
+	}
+
+	select {}
+}
