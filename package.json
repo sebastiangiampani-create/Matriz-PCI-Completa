@@ -3,7 +3,44 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "main": "offline/electron-main.cjs",
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "start:offline": "electron .",
+    "dist:win": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "37.4.0",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "ar.buenosaires.escuelademaestros.matrizpci.offline",
+    "productName": "Matriz PCI Offline",
+    "asar": true,
+    "files": [
+      "**/*",
+      "!.github/**",
+      "!release/**",
+      "!node_modules/**"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Matriz PCI Offline"
+    },
+    "artifactName": "Matriz-PCI-Offline-Setup-${version}-${arch}.${ext}"
   }
 }
