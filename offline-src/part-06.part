@@ -1,0 +1,144 @@
+w("el vault del respaldo no es compatible")
+	}
+	for id := range v.Schools {
+		if _, err := os.Stat(filepath.Join(tmp, "schools", id+".json")); err != nil {
+			return fmt.Errorf("falta el estado de la escuela %s", id)
+		}
+	}
+	return s.installSnapshot(tmp)
+}
+
+func (s *server) installSnapshot(tmp string) error {
+	s.dataMu.Lock()
+	defer s.dataMu.Unlock()
+	current := s.currentDir()
+	previous := filepath.Join(s.root, "previous")
+	_ = os.RemoveAll(previous)
+	if _, err := os.Stat(current); err == nil {
+		if err := os.Rename(current, previous); err != nil {
+			return err
+		}
+	}
+	if err := os.Rename(tmp, current); err != nil {
+		if _, statErr := os.Stat(previous); statErr == nil {
+			_ = os.Rename(previous, current)
+		}
+		return err
+	}
+	_ = os.RemoveAll(previous)
+	return nil
+}
+
+func (s *server) handleLogout(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost || !requireLocalMutation(r) {
+		http.Error(w, "Solicitud no permitida", http.StatusMethodNotAllowed)
+		return
+	}
+	var req struct {
+		Token string `json:"token"`
+	}
+	_ = decodeJSON(r, &req, 1<<20)
+	s.sessionsMu.Lock()
+	delete(s.sessions, req.Token)
+	s.sessionsMu.Unlock()
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
+func (s *server) newSession(sess localSession) string {
+	buf := make([]byte, 32)
+	_, _ = rand.Read(buf)
+	token := hex.EncodeToString(buf)
+	sess.Token = token
+	sess.ExpiresAt = time.Now().Add(12 * time.Hour)
+	s.sessionsMu.Lock()
+	s.sessions[token] = sess
+	s.sessionsMu.Unlock()
+	return token
+}
+
+func (s *server) session(token string) (localSession, bool) {
+	s.sessionsMu.Lock()
+	defer s.sessionsMu.Unlock()
+	sess, ok := s.sessions[token]
+	if !ok || time.Now().After(sess.ExpiresAt) {
+		if ok {
+			delete(s.sessions, token)
+		}
+		return localSession{}, false
+	}
+	return sess, true
+}
+
+func (s *server) appendLocalAudit(schoolID int, action, first, last, email string) {
+	s.dataMu.Lock()
+	defer s.dataMu.Unlock()
+	_ = s.appendLocalAuditUnlocked(schoolID, action, first, last, email)
+}
+
+func (s *server) appendLocalAuditUnlocked(schoolID int, action, first, last, email string) error {
+	dir := filepath.Join(s.currentDir(), "audit")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+	row, _ := json.Marshal(map[string]any{
+		"school_id":  schoolID,
+		"action":     action,
+		"first_name": strings.TrimSpace(first),
+		"last_name":  strings.TrimSpace(last),
+		"email":      strings.TrimSpace(email),
+		"at":         time.Now().UTC().Format(time.RFC3339),
+	})
+	f, err := os.OpenFile(filepath.Join(dir, strconv.Itoa(schoolID)+".jsonl"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.Write(append(row, '\n'))
+	return err
+}
+
+func makeVerifier(secret string) (credentialVerifier, error) {
+	salt := make([]byte, 16)
+	if _, err := rand.Read(salt); err != nil {
+		return credentialVerifier{}, err
+	}
+	dk := pbkdf2SHA256([]byte(secret), salt, credentialRounds, 32)
+	return credentialVerifier{
+		Algorithm:  "pbkdf2-sha256",
+		Iterations: credentialRounds,
+		Salt:       base64.RawStdEncoding.EncodeToString(salt),
+		Hash:       base64.RawStdEncoding.EncodeToString(dk),
+	}, nil
+}
+
+func verifyCredential(secret string, v credentialVerifier) bool {
+	if v.Algorithm != "pbkdf2-sha256" || v.Iterations < 100000 || v.Iterations > 2000000 {
+		return false
+	}
+	salt, err := base64.RawStdEncoding.DecodeString(v.Salt)
+	if err != nil {
+		return false
+	}
+	expected, err := base64.RawStdEncoding.DecodeString(v.Hash)
+	if err != nil || len(expected) == 0 {
+		return false
+	}
+	actual := pbkdf2SHA256([]byte(secret), salt, v.Iterations, len(expected))
+	return hmac.Equal(actual, expected)
+}
+
+func pbkdf2SHA256(password, salt []byte, iterations, keyLen int) []byte {
+	hLen := sha256.Size
+	blocks := (keyLen + hLen - 1) / hLen
+	out := make([]byte, 0, blocks*hLen)
+	for block := 1; block <= blocks; block++ {
+		mac := hmac.New(sha256.New, password)
+		_, _ = mac.Write(salt)
+		_, _ = mac.Write([]byte{byte(block >> 24), byte(block >> 16), byte(block >> 8), byte(block)})
+		u := mac.Sum(nil)
+		t := append([]byte(nil), u...)
+		for i := 1; i < iterations; i++ {
+			mac = hmac.New(sha256.New, password)
+			_, _ = mac.Write(u)
+			u = mac.Sum(nil)
+		
