@@ -1,0 +1,27 @@
+name: Validar catalogo PCI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'panel-escuela.html'
+      - 'scripts/patch-pci-catalog.mjs'
+      - 'tests/pci-catalog-patch.test.js'
+      - 'tests/pci-school-picker.test.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  catalogo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar funcion Supabase y pantallas de acceso
+        run: node --test tests/pci-catalog-patch.test.js tests/pci-school-picker.test.js
