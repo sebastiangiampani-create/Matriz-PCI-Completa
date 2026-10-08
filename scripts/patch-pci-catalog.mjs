@@ -34,7 +34,8 @@ export function patchPciCatalog(source) {
     name:String(row.data?.schoolName||'Escuela '+row.school_id),
     cue:String(row.data?._meta?.cue||''),
     email:String(row.data?._meta?.email||''),
-    entry_year:String(row.data?._meta?.entry_year||'')
+    entry_year:String(row.data?._meta?.entry_year||''),
+    model:row.data?.profile==='tecnica'?'tecnica':'comun'
   }));
 }
 // Historical initialization hook: reads must never insert or reset PCI data.
@@ -47,7 +48,7 @@ async function ensureSchools(){return await loadCatalog()}
   const publicAction = `if(action==='public-catalog'){
   const catalog=await loadCatalog();
   return new Response(JSON.stringify({schools:catalog.map(s=>({
-    school_id:s.school_id,name:s.name,cue:s.cue
+    school_id:s.school_id,name:s.name,cue:s.cue,model:s.model
   }))}),{headers:cors})
 }
 
