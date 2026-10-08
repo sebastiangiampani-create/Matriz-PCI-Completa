@@ -38,7 +38,7 @@ export function patchPciCatalog(source) {
   }));
 }
 // Historical initialization hook: reads must never insert or reset PCI data.
-async function ensureSchools(){return true}
+async function ensureSchools(){return await loadCatalog()}
 `;
   const result = (source.slice(0, start) + corrected + source.slice(end))
     .replace(/^const CATALOG_URL=.*\r?\n/m, '');
