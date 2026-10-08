@@ -34,14 +34,28 @@ export function patchPciCatalog(source) {
     name:String(row.data?.schoolName||'Escuela '+row.school_id),
     cue:String(row.data?._meta?.cue||''),
     email:String(row.data?._meta?.email||''),
-    entry_year:String(row.data?._meta?.entry_year||'')
+    entry_year:String(row.data?._meta?.entry_year||''),
+    model:row.data?.profile==='tecnica'?'tecnica':'comun'
   }));
 }
 // Historical initialization hook: reads must never insert or reset PCI data.
 async function ensureSchools(){return await loadCatalog()}
 `;
+  // Names and CUEs are already part of the public school selector.
+  // Expose no credentials, user permissions, PCI content or email addresses.
+  const entryPoint = "if(action==='admin-login'){";
+  if (source.split(entryPoint).length !== 2) throw new Error('Unexpected action handlers');
+  const publicAction = `if(action==='public-catalog'){
+  const catalog=await loadCatalog();
+  return new Response(JSON.stringify({schools:catalog.map(s=>({
+    school_id:s.school_id,name:s.name,cue:s.cue,model:s.model
+  }))}),{headers:cors})
+}
+
+`;
   const result = (source.slice(0, start) + corrected + source.slice(end))
-    .replace(/^const CATALOG_URL=.*\r?\n/m, '');
+    .replace(/^const CATALOG_URL=.*\r?\n/m, '')
+    .replace(entryPoint, publicAction + entryPoint);
   if (result.includes('fetch(CATALOG_URL') || result.includes('const CATALOG_URL') ||
       !result.includes("if(action==='list-schools')") ||
       !result.includes("if(action==='save-state')")) {

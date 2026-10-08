@@ -9,6 +9,7 @@ const existingSource = [
   "async function loadCatalog(){const r=await fetch(CATALOG_URL);if(!r.ok)throw Error('CSV');return [];}",
   "async function ensureSchools(){const catalog=await loadCatalog();await supabase.from('pci_proposals').upsert([]);return catalog}",
   'function schoolMeta(rows){return rows}',
+  "if(action==='admin-login'){const unchanged='admin';}",
   "if(action==='list-schools'){await ensureSchools();}",
   "if(action==='save-state'){const unchanged='save_state';}",
   "if(action==='get-state'){const unchanged='get_state';}"
@@ -43,15 +44,19 @@ test('patch removes the remote CSV dependency and the implicit upsert', () => {
   assert.match(patched, /\.from\('pci_proposals'\)/);
   assert.ok(patched.includes("if(action==='save-state'){const unchanged='save_state';}"));
   assert.ok(patched.includes("if(action==='get-state'){const unchanged='get_state';}"));
-  assert.equal(patched.slice(patched.indexOf('function schoolMeta(')),
-    existingSource.slice(existingSource.indexOf('function schoolMeta(')));
+  assert.match(patched, /if\(action==='public-catalog'\)/);
+  const publicHandler=patched.split("if(action==='public-catalog'){")[1].split("if(action==='admin-login'){")[0];
+  assert.match(publicHandler, /school_id:s.school_id,name:s.name,cue:s.cue,model:s.model/);
+  assert.doesNotMatch(publicHandler, /edit_code|primary_code|email|password|secret/);
+  assert.equal(patched.slice(patched.indexOf("if(action==='admin-login')")),
+    existingSource.slice(existingSource.indexOf("if(action==='admin-login')")));
 });
 
 test('reads 233 schools using stored metadata, without any write', async () => {
   const patched = patchPciCatalog(existingSource);
   const rows = Array.from({length:233}, (_, i) => ({
     school_id:i+1001,
-    data:{schoolName:'Escuela '+(i+1),_meta:{catalog_id:'C'+(i+1),cue:'000'+i,email:'x@example.edu.ar',entry_year:'2026'}}
+    data:{profile:i===0?'tecnica':'comun',schoolName:'Escuela '+(i+1),_meta:{catalog_id:'C'+(i+1),cue:'000'+i,email:'x@example.edu.ar',entry_year:'2026'}}
   }));
   const {result,stats} = loadFunction(patched,rows);
   const catalog = await result;
@@ -59,6 +64,8 @@ test('reads 233 schools using stored metadata, without any write', async () => {
   assert.equal(catalog[0].school_id,1001);
   assert.equal(catalog[0].rid,'C1');
   assert.equal(catalog[0].name,'Escuela 1');
+  assert.equal(catalog[0].model,'tecnica');
+  assert.equal(catalog[1].model,'comun');
   assert.equal(catalog[232].school_id,1233);
   assert.equal(stats().writes,0);
   assert.equal(stats().reads,1);
