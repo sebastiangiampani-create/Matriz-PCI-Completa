@@ -36,5 +36,22 @@ test('school administration selector parses and prefers database catalog',()=>{
 test('existing CSV catalog remains intact as compatibility fallback',()=>{
   const text=readFileSync(new URL('../schools-catalog.csv',import.meta.url),'utf8').replace(/^\uFEFF/,'');
   assert.match(text.split(/\r?\n/)[0], /^id,name,cue,email,entry_year/);
-  assert.equal(text.split(/\r?\n/).filter(Boolean).length-1,233);
+  // One quoted school name legitimately contains a newline.
+  // Count records outside quoted CSV cells, not physical lines.
+  let insideQuotes=false,recordCount=0,recordHasText=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(c==='\"'){
+      if(insideQuotes&&text[i+1]==='\"')i++;
+      else insideQuotes=!insideQuotes;
+    }else if((c==='\n'||c==='\r')&&!insideQuotes){
+      if(c==='\r'&&text[i+1]==='\n')i++;
+      if(recordHasText)recordCount++;
+      recordHasText=false;
+    }else{
+      recordHasText=true;
+    }
+  }
+  if(recordHasText)recordCount++;
+  assert.equal(recordCount-1,233);
 });
