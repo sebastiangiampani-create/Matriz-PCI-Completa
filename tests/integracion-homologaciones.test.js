@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createOrientationPackage} from '../src/integracion-curricular/bridge.js';
+import {createOrientationPackage,chooseFgMode} from '../src/integracion-curricular/bridge.js';
+import {stageFgContent,appendFgContent} from '../src/integracion-curricular/mapa-oferta.js';
 import {
   mappingKey,suggestHomologations,approveHomologation,
   getApprovedHomologations,inspectHomologations
@@ -118,4 +119,34 @@ test('cambiar homologación conserva la anterior en el historial',()=>{
   assert.equal(history[1].previous.referenceId,'v2-e3');
   assert.equal(getApprovedHomologations(second,'economia_administracion')
     [mappingKey('Ciencias Sociales',3,'legacy-e3')].referenceId,'v2-e3b');
+});
+
+test('arrastre pendiente -> revisión pedagógica -> incorporación no altera plan previo',()=>{
+  const old=original(),init=chooseFgMode(pack(),'economia_administracion','revisar');
+  const extra={id:'legacy-extra',area:'Ciencias Sociales',subject:'Economía',text:'Texto escolar diferente'};
+  const fullMatrix=[...matrix,extra];
+  const waiting=stageFgContent(init,{
+    orientationId:'economia_administracion',area:'Ciencias Sociales',groupId:'social3',
+    contentId:'legacy-extra',matrixRows:fullMatrix
+  });
+  const groupBefore=waiting.orientations.economia_administracion.fg.areas['Ciencias Sociales'].groups[0];
+  assert.equal(groupBefore.items.includes(extra.id),false);
+  assert.equal(groupBefore.provisionalContentIds.includes(extra.id),true);
+  assert.throws(()=>appendFgContent(waiting,{
+    orientationId:'economia_administracion',area:'Ciencias Sociales',groupId:'social3',
+    contentId:extra.id,matrixRows:fullMatrix,v2FgRows:v2
+  }),/Revisar homologación/);
+  const approved=approveHomologation(waiting,{
+    ...args,matrixId:extra.id,matrixRows:fullMatrix
+  });
+  const promoted=appendFgContent(approved,{
+    orientationId:'economia_administracion',area:'Ciencias Sociales',groupId:'social3',
+    contentId:extra.id,matrixRows:fullMatrix,v2FgRows:v2
+  });
+  const next=promoted.orientations.economia_administracion.fg.areas['Ciencias Sociales'].groups[0];
+  assert.ok(next.items.includes(extra.id));
+  assert.deepEqual(next.provisionalContentIds,[]);
+  assert.equal(next.plansBimestrales[0].stages.punto_partida.description,'No borrar esta secuencia');
+  assert.deepEqual(old,original());
+  assert.equal(promoted.orientations.ciencias_naturales.fg.areas['Ciencias Sociales'].groups[0].items.includes(extra.id),false);
 });
