@@ -1,0 +1,38 @@
+name: Validar mapa V2 original en vista aislada
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'preview-v2-real/**'
+      - 'tests/integracion-v2-original*'
+      - '.github/workflows/validar-v2-real-aislado.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mapa-autentico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar fuentes originales y recursos sin acceso a escuelas
+        run: node --test tests/integracion-v2-original.test.js
+      - name: Instalar Chromium para test web y movil
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Abrir Mapa de la Oferta real de V2 y verificar materias
+        run: node tests/integracion-v2-original-browser.mjs
+      - name: Guardar capturas de la vista real
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vista-previa-v2-original
+          path: test-artifacts/integracion-v2-real/
+          if-no-files-found: ignore
+          retention-days: 7
