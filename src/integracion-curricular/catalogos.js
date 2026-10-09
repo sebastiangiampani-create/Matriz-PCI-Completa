@@ -146,7 +146,10 @@ export function fgCoverageByLevel({areas,matrixRows,v2FgRows,area,level}){
   }
   return {area,level:year,sourceGroups:sourceGroups.length,locatedLegacyContents:ids.length,
     mappedUniqueContents:matched.size,prescribedTotal:universe.length,
-    verifiedPercent:universe.length?Math.round(matched.size/universe.length*1000)/10:null,
+    // A partial mapping is a documented lower bound, not verified coverage.
+    verifiedPercent:unmatched.length||ambiguous.length?null:
+      universe.length?Math.round(matched.size/universe.length*1000)/10:null,
+    minimumMappedPercent:universe.length?Math.round(matched.size/universe.length*1000)/10:null,
     unmatched,ambiguous,
     coverageStatus:unmatched.length||ambiguous.length?'partial-homologation':'verified',
     note:'No se cuentan dos veces los contenidos repetidos en laboratorios o planes.'};
