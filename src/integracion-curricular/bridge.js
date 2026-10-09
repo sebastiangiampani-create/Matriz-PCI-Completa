@@ -149,6 +149,52 @@ export function chooseFgMode(pack,orientationId,mode) {
   return changed;
 }
 
+/**
+ * Read-only choice information for a future school-facing interface.
+ * UI code should take title/labels as text, never inject saved HTML.
+ */
+export function getFgDecision(pack,orientationId) {
+  const w=workspace(pack,orientationId);
+  return {
+    title:'Tu Formación General ya está construida',
+    description:'Podés conservar los agrupamientos existentes o revisarlos para esta orientación. Las secuencias y planes no se eliminan.',
+    orientation:w.name,
+    selected:w.fg.mode,
+    options:[
+      {value:FG_MODES.CONSERVAR,label:'Conservar la Formación General',description:'Mantener los agrupamientos, contenidos y secuencias copiados de la matriz existente.'},
+      {value:FG_MODES.REVISAR,label:'Revisar y adaptar esta orientación',description:'Analizar posibles articulaciones FG–FO y señalar los laboratorios y planes que requieran revisión.'}
+    ],
+    pendingReviews:w.pendingReviews.length
+  };
+}
+
+/**
+ * Registers a proposed FO space in this isolated package only.
+ * The prescribed number and composition of FO spaces remains subject
+ * to a separate curriculum validator before publishing.
+ */
+export function registerFoSpace(pack,orientationId,definition) {
+  const w=workspace(pack,orientationId);
+  if(!isObject(definition)||!nonEmpty(String(definition.id??'')))
+    throw new Error('Se requiere el identificador de un espacio FO.');
+  const year=Number(definition.year);
+  if(!Number.isInteger(year)||year<3||year>5)
+    throw new Error('La Formación Orientada se organiza en niveles 3.º a 5.º.');
+  const kind=definition.kind;
+  if(!['laboratorio','taller','proyecto'].includes(kind))
+    throw new Error('El tipo de espacio FO es inválido.');
+  if(kind==='proyecto'&&year!==5)
+    throw new Error('El Proyecto de Vinculación se ubica en 5.º.');
+  if(w.fo.spaces.some(x=>String(x.id)===String(definition.id)))
+    throw new Error('Ese espacio FO ya existe; no se sobrescribe.');
+  const updated=copy(pack);
+  updated.orientations[orientationId].fo.spaces.push({
+    id:String(definition.id),name:String(definition.name||definition.id),year,kind,
+    members:Array.isArray(definition.members)?copy(definition.members):[]
+  });
+  return updated;
+}
+
 export function inspectIntegration(legacyState,pack) {
   validateLegacy(legacyState);
   const baseline=countInventory(legacyState.areas);
@@ -186,6 +232,9 @@ export function previewArticulation(pack,{orientationId,area,groupId,foSpaceId,s
     throw new Error('La articulación FG-FO corresponde al mismo nivel, desde 3.º.');
   if(!nonEmpty(subject)||!nonEmpty(String(foSpaceId??'')))
     throw new Error('Falta identificar la materia o el destino.');
+  const foSpace=w.fo.spaces.find(x=>String(x.id)===String(foSpaceId));
+  if(!foSpace)throw new Error('El espacio de Formación Orientada todavía no fue creado.');
+  if(foSpace.year!==y)throw new Error('El laboratorio y el espacio FO deben corresponder al mismo nivel.');
   const plans=Array.isArray(source.plansBimestrales)?source.plansBimestrales:[];
   const withWork=plans.map((p,i)=>({
     number:p.number??i+1,name:p.name||'',
@@ -219,6 +268,8 @@ export function queueReview(pack,preview) {
   if(!preview||preview.canApply!==false||preview.status!=='pending-review')
     throw new Error('Vista previa de revisión inválida.');
   const w=workspace(pack,preview.orientationId);
+  if(w.fg.mode!==FG_MODES.REVISAR)throw new Error('La orientación debe estar en modo revisión.');
+  if(!w.fo.spaces.some(s=>String(s.id)===String(preview.foSpaceId)))throw new Error('El destino FO ya no existe.');
   if(!w.fg.areas?.[preview.area]?.groups?.some(g=>String(g.id)===preview.groupId))
     throw new Error('El laboratorio dejó de existir.');
   const updated=copy(pack),alerts=updated.orientations[preview.orientationId].pendingReviews;
