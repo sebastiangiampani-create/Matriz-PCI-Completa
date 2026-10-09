@@ -25,7 +25,9 @@ export const ORIENTATIONS=Object.freeze([
   {id:'informatica',name:'Informática'},
   {id:'educacion',name:'Educación'},
   {id:'ciencias_sociales_humanidades',name:'Ciencias Sociales y Humanidades'},
-  {id:'arte',name:'Arte'},
+  {id:'arte_artes_visuales',name:'Arte - Artes Visuales',foCatalogId:'arte'},
+  {id:'arte_musica',name:'Arte - Música',foCatalogId:'arte'},
+  {id:'arte_teatro',name:'Arte - Teatro',foCatalogId:'arte'},
   {id:'agro_ambiente',name:'Agro y Ambiente'}
 ]);
 const CATALOG=new Map(ORIENTATIONS.map(o=>[o.id,o]));
