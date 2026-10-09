@@ -102,7 +102,7 @@ export async function loadV2Fo({fetchFn=fetch,base='data/integracion-curricular/
 }
 export async function loadV2Rules({fetchFn=fetch,base='data/integracion-curricular/referencia-v2'}={}){
   const names=['reglas-v2.json','horas-v2.json','materias-v2.json','catalogo-orientaciones.json'];
-  const content=await Promise.all(names.map(x=>fetchText(fetchFn,base,x)));
+  const content=await Promise.all(names.map(x=>fetchText(fetchFn,base+'/'+x)));
   const [rules,hours,subjects,catalog]=content.map(JSON.parse);
   if(rules?.modelo_institucional?.unidad_trabajo!=='pci_por_escuela_y_orientacion')
     throw new Error('La referencia de composición no está completa.');
