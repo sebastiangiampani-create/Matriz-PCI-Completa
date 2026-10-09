@@ -52,7 +52,7 @@ export function suggestHomologations({matrixRows,v2FgRows,area,year,matrixId,lim
 }
 function knownGroup(areas,area,year,id){
   return array(areas?.[area]?.groups).some(g=>Number(g.level)===Number(year)&&
-    array(g.items).map(String).includes(String(id)));
+    [...array(g.items),...array(g.provisionalContentIds)].map(String).includes(String(id)));
 }
 export function approveHomologation(pack,{
   orientationId,area,year,matrixId,referenceId,reason,reviewer,
