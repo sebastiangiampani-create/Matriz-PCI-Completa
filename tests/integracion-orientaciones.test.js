@@ -95,6 +95,22 @@ test('al seleccionar conservar no se modifica ninguna orientacion',()=>{
   assert.equal(msg.options.length,2);
 });
 
+test('no anuncia FG completa cuando solo hay estructura vacia',()=>{
+  const original=existingSchool();
+  original.areas={'Matemática':{groups:[{
+    id:'mat-3',kind:'trunk',name:'Matemática 3.º',level:3,
+    startTerm:5,endTerm:6,items:[],plansBimestrales:[],
+    objective:'',context:'',synopsis:''
+  }]}};
+  const pkg=createOrientationPackage({
+    legacyState:original,schoolId:1001,orientationIds:['economia_administracion']
+  });
+  const message=getFgDecision(pkg,'economia_administracion');
+  assert.equal(message.hasPriorWork,false);
+  assert.match(message.title,/inicial disponible/);
+  assert.equal(message.selected,'conservar');
+});
+
 test('al seleccionar revisar solo esa orientacion cambia de modo',()=>{
   const pkg=packageFor(),revised=chooseFgMode(pkg,'economia_administracion','revisar');
   assert.equal(revised.orientations.economia_administracion.fg.mode,'revisar');
