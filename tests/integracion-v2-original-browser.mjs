@@ -15,8 +15,12 @@ async function serve(){
   throw new Error('No levantó servidor de prueba.');
 }
 async function inspect(page,mode){
-  const bad=[];
+  const bad=[],missing=[];
   page.on('pageerror',e=>bad.push(e.message));
+  page.on('response',response=>{
+    if(response.status()>=400&&response.url().includes('/preview-v2-real/'))
+      missing.push(response.status()+' '+response.url());
+  });
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#orientationList input[type="checkbox"]',{timeout:60000});
   await page.waitForSelector('#pciList [data-open]',{timeout:60000});
@@ -41,13 +45,15 @@ async function inspect(page,mode){
     phase2:!!window.PCIPhase2V28,
     originalName:document.querySelector('#offerTitle')?.textContent
   }));
+  console.log('Mapa auténtico V2 '+mode+' métricas: '+JSON.stringify(state));
+  await page.screenshot({path:artifacts+'/'+mode+'-mapa-original.png',fullPage:true});
+  assert.deepEqual(missing,[],'Recursos curriculares faltantes: '+missing.join(' | '));
   assert.ok(state.map>35,'El mapa C1–C10 debe contener ubicaciones originales');
   assert.ok(state.subjects>20,'La bolsa FG/FO debe mostrar materias reales');
   assert.equal(state.realMap,true,'Debe renderizar la matriz de V2, no una maqueta');
   assert.ok(state.socialButtons>=2,'Deben aparecer las opciones reales de Sociales N3');
   assert.ok(state.formatButtons>=2,'Deben aparecer los formatos FO originales');
   assert.ok(state.phase2,'Debe cargar el motor auténtico de Desarrollo Curricular');
-  await page.screenshot({path:artifacts+'/'+mode+'-mapa-original.png',fullPage:true});
   assert.deepEqual(bad,[], 'Errores JavaScript del mapa original: '+bad.join(' | '));
   console.log('V2 original real '+mode+': '+JSON.stringify(state));
 }

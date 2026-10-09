@@ -46,3 +46,20 @@ test('vista aislada sin endpoint escolar ni colisiones con el almacenamiento de 
  assert.ok(core.includes('../assets/ba-logo.png'));
  assert.ok(core.includes('../assets/ba-ciudad-footer.png'));
 });
+
+test('copió las bases históricas de materias que V2 usa para completar su bolsa',async()=>{
+ for(const part of ['db1','db2','db3','db4','rest1','rest2','rest3','rest4','rest5'])
+   await access(dir+'data/formacion_general/'+part+'.txt');
+ for(const orientation of [
+   'agro_ambiente','arte','ciencias_naturales','ciencias_sociales_humanidades',
+   'comunicacion','economia_administracion','educacion','educacion_fisica',
+   'energia_sustentabilidad','informatica','lenguas','literatura',
+   'matematica_fisica','turismo'
+ ])await access(dir+'data/orientaciones/'+orientation+'.txt');
+ for(let i=1;i<=9;i++)
+   await access(dir+'data/curriculum_v96/fg-all-p'+i+'.txt');
+ await access(dir+'data/tutoria.json');
+ await access(dir+'data/contenidos-prescriptos-fg.json');
+ await access(dir+'assets/ba-logo.png');
+ await access(dir+'assets/ba-ciudad-footer.png');
+});
