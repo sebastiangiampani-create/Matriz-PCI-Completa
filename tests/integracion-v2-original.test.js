@@ -31,7 +31,7 @@ test('el mapa verdadero incluye las reglas de composición y la bolsa FG/FO',asy
  assert.match(map,/data-format/);
  assert.match(map,/data-social-option/);
  assert.match(map,/foLab5/);
- assert.match(map,/C\\$\\{t\\}/);
+ assert.ok(map.includes('C${t}'));
  const subjects=JSON.parse(await r('data/materias-v2.json'));
  assert.ok(subjects.formacion_general['3'].includes('Economía'));
  assert.ok(subjects.formacion_orientada['Economía y Administración']);
@@ -41,7 +41,8 @@ test('vista aislada sin endpoint escolar ni colisiones con el almacenamiento de 
  const core=await r('app-core.html');
  assert.match(core,/pci-matriz-fg-v2-original-preview-20261009/);
  assert.doesNotMatch(core,/const STORAGE='pci-sa-v2-app-20260910-21'/);
- assert.doesNotMatch(core,/supabase\\.co|functions\\/v1\\//);
- assert.match(core,/\.\.\\/assets\\/ba-logo\.png/);
- assert.match(core,/\.\.\\/assets\\/ba-ciudad-footer\.png/);
+ assert.equal(core.includes('supabase.co'),false);
+ assert.equal(core.includes('functions/v1/'),false);
+ assert.ok(core.includes('../assets/ba-logo.png'));
+ assert.ok(core.includes('../assets/ba-ciudad-footer.png'));
 });
