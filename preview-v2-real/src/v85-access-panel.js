@@ -156,7 +156,7 @@
     overlay.innerHTML=`
       <main class="v85-shell" role="dialog" aria-modal="true" aria-labelledby="v85Title">
         <section class="v85-hero">
-          <div class="access-brand-row"><img class="access-school-logo" src="assets/logo-escuela-maestros.svg" alt="Escuela de Maestros"><img class="access-ba-logo" src="assets/ba-logo.png" alt="BA · Gobierno de la Ciudad de Buenos Aires"></div>
+          <div class="access-brand-row"><img class="access-school-logo" src="assets/logo-escuela-maestros.svg" alt="Escuela de Maestros"><img class="access-ba-logo" src="../assets/ba-logo.png" alt="BA · Gobierno de la Ciudad de Buenos Aires"></div>
           <p class="v85-eye">PCI Secundaria Aprende</p>
           <h1 id="v85Title">Acceso a la plataforma</h1>
           <p>Elegí el perfil con el que querés ingresar. Esta pantalla prepara la lógica de permisos del nuevo sistema sin modificar la estética curricular existente.</p>
@@ -186,7 +186,7 @@
           <strong>Acceso de prueba.</strong>
           La selección de perfil funciona localmente. La autenticación real por usuario/email y los permisos persistentes se conectarán al backend cuando armemos la base.
         </aside>
-        <footer class="access-institutional-footer" aria-label="Identidad institucional"><img class="access-footer-school" src="assets/logo-escuela-maestros-blanco.svg" alt="Escuela de Maestros"><div class="access-footer-right"><strong>Ministerio de Educación</strong><span class="access-footer-sep"></span><img src="assets/ba-ciudad-footer.png" alt="Buenos Aires Ciudad"></div></footer>
+        <footer class="access-institutional-footer" aria-label="Identidad institucional"><img class="access-footer-school" src="assets/logo-escuela-maestros-blanco.svg" alt="Escuela de Maestros"><div class="access-footer-right"><strong>Ministerio de Educación</strong><span class="access-footer-sep"></span><img src="../assets/ba-ciudad-footer.png" alt="Buenos Aires Ciudad"></div></footer>
         <div class="access-cc-footer"><a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" rel="license noopener noreferrer"><img src="https://licensebuttons.net/l/by-nc-nd/4.0/88x31.png" alt="Creative Commons BY-NC-ND 4.0"></a><div><strong>© 2026 Sebastián Giampani</strong><span>Creative Commons BY-NC-ND 4.0 · Atribución · No Comercial · Sin Derivadas</span></div></div>
       </main>`;
 
