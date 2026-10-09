@@ -115,11 +115,11 @@ import {ORIENTATIONS,createOrientationPackage,chooseFgMode,previewArticulation,q
   from './src/integracion-curricular/bridge.js';
 import {
   loadMatrixContents,loadV2Fg,loadV2Fo,loadV2Rules,
-  selectFoByOrientation,fgCatalogPlacementSummary,fgCoverageByLevel,foTrajectoryCoverage
+  selectFoByOrientation,fgCatalogPlacementSummary,fgCoverageByLevel,foTrajectoryCoverage,matchMatrixToV2Fg
 } from './src/integracion-curricular/catalogos.js';
 import {
   seedOfferStructure,foSubjectBank,setFoAlternative,assignFoSubject,stageFoContent,
-  appendFgContent,moveFoSpace,offerMapRows,validateOfferStructure
+  appendFgContent,stageFgContent,moveFoSpace,offerMapRows,validateOfferStructure
 } from './src/integracion-curricular/mapa-oferta.js';
 import {curriculumTracking} from './src/integracion-curricular/seguimiento.js';
 import {suggestHomologations,approveHomologation,getApprovedHomologations}
@@ -284,8 +284,18 @@ function placeOnFg(area,groupId,payload){
   if(!payload||payload.kind!=='fg-contenido')throw new Error('Seleccioná un contenido de Matriz PCI para incorporarlo a FG.');
   if(payload.orientationId!==currentOrientation())
     throw new Error('Cambiaron las orientaciones: volvé a seleccionar el contenido.');
-  pack=appendFgContent(pack,{orientationId:currentOrientation(),area,groupId,
-    contentId:payload.id,matrixRows});
+  const group=current().fg.areas?.[area]?.groups?.find(x=>String(x.id)===String(groupId));
+  const mapping=matchMatrixToV2Fg({
+    matrixRows,v2FgRows:v2Fg,area,contentId:payload.id,
+    level:Number(group.level),approvedMappings:current().fg.homologations||{}
+  });
+  if(mapping.status==='matched'){
+    pack=appendFgContent(pack,{orientationId:currentOrientation(),area,groupId,
+      contentId:payload.id,matrixRows,v2FgRows:v2Fg});
+  }else{
+    pack=stageFgContent(pack,{orientationId:currentOrientation(),area,groupId,
+      contentId:payload.id,matrixRows});
+  }
 }
 function placeOnFo(space,payload){
   if(!payload)throw new Error('Seleccioná una materia o un contenido para ubicar.');
@@ -325,7 +335,7 @@ function fgCard(info){
   const group=current().fg.areas[info.area].groups.find(g=>g.id===info.id);
   const card=node('div',undefined,'group');
   card.append(node('div','FG · '+info.area,'zone-label'),node('b',group.name));
-  card.append(node('small',arr(group.items).length+' contenidos · '+arr(group.plansBimestrales).length+' planes guardados'));
+  card.append(node('small',arr(group.items).length+' contenidos ubicados · '+arr(group.provisionalContentIds).length+' pendientes de homologación · '+arr(group.plansBimestrales).length+' planes guardados'));
   const row=node('div',undefined,'row');
   row.append(btn('Usar seleccionado',()=>run(()=>placeOnFg(info.area,info.id,selectedItem))));
   if(info.area==='Ciencias Sociales'&&info.level===3){
@@ -483,7 +493,7 @@ function renderEquivalence(){
   }
   const area=selectedItem.area,year=Number($('year').value);
   const inYear=current().fg.areas?.[area]?.groups?.some(g=>Number(g.level)===year&&
-    arr(g.items).map(String).includes(String(selectedItem.id)));
+    [...arr(g.items),...arr(g.provisionalContentIds)].map(String).includes(String(selectedItem.id)));
   if(!inYear){
     panel.append(node('p','Este contenido aún no está ubicado en FG de '+year+'º. Ubicalo primero en un agrupamiento del mismo nivel.','help'));
     return;
@@ -522,6 +532,12 @@ function renderEquivalence(){
         reason:reason.value,reviewer:'Revisor ficticio de demostración',
         matrixRows,v2FgRows:v2Fg
       });
+      const targetGroup=current().fg.areas?.[area]?.groups?.find(g=>
+        Number(g.level)===year&&arr(g.provisionalContentIds).map(String).includes(String(selectedItem.id)));
+      if(targetGroup){
+        pack=appendFgContent(pack,{orientationId:currentOrientation(),area,
+          groupId:targetGroup.id,contentId:selectedItem.id,matrixRows,v2FgRows:v2Fg});
+      }
     })));
     panel.append(item);
   }
