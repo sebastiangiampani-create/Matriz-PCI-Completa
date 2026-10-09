@@ -110,8 +110,8 @@ function totalHours(space,additional=null){
 }
 export function assignFoSubject(pack,{orientationId,spaceId,subjectId,refs}){
   const w=ws(pack,orientationId);
-  if(w.fg.mode!==FG_MODES.REVISAR)
-    throw new Error('Para componer la oferta hay que elegir Revisar y adaptar.');
+  // Conservar FG does not prevent the school from constructing its FO.
+  // The mode only protects modifications to the copied FG itself.
   const s=w.fo.spaces.find(x=>x.id===spaceId);
   if(!s||s.kind==='proyecto')throw new Error('Destino FO inválido para una materia.');
   const bank=foSubjectBank({orientationId,refs,alternative:w.fo.subjectAlternative||'A'});
