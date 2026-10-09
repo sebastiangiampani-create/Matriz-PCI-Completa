@@ -119,7 +119,7 @@ import {
 } from './src/integracion-curricular/catalogos.js';
 import {
   seedOfferStructure,foSubjectBank,setFoAlternative,assignFoSubject,stageFoContent,
-  appendFgContent,offerMapRows,validateOfferStructure
+  appendFgContent,moveFoSpace,offerMapRows,validateOfferStructure
 } from './src/integracion-curricular/mapa-oferta.js';
 const $=s=>document.getElementById(s);
 const origSelection=['economia_administracion','ciencias_naturales','ciencias_sociales_humanidades'];
@@ -288,7 +288,9 @@ function placeOnFo(space,payload){
   if(!payload)throw new Error('Seleccioná una materia o un contenido para ubicar.');
   if(payload.orientationId!==currentOrientation())
     throw new Error('El contenido pertenece a otra orientación.');
-  if(payload.kind==='fo-materia'){
+  if(payload.kind==='fo-formato'){
+    pack=moveFoSpace(pack,{orientationId:currentOrientation(),spaceId:payload.spaceId,targetTerm:space.term});
+  }else if(payload.kind==='fo-materia'){
     pack=assignFoSubject(pack,{orientationId:currentOrientation(),
       spaceId:space.id,subjectId:payload.id,refs});
   }else if(payload.kind==='fo-contenido'){
@@ -309,7 +311,7 @@ function makeDropZone(card,onUse){
   card.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy';card.classList.add('over');});
   card.addEventListener('dragleave',()=>card.classList.remove('over'));
   card.addEventListener('drop',e=>{
-    e.preventDefault();card.classList.remove('over');
+    e.preventDefault();e.stopPropagation();card.classList.remove('over');
     try{
       const data=JSON.parse(e.dataTransfer.getData('text/plain'));
       run(()=>onUse(data));
@@ -343,6 +345,18 @@ function foCard(space){
     ' contenidos validados · '+arr(space.provisionalContentIds).length+' contenidos provisionales'));
   for(const m of arr(space.members))card.append(node('span',m.name,'tag ok'));
   if(arr(space.provisionalContentIds).length)card.append(node('span','Contenidos pendientes de validación','tag pending'));
+  const formatMove={kind:'fo-formato',orientationId:currentOrientation(),spaceId:space.id};
+  const handle=btn('⠿ Arrastrar formato a otro C',()=>{
+    selectedItem=formatMove;
+    setMessage('Formato seleccionado. Soltalo en otro cuatrimestre del mismo año.');
+  });
+  handle.draggable=true;
+  handle.addEventListener('dragstart',e=>{
+    selectedItem=formatMove;
+    e.dataTransfer.setData('text/plain',JSON.stringify(formatMove));
+    e.dataTransfer.effectAllowed='move';
+  });
+  if(space.kind!=='proyecto')card.append(handle);
   card.append(btn('Usar seleccionado',()=>run(()=>placeOnFo(space,selectedItem))));
   makeDropZone(card,p=>placeOnFo(space,p));
   return card;
@@ -359,6 +373,18 @@ function renderMap(){
   for(const row of map.filter(r=>r.year===year)){
     const col=node('div',undefined,'term-column');
     col.append(node('div','C'+row.term+' · '+row.year+'º año','term-header'));
+    col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('over');});
+    col.addEventListener('dragleave',()=>col.classList.remove('over'));
+    col.addEventListener('drop',e=>{
+      e.preventDefault();col.classList.remove('over');
+      try{
+        const payload=JSON.parse(e.dataTransfer.getData('text/plain'));
+        if(payload.kind!=='fo-formato'||payload.orientationId!==currentOrientation())
+          throw new Error('Soltá un formato FO en la columna de su nuevo cuatrimestre.');
+        run(()=>{pack=moveFoSpace(pack,{orientationId:currentOrientation(),
+          spaceId:payload.spaceId,targetTerm:row.term});});
+      }catch(error){setMessage(String(error.message||error),true);}
+    });
     for(const info of row.fg)col.append(fgCard(info));
     for(const info of row.fo)col.append(foCard(info));
     if(!row.fo.length)col.append(node('p','Sin espacios FO en este cuatrimestre.','help'));
