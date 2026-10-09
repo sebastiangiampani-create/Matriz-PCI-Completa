@@ -157,9 +157,16 @@ export function chooseFgMode(pack,orientationId,mode) {
  */
 export function getFgDecision(pack,orientationId) {
   const w=workspace(pack,orientationId);
+  const inv=countInventory(w.fg.areas);
+  const hasPriorWork=inv.groupsWithContents>0||inv.plansWithWork>0||
+    groups(w.fg.areas).some(({group})=>
+      nonEmpty(group.objective)||nonEmpty(group.context)||nonEmpty(group.synopsis));
   return {
-    title:'Tu Formación General ya está construida',
-    description:'Podés conservar los agrupamientos existentes o revisarlos para esta orientación. Las secuencias y planes no se eliminan.',
+    hasPriorWork,
+    title:hasPriorWork?'Tu Formación General ya está construida':'Formación General inicial disponible',
+    description:hasPriorWork
+      ?'Podés conservar los agrupamientos existentes o revisarlos para esta orientación. Las secuencias y planes no se eliminan.'
+      :'Todavía no hay contenidos o secuencias elaborados en estos agrupamientos. Podés conservar la estructura inicial o comenzar a revisarla.',
     orientation:w.name,
     selected:w.fg.mode,
     options:[
