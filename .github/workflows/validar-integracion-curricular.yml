@@ -7,6 +7,7 @@ on:
       - 'src/integracion-curricular/**'
       - 'tests/integracion-*.test.js'
       - 'data/integracion-curricular/**'
+      - 'scripts/diagnostico-homologacion-curricular.mjs'
       - 'demo-integracion-curricular.html'
       - 'docs/integracion-orientaciones-sin-perdida.md'
       - '.github/workflows/validar-integracion-curricular.yml'
@@ -26,6 +27,8 @@ jobs:
           node-version: '22'
       - name: Probar copias FG y revision de articulaciones sin persistencia
         run: node --test tests/integracion-*.test.js
+      - name: Diagnosticar correspondencia de contenidos sin modificar datos
+        run: node scripts/diagnostico-homologacion-curricular.mjs
       - name: Verificar que la vista de prueba no acceda a Supabase
         run: |
           if grep -Eiq '(supabase[.]co/|functions/v1/|api[.]github[.]com/)' demo-integracion-curricular.html; then
