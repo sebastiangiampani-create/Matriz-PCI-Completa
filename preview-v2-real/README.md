@@ -29,3 +29,9 @@ No se borran datos históricos ni se realiza ninguna migración sobre las escuel
 ## Ajuste visual acotado a Matriz PCI (2026-10-09)
 
 La copia adopta **la identidad visual de Matriz PCI Completa** (Archivo, azul institucional, banda celeste, bordes, botones redondeados, logos de encabezado y pie). Se agrego exclusivamente `estetica-matriz-compacta.css`, aplicado despues del CSS de V2. En el inicio se redujeron el campo de escuela, la grilla de orientaciones y el resumen de PCI activos. El selector mantiene sus 16 opciones y conserva su estado. **No se altero el motor curricular, la matriz de arrastre, las reglas ni las secuencias**. Los logos se resuelven desde `../assets` de Matriz, sin copiar nuevos usuarios. Todo sigue siendo una prueba local sin Supabase y sin publicacion en `main`.
+
+## Corrección del inicio: retorno a la lógica de Matriz PCI
+
+La anterior compactación por CSS resultó insuficiente: seguían visibles las 16 orientaciones de V2. Ahora el inicio se reorganiza con la **escuela como título**, un solo selector de **orientación activa**, y un único acceso al PCI en curso. Las 16 opciones oficiales siguen disponibles en **«Administrar orientaciones»**, plegado por defecto. La selección y los datos de otras orientaciones no se borran ni reinicializan. El campo duplicado de nombre de escuela se mantiene internamente para compatibilidad, pero ya no se solicita al usuario.
+
+Este cambio afecta solo el inicio de la copia en pruebas. El motor C1-C10, la bolsa FG/FO, la composición y el desarrollo de secuencias siguen sin cambios.

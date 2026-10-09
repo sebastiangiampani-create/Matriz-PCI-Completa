@@ -33,9 +33,30 @@
 <header class="top"><div class="brand"><img src="../assets/em-logo-header.svg" alt="Escuela de Maestros"></div><div class="row"><img class="institutional-ba" src="../assets/ba-logo.png" alt="BA · Gobierno de la Ciudad de Buenos Aires"><button id="rulesBtn" class="btn soft">Reglas</button><button id="printBtn" class="btn">Impresión de PCI</button></div></header>
 <main class="wrap">
 <section id="home" class="screen active">
-<div class="hero"><div class="eyebrow">Matriz PCI Completa</div><h1>PCI por orientación</h1><p>Cada orientación de la escuela funciona como un PCI independiente, con su propio Mapa de la Oferta y su propio Mapa Propuesta Curricular.</p></div>
-<section class="card panel"><label><span class="eyebrow">Escuela</span><input id="schoolName" value="Escuela Muestra" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;margin:6px 0 12px"></label><div class="eyebrow">Orientaciones de la escuela</div><div id="orientationList" class="orientation-list"></div></section>
-<div id="pciList" class="pci-list"></div>
+  <div class="hero">
+    <div class="eyebrow">Matriz PCI Completa</div>
+    <h1 id="matrizSchoolTitle">Escuela Muestra</h1>
+    <p>Continuá el trabajo curricular de tu escuela: agrupamientos, contenidos, planes y secuencias.</p>
+  </div>
+  <input id="schoolName" type="hidden" value="Escuela Muestra">
+  <section class="card panel matriz-entry-panel" aria-label="Orientación con la que se trabaja">
+    <div class="matriz-entry-fields">
+      <div class="matriz-school-data">
+        <div class="eyebrow">Escuela</div>
+        <strong id="matrizSchoolLabel">Escuela Muestra</strong>
+      </div>
+      <div class="matriz-current-orientation">
+        <label for="matrizOrientationSelect">Orientación de trabajo</label>
+        <select id="matrizOrientationSelect" aria-label="Cambiar orientación de trabajo"></select>
+      </div>
+    </div>
+    <details id="matrizOrientationManager" class="matriz-orientation-settings">
+      <summary>Administrar orientaciones <small id="matrizOrientationsCount"></small></summary>
+      <p class="matriz-settings-help">Seleccioná las orientaciones de la escuela. Los PCI de las demás orientaciones se conservan.</p>
+      <div id="orientationList" class="orientation-list"></div>
+    </details>
+  </section>
+  <div id="pciList" class="pci-list" aria-live="polite"></div>
 </section>
 <section id="panel" class="screen"><button class="back" data-go="home">← Volver a la escuela</button><div class="hero"><div class="eyebrow">Panel del PCI</div><h1 id="panelTitle"></h1><p>Para ingresar al desarrollo de la Propuesta Curricular, primero deberá construir y validar su Mapa de la Oferta.</p></div><div class="phase-grid"><article class="card phase"><div class="eyebrow">1</div><h2>Mapa de la Oferta</h2><p>Organiza la estructura: materias, agrupamientos, articulaciones, ubicación temporal y docentes.</p><button id="openOffer" class="btn primary">Entrar</button></article><article id="proposalCard" class="card phase locked"><div class="eyebrow">2</div><h2>Mapa Propuesta Curricular</h2><p>Toma el mapa anterior y lo completa con contenidos, objetivos, planes, contextos y demás desarrollo curricular.</p><button id="openProposal" class="btn primary" disabled>Entrar</button></article></div></section>
 <section id="offer" class="screen"><button class="back" data-go="panel">← Volver al panel</button><div class="hero"><div class="eyebrow">1 · Mapa de la Oferta</div><h1 id="offerTitle"></h1></div><section class="card social-box"><div class="eyebrow">Nivel 3 · Ciencias Sociales</div><h3>Elegí primero el tipo de agrupamiento y después armalo libremente en la matriz</h3><div id="socialModes" class="modes"><button data-mode="one">1 laboratorio · 4 juntas</button><button data-mode="split">2 laboratorios · 2 + 2</button><button data-mode="articulated">3 juntas + 1 articula con FO</button></div><p id="socialHelp" class="social-help"></p><div id="socialStatus" class="social-status"></div></section><div id="workspace" class="workspace"><aside class="card bag"><div class="eyebrow">Bolsa de materias</div><h2 id="bagTitle"></h2><div class="help">Primero Formación General completa, año por año. Debajo, Formación Orientada de 3.º a 5.º. No se muestran horas.</div><div id="bagContent"></div><div class="custom-box"><div class="subhead">Bilingüe · Intensificada · EDI · otra materia</div><input id="customName" placeholder="Nombre de la materia / espacio"><select id="customYear"><option value="1">1.º año</option><option value="2">2.º año</option><option value="3">3.º año</option><option value="4">4.º año</option><option value="5">5.º año</option></select><button id="addCustom" class="btn soft">Agregar a la bolsa</button></div></aside><section class="card matrix-card"><div class="matrix-toolbar"><div><div class="eyebrow">Mapa completo</div><h2>Nivel 1 a Nivel 5 · C1 a C10</h2><div class="legend"><span>Troncales: anuales</span><span>Laboratorios/talleres: cuatrimestrales</span><span>Artes: C1,C2,C3,C4,C7,C8</span></div></div><div class="row"><button id="toggleBag" class="btn small soft">Ver solo mapa</button><span class="status">Mapa independiente de esta orientación</span></div></div><div class="matrix-shell"><div id="matrix" class="matrix"></div></div><div id="validation" class="validation"></div><div class="footer-actions"><button id="copyC5C6" class="btn small soft">Copiar agrupamiento de Sociales C5 → C6</button><button id="validateBtn" class="btn mint">Validar Mapa de la Oferta</button></div></section></div></section>
@@ -64,7 +85,63 @@ function level(t){return Math.ceil(t/2)}
 function termOfSlot(slot){const m=slot.match(/-c(\d+)$/);return m?+m[1]:null}function yearOfAnnual(slot){const m=slot.match(/-n(\d+)$/);return m?+m[1]:null}
 function usage(id){const u=new Set();for(const[slot,ids]of Object.entries(ensure(state.active).placements)){if(!(ids||[]).includes(id))continue;const t=termOfSlot(slot);if(t)u.add(t);const y=yearOfAnnual(slot);if(y){u.add(y*2-1);u.add(y*2)}}return u}
 function usageLabel(s){const u=[...usage(s.id)].sort((a,b)=>a-b);if(!u.length)return'0/2';return`${u.length}/2 · ${u.map(x=>'C'+x).join('/')}`}
-function renderHome(){$('schoolName').value=state.school;const o=$('orientationList');o.innerHTML=ORIENTATIONS.map(x=>`<label class="orientation"><input type="checkbox" data-o="${esc(x)}" ${state.selected.includes(x)?'checked':''}><span><strong>${esc(x)}</strong><small style="display:block;color:var(--muted)">PCI independiente</small></span></label>`).join('');o.querySelectorAll('[data-o]').forEach(i=>i.onchange=()=>{const x=i.dataset.o;if(i.checked&&!state.selected.includes(x)){state.selected.push(x);ensure(x);state.active=x}if(!i.checked){state.selected=state.selected.filter(v=>v!==x);if(state.active===x)state.active=state.selected[0]||null}save();renderHome()});$('pciList').innerHTML=state.selected.map(x=>`<article class="card pci-card"><div class="eyebrow">PCI independiente</div><h3>${esc(x)}</h3><div class="status">${ensure(x).valid?'Mapa de la Oferta validado':'En construcción'}</div><div class="top-actions"><button class="btn primary" data-open="${esc(x)}">Abrir PCI</button></div></article>`).join('');$('pciList').querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{state.active=b.dataset.open;save();screen('panel')})}
+function renderHome(){
+  $('schoolName').value=state.school;
+  $('matrizSchoolTitle').textContent=state.school;
+  $('matrizSchoolLabel').textContent=state.school;
+  if(!state.selected.length)state.selected=['Economía y Administración'];
+  if(!state.selected.includes(state.active))state.active=state.selected[0];
+
+  // El desplegable trabaja solo con orientaciones habilitadas por la escuela.
+  const selector=$('matrizOrientationSelect');
+  selector.innerHTML=state.selected.map(x=>`<option value="${esc(x)}" ${x===state.active?'selected':''}>${esc(x)}</option>`).join('');
+  selector.onchange=()=>{
+    if(!state.selected.includes(selector.value))return;
+    state.active=selector.value;
+    ensure(state.active);
+    save();
+    renderHome();
+  };
+
+  const list=$('orientationList');
+  list.innerHTML=ORIENTATIONS.map(x=>`<label class="orientation">
+    <input type="checkbox" data-o="${esc(x)}" ${state.selected.includes(x)?'checked':''}>
+    <span><strong>${esc(x)}</strong></span>
+  </label>`).join('');
+  list.querySelectorAll('[data-o]').forEach(input=>input.onchange=()=>{
+    const name=input.dataset.o;
+    if(input.checked&&!state.selected.includes(name)){
+      state.selected.push(name);
+      ensure(name);
+      state.active=name;
+    }else if(!input.checked&&state.selected.includes(name)){
+      if(state.selected.length===1){
+        input.checked=true;
+        toast('Debe quedar al menos una orientación seleccionada.',true);
+        return;
+      }
+      state.selected=state.selected.filter(item=>item!==name);
+      if(state.active===name)state.active=state.selected[0];
+    }
+    save();
+    renderHome();
+  });
+  $('matrizOrientationsCount').textContent=state.selected.length===1?'1 habilitada':state.selected.length+' habilitadas';
+
+  // No mostrar una tarjeta por orientación: solo la que se está trabajando.
+  const active=state.active;
+  $('pciList').innerHTML=`<article class="card pci-card matriz-active-pci">
+    <div class="eyebrow">PCI de la orientación</div>
+    <h3>${esc(active)}</h3>
+    <div class="status">${ensure(active).valid?'Mapa de la Oferta validado':'En construcción'}</div>
+    <div class="top-actions"><button class="btn primary" type="button" data-open="${esc(active)}">Abrir PCI</button></div>
+  </article>`;
+  $('pciList').querySelector('[data-open]').onclick=()=>{
+    state.active=active;
+    save();
+    screen('panel');
+  };
+}
 function renderPanel(){const m=ensure(state.active);$('panelTitle').textContent=state.school+' · '+state.active;$('proposalCard').classList.toggle('locked',!m.valid);$('openProposal').disabled=!m.valid}
 function item(s){const u=usage(s.id),cls=u.size>=2?'complete':u.size===1?'partial':'';return`<div class="subject ${u.size>=2?'used-two':''}" draggable="true" data-sub="${esc(s.id)}"><span>⠿</span><span><strong>${esc(s.name)} · ${s.year}.º</strong><small>${s.origin==='FO'?'Formación Orientada':s.origin==='CUSTOM'?'Materia agregada':'Formación General'}</small></span><span class="usage ${cls}">${usageLabel(s)}</span></div>`}
 function renderBag(){const box=$('bagContent');let h='';for(let y=1;y<=5;y++){h+=`<section class="year"><div class="year-head"><strong>${y}.º año</strong><span>Nivel ${y} · C${y*2-1}/C${y*2}</span></div><div class="subhead">Formación General</div>`;h+=fg().filter(s=>s.year===y&&s.origin==='FG').map(item).join('');h+='</section>'}const m=ensure(state.active),d=DATA.formacion_orientada[state.active]||{};h+=`<section class="year"><div class="year-head"><strong>Formación Orientada</strong><span>3.º–5.º</span></div>`;if(!d.sinAlternativas)h+=`<div class="modes"><button data-alt="A" class="${m.alt==='A'?'active':''}">Alternativa A</button><button data-alt="B" class="${m.alt==='B'?'active':''}">Alternativa B</button></div>`;for(let y=3;y<=5;y++){h+=`<div class="subhead">${y}.º año · Formación Orientada</div>`;h+=fo().filter(s=>s.year===y).map(item).join('')}h+='</section>';if(m.custom.length)h+=`<section class="year"><div class="subhead">Materias agregadas por la escuela</div>${m.custom.map(item).join('')}</section>`;box.innerHTML=h;box.querySelectorAll('[data-sub]').forEach(el=>{el.ondragstart=e=>{picked=el.dataset.sub;e.dataTransfer.setData('text/plain',picked)};el.onclick=()=>{picked=el.dataset.sub;box.querySelectorAll('.subject').forEach(x=>x.classList.toggle('selected',x===el));toast('Materia seleccionada: ahora tocá el destino')}});box.querySelectorAll('[data-alt]').forEach(b=>b.onclick=()=>{m.alt=b.dataset.alt;m.valid=false;save();renderOffer()})}

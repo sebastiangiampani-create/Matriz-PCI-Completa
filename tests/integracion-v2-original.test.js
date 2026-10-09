@@ -102,3 +102,18 @@ test('no se incluye el módulo Calificaciones ni se pierde la etapa de evaluaci�
  assert.ok(!base.includes('v114CriteriaEntry'));
  assert.ok(!base.includes('v114PlanCriteriaScreen'));
 });
+
+test('el inicio mantiene la estética de Matriz sin grilla obligatoria de 16 orientaciones',async()=>{
+  const core=await r('app-core.html'),css=await r('estetica-matriz-compacta.css');
+  assert.ok(core.includes('id="matrizSchoolTitle"'));
+  assert.ok(core.includes('id="matrizOrientationSelect"'));
+  assert.ok(core.includes('<details id="matrizOrientationManager"'));
+  assert.ok(core.includes('id="orientationList"'));
+  assert.ok(core.includes('id="pciList"'));
+  assert.ok(core.includes('function renderHome(){'));
+  assert.ok(core.includes('list.querySelectorAll'));
+  assert.ok(core.includes("screen('panel')"));
+  assert.ok(css.includes('#home .matriz-entry-fields'));
+  assert.ok(css.includes('#home .matriz-orientation-settings'));
+  assert.ok(!core.includes('Cada orientación de la escuela funciona como un PCI independiente'));
+});
