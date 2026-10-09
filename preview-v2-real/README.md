@@ -19,3 +19,9 @@ Abrir `preview-v2-real/app.html` desde un servidor HTTP estático en la rama de 
 Al cargar: selector original de orientaciones → Abrir PCI → Mapa de la Oferta. Deben aparecer la bolsa de materias de Formación General y Orientada (alternativas A/B) y la matriz de Nivel 1 a 5 con C1–C10 y controles originales de composición. El guardado es **local del navegador de prueba**, no la base de producción.
 
 Los casos de pruebas de la carpeta se validan en `tests/integracion-v2-original.test.js` y `tests/integracion-v2-original-browser.mjs`.
+
+## Alcance pedagógico sin calificaciones
+
+**Calificaciones queda explícitamente excluido.** En la rama de prueba se eliminó físicamente `src/v114-plan-criteria-excel.js`, junto con su carga. No existe pantalla de calificaciones, calificación final, registro de notas ni exportación de planillas de calificación. Se mantienen los criterios de evaluación del **plan de aprendizaje** y las cuatro etapas de las secuencias (punto de partida, indagación, producción y evaluación), que son pedagógicos y no equivalen a calificaciones.
+
+No se borran datos históricos ni se realiza ninguna migración sobre las escuelas. La única plataforma de acceso será Matriz PCI Completa una vez que la integración institucional esté verificada.

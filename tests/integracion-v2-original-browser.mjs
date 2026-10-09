@@ -28,6 +28,9 @@ async function inspect(page,mode){
   // pantalla de acceso, alta de usuarios ni perfiles de V2.
   assert.equal(await page.locator('#v85AccessPanel').count(),0);
   assert.equal(await page.locator('[data-v85-role]').count(),0);
+  // Calificaciones y sus planillas NO integran esta plataforma.
+  assert.equal(await page.locator('#v114CriteriaEntry').count(),0);
+  assert.equal(await page.locator('#v114PlanCriteriaScreen').count(),0);
   const selected=await page.locator('#orientationList input[type="checkbox"]').count();
   assert.equal(selected,16,'La selección original debe ofrecer 16 orientaciones');
   await page.locator('#pciList [data-open]').first().click();
@@ -61,6 +64,8 @@ async function inspect(page,mode){
   assert.ok(state.socialButtons>=2,'Deben aparecer las opciones reales de Sociales N3');
   assert.ok(state.foSlots>0,'Deben existir las ubicaciones originales de FO');
   assert.ok(state.phase2,'Debe cargar el motor auténtico de Desarrollo Curricular');
+  assert.equal(await page.getByText('Calificaciones',{exact:true}).count(),0,
+    'No debe existir ninguna entrada visible a Calificaciones');
   // Probar una selección y ubicación REAL con la lógica V2, sin datos de escuelas.
   const math=page.locator('#bagContent .subject').filter({hasText:'Matemática · 3.º'}).first();
   assert.equal(await math.count(),1,'Debe estar Matemática de 3.º en la bolsa original.');

@@ -12,7 +12,7 @@ test('arranque V2 original con sus módulos completos y sin archivos ausentes',a
  assert.match(boot,/src\/v47-fo-content-atomicizer\.js/);
  const list=boot.match(/const modulePaths=\[([\s\S]*?)\]/)?.[1]||'';
  const files=[...list.matchAll(/'([^']+)'/g)].map(x=>x[1]);
- assert.equal(files.length,26);
+ assert.equal(files.length,25);
  for(const file of files)await access(dir+file);
  for(const file of ['app-core.html','src/v47-phase2-matrix.js','src/v47-fo-content-atomicizer.js',
    'data/materias-v2.json','data/horas-v2.json','assets/logo-escuela-maestros.svg',
@@ -84,4 +84,18 @@ test('no se copian usuarios, permisos ni módulos de gestión de V2',async()=>{
  assert.ok(boot.includes('v91-coverage-core.js'));
  assert.ok(boot.includes('v93-curricular-coverage-dashboard.js'));
  assert.ok(boot.includes('v47-phase2-matrix.js'));
+});
+
+test('no se incluye el módulo Calificaciones ni se pierde la etapa de evaluación curricular',async()=>{
+ const boot=await r('app.html');
+ assert.ok(!boot.includes('v114-plan-criteria-excel.js'));
+ await assert.rejects(access(dir+'src/v114-plan-criteria-excel.js'),{code:'ENOENT'});
+ const curricular=await r('src/v47-elective-plans.js');
+ for(const stage of ['punto_partida','indagacion','produccion','evaluacion'])
+   assert.ok(curricular.includes(stage),'Debe conservar la etapa pedagógica '+stage);
+ const base=await r('app-core.html');
+ assert.ok(base.includes('id="openOffer"'),'Se conserva el Mapa de la Oferta');
+ assert.ok(base.includes('id="openProposal"'),'Se conserva el Desarrollo Curricular');
+ assert.ok(!base.includes('v114CriteriaEntry'));
+ assert.ok(!base.includes('v114PlanCriteriaScreen'));
 });
