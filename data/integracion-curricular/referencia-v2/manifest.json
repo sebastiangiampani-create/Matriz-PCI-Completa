@@ -1,0 +1,46 @@
+{
+  "version": "v96",
+  "source": {
+    "fg": "Formacion_General_Ano_Materia_Eje_Subeje_Contenido(1).xlsx",
+    "fo": "Formacion_Orientada_Bloque_Eje_Subeje_Contenido(1).xlsx"
+  },
+  "fgCount": 979,
+  "fgByYear": {
+    "1": 218,
+    "2": 205,
+    "3": 217,
+    "4": 198,
+    "5": 141
+  },
+  "tutoria": {
+    "includedYears": [1, 2],
+    "countByYear": {"1": 10, "2": 9, "3": 0, "4": 0, "5": 0}
+  },
+  "foCount": 860,
+  "foByOrientation": {
+    "Agro y Ambiente": 97,
+    "Comunicación": 128,
+    "Lenguas": 47,
+    "Ciencias Sociales y Humanidades": 75,
+    "Arte - Artes Visuales": 66,
+    "Arte - Música": 72,
+    "Arte - Teatro": 67,
+    "Economía y Administración": 51,
+    "Literatura": 69,
+    "Energía y Sustentabilidad": 37,
+    "Educación Física": 81,
+    "Turismo": 70
+  },
+  "historiaOrientadaCount": 98,
+  "tecnologiasInformacionOrientadaCount": 91,
+  "historiaYTecnologiaIncludedInFo": true,
+  "foHasExplicitYear": false,
+  "fgFiles": [
+    "fg-all-p1.txt","fg-all-p2.txt","fg-all-p3.txt","fg-all-p4.txt","fg-all-p5.txt",
+    "fg-all-p6.txt","fg-all-p7.txt","fg-all-p8.txt","fg-all-p9.txt"
+  ],
+  "foFiles": [
+    "fo_all.txt","fo_part02.txt","fo_part03.txt","fo_part04.txt","fo_part05.txt","fo_part06.txt",
+    "fo_part07.txt","fo_part08.txt","fo_part09.txt","fo_part10.txt","fo_part11.txt"
+  ]
+}
