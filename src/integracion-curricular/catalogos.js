@@ -115,7 +115,7 @@ export function selectFoByOrientation(rows,orientationId,orientations){
   const variant=String(orientationId).startsWith('arte_')?orientationId.slice(5):'';
   return alpha(rows).filter(r=>r.orientation===orientation&&(!variant||r.variant===variant));
 }
-export function matchMatrixToV2Fg({matrixRows,v2FgRows,contentId,level,area}){
+export function matchMatrixToV2Fg({matrixRows,v2FgRows,contentId,level,area,approvedMappings={}}){
   const year=Number(level);
   if(!Number.isInteger(year)||year<1||year>5)
     return {status:'unresolved',reason:'Nivel no definido',matches:[]};
@@ -123,6 +123,19 @@ export function matchMatrixToV2Fg({matrixRows,v2FgRows,contentId,level,area}){
   if(!found)return {status:'unresolved',reason:'ID original sin referencia en Matriz',matches:[]};
   if(area&&norm(area)!==norm(found.area)&&!(norm(area)==='artes'&&norm(found.area).startsWith('educacion artistica')))
     return {status:'unresolved',reason:'El contenido no pertenece al área del agrupamiento',matches:[]};
+  const approvedKey=JSON.stringify([String(area),year,String(contentId)]);
+  const approved=approvedMappings?.[approvedKey];
+  if(approved){
+    const row=alpha(v2FgRows).find(r=>String(r.id)===String(approved.referenceId));
+    if(!row||approved.status!=='approved'||row.year!==year||
+      norm(row.area)!==norm(area)||subkey(row.subject)!==subkey(found.subject)||
+      !String(approved.reason||'').trim()||!String(approved.reviewer||'').trim()){
+      return {status:'unresolved',reason:'Homologación manual desactualizada o inválida',
+        matrixId:String(contentId),year,matches:[]};
+    }
+    return {status:'matched',matrixId:String(contentId),
+      referenceId:String(row.id),year,reference:row,approved:true};
+  }
   const matches=alpha(v2FgRows).filter(r=>
     r.year===year&&subkey(r.subject)===subkey(found.subject)&&norm(r.text)===norm(found.text));
   if(matches.length===1)return {status:'matched',matrixId:String(found.id),
@@ -132,14 +145,14 @@ export function matchMatrixToV2Fg({matrixRows,v2FgRows,contentId,level,area}){
   return {status:'unresolved',reason:'Sin coincidencia exacta de materia, texto y nivel',
     matrixId:String(found.id),year,matches:[]};
 }
-export function fgCoverageByLevel({areas,matrixRows,v2FgRows,area,level}){
+export function fgCoverageByLevel({areas,matrixRows,v2FgRows,area,level,approvedMappings={}}){
   const year=Number(level),areaKey=norm(area);
   const universe=alpha(v2FgRows).filter(r=>r.year===year&&norm(r.area)===areaKey);
   const sourceGroups=alpha(areas?.[area]?.groups).filter(g=>Number(g.level)===year);
   const ids=[...new Set(sourceGroups.flatMap(g=>alpha(g.items).map(String)))];
   const matched=new Set(),unmatched=[],ambiguous=[];
   for(const id of ids){
-    const result=matchMatrixToV2Fg({matrixRows,v2FgRows,contentId:id,level:year,area});
+    const result=matchMatrixToV2Fg({matrixRows,v2FgRows,contentId:id,level:year,area,approvedMappings});
     if(result.status==='matched')matched.add(result.referenceId);
     else if(result.status==='ambiguous')ambiguous.push({id,reason:result.reason});
     else unmatched.push({id,reason:result.reason});
