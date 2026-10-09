@@ -98,7 +98,7 @@ button:hover:not(:disabled){filter:brightness(.97)}
 <label class="field">Buscar<input type="search" id="search" placeholder="Materia, eje o contenido"></label>
 <div id="bankInfo" class="help" style="margin:10px 0"></div>
 <div id="sourceList" class="source-list"></div>
-<div id="feedback"></div>
+<div id="feedback"></div><div id="equivalence" style="margin-top:14px;border-top:1px solid #e4eaed;padding-top:12px"></div>
 </div>
 <div class="panel">
 <div class="panel-header"><div><div class="eyebrow">Fase 1 + Fase 2</div><h2>Mapa por cuatrimestre y seguimiento</h2></div></div>
@@ -122,6 +122,8 @@ import {
   appendFgContent,moveFoSpace,offerMapRows,validateOfferStructure
 } from './src/integracion-curricular/mapa-oferta.js';
 import {curriculumTracking} from './src/integracion-curricular/seguimiento.js';
+import {suggestHomologations,approveHomologation,getApprovedHomologations}
+  from './src/integracion-curricular/homologaciones.js';
 const $=s=>document.getElementById(s);
 const origSelection=['economia_administracion','ciencias_naturales','ciencias_sociales_humanidades'];
 let matrixRows=[],v2Fg=[],v2Fo=[],refs=null,legacy=null,pack=null;
@@ -226,7 +228,7 @@ function contentDrag(button,payload){
     e.dataTransfer.setData('text/plain',JSON.stringify(payload));
     selectedItem=payload;
   });
-  button.addEventListener('click',()=>{selectedItem=payload;renderBank();setMessage('Elemento seleccionado. Elegí «Usar seleccionado» en el agrupamiento de destino.');});
+  button.addEventListener('click',()=>{selectedItem=payload;renderBank();renderEquivalence();setMessage('Elemento seleccionado. Elegí «Usar seleccionado» en el agrupamiento de destino.');});
 }
 function renderBank(){
   const tabs=$('bankTabs');tabs.replaceChildren();
@@ -399,7 +401,8 @@ function renderCoverage(){
   const areaKeys=Object.keys(w.fg.areas||{});
   for(const area of areaKeys){
     const m=fgCatalogPlacementSummary({areas:w.fg.areas,matrixRows,area});
-    const c=fgCoverageByLevel({areas:w.fg.areas,matrixRows,v2FgRows:v2Fg,area,level:year});
+    const c=fgCoverageByLevel({areas:w.fg.areas,matrixRows,v2FgRows:v2Fg,area,level:year,
+      approvedMappings:w.fg.homologations||{}});
     const summary=node('div',area+': '+m.assignedUnique+' / '+m.total+
       ' contenidos de Matriz ubicados (área completa).','help');
     nodeRoot.append(summary);
@@ -469,8 +472,62 @@ function renderCoverage(){
     alertList.append(card);
   }
 }
+function renderEquivalence(){
+  const panel=$('equivalence');panel.replaceChildren();
+  panel.append(node('h3','Revisar equivalencia de contenidos FG'));
+  const intro=node('p','No se reemplazan ID ni textos de Matriz. Esta acción de prueba vincula un contenido existente con el universo por nivel de V2; producción requerirá permiso institucional validado.','help');
+  panel.append(intro);
+  if(selectedItem?.kind!=='fg-contenido'){
+    panel.append(node('p','Seleccioná un contenido del banco de Matriz para consultar equivalencias.','help'));
+    return;
+  }
+  const area=selectedItem.area,year=Number($('year').value);
+  const inYear=current().fg.areas?.[area]?.groups?.some(g=>Number(g.level)===year&&
+    arr(g.items).map(String).includes(String(selectedItem.id)));
+  if(!inYear){
+    panel.append(node('p','Este contenido aún no está ubicado en FG de '+year+'º. Ubicalo primero en un agrupamiento del mismo nivel.','help'));
+    return;
+  }
+  let suggestions;
+  try{
+    suggestions=suggestHomologations({
+      matrixRows,v2FgRows:v2Fg,area,year,matrixId:selectedItem.id,limit:5
+    });
+  }catch(e){panel.append(node('p',String(e.message||e),'help'));return;}
+  panel.append(node('p','Origen: '+suggestions.source.subject+' · '+suggestions.source.text,'help'));
+  const confirmed=getApprovedHomologations(pack,currentOrientation());
+  const key=JSON.stringify([area,year,String(selectedItem.id)]);
+  if(confirmed[key])
+    panel.append(node('p','Equivalencia ya revisada: '+confirmed[key].referenceId,'tag ok'));
+  if(!suggestions.candidates.length){
+    panel.append(node('p','No hay candidatos de esta materia y nivel. Mantener pendiente; nunca inventar una equivalencia.','help'));
+    return;
+  }
+  const reasonLabel=node('label','Justificación pedagógica de prueba','field');
+  const reason=node('textarea');
+  reason.placeholder='Explicá por qué ambos contenidos se consideran equivalentes';
+  reason.rows=2;reason.style.width='100%';reason.style.borderRadius='8px';
+  reason.style.border='1px solid #b8cbd1';reason.style.padding='9px';
+  reasonLabel.append(reason);
+  panel.append(reasonLabel);
+  for(const candidate of suggestions.candidates){
+    const item=node('div',undefined,'group');
+    item.append(node('b',candidate.text));
+    item.append(node('small',candidate.subject+' · Nivel '+candidate.year+
+      (candidate.exact?' · Texto idéntico':' · Revisión de sentido necesaria')));
+    item.append(btn('Aprobar equivalencia en esta simulación',()=>run(()=>{
+      pack=approveHomologation(pack,{
+        orientationId:currentOrientation(),area,year,
+        matrixId:selectedItem.id,referenceId:candidate.id,
+        reason:reason.value,reviewer:'Revisor ficticio de demostración',
+        matrixRows,v2FgRows:v2Fg
+      });
+    })));
+    panel.append(item);
+  }
+}
 function render(){
-  renderMode();renderStats();renderBank();renderMap();renderCoverage();
+  renderMode();renderStats();renderBank();renderEquivalence();renderMap();renderCoverage();
 }
 async function init(){
   const values=await Promise.all([loadMatrixContents(),loadV2Fg(),loadV2Fo(),loadV2Rules()]);
