@@ -1,0 +1,34 @@
+name: Validar integracion curricular aislada
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/integracion-curricular/**'
+      - 'tests/integracion-orientaciones.test.js'
+      - 'demo-integracion-curricular.html'
+      - 'docs/integracion-orientaciones-sin-perdida.md'
+      - '.github/workflows/validar-integracion-curricular.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secuencias-intactas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Probar copias FG y revision de articulaciones sin persistencia
+        run: node --test tests/integracion-orientaciones.test.js
+      - name: Verificar que la vista de prueba no acceda a Supabase
+        run: |
+          if grep -Eiq '(supabase[.]co/|functions/v1/|api[.]github[.]com/)' demo-integracion-curricular.html; then
+            echo 'La vista de prueba no debe acceder a servicios remotos'
+            exit 1
+          fi
+          echo 'Vista de prueba sin conexion remota'
