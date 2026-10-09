@@ -119,17 +119,35 @@ export function assignFoSubject(pack,{orientationId,spaceId,subjectId,refs}){
   if(!subject)throw new Error('La materia no figura en el catálogo curricular de la orientación.');
   if(subject.year!==s.year)throw new Error('Las materias no pueden moverse entre niveles.');
   if(s.members.some(x=>x.id===subject.id))return clone(pack);
-  // Duplicate annual subjects require a separate C1/C2-replication decision.
-  const already=w.fo.spaces.filter(x=>x.id!==s.id&&array(x.members).some(y=>y.id===subject.id));
-  if(already.length)
-    throw new Error('Materia ya ubicada en otro agrupamiento FO. Revisar réplica anual antes de duplicar.');
-  if(subject.hours===null)
+  // Annual subjects can occupy paired quarters. They cannot be duplicated
+  // within the SAME term, where this would represent two simultaneous offers.
+  const sameTerm=w.fo.spaces.filter(x=>x.id!==s.id&&x.term===s.term&&
+    array(x.members).some(y=>y.id===subject.id));
+  if(sameTerm.length)
+    throw new Error('Materia ya ubicada en otro espacio del mismo cuatrimestre.');
+  if(subject.hours===null||subject.hours<=0)
     throw new Error('No se conoce la carga horaria oficial de esta materia. Revisar catálogo.');
-  const hc=totalHours(s,subject),max=Number(refs.rules.laboratorios?.max_horas_catedra)||9;
+  const max=Number(refs.rules.laboratorios?.max_horas_catedra)||9;
+  const hc=totalHours(s,subject);
   if(s.kind==='laboratorio'&&hc>max)
     throw new Error('Superaría el máximo de '+max+' horas cátedra del laboratorio.');
   const upd=clone(pack);
-  upd.orientations[orientationId].fo.spaces.find(x=>x.id===spaceId).members.push(subject);
+  const target=upd.orientations[orientationId].fo.spaces.find(x=>x.id===spaceId);
+  target.members.push(subject);
+  // In 5th year, the SAME format exists in both quarters (C9 and C10).
+  // Apply the V2 annual-mirroring rule only when its paired format exists.
+  const otherTerm=PERIOD[s.year]?.find(t=>t!==s.term);
+  const mirror=upd.orientations[orientationId].fo.spaces.find(x=>
+    x.id!==spaceId&&x.year===s.year&&x.term===otherTerm&&x.kind===s.kind);
+  if(mirror&&!mirror.members.some(x=>x.id===subject.id)){
+    const otherTotal=totalHours(mirror,subject);
+    if(s.kind==='laboratorio'&&otherTotal>max)
+      throw new Error('La réplica anual superaría el máximo de horas del laboratorio par.');
+    const conflict=upd.orientations[orientationId].fo.spaces.some(x=>
+      x.id!==mirror.id&&x.term===mirror.term&&array(x.members).some(m=>m.id===subject.id));
+    if(conflict)throw new Error('La réplica anual duplicaría la materia dentro del cuatrimestre par.');
+    mirror.members.push({...subject,mirroredFrom:spaceId});
+  }
   return upd;
 }
 export function moveFoSpace(pack,{orientationId,spaceId,targetTerm}){
