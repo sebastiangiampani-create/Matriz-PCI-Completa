@@ -22,7 +22,7 @@ async function inspect(page,mode){
       missing.push(response.status()+' '+response.url());
   });
   await page.goto(url,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('#orientationList input[type="checkbox"]',{timeout:60000});
+  await page.waitForSelector('#orientationList input[type="checkbox"]',{state:'attached',timeout:60000});
   await page.waitForSelector('#pciList [data-open]',{timeout:60000});
   // La integración reutilizará la sesión de Matriz. En esta copia NO hay
   // pantalla de acceso, alta de usuarios ni perfiles de V2.
