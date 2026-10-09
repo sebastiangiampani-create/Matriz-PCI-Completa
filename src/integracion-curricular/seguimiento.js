@@ -14,10 +14,10 @@ const norm=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLo
 const pct=(a,b)=>b>0?Math.round(a/b*1000)/10:null;
 const unique=x=>[...new Set(arr(x).map(String))];
 const typeNames={trunk:'Troncal',laboratory:'Laboratorio',workshop:'Taller',other:'Otro formato'};
-function useMap({ids,area,year,matrixRows,v2FgRows}){
+function useMap({ids,area,year,matrixRows,v2FgRows,approvedMappings={}}){
   const mapped=new Set(),pending=[];
   for(const id of unique(ids)){
-    const match=matchMatrixToV2Fg({matrixRows,v2FgRows,contentId:id,level:year,area});
+    const match=matchMatrixToV2Fg({matrixRows,v2FgRows,contentId:id,level:year,area,approvedMappings});
     if(match.status==='matched')mapped.add(match.referenceId);
     else pending.push({id,status:match.status,reason:match.reason});
   }
@@ -54,8 +54,8 @@ function groupSubjectNames(g){
     return unique(g.curricularSubjects);
   return null;
 }
-function planReport({plan,g,area,year,matrixRows,v2FgRows,universe,denominatorValidated}){
-  const ids=unique(plan.contentIds),links=useMap({ids,area,year,matrixRows,v2FgRows});
+function planReport({plan,g,area,year,matrixRows,v2FgRows,universe,denominatorValidated,approvedMappings={}}){
+  const ids=unique(plan.contentIds),links=useMap({ids,area,year,matrixRows,v2FgRows,approvedMappings});
   const r=report(links.mapped,universe,links.pending,denominatorValidated);
   const groupIds=new Set(unique(g.items));
   const inGroup=ids.filter(id=>groupIds.has(id)).length;
@@ -74,6 +74,7 @@ function planReport({plan,g,area,year,matrixRows,v2FgRows,universe,denominatorVa
 export function curriculumTracking({pack,orientationId,matrixRows,v2FgRows,v2FoRows,orientations}){
   const w=pack?.orientations?.[orientationId];
   if(!w)throw new Error('Falta seleccionar una orientación.');
+  const approvedMappings=w.fg.homologations||{};
   const raw=splitAreas(w.fg.areas),byAreaYear=new Map(),byFormatYear=new Map();
   const groupRows=[];
   for(const {area,year,group:g} of raw){
@@ -82,10 +83,10 @@ export function curriculumTracking({pack,orientationId,matrixRows,v2FgRows,v2FoR
     const universe=subjectNames?officialUniverse(v2FgRows,area,year,subjectNames):fullUniverse;
     const denominatorValidated=!!subjectNames&&subjectNames.every(s=>
       fullUniverse.some(row=>norm(row.subject)===norm(s)));
-    const links=useMap({ids:g.items,area,year,matrixRows,v2FgRows});
+    const links=useMap({ids:g.items,area,year,matrixRows,v2FgRows,approvedMappings});
     const gResult=report(links.mapped,universe,links.pending,denominatorValidated);
     const plans=arr(g.plansBimestrales).map(plan=>planReport({
-      plan,g,area,year,matrixRows,v2FgRows,universe,denominatorValidated
+      plan,g,area,year,matrixRows,v2FgRows,universe,denominatorValidated,approvedMappings
     }));
     const groupRow={
       area,year,groupId:String(g.id),name:g.name||String(g.id),
