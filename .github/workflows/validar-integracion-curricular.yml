@@ -5,7 +5,8 @@ on:
     branches: [main]
     paths:
       - 'src/integracion-curricular/**'
-      - 'tests/integracion-orientaciones.test.js'
+      - 'tests/integracion-*.test.js'
+      - 'data/integracion-curricular/**'
       - 'demo-integracion-curricular.html'
       - 'docs/integracion-orientaciones-sin-perdida.md'
       - '.github/workflows/validar-integracion-curricular.yml'
@@ -24,7 +25,7 @@ jobs:
         with:
           node-version: '22'
       - name: Probar copias FG y revision de articulaciones sin persistencia
-        run: node --test tests/integracion-orientaciones.test.js
+        run: node --test tests/integracion-*.test.js
       - name: Verificar que la vista de prueba no acceda a Supabase
         run: |
           if grep -Eiq '(supabase[.]co/|functions/v1/|api[.]github[.]com/)' demo-integracion-curricular.html; then
