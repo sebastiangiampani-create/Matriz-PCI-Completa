@@ -213,5 +213,5 @@ test('no admite confirmaciones ni movimientos automaticos de articulaciones',()=
   assert.throws(()=>chooseFgMode(pkg,'economia_administracion','sobrescribir'),/conservar o revisar/);
   assert.throws(()=>registerFoSpace(pkg,'economia_administracion',{
     id:'fo-proyecto-3',kind:'proyecto',year:3
-  }),/nivel 5/);
+  }),/5.º/);
 });
