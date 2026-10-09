@@ -121,6 +121,7 @@ import {
   seedOfferStructure,foSubjectBank,setFoAlternative,assignFoSubject,stageFoContent,
   appendFgContent,moveFoSpace,offerMapRows,validateOfferStructure
 } from './src/integracion-curricular/mapa-oferta.js';
+import {curriculumTracking} from './src/integracion-curricular/seguimiento.js';
 const $=s=>document.getElementById(s);
 const origSelection=['economia_administracion','ciencias_naturales','ciencias_sociales_humanidades'];
 let matrixRows=[],v2Fg=[],v2Fo=[],refs=null,legacy=null,pack=null;
@@ -423,6 +424,42 @@ function renderCoverage(){
   for(const e of status.errors.slice(0,2))warning.append(node('div','• '+e,'help'));
   for(const e of status.warnings.slice(0,1))warning.append(node('div','• '+e,'help'));
   nodeRoot.append(warning);
+  const tracking=curriculumTracking({
+    pack,orientationId:currentOrientation(),matrixRows,v2FgRows:v2Fg,v2FoRows:v2Fo,
+    orientations:ORIENTATIONS
+  });
+  const detail=node('details');
+  const heading=node('summary','Desglose: materia, nivel, formato, agrupamiento y plan');
+  heading.style.cursor='pointer';
+  heading.style.fontWeight='800';
+  heading.style.margin='12px 0';
+  detail.append(heading);
+  for(const row of tracking.fg.subjectsByLevel.filter(x=>x.year===year)){
+    const percentage=row.confirmedPercent===null?
+      'pendiente de homologación (mín. '+String(row.mappedPercentMinimum??0)+'%)'
+      :String(row.confirmedPercent)+'%';
+    detail.append(node('div','Materia '+row.subject+': '+row.used+'/'+row.total+' · '+percentage,'help'));
+  }
+  const formatRows=tracking.fg.formatsByLevel.filter(x=>x.year===year);
+  for(const fmt of formatRows){
+    detail.append(node('div','Formato '+fmt.format+' · '+fmt.area+': '+fmt.used+'/'+fmt.total+
+      (fmt.confirmedPercent===null?' · revisar composición':' · '+fmt.confirmedPercent+'%'),'help'));
+  }
+  for(const group of tracking.fg.groupings.filter(x=>x.year===year)){
+    const a=node('div',undefined,'status');
+    a.append(node('b','Agrupamiento: '+group.name));
+    a.append(node('div',group.used+'/'+group.total+' contenidos homologados · '+
+      (group.confirmedPercent===null?'denominador sin validar':group.confirmedPercent+'%'),'help'));
+    for(const p of group.plans){
+      a.append(node('div','Plan '+p.number+': '+p.legacyContents+' contenidos · '+
+        p.stageCountWithWork+'/4 etapas con trabajo · cobertura interna '+
+        (p.localPercent===null?'pendiente':p.localPercent+'%'),'help'));
+    }
+    detail.append(a);
+  }
+  for(const block of tracking.fo.byBlock.slice(0,9))
+    detail.append(node('div','FO · '+block.block+': '+block.used+'/'+block.total+' contenidos de trayectoria','help'));
+  nodeRoot.append(detail);
   const alertList=$('feedback');alertList.replaceChildren();
   for(const review of current().pendingReviews){
     const card=node('div',undefined,'review');
