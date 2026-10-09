@@ -9,6 +9,8 @@
  */
 import {FG_MODES} from './bridge.js';
 import {validateFgComposition} from './reglas-composicion-fg.js';
+import {matchMatrixToV2Fg,selectFoByOrientation} from './catalogos.js';
+import {ORIENTATIONS} from './bridge.js';
 const clone=x=>JSON.parse(JSON.stringify(x));
 const normalize=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const array=x=>Array.isArray(x)?x:[];
@@ -239,7 +241,11 @@ export function stageFoContent(pack,{orientationId,spaceId,contentId,foRows}){
     target.provisionalContentIds=[...array(target.provisionalContentIds),contentId];
   return upd;
 }
-export function appendFgContent(pack,{orientationId,area,groupId,contentId,matrixRows}){
+/**
+ * Matriz contents do not carry a prescribed year. A content with no verified
+ * V2 level match is staged, not counted and never added to a saved plan.
+ */
+export function stageFgContent(pack,{orientationId,area,groupId,contentId,matrixRows}){
   const w=ws(pack,orientationId);
   if(w.fg.mode!==FG_MODES.REVISAR)
     throw new Error('Elegí Revisar y adaptar para incorporar contenidos.');
@@ -250,7 +256,52 @@ export function appendFgContent(pack,{orientationId,area,groupId,contentId,matri
     throw new Error('El contenido no pertenece a la bolsa original de esta área.');
   const upd=clone(pack),fg=upd.orientations[orientationId].fg.areas[area].groups
     .find(x=>String(x.id)===String(groupId));
+  if(!array(fg.items).map(String).includes(String(contentId))&&
+     !array(fg.provisionalContentIds).map(String).includes(String(contentId)))
+    fg.provisionalContentIds=[...array(fg.provisionalContentIds),String(contentId)];
+  return upd;
+}
+
+/** Promotes source content only after its year has been verified. */
+export function appendFgContent(pack,{orientationId,area,groupId,contentId,matrixRows,v2FgRows}){
+  const w=ws(pack,orientationId);
+  if(w.fg.mode!==FG_MODES.REVISAR)
+    throw new Error('Elegí Revisar y adaptar para incorporar contenidos.');
+  const group=w.fg.areas?.[area]?.groups?.find(x=>String(x.id)===String(groupId));
+  if(!group)throw new Error('Agrupamiento FG inexistente.');
+  if(!array(v2FgRows).length)
+    throw new Error('Antes de ubicar contenidos FG debe cargarse el universo prescripto por año.');
+  const mapping=matchMatrixToV2Fg({
+    matrixRows,v2FgRows,contentId,level:Number(group.level),
+    area,approvedMappings:w.fg.homologations||{}
+  });
+  if(mapping.status!=='matched')
+    throw new Error('Revisar homologación de nivel/materia antes de ubicar el contenido.');
+  const upd=clone(pack),fg=upd.orientations[orientationId].fg.areas[area].groups
+    .find(x=>String(x.id)===String(groupId));
   if(!array(fg.items).map(String).includes(String(contentId)))
     fg.items=[...array(fg.items),String(contentId)];
+  fg.provisionalContentIds=array(fg.provisionalContentIds)
+    .filter(id=>String(id)!==String(contentId));
   return upd;
+}
+
+/** Commits staged FO contents ONLY after FG + FO composition are fully valid. */
+export function confirmFoContentAfterOffer(pack,{orientationId,refs,foRows}){
+  const w=ws(pack,orientationId),audit=validateOfferStructure(pack,orientationId,refs);
+  if(!audit.valid)throw new Error(
+    'No se confirma contenido FO mientras el Mapa de la Oferta tenga composiciones o homologaciones pendientes.'
+  );
+  const allowed=new Set(selectFoByOrientation(foRows,orientationId,ORIENTATIONS)
+    .map(x=>x.id));
+  const updated=clone(pack);
+  for(const s of updated.orientations[orientationId].fo.spaces){
+    const provisional=array(s.provisionalContentIds);
+    if(provisional.some(id=>!allowed.has(id)))
+      throw new Error('El contenido FO preparado no pertenece a esta orientación.');
+    s.contentIds=[...new Set([...array(s.contentIds),...provisional])];
+    s.provisionalContentIds=[];
+    s.phase='mapa-propuesta-curricular';
+  }
+  return updated;
 }
