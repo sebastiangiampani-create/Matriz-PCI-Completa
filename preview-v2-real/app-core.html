@@ -36,27 +36,29 @@
   <div class="hero">
     <div class="eyebrow">Matriz PCI Completa</div>
     <h1 id="matrizSchoolTitle">Escuela Muestra</h1>
-    <p>Continuá el trabajo curricular de tu escuela: agrupamientos, contenidos, planes y secuencias.</p>
+    <p>Continuá la planificación curricular de tu escuela desde donde la dejaste.</p>
   </div>
   <input id="schoolName" type="hidden" value="Escuela Muestra">
-  <section class="card panel matriz-entry-panel" aria-label="Orientación con la que se trabaja">
-    <div class="matriz-entry-fields">
-      <div class="matriz-school-data">
-        <div class="eyebrow">Escuela</div>
-        <strong id="matrizSchoolLabel">Escuela Muestra</strong>
-      </div>
+  <section class="card panel matriz-entry-panel" aria-labelledby="matrizEntryTitle">
+    <div class="matriz-entry-heading">
+      <div class="eyebrow">Tu espacio de trabajo</div>
+      <h2 id="matrizEntryTitle">Continuar con el PCI</h2>
+      <p>Elegí la orientación y abrí su PCI para trabajar con el Mapa de la Oferta, los contenidos y los planes.</p>
+    </div>
+    <div class="matriz-entry-work">
       <div class="matriz-current-orientation">
-        <label for="matrizOrientationSelect">Orientación de trabajo</label>
-        <select id="matrizOrientationSelect" aria-label="Cambiar orientación de trabajo"></select>
+        <label for="matrizOrientationSelect">Orientación de la escuela</label>
+        <select id="matrizOrientationSelect" aria-label="Elegir orientación para abrir el PCI"></select>
       </div>
+      <div id="pciList" class="pci-list" aria-live="polite"></div>
     </div>
     <details id="matrizOrientationManager" class="matriz-orientation-settings">
-      <summary>Administrar orientaciones <small id="matrizOrientationsCount"></small></summary>
-      <p class="matriz-settings-help">Seleccioná las orientaciones de la escuela. Los PCI de las demás orientaciones se conservan.</p>
+      <summary>¿Tu escuela tiene otras orientaciones? <span>Configurar orientaciones</span> <small id="matrizOrientationsCount"></small></summary>
+      <p class="matriz-settings-help">Agregá únicamente las orientaciones que ofrece la escuela. Cada orientación conserva su propio PCI. Esta configuración no borra los mapas ni los planes ya guardados.</p>
       <div id="orientationList" class="orientation-list"></div>
     </details>
   </section>
-  <div id="pciList" class="pci-list" aria-live="polite"></div>
+  <p class="matriz-preview-note">Vista de prueba: todavía no está conectada a los PCI reales de las escuelas ni a sus usuarios.</p>
 </section>
 <section id="panel" class="screen"><button class="back" data-go="home">← Volver a la escuela</button><div class="hero"><div class="eyebrow">Panel del PCI</div><h1 id="panelTitle"></h1><p>Para ingresar al desarrollo de la Propuesta Curricular, primero deberá construir y validar su Mapa de la Oferta.</p></div><div class="phase-grid"><article class="card phase"><div class="eyebrow">1</div><h2>Mapa de la Oferta</h2><p>Organiza la estructura: materias, agrupamientos, articulaciones, ubicación temporal y docentes.</p><button id="openOffer" class="btn primary">Entrar</button></article><article id="proposalCard" class="card phase locked"><div class="eyebrow">2</div><h2>Mapa Propuesta Curricular</h2><p>Toma el mapa anterior y lo completa con contenidos, objetivos, planes, contextos y demás desarrollo curricular.</p><button id="openProposal" class="btn primary" disabled>Entrar</button></article></div></section>
 <section id="offer" class="screen"><button class="back" data-go="panel">← Volver al panel</button><div class="hero"><div class="eyebrow">1 · Mapa de la Oferta</div><h1 id="offerTitle"></h1></div><section class="card social-box"><div class="eyebrow">Nivel 3 · Ciencias Sociales</div><h3>Elegí primero el tipo de agrupamiento y después armalo libremente en la matriz</h3><div id="socialModes" class="modes"><button data-mode="one">1 laboratorio · 4 juntas</button><button data-mode="split">2 laboratorios · 2 + 2</button><button data-mode="articulated">3 juntas + 1 articula con FO</button></div><p id="socialHelp" class="social-help"></p><div id="socialStatus" class="social-status"></div></section><div id="workspace" class="workspace"><aside class="card bag"><div class="eyebrow">Bolsa de materias</div><h2 id="bagTitle"></h2><div class="help">Primero Formación General completa, año por año. Debajo, Formación Orientada de 3.º a 5.º. No se muestran horas.</div><div id="bagContent"></div><div class="custom-box"><div class="subhead">Bilingüe · Intensificada · EDI · otra materia</div><input id="customName" placeholder="Nombre de la materia / espacio"><select id="customYear"><option value="1">1.º año</option><option value="2">2.º año</option><option value="3">3.º año</option><option value="4">4.º año</option><option value="5">5.º año</option></select><button id="addCustom" class="btn soft">Agregar a la bolsa</button></div></aside><section class="card matrix-card"><div class="matrix-toolbar"><div><div class="eyebrow">Mapa completo</div><h2>Nivel 1 a Nivel 5 · C1 a C10</h2><div class="legend"><span>Troncales: anuales</span><span>Laboratorios/talleres: cuatrimestrales</span><span>Artes: C1,C2,C3,C4,C7,C8</span></div></div><div class="row"><button id="toggleBag" class="btn small soft">Ver solo mapa</button><span class="status">Mapa independiente de esta orientación</span></div></div><div class="matrix-shell"><div id="matrix" class="matrix"></div></div><div id="validation" class="validation"></div><div class="footer-actions"><button id="copyC5C6" class="btn small soft">Copiar agrupamiento de Sociales C5 → C6</button><button id="validateBtn" class="btn mint">Validar Mapa de la Oferta</button></div></section></div></section>
@@ -88,7 +90,6 @@ function usageLabel(s){const u=[...usage(s.id)].sort((a,b)=>a-b);if(!u.length)re
 function renderHome(){
   $('schoolName').value=state.school;
   $('matrizSchoolTitle').textContent=state.school;
-  $('matrizSchoolLabel').textContent=state.school;
   if(!state.selected.length)state.selected=['Economía y Administración'];
   if(!state.selected.includes(state.active))state.active=state.selected[0];
 
@@ -128,13 +129,11 @@ function renderHome(){
   });
   $('matrizOrientationsCount').textContent=state.selected.length===1?'1 habilitada':state.selected.length+' habilitadas';
 
-  // No mostrar una tarjeta por orientación: solo la que se está trabajando.
+  // Una sola acción principal: la configuración de orientaciones es secundaria.
   const active=state.active;
-  $('pciList').innerHTML=`<article class="card pci-card matriz-active-pci">
-    <div class="eyebrow">PCI de la orientación</div>
-    <h3>${esc(active)}</h3>
-    <div class="status">${ensure(active).valid?'Mapa de la Oferta validado':'En construcción'}</div>
-    <div class="top-actions"><button class="btn primary" type="button" data-open="${esc(active)}">Abrir PCI</button></div>
+  $('pciList').innerHTML=`<article class="pci-card matriz-active-pci">
+    <div class="status">${ensure(active).valid?'Mapa de la Oferta: validado':'Mapa de la Oferta: pendiente de validar'}</div>
+    <div class="top-actions"><button class="btn primary" type="button" data-open="${esc(active)}">Abrir PCI <span aria-hidden="true">→</span></button></div>
   </article>`;
   $('pciList').querySelector('[data-open]').onclick=()=>{
     state.active=active;

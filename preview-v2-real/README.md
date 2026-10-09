@@ -35,3 +35,7 @@ La copia adopta **la identidad visual de Matriz PCI Completa** (Archivo, azul in
 La anterior compactación por CSS resultó insuficiente: seguían visibles las 16 orientaciones de V2. Ahora el inicio se reorganiza con la **escuela como título**, un solo selector de **orientación activa**, y un único acceso al PCI en curso. Las 16 opciones oficiales siguen disponibles en **«Administrar orientaciones»**, plegado por defecto. La selección y los datos de otras orientaciones no se borran ni reinicializan. El campo duplicado de nombre de escuela se mantiene internamente para compatibilidad, pero ya no se solicita al usuario.
 
 Este cambio afecta solo el inicio de la copia en pruebas. El motor C1-C10, la bolsa FG/FO, la composición y el desarrollo de secuencias siguen sin cambios.
+
+## Inicio simplificado y texto operativo
+
+Se conserva el encabezado y los colores de Matriz PCI, con **una única acción visible**: orientación de la escuela → Abrir PCI. Se quitó la duplicación de nombre de escuela, orientación y tarjeta de PCI. La configuración de orientaciones es secundaria y plegada por defecto, con explicación pedagógica clara. La pantalla indica expresamente que es una vista ficticia, no conectada a usuarios ni matrices reales. Se mantienen controles y nombres DOM que necesita el motor curricular, sin modificar la composición, el arrastre, la cobertura ni los planes.

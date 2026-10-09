@@ -38,6 +38,10 @@ async function inspect(page,mode){
   assert.equal(await page.locator('#orientationList').isVisible(),false);
   assert.equal(await page.locator('#pciList .pci-card').count(),1);
   assert.equal(await page.locator('#schoolName').isVisible(),false);
+  assert.equal(await page.getByRole('heading',{name:'Continuar con el PCI'}).count(),1);
+  assert.equal(await page.getByRole('button',{name:/Abrir PCI/}).count(),1);
+  assert.ok((await page.locator('#home').innerText()).includes('todavía no está conectada'));
+  assert.equal(await page.locator('#matrizOrientationManager').evaluate(e=>e.open),false);
 
   const view=await page.evaluate(()=>{
     const summary=document.querySelector('#matrizOrientationManager > summary');
@@ -63,7 +67,7 @@ async function inspect(page,mode){
   assert.equal(view.heroTitle,'Escuela Muestra');
   assert.equal(view.hiddenOrientations,true);
   assert.equal(view.orientationOptions,1,'Por defecto solo aparece la orientación activa');
-  assert.ok(view.entryPanelHeight<225,'El inicio debe ser compacto: '+JSON.stringify(view));
+  assert.ok(view.entryPanelHeight<(mode==='movil'?445:330),'El acceso debe ser claro y compacto: '+JSON.stringify(view));
   assert.ok(view.singleCardHeight<145,'El acceso al PCI debe ser compacto: '+JSON.stringify(view));
   assert.equal(view.horizontalOverflow,false,'Inicio con desplazamiento horizontal: '+JSON.stringify(view));
   console.log('Nuevo inicio Matriz '+mode+': '+JSON.stringify(view));
@@ -75,7 +79,8 @@ async function inspect(page,mode){
   await newOrientation.check();
   assert.equal(await page.locator('#matrizOrientationSelect option').count(),2);
   await page.locator('#matrizOrientationSelect').selectOption('Economía y Administración');
-  assert.equal(await page.locator('#pciList .pci-card h3').textContent(),'Economía y Administración');
+  assert.equal(await page.locator('#matrizOrientationSelect').inputValue(),'Economía y Administración');
+  assert.equal(await page.locator('#pciList [data-open]').count(),1);
   await newOrientation.uncheck();
   assert.equal(await page.locator('#matrizOrientationSelect option').count(),1);
   assert.equal(await page.locator('#matrizOrientationManager').evaluate(e=>e.open),true);

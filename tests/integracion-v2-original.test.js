@@ -106,7 +106,11 @@ test('no se incluye el módulo Calificaciones ni se pierde la etapa de evaluaci�
 test('el inicio mantiene la estética de Matriz sin grilla obligatoria de 16 orientaciones',async()=>{
   const core=await r('app-core.html'),css=await r('estetica-matriz-compacta.css');
   assert.ok(core.includes('id="matrizSchoolTitle"'));
-  assert.ok(core.includes('id="matrizOrientationSelect"'));
+  assert.ok(core.includes('id="matrizOrientationSelect"'))
+  assert.ok(core.includes('id="matrizEntryTitle"'));
+  assert.ok(core.includes('Elegí la orientación y abrí su PCI'));
+  assert.ok(core.includes('Esta configuración no borra los mapas'));
+  assert.ok(core.includes('todavía no está conectada a los PCI reales'));;
   assert.ok(core.includes('<details id="matrizOrientationManager"'));
   assert.ok(core.includes('id="orientationList"'));
   assert.ok(core.includes('id="pciList"'));
