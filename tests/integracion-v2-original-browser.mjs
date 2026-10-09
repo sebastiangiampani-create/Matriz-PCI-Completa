@@ -36,12 +36,18 @@ async function inspect(page,mode){
   await page.click('#openOffer');
   await page.waitForSelector('#offer.screen.active #matrix .drop',{timeout:50000});
   await page.waitForSelector('#offer.screen.active #bagContent .subject',{timeout:50000});
+  // La bolsa V2 real filtra por nivel: 1º muestra solo FG; 3º muestra FG y FO.
+  await page.locator('#bagContent [data-bag-year="3"]').click();
+  await page.waitForSelector('#bagContent [data-alt="A"]',{timeout:15000});
   const state=await page.evaluate(()=>({
     map:document.querySelectorAll('#matrix .drop').length,
     subjects:document.querySelectorAll('#bagContent .subject').length,
     realMap:!!document.querySelector('#matrix .grid.levels'),
     socialButtons:document.querySelectorAll('#compositionPalette [data-social-option]').length,
     formatButtons:document.querySelectorAll('#compositionPalette [data-format]').length,
+    yearButtons:document.querySelectorAll('#bagContent [data-bag-year]').length,
+    foOptions:document.querySelectorAll('#bagContent [data-alt]').length,
+    foSlots:document.querySelectorAll('#matrix .drop[data-slot^="fo"]').length,
     phase2:!!window.PCIPhase2V28,
     originalName:document.querySelector('#offerTitle')?.textContent
   }));
@@ -49,10 +55,12 @@ async function inspect(page,mode){
   await page.screenshot({path:artifacts+'/'+mode+'-mapa-original.png',fullPage:true});
   assert.deepEqual(missing,[],'Recursos curriculares faltantes: '+missing.join(' | '));
   assert.ok(state.map>35,'El mapa C1–C10 debe contener ubicaciones originales');
-  assert.ok(state.subjects>20,'La bolsa FG/FO debe mostrar materias reales');
+  assert.ok(state.subjects>=7,'La bolsa de 3.º debe mostrar materias reales de FG y FO');
+  assert.equal(state.yearButtons,5,'V2 debe permitir elegir los cinco niveles de la bolsa');
+  assert.equal(state.foOptions,2,'V2 debe mostrar las alternativas A y B');
   assert.equal(state.realMap,true,'Debe renderizar la matriz de V2, no una maqueta');
   assert.ok(state.socialButtons>=2,'Deben aparecer las opciones reales de Sociales N3');
-  assert.ok(state.formatButtons>=2,'Deben aparecer los formatos FO originales');
+  assert.ok(state.foSlots>0,'Deben existir las ubicaciones originales de FO');
   assert.ok(state.phase2,'Debe cargar el motor auténtico de Desarrollo Curricular');
   assert.deepEqual(bad,[], 'Errores JavaScript del mapa original: '+bad.join(' | '));
   console.log('V2 original real '+mode+': '+JSON.stringify(state));
