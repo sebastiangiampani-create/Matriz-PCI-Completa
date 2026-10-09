@@ -33,6 +33,41 @@ async function inspect(page,mode){
   assert.equal(await page.locator('#v114PlanCriteriaScreen').count(),0);
   const selected=await page.locator('#orientationList input[type="checkbox"]').count();
   assert.equal(selected,16,'La selección original debe ofrecer 16 orientaciones');
+  // Geometría y navegación conservada: las tarjetas son compactas y siguen accesibles.
+  const visual=await page.evaluate(()=>{
+    const orient=document.querySelector('#orientationList .orientation');
+    const grid=document.querySelector('#orientationList');
+    const card=document.querySelector('#pciList .pci-card');
+    const css=getComputedStyle(grid);
+    return {
+      font:getComputedStyle(document.body).fontFamily,
+      brand:document.querySelector('header.top .brand img')?.getAttribute('src'),
+      footer:document.querySelector('#institutionalFooter .footer-school')?.getAttribute('src'),
+      cssLinked:!!document.querySelector('link[href^="estetica-matriz-compacta.css"]'),
+      orientationHeight:orient?.getBoundingClientRect().height,
+      pciCardHeight:card?.getBoundingClientRect().height,
+      columns:css.gridTemplateColumns.split(' ').length,
+      viewport:window.innerWidth,
+      htmlOverflow:document.documentElement.scrollWidth>window.innerWidth+2
+    };
+  });
+  assert.equal(visual.cssLinked,true,'El CSS debe cargarse desde la copia de Matriz');
+  assert.match(visual.brand||'',/em-logo-header\.svg/);
+  assert.match(visual.footer||'',/em-logo-footer\.svg/);
+  assert.match(visual.font||'',/Archivo/);
+  assert.ok(visual.orientationHeight<=73,'Orientaciones demasiado altas para la estética compacta: '+JSON.stringify(visual));
+  assert.ok(visual.pciCardHeight<=140,'El resumen debe ser un mosaico compacto: '+JSON.stringify(visual));
+  assert.ok(visual.columns>=2,'Las orientaciones deben conservar una grilla usable: '+JSON.stringify(visual));
+  assert.equal(visual.htmlOverflow,false,'No debe haber desplazamiento horizontal en el inicio: '+JSON.stringify(visual));
+  console.log('Estética Matriz compacta '+mode+': '+JSON.stringify(visual));
+  // Toggle sin resetear el resto de orientaciones ni sus mapas.
+  const check=page.locator('#orientationList [data-o="Ciencias Naturales"]');
+  const before=await check.isChecked();
+  await check.click();
+  assert.equal(await page.locator('#orientationList [data-o="Ciencias Naturales"]').isChecked(),!before);
+  await page.locator('#orientationList [data-o="Ciencias Naturales"]').click();
+  assert.equal(await page.locator('#orientationList [data-o="Ciencias Naturales"]').isChecked(),before);
+  await page.screenshot({path:artifacts+'/'+mode+'-inicio-matriz-compacto.png',fullPage:true});
   await page.locator('#pciList [data-open]').first().click();
   await page.waitForSelector('#openOffer');
   await page.click('#openOffer');

@@ -25,3 +25,7 @@ Los casos de pruebas de la carpeta se validan en `tests/integracion-v2-original.
 **Calificaciones queda explícitamente excluido.** En la rama de prueba se eliminó físicamente `src/v114-plan-criteria-excel.js`, junto con su carga. No existe pantalla de calificaciones, calificación final, registro de notas ni exportación de planillas de calificación. Se mantienen los criterios de evaluación del **plan de aprendizaje** y las cuatro etapas de las secuencias (punto de partida, indagación, producción y evaluación), que son pedagógicos y no equivalen a calificaciones.
 
 No se borran datos históricos ni se realiza ninguna migración sobre las escuelas. La única plataforma de acceso será Matriz PCI Completa una vez que la integración institucional esté verificada.
+
+## Ajuste visual acotado a Matriz PCI (2026-10-09)
+
+La copia adopta **la identidad visual de Matriz PCI Completa** (Archivo, azul institucional, banda celeste, bordes, botones redondeados, logos de encabezado y pie). Se agrego exclusivamente `estetica-matriz-compacta.css`, aplicado despues del CSS de V2. En el inicio se redujeron el campo de escuela, la grilla de orientaciones y el resumen de PCI activos. El selector mantiene sus 16 opciones y conserva su estado. **No se altero el motor curricular, la matriz de arrastre, las reglas ni las secuencias**. Los logos se resuelven desde `../assets` de Matriz, sin copiar nuevos usuarios. Todo sigue siendo una prueba local sin Supabase y sin publicacion en `main`.

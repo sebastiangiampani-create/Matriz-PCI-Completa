@@ -44,7 +44,10 @@ test('vista aislada sin endpoint escolar ni colisiones con el almacenamiento de 
  assert.equal(core.includes('supabase.co'),false);
  assert.equal(core.includes('functions/v1/'),false);
  assert.ok(core.includes('../assets/ba-logo.png'));
- assert.ok(core.includes('../assets/ba-ciudad-footer.png'));
+ assert.ok(core.includes('../assets/em-logo-header.svg'));
+ assert.ok(core.includes('../assets/em-logo-footer.svg'));
+ assert.ok(core.includes('../assets/ministerio-footer.svg'));
+ assert.ok(core.includes('estetica-matriz-compacta.css'));
 });
 
 test('copió las bases históricas de materias que V2 usa para completar su bolsa',async()=>{
