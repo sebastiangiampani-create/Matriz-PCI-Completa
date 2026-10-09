@@ -12,7 +12,7 @@ test('arranque V2 original con sus módulos completos y sin archivos ausentes',a
  assert.match(boot,/src\/v47-fo-content-atomicizer\.js/);
  const list=boot.match(/const modulePaths=\[([\s\S]*?)\]/)?.[1]||'';
  const files=[...list.matchAll(/'([^']+)'/g)].map(x=>x[1]);
- assert.equal(files.length,43);
+ assert.equal(files.length,26);
  for(const file of files)await access(dir+file);
  for(const file of ['app-core.html','src/v47-phase2-matrix.js','src/v47-fo-content-atomicizer.js',
    'data/materias-v2.json','data/horas-v2.json','assets/logo-escuela-maestros.svg',
@@ -62,4 +62,26 @@ test('copió las bases históricas de materias que V2 usa para completar su bols
  await access(dir+'data/contenidos-prescriptos-fg.json');
  await access(dir+'assets/ba-logo.png');
  await access(dir+'assets/ba-ciudad-footer.png');
+});
+
+test('no se copian usuarios, permisos ni módulos de gestión de V2',async()=>{
+ const boot=await r('app.html');
+ const forbidden=[
+  'v22-teachers.js','v31-integration-hours-print.js',
+  'v48-institutional-layer.js','v48-phase2-institutional-content.js',
+  'v48-disable-phase1-teachers.js','v52-derived-teacher-load.js',
+  'v57-custom-divisions.js','v68-institutional-export.js',
+  'v71-lean-management.js','v71-management-nav-reset.js',
+  'v71-simple-assignment-excel.js','v72-students-commissions.js',
+  'v73-management-home.js','v74-home-redesign.js',
+  'v75-app-architecture.js','v80-access-control.js','v85-access-panel.js'
+ ];
+ for(const name of forbidden){
+   assert.equal(boot.includes(name),false,'No se debe iniciar '+name);
+   await assert.rejects(access(dir+'src/'+name),{code:'ENOENT'});
+ }
+ assert.ok(boot.includes('v19-map.js'));
+ assert.ok(boot.includes('v91-coverage-core.js'));
+ assert.ok(boot.includes('v93-curricular-coverage-dashboard.js'));
+ assert.ok(boot.includes('v47-phase2-matrix.js'));
 });

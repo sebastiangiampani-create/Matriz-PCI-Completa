@@ -24,11 +24,10 @@ async function inspect(page,mode){
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#orientationList input[type="checkbox"]',{timeout:60000});
   await page.waitForSelector('#pciList [data-open]',{timeout:60000});
-  // El V2 auténtico pide elegir un rol de prueba antes de editar la oferta.
-  await page.waitForSelector('#v85AccessPanel [data-v85-role="admin"]',{timeout:30000});
-  await page.locator('#v85AccessPanel [data-v85-role="admin"]').click();
-  await page.locator('#v85EnterAdmin').click();
-  await page.waitForSelector('#v85AccessPanel',{state:'detached'});
+  // La integración reutilizará la sesión de Matriz. En esta copia NO hay
+  // pantalla de acceso, alta de usuarios ni perfiles de V2.
+  assert.equal(await page.locator('#v85AccessPanel').count(),0);
+  assert.equal(await page.locator('[data-v85-role]').count(),0);
   const selected=await page.locator('#orientationList input[type="checkbox"]').count();
   assert.equal(selected,16,'La selección original debe ofrecer 16 orientaciones');
   await page.locator('#pciList [data-open]').first().click();
