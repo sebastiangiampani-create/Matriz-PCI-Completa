@@ -4,25 +4,40 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#12395c">
-<title>PCI Secundaria Aprende · Gestión</title>
+<title>Mapa de la Oferta · Integración con Matriz PCI</title>
 </head>
 <body>
-<p style="font-family:system-ui;padding:24px">Cargando PCI Secundaria Aprende V2…</p>
+<p style="font-family:system-ui;padding:24px">Cargando el Mapa de la Oferta curricular…</p>
 <script>
 (async()=>{
+  // Componentes curriculares de PCI Aprende V2, SIN usuarios ni acceso propios.
   const modulePaths=[
-    'src/v19-map.js','src/v20-format-order.js','src/v21-custom-social-ui.js','src/v22-teachers.js',
-    'src/v23-prearm.js','src/v24-social-interactions.js','src/v25-institutional-spaces.js','src/v26-other-formats-print.js',
-    'src/v29-fo-rules.js','src/v30-fo-minimum-guard.js','src/v31-integration-hours-print.js','src/v32-phase2-entry-fix.js',
-    'src/v38-phase2-workspace.js','src/v47-elective-plans.js','src/v42-homologacion-performance.js',
-    'src/v48-institutional-layer.js','src/v48-phase2-institutional-content.js','src/v48-disable-phase1-teachers.js','src/v57-custom-divisions.js',
-    'src/v52-derived-teacher-load.js','src/v59-phase2-annual-matrix.js','src/v33-articulation-rules.js',
-    'src/v71-simple-assignment-excel.js','src/v71-management-nav-reset.js','src/v71-lean-management.js','src/v72-students-commissions.js',
-    'src/v68-institutional-export.js','src/v73-management-home.js','src/v74-home-redesign.js','src/v75-app-architecture.js',
-    'src/v80-access-control.js','src/v85-access-panel.js',
-    'src/ui-hide-version-labels.js','src/ui-navigation-consistency.js',
-    'src/creative-commons-footer.js','src/v84-content-control-table.js',
-    'src/v91-coverage-core.js','src/v91-plans-coverage.js','src/v93-curricular-coverage-dashboard.js','src/v108-pci-document-editor.js','src/v112-remove-obsolete-map-notice.js','src/v114-plan-criteria-excel.js','src/v119-responsive-legibility.js'
+    'src/v19-map.js',
+    'src/v20-format-order.js',
+    'src/v21-custom-social-ui.js',
+    'src/v23-prearm.js',
+    'src/v24-social-interactions.js',
+    'src/v25-institutional-spaces.js',
+    'src/v26-other-formats-print.js',
+    'src/v29-fo-rules.js',
+    'src/v30-fo-minimum-guard.js',
+    'src/v32-phase2-entry-fix.js',
+    'src/v38-phase2-workspace.js',
+    'src/v47-elective-plans.js',
+    'src/v42-homologacion-performance.js',
+    'src/v59-phase2-annual-matrix.js',
+    'src/v33-articulation-rules.js',
+    'src/ui-hide-version-labels.js',
+    'src/ui-navigation-consistency.js',
+    'src/creative-commons-footer.js',
+    'src/v84-content-control-table.js',
+    'src/v91-coverage-core.js',
+    'src/v91-plans-coverage.js',
+    'src/v93-curricular-coverage-dashboard.js',
+    'src/v108-pci-document-editor.js',
+    'src/v112-remove-obsolete-map-notice.js',
+    'src/v114-plan-criteria-excel.js',
+    'src/v119-responsive-legibility.js'
   ];
   const fetchText=async url=>{
     const response=await fetch(url,{cache:'no-store'});
@@ -47,8 +62,10 @@
     const closeScript='</scr'+'ipt>';
     html=html.replace('\ninit();\n'+closeScript,'\nwindow.__pciBaseInit=init;\n'+closeScript);
 
-    const beforePhase2=moduleSources.slice(0,8).map(inline).join('');
-    const afterPhase2=moduleSources.slice(8).map(inline).join('');
+    const pivot=modulePaths.indexOf('src/v29-fo-rules.js');
+    if(pivot<0)throw new Error('Faltan las reglas curriculares de Formación Orientada.');
+    const beforePhase2=moduleSources.slice(0,pivot).map(inline).join('');
+    const afterPhase2=moduleSources.slice(pivot).map(inline).join('');
     html=html.replace('</body>',
       beforePhase2+
       inline(foAtomicSource)+
