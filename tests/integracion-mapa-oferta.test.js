@@ -5,7 +5,7 @@ import {createOrientationPackage,chooseFgMode} from '../src/integracion-curricul
 import {
   seedOfferStructure,foSubjectBank,setFoAlternative,assignFoSubject,
   moveFoSpace,validateOfferStructure,offerMapRows,
-  stageFoContent,appendFgContent
+  stageFoContent,stageFgContent,appendFgContent,confirmFoContentAfterOffer
 } from '../src/integracion-curricular/mapa-oferta.js';
 
 const base='data/integracion-curricular/referencia-v2/';
@@ -147,26 +147,45 @@ test('arrastrar contenido FO queda provisional hasta validar Mapa Oferta',()=>{
     contentId:'no-oficial',foRows:[]
   }),/no identificado/);
 });
-test('arrastrar contenido de Matriz solo agrega a FG copiada y conserva los planes',()=>{
+test('arrastrar contenido Matriz se prepara y solo se incorpora tras verificar el año',()=>{
   const p=make(),original=legacy();
   const matrixRows=[{id:'extra',area:'Ciencias Sociales',subject:'Economía',text:'Nuevo contenido'}];
-  const after=appendFgContent(p,{
+  const reference=[{id:'v2-extra',year:3,area:'Ciencias Sociales',subject:'Economía',text:'Nuevo contenido'}];
+  const waiting=stageFgContent(p,{
     orientationId:'economia_administracion',area:'Ciencias Sociales',groupId:'social3',
     contentId:'extra',matrixRows
   });
-  const orig=p.orientations.economia_administracion.fg.areas['Ciencias Sociales'].groups[0];
+  const before=waiting.orientations.economia_administracion.fg.areas['Ciencias Sociales'].groups[0];
+  assert.ok(before.provisionalContentIds.includes('extra'));
+  assert.ok(!before.items.includes('extra'));
+  assert.throws(()=>appendFgContent(waiting,{
+    orientationId:'economia_administracion',area:'Ciencias Sociales',groupId:'social3',
+    contentId:'extra',matrixRows,v2FgRows:reference.map(x=>({...x,year:4}))
+  }),/Revisar homologación/);
+  const after=appendFgContent(waiting,{
+    orientationId:'economia_administracion',area:'Ciencias Sociales',groupId:'social3',
+    contentId:'extra',matrixRows,v2FgRows:reference
+  });
   const changed=after.orientations.economia_administracion.fg.areas['Ciencias Sociales'].groups[0];
   assert.ok(changed.items.includes('extra'));
-  assert.ok(!orig.items.includes('extra'));
-  assert.deepEqual(changed.plansBimestrales,orig.plansBimestrales);
+  assert.ok(!changed.provisionalContentIds.includes('extra'));
+  assert.deepEqual(changed.plansBimestrales,before.plansBimestrales);
   assert.deepEqual(original,legacy());
   assert.ok(!after.orientations.ciencias_naturales.fg.areas['Ciencias Sociales'].groups[0].items.includes('extra'));
   const again=appendFgContent(after,{
     orientationId:'economia_administracion',area:'Ciencias Sociales',groupId:'social3',
-    contentId:'extra',matrixRows
+    contentId:'extra',matrixRows,v2FgRows:reference
   });
   assert.equal(again.orientations.economia_administracion.fg.areas['Ciencias Sociales'].groups[0].items.filter(x=>x==='extra').length,1);
 });
+test('FO no confirma contenidos mientras el Mapa de la Oferta sea incompleto',()=>{
+  const p=make();
+  assert.throws(()=>confirmFoContentAfterOffer(p,{
+    orientationId:'economia_administracion',refs,
+    foRows:[{id:'fo-test',orientation:'Economía y Administración',text:'Contenido'}]
+  }),/No se confirma contenido FO/);
+});
+
 test('cambiar alternativa se bloquea si las materias FO ya fueron compuestas',()=>{
   const p=make(),q=setFoAlternative(p,'economia_administracion','B');
   assert.equal(q.orientations.economia_administracion.fo.subjectAlternative,'B');
