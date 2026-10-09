@@ -62,6 +62,20 @@ async function inspect(page,mode){
   assert.ok(state.socialButtons>=2,'Deben aparecer las opciones reales de Sociales N3');
   assert.ok(state.foSlots>0,'Deben existir las ubicaciones originales de FO');
   assert.ok(state.phase2,'Debe cargar el motor auténtico de Desarrollo Curricular');
+  // Probar una selección y ubicación REAL con la lógica V2, sin datos de escuelas.
+  const math=page.locator('#bagContent .subject').filter({hasText:'Matemática · 3.º'}).first();
+  assert.equal(await math.count(),1,'Debe estar Matemática de 3.º en la bolsa original.');
+  await math.click();
+  await page.locator('#matrix .drop[data-slot="matematica-n3"]').click();
+  await page.waitForSelector('#matrix .drop[data-slot="matematica-n3"] .placed',{timeout:15000});
+  assert.match(await page.locator('#matrix .drop[data-slot="matematica-n3"] .placed').innerText(),/Matemática/);
+  const local=await page.evaluate(()=>{
+    const value=localStorage.getItem('pci-matriz-fg-v2-original-preview-20261009');
+    return value?JSON.parse(value):null;
+  });
+  assert.ok(local?.maps?.['Economía y Administración']?.placements?.['matematica-n3']?.length,
+    'La asignación V2 debe guardarse solo en el almacenamiento aislado de prueba.');
+  console.log('Selección de Matemática 3.º comprobada en '+mode);
   assert.deepEqual(bad,[], 'Errores JavaScript del mapa original: '+bad.join(' | '));
   console.log('V2 original real '+mode+': '+JSON.stringify(state));
 }
