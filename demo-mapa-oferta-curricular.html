@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mapa de la Oferta y Desarrollo Curricular - simulador aislado</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#16384a;background:#f4f7f8}
+*{box-sizing:border-box}body{margin:0;font-size:14px}
+header{background:#fff;border-bottom:1px solid #dbe5e9;padding:14px 3.5vw;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header img{height:39px;max-width:210px;object-fit:contain}
+header small{font-weight:700;color:#5e7584}
+main{max-width:1420px;margin:0 auto;padding:18px clamp(12px,3vw,36px) 65px}
+h1{font-size:clamp(1.7rem,3vw,2.5rem);letter-spacing:-.03em;margin:4px 0 10px}h2{font-size:1.05rem;margin:0 0 10px}h3{font-size:.95rem;margin:5px 0}
+p{line-height:1.48}small{color:#607888}
+.eyebrow{font-size:.72rem;color:#247367;text-transform:uppercase;letter-spacing:.1em;font-weight:850}
+.alert{border:1px solid #e3c38f;background:#fff8e9;border-radius:12px;padding:12px 16px;margin:14px 0}
+.alert strong{display:block;margin-bottom:4px}
+.layout{display:grid;grid-template-columns:minmax(300px,.8fr) minmax(460px,1.5fr);gap:15px;align-items:start}
+.panel{background:#fff;border:1px solid #d9e4e9;border-radius:16px;padding:15px;min-width:0}
+.panel-header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.field{display:grid;gap:4px;font-size:.73rem;font-weight:750}
+select,input[type=search]{width:100%;border:1px solid #bdcbd3;border-radius:8px;padding:10px;background:#fff;min-height:40px;color:#17394b;font:inherit}
+button{font:inherit;border:1px solid #b3c8d1;background:#fff;color:#183b4d;padding:9px 12px;border-radius:9px;min-height:37px;cursor:pointer;font-weight:750}
+button.primary{background:#176f6d;border-color:#176f6d;color:#fff}
+button.active{background:#e2f3ef;color:#105e58;border-color:#329b90}
+button:focus-visible{outline:3px solid #b7d6ff;outline-offset:2px}
+button[disabled]{opacity:.5;cursor:not-allowed}
+button:hover:not(:disabled){filter:brightness(.97)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#modeActions{margin-top:10px}
+.stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:15px 0}
+.stat{border:1px solid #d9e4e9;background:#fff;border-radius:11px;padding:11px}
+.stat b{font-size:1.25rem;display:block}.stat small{font-size:.67rem}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.source-list{display:grid;gap:7px;max-height:380px;overflow-y:auto;padding-right:3px}
+.source{border:1px solid #d1dee4;background:#f9fbfc;border-radius:10px;text-align:left;padding:9px;display:flex;gap:7px;justify-content:space-between;align-items:flex-start}
+.source.selected{border-color:#1c897e;background:#e5f5f1}
+.source b{font-size:.81rem}.source small{display:block;font-weight:500;font-size:.7rem;margin-top:4px}
+.source .handle{font-size:1rem;flex:none;color:#627d8b}
+.help{font-size:.77rem;color:#536d7d}
+.timeline{display:grid;grid-template-columns:repeat(10,minmax(24px,1fr));gap:4px;margin-bottom:13px}
+.term{border:1px solid #dce7e9;border-radius:6px;padding:8px 2px;text-align:center;font-size:.7rem}
+.term.focus{background:#e4f3f1;border-color:#19877e}
+.term small{display:block;font-size:.61rem}
+.map-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.term-column{border:1px solid #d8e4e8;background:#f9fbfb;border-radius:11px;padding:10px;min-width:0}
+.term-header{font-size:.77rem;font-weight:850;margin-bottom:8px}
+.group{border:1px solid #d6e1e6;background:#fff;border-radius:10px;padding:10px;margin-bottom:7px;min-height:82px}
+.group.fo{border-color:#a6d5cf}.group.over{border:2px dashed #277c71;background:#e7f7f2}
+.group small{display:block;font-size:.68rem}
+.tag{display:inline-block;font-size:.66rem;border-radius:5px;padding:3px 6px;background:#e7f2f6;margin:4px 4px 0 0;color:#195067;font-weight:750}
+.tag.pending{background:#fff0d6;color:#925c16}.tag.ok{background:#e4f3ed;color:#216b5e}
+.zone-label{font-size:.65rem;color:#687e8b;margin-bottom:6px;font-weight:850;text-transform:uppercase}
+.coverage{margin-top:15px;border-top:1px solid #e2e8ea;padding-top:12px}
+.progress{height:7px;background:#ebeff0;border-radius:9px;overflow:hidden;margin:5px 0 2px}
+.progress>span{display:block;height:100%;background:#239587}
+.status{font-size:.74rem;border-left:3px solid #e3b267;padding:6px 9px;background:#fff8ec;margin-top:9px}
+#msg{margin-top:12px;min-height:20px;color:#1d756a;font-weight:700}
+#msg.bad{color:#ae4141}
+#loading{font-size:.85rem;font-weight:750;color:#58727f;padding:20px}
+#feedback{margin-top:12px;display:grid;gap:6px}
+.review{padding:10px;border:1px solid #ebc78f;border-radius:10px;background:#fff8ee;font-size:.76rem}
+#workspace[hidden],#loading[hidden]{display:none}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.stat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.map-grid{grid-template-columns:1fr}header img{height:30px}.panel{padding:12px}.stat b{font-size:1rem}}
+</style>
+</head>
+<body>
+<header>
+<img src="assets/em-logo-header.svg" alt="Escuela de Maestros">
+<small>Integración curricular · Rama de prueba, sin publicación</small>
+</header>
+<main>
+<div class="eyebrow">Matriz PCI Completa + desarrollo curricular de Aprende V2</div>
+<h1>Mapa de la Oferta y Desarrollo Curricular</h1>
+<p>Simulador de integración: la <strong>Formación General viene de Matriz PCI Completa</strong>; las orientaciones, materias FO, estructura y validaciones siguen el modelo curricular de V2.</p>
+<div class="alert"><strong>Solo demostración</strong>Los datos escolares de esta pantalla son ficticios y están en memoria. No utiliza claves, no consulta Supabase y no guarda información en las plataformas publicadas.</div>
+<div id="loading">Cargando los catálogos curriculares de referencia…</div>
+<div id="workspace" hidden>
+<section class="panel">
+<div class="controls">
+<label class="field">Orientación<select id="orientation"></select></label>
+<label class="field">Nivel para visualizar<select id="year">
+<option value="1">1.º</option><option value="2">2.º</option><option value="3" selected>3.º</option><option value="4">4.º</option><option value="5">5.º</option></select></label>
+<label class="field">Alternativa FO<select id="alternative"><option value="A">Alternativa A</option><option value="B">Alternativa B</option></select></label>
+</div>
+<div class="row" id="modeActions"></div>
+<div id="modeInfo" class="help"></div>
+</section>
+<div class="stat-grid" id="stats"></div>
+<div class="layout">
+<div class="panel">
+<div class="panel-header"><div><div class="eyebrow">Banco curricular</div><h2>Materias y contenidos para arrastrar</h2></div></div>
+<p class="help">Podés arrastrar un elemento o seleccionarlo y tocar «Usar seleccionado» en el espacio. El contenido se asocia únicamente a esta orientación.</p>
+<div class="tabs" id="bankTabs"></div>
+<label class="field">Buscar<input type="search" id="search" placeholder="Materia, eje o contenido"></label>
+<div id="bankInfo" class="help" style="margin:10px 0"></div>
+<div id="sourceList" class="source-list"></div>
+<div id="feedback"></div>
+</div>
+<div class="panel">
+<div class="panel-header"><div><div class="eyebrow">Fase 1 + Fase 2</div><h2>Mapa por cuatrimestre y seguimiento</h2></div></div>
+<div id="timeline" class="timeline"></div>
+<div id="mapGrid" class="map-grid"></div>
+<div id="coverage" class="coverage"></div>
+<div id="msg" role="status" aria-live="polite"></div>
+</div>
+</div>
+</div>
+</main>
+<script type="module">
+import {ORIENTATIONS,createOrientationPackage,chooseFgMode,previewArticulation,queueReview,getFgDecision}
+  from './src/integracion-curricular/bridge.js';
+import {
+  loadMatrixContents,loadV2Fg,loadV2Fo,loadV2Rules,
+  selectFoByOrientation,fgCatalogPlacementSummary,fgCoverageByLevel,foTrajectoryCoverage
+} from './src/integracion-curricular/catalogos.js';
+import {
+  seedOfferStructure,foSubjectBank,setFoAlternative,assignFoSubject,stageFoContent,
+  appendFgContent,offerMapRows,validateOfferStructure
+} from './src/integracion-curricular/mapa-oferta.js';
+const $=s=>document.getElementById(s);
+const origSelection=['economia_administracion','ciencias_naturales','ciencias_sociales_humanidades'];
+let matrixRows=[],v2Fg=[],v2Fo=[],refs=null,legacy=null,pack=null;
+let selected=null,selectedBank='fo-materia',selectedItem=null;
+let searchQuery='';
+const copy=v=>JSON.parse(JSON.stringify(v));
+const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const uniq=a=>[...new Set(a)];
+const arr=a=>Array.isArray(a)?a:[];
+function node(tag,text,cls){
+  const x=document.createElement(tag);
+  if(text!==undefined)x.textContent=String(text);
+  if(cls)x.className=cls;
+  return x;
+}
+function btn(text,fn,style){
+  const x=node('button',text,style);x.type='button';x.addEventListener('click',fn);return x;
+}
+function setMessage(message,fail=false){
+  const box=$('msg');box.textContent=message;box.className=fail?'bad':'';
+}
+function run(fn){try{fn();render();setMessage('Cambio aplicado solo al simulador; los datos existentes permanecen intactos.');}catch(e){setMessage(String(e.message||e),true);}}
+function legacySample(){
+  const find=s=>matrixRows.find(x=>norm(x.area)==='ciencias sociales'&&norm(x.subject)===norm(s));
+  const economy=find('Economía')||matrixRows.find(x=>norm(x.area)==='ciencias sociales');
+  const history=find('Historia')||matrixRows.find(x=>norm(x.area)==='ciencias sociales'&&x.id!==economy?.id);
+  const math=matrixRows.find(x=>norm(x.area)==='matematica');
+  const natural=matrixRows.find(x=>norm(x.area)==='ciencias naturales');
+  return {schemaVersion:10,schoolName:'Escuela ficticia',areas:{
+    'Ciencias Sociales':{groups:[{
+      id:'social-demo-3',kind:'laboratory',level:3,startTerm:5,endTerm:5,
+      name:'Laboratorio de Sociales de 3.º',items:uniq([economy?.id,history?.id].filter(Boolean)),
+      objective:'Analizar las relaciones entre producción, economía y sociedad',
+      plansBimestrales:[{number:1,name:'Economía y transformaciones sociales',
+        contentIds:uniq([economy?.id,history?.id].filter(Boolean)),
+        objectives:'Construir explicaciones con fuentes',
+        stages:{
+          punto_partida:{description:'Preguntas iniciales',activities:'Conversar'},
+          indagacion:{description:'Explorar fuentes',activities:'Investigar'},
+          produccion:{description:'Elaborar producciones',activities:'Crear'},
+          evaluacion:{description:'Revisar criterios',activities:'Reflexionar'}
+        }
+      }]
+    }]},
+    'Ciencias Naturales':{groups:[{
+      id:'naturales-demo-3',kind:'laboratory',level:3,startTerm:5,endTerm:5,
+      name:'Laboratorio de Naturales de 3.º',
+      items:natural?[natural.id]:[],plansBimestrales:[]
+    }]},
+    'Matemática':{groups:[{
+      id:'matematica-demo-3',kind:'trunk',level:3,startTerm:5,endTerm:6,
+      name:'Troncal Matemática de 3.º',
+      items:math?[math.id]:[],plansBimestrales:[]
+    }]}
+  }};
+}
+function current(){return pack.orientations[$('orientation').value];}
+function currentOrientation(){return $('orientation').value;}
+function changeOrientation(){
+  const id=currentOrientation();
+  if(!pack.orientations[id])
+    pack=createOrientationPackage({legacyState:legacy,schoolId:1001,
+      orientationIds:[id],existing:pack});
+  pack=seedOfferStructure(pack,id,refs);
+  selectedItem=null;$('alternative').value=current().fo.subjectAlternative||'A';
+  render();
+}
+function renderMode(){
+  const id=currentOrientation(),decision=getFgDecision(pack,id);
+  const row=$('modeActions');row.replaceChildren();
+  for(const item of decision.options){
+    row.append(btn(item.label,()=>run(()=>{pack=chooseFgMode(pack,id,item.value);}),
+      item.value===current().fg.mode?'active':''));
+  }
+  $('modeInfo').textContent=decision.description;
+  $('alternative').value=current().fo.subjectAlternative||'A';
+}
+function addStat(label,value,detail){
+  const card=node('div',undefined,'stat');
+  card.append(node('b',value),node('small',label));
+  if(detail)card.append(node('div',detail,'help'));
+  $('stats').append(card);
+}
+function renderStats(){
+  $('stats').replaceChildren();
+  const w=current(),all=Object.values(w.fg.areas).flatMap(x=>arr(x.groups));
+  const plans=all.flatMap(g=>arr(g.plansBimestrales));
+  const fo=selectFoByOrientation(v2Fo,currentOrientation(),ORIENTATIONS);
+  const coverage=foTrajectoryCoverage({
+    rows:v2Fo,spaces:w.fo.spaces,orientationId:currentOrientation(),orientations:ORIENTATIONS
+  });
+  const provisional=w.fo.spaces.reduce((n,s)=>n+arr(s.provisionalContentIds).length,0);
+  addStat('Agrupamientos FG conservados',all.length,'Planes: '+plans.length);
+  addStat('Etapas de secuencias conservadas',plans.reduce((n,p)=>n+
+    ['punto_partida','indagacion','produccion','evaluacion'].filter(k=>p.stages?.[k]?.description).length,0));
+  addStat('FO: contenidos usados / disponibles',coverage.used+' / '+fo.length,'Provisionales: '+provisional);
+}
+function contentDrag(button,payload){
+  button.draggable=true;
+  button.addEventListener('dragstart',e=>{
+    e.dataTransfer.effectAllowed='copy';
+    e.dataTransfer.setData('text/plain',JSON.stringify(payload));
+    selectedItem=payload;
+  });
+  button.addEventListener('click',()=>{selectedItem=payload;renderBank();setMessage('Elemento seleccionado. Elegí «Usar seleccionado» en el agrupamiento de destino.');});
+}
+function renderBank(){
+  const tabs=$('bankTabs');tabs.replaceChildren();
+  for(const [key,label] of [
+    ['fo-materia','Materias FO'],['fo-contenido','Contenidos FO'],['fg-contenido','Contenidos de Matriz']]){
+    tabs.append(btn(label,()=>{selectedBank=key;selectedItem=null;renderBank();},
+      selectedBank===key?'active':''));
+  }
+  const id=currentOrientation(),year=Number($('year').value),bank=$('sourceList');
+  bank.replaceChildren();
+  const needle=norm($('search').value||'');
+  let list=[];
+  if(selectedBank==='fo-materia'){
+    const b=foSubjectBank({orientationId:id,refs,alternative:current().fo.subjectAlternative||'A'});
+    if(b.warning)$('bankInfo').textContent='Observación oficial: '+b.warning;
+    else $('bankInfo').textContent='Materias FO oficiales de '+year+'º. Arrastrar a un laboratorio o taller del mismo nivel.';
+    list=b.subjects.filter(s=>s.year===year).map(s=>({
+      label:s.name,meta:'Materia FO · '+(s.hours??'?')+' HC · '+s.year+'º',
+      payload:{kind:'fo-materia',id:s.id,orientationId:id}
+    }));
+  }else if(selectedBank==='fo-contenido'){
+    const rows=selectFoByOrientation(v2Fo,id,ORIENTATIONS);
+    $('bankInfo').textContent='Bolsa FO por bloque/eje. La base no atribuye año a estos contenidos: se preparan como selección provisional hasta validar la oferta.';
+    list=rows.map(s=>({
+      label:s.text,meta:(s.block||'Bloque')+' · '+(s.axis||'Eje'),
+      payload:{kind:'fo-contenido',id:s.id,orientationId:id}
+    }));
+  }else{
+    $('bankInfo').textContent='Contenidos originales de Matriz PCI. Solo se incorporan a la copia FG de esta orientación, nunca al original.';
+    list=matrixRows.filter(x=>current().fg.areas?.[x.area])
+      .map(s=>({label:s.text,meta:s.area+' · '+s.subject,
+        payload:{kind:'fg-contenido',id:s.id,area:s.area,orientationId:id}}));
+  }
+  const filtered=list.filter(x=>norm(x.label+' '+x.meta).includes(needle));
+  for(const item of filtered.slice(0,35)){
+    const button=node('button',undefined,'source'+(selectedItem?.id===item.payload.id?' selected':''));
+    const content=node('span');content.append(node('b',item.label),node('small',item.meta));
+    button.append(content,node('span','⠿','handle'));
+    contentDrag(button,item.payload);bank.append(button);
+  }
+  if(!filtered.length)bank.append(node('p','No se encontraron elementos con este filtro.','help'));
+  else if(filtered.length>35)bank.append(node('p','Se muestran 35 de '+filtered.length+' resultados. Usá el buscador para acotar.','help'));
+}
+function sourceSubject(){
+  const group=current().fg.areas?.['Ciencias Sociales']?.groups?.[0];
+  if(!group)return null;
+  const known=matrixRows.find(r=>norm(r.subject)==='economia'&&arr(group.items).map(String).includes(r.id));
+  if(!known)return null;
+  return {kind:'fg-materia',subject:'Economía',area:'Ciencias Sociales',
+    groupId:String(group.id),year:3,orientationId:currentOrientation()};
+}
+function placeOnFg(area,groupId,payload){
+  if(!payload||payload.kind!=='fg-contenido')throw new Error('Seleccioná un contenido de Matriz PCI para incorporarlo a FG.');
+  if(payload.orientationId!==currentOrientation())
+    throw new Error('Cambiaron las orientaciones: volvé a seleccionar el contenido.');
+  pack=appendFgContent(pack,{orientationId:currentOrientation(),area,groupId,
+    contentId:payload.id,matrixRows});
+}
+function placeOnFo(space,payload){
+  if(!payload)throw new Error('Seleccioná una materia o un contenido para ubicar.');
+  if(payload.orientationId!==currentOrientation())
+    throw new Error('El contenido pertenece a otra orientación.');
+  if(payload.kind==='fo-materia'){
+    pack=assignFoSubject(pack,{orientationId:currentOrientation(),
+      spaceId:space.id,subjectId:payload.id,refs});
+  }else if(payload.kind==='fo-contenido'){
+    const pool=selectFoByOrientation(v2Fo,currentOrientation(),ORIENTATIONS);
+    pack=stageFoContent(pack,{orientationId:currentOrientation(),
+      spaceId:space.id,contentId:payload.id,foRows:pool});
+  }else if(payload.kind==='fg-materia'){
+    const preview=previewArticulation(pack,{orientationId:currentOrientation(),
+      area:payload.area,groupId:payload.groupId,foSpaceId:space.id,
+      subject:payload.subject,year:payload.year});
+    pack=queueReview(pack,preview);
+    setMessage('Se generó «Revisar laboratorio». La materia no fue trasladada.');
+  }else{
+    throw new Error('Un contenido FG no se mueve directamente a Formación Orientada. Primero revisá la articulación curricular.');
+  }
+}
+function makeDropZone(card,onUse){
+  card.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy';card.classList.add('over');});
+  card.addEventListener('dragleave',()=>card.classList.remove('over'));
+  card.addEventListener('drop',e=>{
+    e.preventDefault();card.classList.remove('over');
+    try{
+      const data=JSON.parse(e.dataTransfer.getData('text/plain'));
+      run(()=>onUse(data));
+    }catch(error){setMessage(String(error.message||error),true);}
+  });
+}
+function fgCard(info){
+  const group=current().fg.areas[info.area].groups.find(g=>g.id===info.id);
+  const card=node('div',undefined,'group');
+  card.append(node('div','FG · '+info.area,'zone-label'),node('b',group.name));
+  card.append(node('small',arr(group.items).length+' contenidos · '+arr(group.plansBimestrales).length+' planes guardados'));
+  const row=node('div',undefined,'row');
+  row.append(btn('Usar seleccionado',()=>run(()=>placeOnFg(info.area,info.id,selectedItem))));
+  if(info.area==='Ciencias Sociales'&&info.level===3){
+    const source=sourceSubject();
+    if(source){
+      const chip=btn('↔ Economía FG: articular',()=>{
+        selectedItem=source;setMessage('Materia estructural seleccionada: soltala en un espacio FO de 3.º para revisar impacto.');
+      });
+      chip.draggable=true;
+      chip.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',JSON.stringify(source));selectedItem=source;});
+      row.append(chip);
+    }
+  }
+  card.append(row);makeDropZone(card,p=>placeOnFg(info.area,info.id,p));return card;
+}
+function foCard(space){
+  const card=node('div',undefined,'group fo');
+  card.append(node('div','FO · '+space.kind,'zone-label'),node('b',space.name));
+  card.append(node('small',space.members.length+' materias · '+arr(space.contentIds).length+
+    ' contenidos validados · '+arr(space.provisionalContentIds).length+' contenidos provisionales'));
+  for(const m of arr(space.members))card.append(node('span',m.name,'tag ok'));
+  if(arr(space.provisionalContentIds).length)card.append(node('span','Contenidos pendientes de validación','tag pending'));
+  card.append(btn('Usar seleccionado',()=>run(()=>placeOnFo(space,selectedItem))));
+  makeDropZone(card,p=>placeOnFo(space,p));
+  return card;
+}
+function renderMap(){
+  const w=current(),year=Number($('year').value),map=offerMapRows(pack,currentOrientation());
+  $('timeline').replaceChildren();
+  for(const row of map){
+    const card=node('div',undefined,'term'+(row.year===year?' focus':''));
+    card.append(node('b','C'+row.term),node('small',row.year+'º'));
+    $('timeline').append(card);
+  }
+  $('mapGrid').replaceChildren();
+  for(const row of map.filter(r=>r.year===year)){
+    const col=node('div',undefined,'term-column');
+    col.append(node('div','C'+row.term+' · '+row.year+'º año','term-header'));
+    for(const info of row.fg)col.append(fgCard(info));
+    for(const info of row.fo)col.append(foCard(info));
+    if(!row.fo.length)col.append(node('p','Sin espacios FO en este cuatrimestre.','help'));
+    $('mapGrid').append(col);
+  }
+}
+function renderCoverage(){
+  const nodeRoot=$('coverage');nodeRoot.replaceChildren();
+  nodeRoot.append(node('h2','Seguimiento curricular y validación'));
+  const w=current(),year=Number($('year').value);
+  const areaKeys=Object.keys(w.fg.areas||{});
+  for(const area of areaKeys){
+    const m=fgCatalogPlacementSummary({areas:w.fg.areas,matrixRows,area});
+    const c=fgCoverageByLevel({areas:w.fg.areas,matrixRows,v2FgRows:v2Fg,area,level:year});
+    const summary=node('div',area+': '+m.assignedUnique+' / '+m.total+
+      ' contenidos de Matriz ubicados (área completa).','help');
+    nodeRoot.append(summary);
+    const line=node('div',undefined,'progress');const f=node('span');
+    f.style.width=String(m.percent||0)+'%';line.append(f);nodeRoot.append(line);
+    if(c.sourceGroups){
+      nodeRoot.append(node('div','Nivel '+year+': '+c.mappedUniqueContents+
+        ' contenidos homologados / '+c.prescribedTotal+
+        ' prescriptos · '+c.unmatched.length+' pendientes de homologación.','help'));
+    }
+  }
+  const cov=foTrajectoryCoverage({
+    rows:v2Fo,spaces:w.fo.spaces,orientationId:currentOrientation(),orientations:ORIENTATIONS
+  });
+  const pending=w.fo.spaces.reduce((n,s)=>n+arr(s.provisionalContentIds).length,0);
+  nodeRoot.append(node('p','Formación Orientada (trayectoria): '+cov.used+' / '+cov.total+
+    ' contenidos validados · '+pending+' asignaciones provisionales.','help'));
+  const status=validateOfferStructure(pack,currentOrientation(),refs);
+  const warning=node('div',undefined,'status');
+  warning.append(node('b',status.valid?'Mapa validado':'Mapa de la Oferta: revisión pendiente'));
+  warning.append(node('div',status.errors.length+' condiciones de composición incompletas. '+status.warnings.length+' advertencia(s).','help'));
+  for(const e of status.errors.slice(0,2))warning.append(node('div','• '+e,'help'));
+  for(const e of status.warnings.slice(0,1))warning.append(node('div','• '+e,'help'));
+  nodeRoot.append(warning);
+  const alertList=$('feedback');alertList.replaceChildren();
+  for(const review of current().pendingReviews){
+    const card=node('div',undefined,'review');
+    card.append(node('b','⚠ Revisar laboratorio'));
+    card.append(node('p',review.groupName+' · '+review.subject));
+    card.append(node('small',review.affectedPlans.length+' planes con trabajo previo. No se movió la materia ni se borraron secuencias.'));
+    alertList.append(card);
+  }
+}
+function render(){
+  renderMode();renderStats();renderBank();renderMap();renderCoverage();
+}
+async function init(){
+  const values=await Promise.all([loadMatrixContents(),loadV2Fg(),loadV2Fo(),loadV2Rules()]);
+  [matrixRows,v2Fg,v2Fo,refs]=values;
+  legacy=legacySample();
+  pack=createOrientationPackage({legacyState:legacy,schoolId:1001,orientationIds:origSelection});
+  for(const id of origSelection)pack=seedOfferStructure(pack,id,refs);
+  for(const o of ORIENTATIONS){const opt=node('option',o.name);opt.value=o.id;$('orientation').append(opt);}
+  $('orientation').value='economia_administracion';
+  $('orientation').addEventListener('change',changeOrientation);
+  $('year').addEventListener('change',()=>{selectedItem=null;render();});
+  $('alternative').addEventListener('change',()=>{
+    const alt=$('alternative').value;
+    run(()=>{pack=setFoAlternative(pack,currentOrientation(),alt);selectedItem=null;});
+  });
+  $('search').addEventListener('input',renderBank);
+  $('loading').hidden=true;$('workspace').hidden=false;
+  render();setMessage('Simulador listo. Elegí materias o contenidos y arrastralos a un espacio.');
+}
+init().catch(err=>{
+  $('loading').textContent='No se pudieron cargar las referencias curriculares: '+String(err.message||err);
+});
+</script>
+</body>
+</html>
