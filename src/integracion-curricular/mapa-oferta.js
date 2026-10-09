@@ -8,6 +8,7 @@
  * - Mapa Propuesta Curricular: only after offer validation.
  */
 import {FG_MODES} from './bridge.js';
+import {validateFgComposition} from './reglas-composicion-fg.js';
 const clone=x=>JSON.parse(JSON.stringify(x));
 const normalize=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const array=x=>Array.isArray(x)?x:[];
@@ -193,12 +194,14 @@ export function validateOfferStructure(pack,orientationId,refs){
     if(!array(s.members).length&&array(s.contentIds).length)
       warnings.push(s.name+': tiene contenidos de un espacio todavía sin conformación.');
   }
-  // No automatic guess of FG subject/group membership: Matriz stores content IDs,
-  // while the Offer of V2 is composed with year-specific curricular subjects.
-  warnings.push('FG: falta homologar materias por año con los contenidos y agrupamientos originales de Matriz PCI.');
+  // Use the same V2 normative structure for the copied Matriz FG.
+  // Missing curricular membership is a review warning, not a guessed subject.
+  const fgValidation=validateFgComposition(w.fg.areas,refs);
+  errors.push(...fgValidation.errors);
+  warnings.push(...fgValidation.warnings);
   return {valid:errors.length===0&&warnings.length===0,
     phase:errors.length?'incomplete':'pending-fg-homologation',errors,warnings,
-    foSpaces:spaces.length,fgUnchanged:true};
+    foSpaces:spaces.length,fgUnchanged:true,fgValidation};
 }
 export function offerMapRows(pack,orientationId){
   const w=ws(pack,orientationId);
