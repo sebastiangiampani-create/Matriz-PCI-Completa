@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vista de prueba | Mapa de la Oferta original de PCI Aprende V2</title>
+<style>
+:root{font-family:Archivo,"Segoe UI",Arial,sans-serif;color:#12395c;background:#f3f7f8}
+*{box-sizing:border-box}body{margin:0}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px clamp(16px,3vw,44px);background:#fff;border-bottom:1px solid #dbe7e8;flex-wrap:wrap}
+header img{height:43px;max-width:240px}
+main{padding:20px clamp(12px,2vw,36px) 32px;max-width:1720px;margin:auto}
+h1{font-size:clamp(1.4rem,2.4vw,2.15rem);letter-spacing:-.035em;margin:5px 0 9px}p{line-height:1.5;margin:6px 0}
+.eyebrow{color:#137d72;font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;font-weight:850}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 0}
+button,a.action{border:1px solid #b8ced4;border-radius:9px;background:#fff;color:#12395c;padding:10px 13px;font-weight:750;min-height:40px;font-size:.8rem;cursor:pointer;text-decoration:none}
+button.primary{background:#126e65;color:#fff;border-color:#126e65}
+button:hover,a.action:hover{filter:brightness(.96)}
+.status{font-size:.8rem;color:#456475;font-weight:650}
+.note{background:#fff9ec;border:1px solid #e8cc92;border-radius:12px;padding:13px 15px;margin:8px 0 12px;font-size:.82rem}
+.frame-wrap{border:1px solid #cddfe3;background:#fff;border-radius:15px;overflow:hidden;box-shadow:0 12px 28px rgba(17,53,78,.06)}
+.frame-label{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:8px 14px;background:#e9f3f1;border-bottom:1px solid #bfd8d3;color:#175e57;font-size:.7rem;font-weight:800}
+iframe{display:block;border:0;background:#fff;width:100%;height:max(820px,85vh)}
+@media(max-width:650px){header img{height:35px}iframe{height:82vh;min-height:760px}.actions button,.actions a{flex:1 1 45%;text-align:center}}
+</style>
+</head>
+<body>
+<header>
+<img src="assets/em-logo-header.svg" alt="Escuela de Maestros">
+<div class="eyebrow">Prueba aislada · Matriz PCI Completa</div>
+</header>
+<main>
+<div class="eyebrow">Referencia funcional auténtica de PCI Aprende V2</div>
+<h1>Mapa de la Oferta original: materias y agrupamientos</h1>
+<p>Esta vista muestra <strong>la aplicación original de PCI Aprende V2, fijada a una versión concreta</strong>, no el simulador de matriz simplificada anterior. Podés examinar la selección de orientaciones, materias FG/FO, alternativas y las filas reales del mapa C1–C10.</p>
+<div class="note"><strong>Solo referencia y prueba.</strong> El contenido de este marco utiliza datos de demostración y almacenamiento local del navegador. No lee ni modifica las matrices escolares guardadas en Supabase, ni altera el repositorio de PCI Aprende V2. <strong>La migración desde Matriz PCI aún no está conectada a esta vista.</strong></div>
+<div class="actions">
+<button id="openMap" class="primary" type="button">Ver el Mapa de la Oferta</button>
+<button id="openHome" type="button">Elegir orientaciones en V2</button>
+<a class="action" href="https://raw.githack.com/sebastiangiampani-create/pci-sec-aprendeV2/883707e281894990b537032880922f4c078689ad/app.html" target="_blank" rel="noopener">Abrir V2 original sin marco ↗</a>
+<span class="status" id="previewStatus" role="status" aria-live="polite">Iniciando la aplicación original...</span>
+</div>
+<div class="frame-wrap">
+<div class="frame-label"><span>Aplicación original de PCI Aprende V2 (lectura de código publicada; sin cambios)</span><span id="phaseLabel">Carga inicial</span></div>
+<iframe id="realV2" title="Mapa de la Oferta completo de PCI Aprende V2" src="https://raw.githack.com/sebastiangiampani-create/pci-sec-aprendeV2/883707e281894990b537032880922f4c078689ad/app.html" loading="eager" referrerpolicy="no-referrer" allow="fullscreen"></iframe>
+</div>
+</main>
+<script>
+(() => {
+const frame=document.getElementById('realV2'),status=document.getElementById('previewStatus');
+const label=document.getElementById('phaseLabel');
+let ready=false,tries=0;
+function doc(){try{return frame.contentWindow.document}catch{return null}}
+function navigate(to){
+  const d=doc();
+  if(!d){status.textContent='Abrí el enlace sin marco para utilizar la vista original.';return false}
+  const open=d.querySelector('#pciList [data-open]');
+  if(to==='home'){
+    const backOffer=d.querySelector('#offer [data-go="panel"]');
+    if(d.querySelector('#offer.screen.active')&&backOffer)backOffer.click();
+    const backPanel=d.querySelector('#panel [data-go="home"]');
+    if(backPanel)backPanel.click();
+    status.textContent='Podés seleccionar las orientaciones en el panel original.';
+    label.textContent='Orientaciones';
+    return true;
+  }
+  if(!d.querySelector('#offer.screen.active')){
+    if(d.querySelector('#home.screen.active')&&open)open.click();
+    const button=d.getElementById('openOffer');
+    if(button)button.click();
+  }
+  const map=d.querySelector('#matrix .drop');
+  const bag=d.querySelector('#bagContent .subject');
+  if(map&&bag){
+    status.textContent='Mapa real cargado: bolsa FG/FO y ubicación C1–C10 disponibles.';
+    label.textContent='Mapa de la Oferta';
+    ready=true;
+    return true;
+  }
+  status.textContent='La aplicación abrió; verificando el mapa y las materias...';
+  return false;
+}
+document.getElementById('openMap').onclick=()=>navigate('offer');
+document.getElementById('openHome').onclick=()=>navigate('home');
+frame.addEventListener('load',()=>{
+  // The V2 app.html loads its own core and modules asynchronously.
+  label.textContent='Aplicación cargando';
+});
+const polling=setInterval(()=>{
+  if(ready){clearInterval(polling);return}
+  tries++;
+  const d=doc();
+  if(d?.querySelector('#pciList [data-open]')){
+    if(navigate('offer')){clearInterval(polling);return;}
+  }
+  if(tries>=90){
+    clearInterval(polling);
+    status.textContent='No pude confirmar el mapa dentro del marco. Usá «Abrir V2 original sin marco».';
+  }
+},650);
+})();
+</script>
+</body>
+</html>
