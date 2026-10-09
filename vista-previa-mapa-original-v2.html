@@ -35,8 +35,8 @@ iframe{display:block;border:0;background:#fff;width:100%;height:max(820px,85vh)}
 <p>Esta vista muestra <strong>la aplicación original de PCI Aprende V2, fijada a una versión concreta</strong>, no el simulador de matriz simplificada anterior. Podés examinar la selección de orientaciones, materias FG/FO, alternativas y las filas reales del mapa C1–C10.</p>
 <div class="note"><strong>Solo referencia y prueba.</strong> El contenido de este marco utiliza datos de demostración y almacenamiento local del navegador. No lee ni modifica las matrices escolares guardadas en Supabase, ni altera el repositorio de PCI Aprende V2. <strong>La migración desde Matriz PCI aún no está conectada a esta vista.</strong></div>
 <div class="actions">
-<button id="openMap" class="primary" type="button">Ver el Mapa de la Oferta</button>
-<button id="openHome" type="button">Elegir orientaciones en V2</button>
+<button id="openMap" class="primary" type="button">Abrir aplicación original</button>
+<button id="openHome" type="button">Abrir selección original</button>
 <a class="action" href="https://raw.githack.com/sebastiangiampani-create/pci-sec-aprendeV2/883707e281894990b537032880922f4c078689ad/app.html" target="_blank" rel="noopener">Abrir V2 original sin marco ↗</a>
 <span class="status" id="previewStatus" role="status" aria-live="polite">Iniciando la aplicación original...</span>
 </div>
@@ -49,55 +49,12 @@ iframe{display:block;border:0;background:#fff;width:100%;height:max(820px,85vh)}
 (() => {
 const frame=document.getElementById('realV2'),status=document.getElementById('previewStatus');
 const label=document.getElementById('phaseLabel');
-let ready=false,tries=0;
-function doc(){try{return frame.contentWindow.document}catch{return null}}
-function navigate(to){
-  const d=doc();
-  if(!d){status.textContent='Abrí el enlace sin marco para utilizar la vista original.';return false}
-  const open=d.querySelector('#pciList [data-open]');
-  if(to==='home'){
-    const backOffer=d.querySelector('#offer [data-go="panel"]');
-    if(d.querySelector('#offer.screen.active')&&backOffer)backOffer.click();
-    const backPanel=d.querySelector('#panel [data-go="home"]');
-    if(backPanel)backPanel.click();
-    status.textContent='Podés seleccionar las orientaciones en el panel original.';
-    label.textContent='Orientaciones';
-    return true;
-  }
-  if(!d.querySelector('#offer.screen.active')){
-    if(d.querySelector('#home.screen.active')&&open)open.click();
-    const button=d.getElementById('openOffer');
-    if(button)button.click();
-  }
-  const map=d.querySelector('#matrix .drop');
-  const bag=d.querySelector('#bagContent .subject');
-  if(map&&bag){
-    status.textContent='Mapa real cargado: bolsa FG/FO y ubicación C1–C10 disponibles.';
-    label.textContent='Mapa de la Oferta';
-    ready=true;
-    return true;
-  }
-  status.textContent='La aplicación abrió; verificando el mapa y las materias...';
-  return false;
-}
-document.getElementById('openMap').onclick=()=>navigate('offer');
-document.getElementById('openHome').onclick=()=>navigate('home');
-frame.addEventListener('load',()=>{
-  // The V2 app.html loads its own core and modules asynchronously.
-  label.textContent='Aplicación cargando';
-});
-const polling=setInterval(()=>{
-  if(ready){clearInterval(polling);return}
-  tries++;
-  const d=doc();
-  if(d?.querySelector('#pciList [data-open]')){
-    if(navigate('offer')){clearInterval(polling);return;}
-  }
-  if(tries>=90){
-    clearInterval(polling);
-    status.textContent='No pude confirmar el mapa dentro del marco. Usá «Abrir V2 original sin marco».';
-  }
-},650);
+// El iframe es de otro origen; el navegador no permite controlar su DOM.
+// Usar el enlace a la aplicación original para navegar sus secciones.
+function openV2(){window.open("https://raw.githack.com/sebastiangiampani-create/pci-sec-aprendeV2/883707e281894990b537032880922f4c078689ad/app.html","_blank","noopener");}
+document.getElementById('openMap').onclick=openV2;
+document.getElementById('openHome').onclick=openV2;
+frame.addEventListener('load',()=>{label.textContent='Referencia V2 cargada';status.textContent='Usá los botones internos de la aplicación original para abrir el Mapa de la Oferta.';});
 })();
 </script>
 </body>
