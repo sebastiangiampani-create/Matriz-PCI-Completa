@@ -57,3 +57,68 @@ La secuencia de cada plan esta guardada dentro de areas[area].groups[].plansBime
 - .github/workflows/validar-integracion-curricular.yml: CI que ejecuta las pruebas aisladas.
 
 **Criterio de publicacion:** no modificar main ni Supabase hasta completar homologacion, validacion normativa, persistencia segura y pruebas con respaldos verificados.
+
+
+## Avance de la rama de prueba - integracion curricular, 9 de octubre de 2026
+
+**Aislamiento confirmado:** todos los archivos se agregaron exclusivamente a la rama feature/integracion-orientaciones-fg-secuencias-20261009 de Matriz PCI Completa. El codigo original de PCI Aprende V2 sigue como referencia de solo lectura. Nada fue fusionado con main ni desplegado a GitHub Pages o Supabase.
+
+### Referencias de PCI Aprende V2 incorporadas SIN editar su origen
+
+- data/integracion-curricular/referencia-v2/reglas-v2.json: composicion de FG y FO, articulacion y excepciones.
+- data/integracion-curricular/referencia-v2/horas-v2.json: carga horaria de las materias para validaciones.
+- data/integracion-curricular/referencia-v2/materias-v2.json: materias FG/FO por nivel y alternativa.
+- data/integracion-curricular/referencia-v2/catalogo-orientaciones.json: orientaciones y variantes.
+- fg-all-p1..p9.txt + manifest-fg-v103.json: **1126 contenidos FG oficiales por nivel** de V2.
+- fo_all.txt + fo_part02..fo_part11.txt + manifest.json: **860 contenidos FO de trayectoria** de V2. Esta base carece de año explícito.
+
+La bolsa de contenidos FG existente permanece en data/db1..db4.txt y data/rest1..rest5.txt de Matriz PCI Completa. **No se reemplaza ni se reescribe.**
+
+### Resultados reales del diagnostico de homologacion, por materia y texto
+
+- Matriz PCI Completa: **1155 contenidos FG**.
+- FG V2 v103: **1126 contenidos**.
+- Coincidencia exacta única de materia/texto (sin asignar año): **624**.
+- Coincidencia textual con múltiples registros posibles: **132**.
+- Sin coincidencia exacta: **399**.
+
+Estas cifras son diagnosticas globales: la homologacion curricular valida exige adicionalmente **nivel y area**. No deben utilizarse como porcentajes de cobertura de una escuela.
+
+### Modulos nuevos: todos aislados, sin backend ni escrituras
+
+- src/integracion-curricular/bridge.js: copiar FG por orientacion, conservar/revisar, enlaces a originales, avisos de impacto.
+- src/integracion-curricular/catalogos.js: leer Matriz/FG V2/FO V2, cruces seguros y cobertura.
+- src/integracion-curricular/mapa-oferta.js: estructura FO (4 laboratorios, 4 talleres, proyecto), banco de materias por nivel, asignacion, replica anual en pares compatibles, movimiento dentro del nivel y validacion.
+- src/integracion-curricular/reglas-composicion-fg.js: validacion FG de tipos, C1-C10, 10/12 Sociales, conformacion, cargas horarias y estado de homologacion.
+- src/integracion-curricular/seguimiento.js: indicadores de materia/nivel, area/nivel, formato, agrupamiento, planes y FO de trayectoria. Desduplicacion de contenidos por universo.
+- src/integracion-curricular/homologaciones.js: propuestas y aprobaciones de equivalencias independientes por orientacion, justificadas, con historial, conservando IDs de origen.
+- scripts/diagnostico-homologacion-curricular.mjs: diagnostico agregado no destructivo.
+
+### Simuladores y pruebas
+
+- demo-integracion-curricular.html: copiar FG y conservar/revisar.
+- **demo-mapa-oferta-curricular.html**: referencia interactiva C1-C10. Usa la bolsa original Matriz para FG, bolsa oficial de materias y contenidos FO de V2, arrastre con alternativa tactil, control de periodos, indicadores y homologacion de prueba. No usa datos reales, claves ni Supabase.
+- tests/integracion-*.test.js: pruebas automatizadas de preservacion, copia, reglas, homologacion, conteo, movimientos y seguridad del simulador.
+- .github/workflows/validar-integracion-curricular.yml: CI especifica y diagnostico.
+
+### Guardas de datos
+
+1. Cada orientacion recibe una copia profunda del estado FG, incluidos planes, objetivos, sinopsis y sus cuatro etapas.
+2. Arrastrar contenido FG sin equivalencia por nivel **lo deja provisional**. Solo se incorpora a la FG copiada cuando una coincidencia univoca o aprobacion curricular valida confirma su nivel.
+3. Arrastrar contenido FO antes de validar la oferta **lo deja provisional**. La promocion a contenido activo exige composicion validada.
+4. Una articulacion FG-FO nunca se confirma automaticamente; se crea "Revisar laboratorio", con contenido/planes previos.
+5. Los conteos de area/nivel y de trayectoria se hacen por union de identificadores, sin duplicaciones. Los denominadores de agrupamiento sin composicion confirmada no se presentan como porcentajes verificados.
+6. Los cambios de una orientacion no afectan la FG original ni a las otras orientaciones.
+7. Un cambio posterior de la FG matriz original bloquea la resincronizacion silenciosa.
+8. Las validaciones de composicion no reescriben los espacios, los planes ni las secuencias.
+
+### Pendientes antes de cualquier publicacion
+
+- Completar y validar la homologacion estructural de materias FG por año: los contenidos existentes no identifican por sí solos la conformacion original del laboratorio.
+- Validar integralmente todas las excepciones de articulacion FG-FO de la NES en estados finales, incluida Sociales 3.º con materias articuladas.
+- Construir la persistencia segura y independiente por escuela+orientacion, con autorizacion de sesion en servidor y RLS adecuadas. No crear tablas de produccion en este PR.
+- Preparar backups completos verificables de los 237 registros escolares y demos, y probar migracion y recuperacion en un entorno no productivo con comparacion íntegra de datos, no solo contadores.
+- Ensayar con navegadores de escritorio y celular la interaccion real de arrastre, modo tactil y pantallas de planes.
+- No fusionar ni publicar hasta obtener estas validaciones. La Matriz Tecnica requiere un tratamiento curricular separado.
+
+**La autenticacion, autorizacion y validacion de revisor del simulador NO son controles de produccion:** cualquier aprobacion local es una demostracion; el backend definitivo debe derivar identidad/permisos desde la sesion institucional y registrar auditoria del servidor.
