@@ -78,6 +78,60 @@ async function testDesktop(page) {
   assert.ok(await page.locator('#areaGrid .area-card').count()>=6,
     'Volver al PCI no debe reconstruir ni borrar los mosaicos Matriz');
   await page.screenshot({path:artifacts+'desktop-matriz-integrada.png',fullPage:true});
+  // El panel no puede repetir el número fijo del modelo heredado.
+  const socialTile=page.locator('#areaGrid button[data-area="Ciencias Sociales"]');
+  await page.waitForFunction(()=>
+    document.querySelector('#areaGrid [data-area="Ciencias Sociales"] .pill')?.textContent.includes('10 laboratorios'),
+    {timeout:15000});
+  assert.match(await socialTile.locator('.pill').innerText(),/10 laboratorios/);
+  await socialTile.click();
+  assert.equal(await page.locator('#pci-area-detail').evaluate(node=>node.open),true);
+  assert.match(await page.locator('#pciAreaDetailStatus').innerText(),/10 laboratorios/);
+  assert.equal(await page.locator('#pciAreaDetailGroups .pci-offer-year-card').nth(2).locator('.pci-offer-group').count(),2);
+  assert.match(await page.locator('#pciAreaDetailLegacyInfo').innerText(),/12 agrupamientos históricos/);
+  await page.locator('#pciAreaDetailClose').click();
+
+  // Dos composiciones V2 deliberadamente distintas de la misma FG inicial.
+  // No se escribe ni se normaliza ninguna secuencia de Matriz.
+  const oldFg=await page.evaluate(()=>JSON.stringify(JSON.parse(localStorage.getItem('pciAppV2') || '{}').areas));
+  await page.evaluate(()=>{
+    const key='pci-matriz-fg-v2-original-preview-20261009';
+    const data=JSON.parse(localStorage.getItem(key) || '{}');
+    data.maps=data.maps||{};
+    data.maps['Economía y Administración']={
+      ...data.maps['Economía y Administración'],socialOption:'A',
+      placements:{'socialA-c5':['fg-3-historia','fg-3-economia'],
+        'socialA-c6':['fg-3-historia','fg-3-economia']}
+    };
+    data.maps['Matemática y Física']={
+      ...data.maps['Matemática y Física'],socialOption:'B',
+      placements:{'socialA-c5':['fg-3-historia'],'socialA-c6':['fg-3-historia'],
+        'socialB-c5':['fg-3-geografia'],'socialB-c6':['fg-3-geografia']}
+    };
+    localStorage.setItem(key,JSON.stringify(data));
+  });
+  await page.locator('#pciDemoOrientationSelect').selectOption('Economía y Administración');
+  assert.match(await socialTile.locator('.pill').innerText(),/10 laboratorios/);
+  await page.locator('#pciDemoOrientationSelect').selectOption('Matemática y Física');
+  assert.match(await socialTile.locator('.pill').innerText(),/12 laboratorios/);
+  await socialTile.click();
+  assert.match(await page.locator('#pciAreaDetailStatus').innerText(),/12 laboratorios/);
+  assert.equal(await page.locator('#pciAreaDetailGroups .pci-offer-year-card').nth(2).locator('.pci-offer-group').count(),4);
+  assert.match(await page.locator('#pciAreaDetailGroups').innerText(),/C5/);
+  assert.match(await page.locator('#pciAreaDetailGroups').innerText(),/C6/);
+  assert.match(await page.locator('#pciAreaDetailLegacyInfo').innerText(),/12 agrupamientos históricos/);
+  const newFg=await page.evaluate(()=>JSON.stringify(JSON.parse(localStorage.getItem('pciAppV2') || '{}').areas));
+  assert.equal(newFg,oldFg,'Cambiar de orientación/opción V2 no puede tocar las secuencias originales');
+  await page.screenshot({path:artifacts+'desktop-detalle-12-sociales.png',fullPage:true});
+  await page.locator('#pciAreaDetailLegacy').click();
+  assert.equal(await page.locator('#board.screen.active').count(),1,
+    'La FG histórica conserva su pantalla de edición independiente del mapa');
+  await page.locator('#backOverview').click();
+  await page.waitForFunction(()=>
+    document.querySelector('#areaGrid [data-area="Ciencias Sociales"] .pill')?.textContent.includes('12 laboratorios'),
+    {timeout:15000});
+  await page.screenshot({path:artifacts+'desktop-matriz-opcion-12.png',fullPage:true});
+
   assert.deepEqual(remote,[],'La vista aislada no debe contactar Supabase');
   assert.deepEqual(errors,[],'Errores JavaScript en la vista integrada: '+errors.join(' | '));
 }
