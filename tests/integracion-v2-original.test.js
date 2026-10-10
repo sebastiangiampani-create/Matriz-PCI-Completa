@@ -12,7 +12,9 @@ test('arranque V2 original con sus módulos completos y sin archivos ausentes',a
  assert.match(boot,/src\/v47-fo-content-atomicizer\.js/);
  const list=boot.match(/const modulePaths=\[([\s\S]*?)\]/)?.[1]||'';
  const files=[...list.matchAll(/'([^']+)'/g)].map(x=>x[1]);
- assert.equal(files.length,25);
+ assert.equal(files.length,26);
+ assert.ok(files.includes('src/matriz-bridge-preview.js'));
+
  for(const file of files)await access(dir+file);
  for(const file of ['app-core.html','src/v47-phase2-matrix.js','src/v47-fo-content-atomicizer.js',
    'data/materias-v2.json','data/horas-v2.json','assets/logo-escuela-maestros.svg',
