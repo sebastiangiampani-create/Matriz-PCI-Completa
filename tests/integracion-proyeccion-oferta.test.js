@@ -52,7 +52,8 @@ test('Conserva la distribución prescripta de troncales, naturales y talleres', 
   ])assert.equal(deriveAreaProjection(area, sample()).count,count,area);
   assert.equal(deriveAreaProjection('Ciencias Naturales',sample()).occupied,1);
   assert.equal(deriveAreaProjection('Tecnologías',sample()).years[4].count,0);
-  assert.equal(deriveAreaProjection('Artes',sample()).years[2].count,2);
+  assert.equal(deriveAreaProjection('Artes',sample()).years[2].count,0);
+  assert.equal(deriveAreaProjection('Artes',sample()).years[3].count,2);
 });
 
 test('La FO incluye formatos V2 por año sin inventar porcentajes', () => {
