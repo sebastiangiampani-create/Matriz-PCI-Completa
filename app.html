@@ -42,6 +42,22 @@
     <section id="control" class="screen" aria-labelledby="controlTitle"><div class="section-heading hero-band"><div><button class="text-button" type="button" data-screen-link="overview">← Volver al PCI</button><h1 id="controlTitle">Panel de control</h1><p class="lead">Cada fila muestra el contenido curricular y todos los espacios donde quedó ubicado.</p></div><div class="button-row no-print"><button id="exportCsv" class="button secondary" type="button">Descargar EXCEL</button><button id="printControl" class="button secondary" type="button">Imprimir | PDF</button></div></div><div id="controlStats" class="stat-grid"></div><div class="report-filters no-print"><label><span>Buscar</span><input id="controlSearch" type="search" placeholder="Contenido, materia, eje o espacio"></label><label><span>Área</span><select id="controlArea"><option value="">Todas las áreas</option></select></label><label><span>Estado</span><select id="controlStatus"><option value="">Todos</option><option value="pending">Pendientes</option><option value="assigned">Asignados</option></select></label></div><p id="controlCount" class="muted"></p><div class="table-wrap"><table class="report-table"><thead><tr><th>Área</th><th>Materia</th><th>Eje / bloque</th><th>Contenido priorizado</th><th>Espacio asignado</th></tr></thead><tbody id="controlRows"></tbody></table></div></section>
     <section id="matrix" class="screen" aria-labelledby="matrixTitle"><div class="section-heading hero-band"><div><button class="text-button" type="button" data-screen-link="overview">← Volver al PCI</button><h1 id="matrixTitle">Matriz completa</h1><p class="lead">Arrastrá laboratorios, talleres y otros formatos para cambiar su momento. Tocá un espacio para abrir sus contenidos en una ventana y usá “Editar espacio” cuando quieras modificarlo.</p></div><div class="button-row no-print"><button id="printMatrix" class="button secondary" type="button">Imprimir | PDF</button></div></div><div id="matrixLegend" class="legend"></div><div class="matrix-move-tools no-print"><div><strong>Mover un espacio</strong><small>Los laboratorios intercambian posición para conservar la cobertura obligatoria.</small></div><label><span>Espacio</span><select id="matrixSpaceSelect"></select></label><label><span>Destino</span><select id="matrixTermSelect"></select></label><button id="matrixMove" class="button accent" type="button">Mover</button><button id="matrixEdit" class="button secondary" type="button">Editar</button></div><div class="matrix-scroll"><div id="matrixGrid" class="matrix-grid"></div></div></section>
   </main>
+  <dialog id="pci-area-detail" class="pci-area-detail" aria-labelledby="pciAreaDetailTitle">
+    <div class="pci-area-detail-head">
+      <div><p class="eyebrow">Composición del Mapa de la Oferta</p><h2 id="pciAreaDetailTitle">Espacio curricular</h2><p id="pciAreaDetailOrientation" class="pci-context"></p></div>
+      <button id="pciAreaDetailClose" class="button secondary" type="button">Cerrar</button>
+    </div>
+    <p id="pciAreaDetailStatus" class="pci-integration-notice"></p>
+    <div id="pciAreaDetailGroups" class="pci-offer-year-list"></div>
+    <div class="pci-area-detail-legacy">
+      <strong>Formación General anterior conservada</strong>
+      <p id="pciAreaDetailLegacyInfo"></p>
+      <button id="pciAreaDetailLegacy" type="button" class="button secondary">Abrir planificación anterior</button>
+    </div>
+    <div class="pci-area-detail-actions">
+      <button id="pciAreaDetailMap" class="button primary" type="button">Abrir Mapa de la Oferta para editar</button>
+    </div>
+  </dialog>
   <div id="pci-map-overlay" role="dialog" aria-modal="true" aria-label="Mapa de la Oferta por orientación" hidden>
     <div class="pci-map-toolbar">
       <div class="pci-map-heading"><strong>Mapa de la Oferta · <span id="pciMapActive">Economía y Administración</span></strong><small>Motor curricular V2 · vista aislada</small></div>
