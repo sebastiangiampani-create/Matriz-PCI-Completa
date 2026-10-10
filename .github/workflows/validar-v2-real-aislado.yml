@@ -5,6 +5,10 @@ on:
     paths:
       - 'preview-v2-real/**'
       - 'tests/integracion-v2-original*'
+      - 'tests/integracion-matriz-integrada-browser.mjs'
+      - 'app.html'
+      - 'integracion-matriz-preview.js'
+      - 'integracion-matriz-preview.css'
       - '.github/workflows/validar-v2-real-aislado.yml'
   workflow_dispatch:
 
@@ -28,11 +32,15 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Abrir Mapa de la Oferta real de V2 y verificar materias
         run: node tests/integracion-v2-original-browser.mjs
+      - name: Probar Matriz original con mapa V2 por año, impresión y retorno
+        run: node tests/integracion-matriz-integrada-browser.mjs
       - name: Guardar capturas de la vista real
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vista-previa-v2-original
-          path: test-artifacts/integracion-v2-real/
+          path: |
+            test-artifacts/integracion-v2-real/
+            test-artifacts/integracion-matriz/
           if-no-files-found: ignore
           retention-days: 7
