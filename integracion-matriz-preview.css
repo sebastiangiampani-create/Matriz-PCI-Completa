@@ -58,3 +58,54 @@ body.pci-map-expanded{overflow:hidden}
 @media print{
   #pci-map-overlay,.pci-offer-sidebar,.pci-integration-notice{display:none!important}
 }
+
+/* La composición V2 se lee, no se escribe, sobre los planes históricos. */
+#overview .pci-workspace-content .area-card .pci-map-count{
+  display:block;max-width:100%;margin-top:9px;padding:6px 8px;
+  color:var(--ink);font-size:.69rem;line-height:1.32;font-weight:800;
+  border-radius:8px;background:var(--band);
+}
+#overview .pci-workspace-content .area-card footer strong[data-pci-legacy-label]{
+  color:var(--muted);font-size:.67rem;line-height:1.35;
+}
+#overview .pci-offer-sidebar .pci-small-status{min-height:1.4em}
+.pci-area-detail{
+  width:min(900px,96vw);max-width:96vw;max-height:min(90vh,1100px);
+  overflow:auto;padding:0;color:var(--ink);border:1px solid var(--line);
+  border-radius:19px;box-shadow:0 20px 80px rgba(18,57,92,.22);
+  font-family:Archivo,Inter,system-ui,sans-serif;background:#fff;
+}
+.pci-area-detail::backdrop{background:rgba(12,35,53,.56)}
+.pci-area-detail-head{
+  position:sticky;top:0;z-index:2;background:var(--band);
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 24px;gap:12px;flex-wrap:wrap;
+}
+.pci-area-detail-head h2{font-size:clamp(1.2rem,2vw,1.65rem);margin:0}
+.pci-area-detail-head .eyebrow{font-size:.67rem;margin:0 0 5px}
+.pci-area-detail-head .pci-context{margin:5px 0 0}
+.pci-area-detail #pciAreaDetailStatus{margin:15px 24px;color:var(--muted)}
+.pci-offer-year-list{display:grid;gap:13px;padding:0 24px 22px}
+.pci-offer-year-card{
+  border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff;
+}
+.pci-offer-year-card h3{font-size:.94rem;margin:0 0 10px}
+.pci-offer-year-card .pci-year-note{color:var(--muted);font-size:.72rem}
+.pci-offer-group{padding:10px 0;border-top:1px solid var(--line)}
+.pci-offer-group strong{font-size:.8rem}
+.pci-offer-group p{margin:4px 0 0;font-size:.72rem;color:var(--muted);line-height:1.4}
+.pci-area-detail-legacy{
+  background:var(--band);margin:0 24px 14px;border-radius:12px;padding:15px;
+}
+.pci-area-detail-legacy strong{font-size:.83rem}
+.pci-area-detail-legacy p{margin:8px 0 11px;font-size:.75rem;line-height:1.4}
+.pci-area-detail-actions{
+  display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;padding:0 24px 22px;
+}
+@media(max-width:540px){
+  .pci-area-detail-head{padding:14px}
+  .pci-area-detail #pciAreaDetailStatus{margin:12px 14px}
+  .pci-offer-year-list{padding:0 14px 14px}
+  .pci-area-detail-legacy{margin:0 14px 13px}
+  .pci-area-detail-actions{padding:0 14px 17px}
+}
