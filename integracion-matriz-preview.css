@@ -143,3 +143,51 @@ body.pci-map-expanded{overflow:hidden}
 @media(max-width:540px){
   #overview .pci-project-card h3{font-size:.88rem}
 }
+
+/* Formación Orientada: un único bloque, dividido por función pedagógica. */
+#overview .pci-workspace-content .pci-fo-format-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;
+}
+#overview .pci-workspace-content .pci-fo-format-grid .area-card{
+  width:100%;min-width:0;min-height:175px;
+}
+#overview .pci-fo-format-grid .area-card h3{
+  font-size:clamp(.88rem,1.2vw,1.05rem);line-height:1.2;
+  overflow-wrap:anywhere;
+}
+#overview .pci-fo-format-grid .area-card footer{min-width:0}
+#overview .pci-fo-format-grid .area-card footer div{min-width:0}
+#overview .pci-fo-format-grid .pci-fo-pending{
+  display:block;margin-top:4px;font-size:.67rem;line-height:1.35;
+  font-weight:600;color:var(--ink-soft);overflow-wrap:anywhere;
+}
+.pci-area-detail-legacy[hidden]{display:none!important}
+#pci-map-overlay{height:100dvh;max-height:100dvh}
+#pci-map-overlay .pci-map-note{flex-shrink:0}
+#pci-map-overlay iframe{overscroll-behavior:contain;max-width:100%}
+@media(max-width:1050px){
+  #overview .pci-workspace-content .pci-fo-format-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:640px){
+  #overview .pci-workspace-content .pci-fo-format-grid{
+    grid-template-columns:minmax(0,1fr);
+  }
+  #overview .pci-workspace-content .pci-fo-format-grid .area-card{
+    min-height:125px;padding:14px;gap:10px;
+  }
+  #overview .pci-fo-format-grid .area-card p{display:block;font-size:.72rem}
+  #pci-map-overlay .pci-map-toolbar{align-items:stretch}
+  #pci-map-overlay .pci-map-heading{flex-basis:100%}
+  #pci-map-overlay .pci-map-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #pci-map-overlay .pci-map-actions label{grid-column:1 / -1}
+  #pci-map-overlay .pci-map-actions select{width:100%}
+  #pci-map-overlay .pci-map-actions .button{
+    min-width:0;width:100%;white-space:normal;overflow-wrap:anywhere;
+  }
+}
+@media(max-width:420px){
+  #overview .pci-workspace-content #areaGrid{grid-template-columns:minmax(0,1fr)}
+  #overview .pci-workspace-content .area-card{min-height:130px;padding:14px}
+}
