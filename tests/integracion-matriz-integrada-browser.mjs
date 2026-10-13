@@ -23,6 +23,19 @@ async function testDesktop(page) {
   page.on('request', (r)=>{if (/supabase\.co/.test(r.url())) remote.push(r.url());});
   await page.goto(url, {waitUntil:'domcontentloaded'});
   await page.locator('#areaGrid .area-card').first().waitFor({timeout:60000});
+  // La importación es una revisión aislada, NO una escritura ni un merge.
+  const originalBefore = await page.evaluate(() => localStorage.getItem('pciAppV2'));
+  await page.locator('#pciImportOpen').click();
+  assert.equal(await page.locator('#pci-import-review').evaluate(el=>el.open),true);
+  await page.locator('#pciImportPrepare').click();
+  await page.locator('#pciImportReviewContent').waitFor({state:'visible'});
+  assert.match(await page.locator('#pciImportMetrics').innerText(),/Agrupamientos/);
+  assert.equal(await page.locator('#pciImportApprove').isDisabled(),true);
+  await page.locator('#pciImportReviewed').check();
+  await page.locator('#pciImportApprove').click();
+  assert.match(await page.locator('#pciImportResult').innerText(),/no se escribió ningún dato escolar/);
+  assert.equal(await page.evaluate(() => localStorage.getItem('pciAppV2')),originalBefore);
+  await page.locator('#pciImportClose').click();
   assert.ok(await page.locator('#areaGrid .area-card').count() >= 6,
     'Deben permanecer los mosaicos curriculares originales de Matriz');
   assert.equal(await page.locator('#pciDemoOrientationSelect option').count(),2,
