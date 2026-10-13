@@ -85,20 +85,27 @@
       const noun = singular(area);
       if (pill) {
         pill.textContent = area === 'Otros formatos pedagógicos'
-          ? offer.count + ' formatos en el mapa'
-          : offer.count + ' ' + noun + (offer.count === 1 ? '' : 's') + ' · Mapa de la Oferta';
+          ? offer.count + ' formatos'
+          : offer.count + ' ' + (noun === 'espacio' ? 'niveles' : noun + (offer.count === 1 ? '' : 's'));
       }
-      let summary = tile.querySelector('.pci-map-count');
-      if (!summary) {
+      const footerInfo = tile.querySelector('footer > div');
+      const legacy = footerInfo?.querySelector(':scope > strong');
+      let summary = footerInfo?.querySelector('.pci-map-count');
+      if (!summary && footerInfo) {
         summary = document.createElement('small');
         summary.className = 'pci-map-count';
-        tile.querySelector('div')?.appendChild(summary);
+        footerInfo.insertBefore(summary, legacy || footerInfo.firstChild);
       }
-      summary.textContent = offer.occupied + '/' + offer.count + ' espacios con materias en el mapa · sin % homologado';
-      const legacy = tile.querySelector('footer strong');
+      if (summary) {
+        summary.textContent = offer.count ? offer.occupied + '/' + offer.count + ' con materias' : 'Sin espacios definidos';
+        summary.title = offer.occupied + ' de ' + offer.count + ' espacios con materias ubicadas en el Mapa de la Oferta. No representa cobertura de contenidos.';
+      }
       if (legacy) {
         if (!legacy.dataset.pciLegacyLabel) legacy.dataset.pciLegacyLabel = legacy.textContent.trim();
-        legacy.textContent = 'FG anterior: ' + legacy.dataset.pciLegacyLabel;
+        const previous = legacy.dataset.pciLegacyLabel.match(/^(\d+)\s*\/\s*(\d+)/);
+        legacy.textContent = previous
+          ? 'Contenidos anteriores: ' + previous[1] + '/' + previous[2]
+          : 'Contenidos anteriores: ' + legacy.dataset.pciLegacyLabel;
       }
     }
   }
@@ -174,9 +181,9 @@
     const categories = projection?.deriveFoFormatSummary(map) || [];
     container.innerHTML = categories.map(item => {
       const available = item.pendingDefinitions > 0
-        ? ' · ' + item.pendingDefinitions + ' formatos de 3.º/4.º por definir'
+        ? item.pendingDefinitions + ' formatos por definir'
         : '';
-      const placed = item.occupied + '/' + item.count + ' espacios con materias';
+      const placed = item.occupied + '/' + item.count + ' con materias';
       const lines = item.id === 'proyecto'
         ? 'Espacio anual de 5.º año · C9 y C10'
         : '3.º, 4.º y 5.º año · según el mapa de esta orientación';
@@ -188,7 +195,7 @@
         '<div><span class="pill">' + esc(badge) + '</span>' +
         '<h3>' + esc(item.label) + '</h3><p>' + esc(lines) + '</p></div>' +
         '<footer><div><strong>' + esc(placed) + '</strong>' +
-        '<small class="pci-fo-pending">' + esc(available || 'Sin porcentajes hasta homologar contenidos') + '</small>' +
+        '<small class="pci-fo-pending"' + (available ? '' : ' hidden') + '>' + esc(available) + '</small>' +
         '</div><strong aria-hidden="true">→</strong></footer></button>';
     }).join('');
     container.querySelectorAll('[data-pci-fo-format]').forEach(button =>
