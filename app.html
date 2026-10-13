@@ -24,6 +24,8 @@
           <select id="pciDemoOrientationSelect" aria-label="Orientación de prueba" hidden><option>Preparando orientaciones…</option></select>
           <p id="pciDemoOfferState" class="pci-small-status" aria-live="polite">Mapa de la Oferta: pendiente de validar</p>
           <button id="pciMapOpen" class="button primary pci-map-open" type="button">Abrir Mapa de la Oferta →</button>
+          <button id="pciImportOpen" class="button secondary pci-import-open" type="button">Importar Matriz original</button>
+          <p class="pci-import-aside-note">Prepará una copia para revisar antes de dar el OK. No modifica la Matriz existente.</p>
           <details>
             <summary>Configurar orientaciones <span id="pciDemoCount">2 habilitadas</span></summary>
             <p class="pci-small-status" id="pciDemoCatalogStatus">Solo orientaciones de prueba. No modifica los datos ni las orientaciones reales de las escuelas.</p>
@@ -42,6 +44,35 @@
     <section id="control" class="screen" aria-labelledby="controlTitle"><div class="section-heading hero-band"><div><button class="text-button" type="button" data-screen-link="overview">← Volver al PCI</button><h1 id="controlTitle">Panel de control</h1><p class="lead">Cada fila muestra el contenido curricular y todos los espacios donde quedó ubicado.</p></div><div class="button-row no-print"><button id="exportCsv" class="button secondary" type="button">Descargar EXCEL</button><button id="printControl" class="button secondary" type="button">Imprimir | PDF</button></div></div><div id="controlStats" class="stat-grid"></div><div class="report-filters no-print"><label><span>Buscar</span><input id="controlSearch" type="search" placeholder="Contenido, materia, eje o espacio"></label><label><span>Área</span><select id="controlArea"><option value="">Todas las áreas</option></select></label><label><span>Estado</span><select id="controlStatus"><option value="">Todos</option><option value="pending">Pendientes</option><option value="assigned">Asignados</option></select></label></div><p id="controlCount" class="muted"></p><div class="table-wrap"><table class="report-table"><thead><tr><th>Área</th><th>Materia</th><th>Eje / bloque</th><th>Contenido priorizado</th><th>Espacio asignado</th></tr></thead><tbody id="controlRows"></tbody></table></div></section>
     <section id="matrix" class="screen" aria-labelledby="matrixTitle"><div class="section-heading hero-band"><div><button class="text-button" type="button" data-screen-link="overview">← Volver al PCI</button><h1 id="matrixTitle">Matriz completa</h1><p class="lead">Arrastrá laboratorios, talleres y otros formatos para cambiar su momento. Tocá un espacio para abrir sus contenidos en una ventana y usá “Editar espacio” cuando quieras modificarlo.</p></div><div class="button-row no-print"><button id="printMatrix" class="button secondary" type="button">Imprimir | PDF</button></div></div><div id="matrixLegend" class="legend"></div><div class="matrix-move-tools no-print"><div><strong>Mover un espacio</strong><small>Los laboratorios intercambian posición para conservar la cobertura obligatoria.</small></div><label><span>Espacio</span><select id="matrixSpaceSelect"></select></label><label><span>Destino</span><select id="matrixTermSelect"></select></label><button id="matrixMove" class="button accent" type="button">Mover</button><button id="matrixEdit" class="button secondary" type="button">Editar</button></div><div class="matrix-scroll"><div id="matrixGrid" class="matrix-grid"></div></div></section>
   </main>
+  <dialog id="pci-import-review" class="pci-import-review" aria-labelledby="pciImportTitle">
+    <div class="pci-import-head">
+      <div>
+        <p class="eyebrow">Revisión antes de incorporar</p>
+        <h2 id="pciImportTitle">Importar Matriz original</h2>
+        <p>Orientación de destino: <strong id="pciImportOrientation"></strong></p>
+      </div>
+      <button id="pciImportClose" class="button secondary" type="button">Cerrar</button>
+    </div>
+    <div class="pci-import-body">
+      <p class="pci-import-explainer">Primero se prepara una <strong>copia de revisión</strong>, sin cambiar nada de la Matriz original. Revisá agrupamientos, contenidos, planes y secuencias. Solo después de verificarla podés dar tu OK.</p>
+      <p class="pci-import-source-warning">Esta vista de prueba utiliza la Matriz cargada en esta sesión. Para incorporar los PCI reales de cada escuela hará falta una copia respaldada de la base original y una migración validada.</p>
+      <div class="pci-import-actions">
+        <button id="pciImportPrepare" type="button" class="button primary">Preparar copia para revisar</button>
+        <button id="pciImportExport" type="button" class="button secondary" disabled>Descargar copia de revisión</button>
+      </div>
+      <div id="pciImportReviewContent" hidden>
+        <div id="pciImportMetrics" class="pci-import-metrics"></div>
+        <h3>Detalle para revisar</h3>
+        <div id="pciImportAreas" class="pci-import-areas"></div>
+        <div id="pciImportWarnings" class="pci-import-warnings"></div>
+        <label class="pci-import-check"><input id="pciImportReviewed" type="checkbox"> Revisé la copia, los planes y las observaciones de esta orientación.</label>
+        <div class="pci-import-actions">
+          <button id="pciImportApprove" type="button" class="button primary" disabled>Dar OK de revisión</button>
+        </div>
+      </div>
+      <p id="pciImportResult" class="pci-import-result" role="status" aria-live="polite">El trabajo original no se modifica con esta operación.</p>
+    </div>
+  </dialog>
   <dialog id="pci-area-detail" class="pci-area-detail" aria-labelledby="pciAreaDetailTitle">
     <div class="pci-area-detail-head">
       <div><p class="eyebrow">Composición del Mapa de la Oferta</p><h2 id="pciAreaDetailTitle">Espacio curricular</h2><p id="pciAreaDetailOrientation" class="pci-context"></p></div>
@@ -84,5 +115,6 @@
   <script type="module" src="other-format-types-extension.js?v=20260821-1"></script>
   <script type="module" src="common-final-fixes.js?v=20260828-commonaxis1"></script>
   <script defer src="integracion-matriz-preview.js?v=20261010-1"></script>
+  <script type="module" src="integracion-matriz-import-preview.js?v=20261013-1"></script>
 </body>
 </html>
