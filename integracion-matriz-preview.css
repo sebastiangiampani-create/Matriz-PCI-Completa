@@ -249,3 +249,10 @@ body.pci-map-expanded{overflow:hidden}
 .pci-import-check input{width:20px;height:20px}
 .pci-import-result{color:var(--ink-soft);font-weight:700}
 @media(max-width:600px){.pci-import-head,.pci-import-body{padding:13px}.pci-import-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.pci-import-area{flex-direction:column;gap:4px}.pci-import-area span{text-align:left}.pci-import-actions .button{width:100%}}
+
+/* Reutilización del trabajo anterior: aviso legible, sin confundirlo con migración. */
+#overview #pciImportSavedStatus{font-size:.74rem;line-height:1.5;margin:10px 0 12px;overflow-wrap:anywhere}
+#overview #pciImportSavedStatus[data-prior-work="found"]{font-weight:750;color:var(--ink)}
+.pci-import-review #pciImportSavedDetail{font-size:.82rem;line-height:1.5;margin:10px 0 14px;color:var(--ink-soft)}
+.pci-import-review #pciImportSavedDetail[data-prior-work="found"]{font-weight:700;color:var(--ink)}
+@media(max-width:600px){#overview #pciImportSavedStatus{font-size:.77rem}.pci-import-review #pciImportSavedDetail{font-size:.8rem}}
