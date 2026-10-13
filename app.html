@@ -14,7 +14,7 @@
   <div id="loading" class="loading" role="status" aria-live="polite"><div class="loading-card"><span class="spinner" aria-hidden="true"></span><strong>Cargando contenidos priorizados…</strong></div></div>
   <header class="site-top no-print"><a class="brand" href="index.html" target="_top" aria-label="Escuela de Maestros · Inicio"><img src="assets/em-logo-header.svg?v=20260902" alt="Escuela de Maestros"></a><div class="top-right"><button class="pill-btn" type="button" data-screen-link="control">Panel de control</button><img class="ba" src="assets/ba-logo.png?v=20260827" alt="Buenos Aires Ciudad"></div></header>
   <main>
-    <section id="overview" class="screen active" aria-labelledby="overviewTitle"><div class="hero-card"><div><a class="text-button" href="index.html" target="_top">← Inicio</a><h1 id="overviewTitle">Escuela Muestra</h1><p>Organizá los contenidos priorizados en niveles, laboratorios, talleres y otros formatos pedagógicos durante C1–C10.</p><div class="button-row"><button id="overviewMatrix" class="button secondary" type="button">Matriz completa</button></div></div><label class="school-name-field"><span>Nombre visible de la escuela</span><input id="schoolName" maxlength="100" value="Escuela Muestra"></label></div><div id="structureStatus" class="notice" role="status"></div>
+    <section id="overview" class="screen active" aria-labelledby="overviewTitle"><div class="hero-card"><div><a class="text-button" href="index.html" target="_top">← Inicio</a><h1 id="overviewTitle">Escuela Muestra</h1><p>Organizá los contenidos priorizados en niveles, laboratorios, talleres y otros formatos pedagógicos durante C1–C10.</p><div class="button-row"><button id="overviewMatrix" class="button secondary" type="button">Matriz completa</button><button id="pciClassicToggle" class="button secondary" type="button" aria-pressed="false">Ver Matriz original</button></div></div><label class="school-name-field"><span>Nombre visible de la escuela</span><input id="schoolName" maxlength="100" value="Escuela Muestra"></label></div><div id="structureStatus" class="notice" role="status"></div><p id="pciClassicStatus" class="pci-classic-status" hidden>Estás consultando la Matriz original de esta sesión. El trabajo escolar guardado online solo está disponible desde el acceso autorizado de su escuela. Los datos no se importan ni se duplican al cambiar de vista.</p>
       <div class="pci-integrated-workspace">
         <aside class="pci-offer-sidebar" aria-label="Construcción curricular por orientación">
           <p class="eyebrow">Tu espacio de trabajo</p>
@@ -52,7 +52,7 @@
     <div class="pci-area-detail-legacy">
       <strong>Formación General anterior conservada</strong>
       <p id="pciAreaDetailLegacyInfo"></p>
-      <button id="pciAreaDetailLegacy" type="button" class="button secondary">Abrir planificación anterior</button>
+      <button id="pciAreaDetailLegacy" type="button" class="button secondary">Abrir en Matriz original</button>
     </div>
     <div class="pci-area-detail-actions">
       <button id="pciAreaDetailMap" class="button primary" type="button">Abrir Mapa de la Oferta para editar</button>
