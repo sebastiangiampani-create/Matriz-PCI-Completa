@@ -25,7 +25,7 @@
           <p id="pciDemoOfferState" class="pci-small-status" aria-live="polite">Mapa de la Oferta: pendiente de validar</p>
           <button id="pciMapOpen" class="button primary pci-map-open" type="button">Abrir Mapa de la Oferta →</button>
           <button id="pciImportOpen" class="button secondary pci-import-open" type="button">Importar Matriz original</button>
-          <p class="pci-import-aside-note">Prepará una copia para revisar antes de dar el OK. No modifica la Matriz existente.</p>
+          <p id="pciImportSavedStatus" class="pci-import-aside-note" role="status" aria-live="polite">¿Ya trabajaste en la Matriz anterior? La información guardada se podrá reutilizar mediante una copia para revisión, sin volver a cargarla desde cero.</p>
           <details>
             <summary>Configurar orientaciones <span id="pciDemoCount">2 habilitadas</span></summary>
             <p class="pci-small-status" id="pciDemoCatalogStatus">Solo orientaciones de prueba. No modifica los datos ni las orientaciones reales de las escuelas.</p>
@@ -55,6 +55,7 @@
     </div>
     <div class="pci-import-body">
       <p class="pci-import-explainer">Primero se prepara una <strong>copia de revisión</strong>, sin cambiar nada de la Matriz original. Revisá agrupamientos, contenidos, planes y secuencias. Solo después de verificarla podés dar tu OK.</p>
+      <p id="pciImportSavedDetail" class="pci-import-previous-data" role="status">Si ya realizaste cargas en la Matriz original, ese trabajo se podrá recuperar para reutilizarlo cuando se habilite la importación definitiva. El original permanecerá conservado.</p>
       <p class="pci-import-source-warning">Esta vista de prueba utiliza la Matriz cargada en esta sesión. Para incorporar los PCI reales de cada escuela hará falta una copia respaldada de la base original y una migración validada.</p>
       <div class="pci-import-actions">
         <button id="pciImportPrepare" type="button" class="button primary">Preparar copia para revisar</button>
