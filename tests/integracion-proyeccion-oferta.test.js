@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { deriveAreaProjection, deriveFoProjection } from '../src/integracion-curricular/proyeccion-oferta-matriz.js';
+import { deriveAreaProjection, deriveFoProjection, deriveFoFormatSummary } from '../src/integracion-curricular/proyeccion-oferta-matriz.js';
 
 const sample = () => ({
   socialOption: 'A',
@@ -73,4 +73,31 @@ test('Datos inválidos no generan cobertura ficticia ni escriben el historial', 
   const map=sample();
   map.placements['socialA-c7']=['fg-4-historia','fg-4-historia'];
   assert.equal(deriveAreaProjection('Ciencias Sociales',map).years[3].groups[0].subjectIds.length,1);
+});
+
+test('La orientación se agrupa en 3 mosaicos: laboratorios, talleres y proyecto', () => {
+  const data=sample();
+  const before=JSON.stringify(data);
+  const summaries=deriveFoFormatSummary(data);
+  assert.deepEqual(summaries.map(item=>item.id), ['laboratorios','talleres','proyecto']);
+  assert.deepEqual(summaries.map(item=>item.count), [2,2,1]);
+  assert.equal(summaries[0].pendingDefinitions, 4);
+  assert.equal(summaries[1].pendingDefinitions, 4);
+  assert.equal(summaries[2].groups[0].slot, 'proyecto-n5');
+  assert.equal(summaries[2].year,5);
+  assert.equal(JSON.stringify(data),before,'El agrupamiento visual no cambia el mapa original');
+});
+
+test('La distribución por formato sigue los años y materias de la orientación', () => {
+  const data=sample();
+  data.foTypes = {'3': {'5':'lab','6':'taller'}, '4': {'7':'taller','8':'lab'}};
+  data.placements['foN3-c5']=['fo-economia-3-0'];
+  data.placements['proyecto-n5']=['fo-economia-5-0'];
+  const summaries=deriveFoFormatSummary(data);
+  assert.deepEqual(summaries.map(item=>item.count),[4,4,1]);
+  assert.equal(summaries[0].pendingDefinitions,0);
+  assert.equal(summaries[0].groups.find(group=>group.slot==='foN3-c5').subjectIds.length,1);
+  assert.equal(summaries[2].occupied,1);
+  assert.deepEqual(summaries[2].years.map(item=>item.year),[5]);
+  assert.equal(summaries[0].coveragePercent,null);
 });
