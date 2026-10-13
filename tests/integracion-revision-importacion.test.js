@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {prepareReview,approveReview,summarizeSource} from '../src/integracion-curricular/revision-importacion-original.js';
+import {prepareReview,approveReview,summarizeSource,assessPriorWork} from '../src/integracion-curricular/revision-importacion-original.js';
 const source={
  schoolName:'Escuela de prueba',
  areas:{
@@ -33,4 +33,26 @@ test('OK no persiste ni muta el original, y se bloquea si cambió',()=>{
  assert.equal(draft.approved,false);
  assert.equal(JSON.stringify(source),before);
  assert.throws(()=>approveReview(draft,{...source,schoolName:'Otro'}),/cambió/);
+});
+
+test('Distingue datos realmente cargados de plantillas curriculares automáticas',()=>{
+ const empty={schoolName:'Escuela',areas:{
+  Matemática:{groups:[{id:'nivel-1',kind:'trunk',name:'Nivel 1',items:[],
+    plansBimestrales:[{number:1,name:'Nivel 1',stages:{
+     puntoPartida:{description:'',duration:'',resources:''},
+     indagacion:{description:'',duration:'',resources:''}
+    }}]}]}
+ }};
+ const none=assessPriorWork(empty);
+ assert.equal(none.available,false);
+ assert.equal(none.contentCount,0);
+ assert.equal(none.developedPlans,0);
+ const data=assessPriorWork(source);
+ assert.equal(data.available,true);
+ assert.equal(data.contentCount,2);
+ assert.equal(data.developedPlans,13);
+ assert.equal(data.sequenceCount,13);
+ const previous=JSON.stringify(source);
+ assert.equal(assessPriorWork(source).describedGroups,0);
+ assert.equal(JSON.stringify(source),previous);
 });
