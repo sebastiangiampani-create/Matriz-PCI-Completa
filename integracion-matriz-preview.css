@@ -109,3 +109,37 @@ body.pci-map-expanded{overflow:hidden}
   .pci-area-detail-legacy{margin:0 14px 13px}
   .pci-area-detail-actions{padding:0 14px 17px}
 }
+
+/* Selector de orientaciones en la zona marcada de la cabecera, sin nueva portada. */
+#overview .pci-workspace-content .pci-orientation-heading{
+  justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px 18px;
+}
+#overview .pci-orientation-top-controls{display:flex;flex-direction:column;align-items:flex-end;min-width:0;max-width:100%;gap:6px}
+#overview .pci-orientation-top-label{font-size:.65rem;line-height:1.1;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+#overview .pci-orientation-tabs{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:7px;max-width:100%}
+#overview .pci-orientation-tabs button{
+  cursor:pointer;max-width:230px;min-height:35px;padding:7px 12px;
+  border:1px solid var(--line);border-radius:999px;background:#fff;
+  color:var(--ink);font:800 .72rem/1.25 Archivo,Arial,sans-serif;
+  text-align:center;overflow-wrap:anywhere;box-shadow:none;
+}
+#overview .pci-orientation-tabs button[aria-pressed="true"]{
+  background:var(--ink);color:#fff;border-color:var(--ink);
+}
+#overview .pci-orientation-tabs button:focus-visible{
+  outline:3px solid var(--mint-dark);outline-offset:2px;
+}
+#overview #pciDemoOfferState[data-status="valid"]{color:var(--mint-dark);font-weight:800}
+#overview #pciDemoOfferState[data-status="draft"]{color:var(--muted)}
+#overview .pci-project-card{--area-color:#8dd2be}
+#overview .pci-project-card .pci-map-count{display:block}
+@media(min-width:921px){
+  #overview .pci-offer-sidebar > label[for="pciDemoOrientationSelect"],
+  #overview .pci-offer-sidebar > #pciDemoOrientationSelect{display:none!important}
+}
+@media(max-width:920px){
+  #overview .pci-orientation-top-controls{display:none}
+}
+@media(max-width:540px){
+  #overview .pci-project-card h3{font-size:.88rem}
+}
