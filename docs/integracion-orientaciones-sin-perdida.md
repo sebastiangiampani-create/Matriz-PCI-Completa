@@ -122,3 +122,75 @@ Estas cifras son diagnosticas globales: la homologacion curricular valida exige 
 - No fusionar ni publicar hasta obtener estas validaciones. La Matriz Tecnica requiere un tratamiento curricular separado.
 
 **La autenticacion, autorizacion y validacion de revisor del simulador NO son controles de produccion:** cualquier aprobacion local es una demostracion; el backend definitivo debe derivar identidad/permisos desde la sesion institucional y registrar auditoria del servidor.
+
+## Protocolo obligatorio de resguardo y bloqueo (octubre 2026)
+
+**Estado:** prueba de migración sin escritura. No se ha realizado una exportación
+de los datos reales de las escuelas desde este desarrollo. Los ensayos sintéticos
+no permiten declarar que la migración institucional está terminada.
+
+### Riesgo crítico encontrado
+
+El acceso online obtiene el JSON mediante la acción get-state y lo coloca en el
+almacenamiento local pciAppV2. El editor ejecuta migrateState y persist al
+iniciar, y el acceso online dispone de guardado automático con save-state.
+El migrador reconstruye ciertos agrupamientos, ajusta ubicaciones y deduplica
+algunas asignaciones. POR ESO NO ES SEGURO guardar automáticamente el estado
+normalizado como si fuera el original de la escuela.
+
+**Fuente del backup:** exportación del JSON bruto por school_id, obtenida antes
+de abrirlo con el editor normalizador. La exportación debe proceder de una
+sesión de administración autorizada; no debe incorporar credenciales a scripts,
+repositorios ni PR. No cargar datos escolares reales en GitHub Actions.
+
+### Procedimiento
+
+1. Impedir escrituras concurrentes para la escuela durante la captura y la
+   futura migración, sin modificar todavía la base desde esta rama.
+2. Obtener el JSON original tal como está persistido y comprobar su school_id.
+3. Guardarlo en un directorio privado FUERA del repositorio.
+4. Ejecutar localmente, con orientaciones válidas del catálogo:
+
+   node scripts/resguardar-matriz-por-orientacion.mjs --source /privado/original.json --school 1234 --orientations economia_administracion,matematica_fisica --destination /privado/resguardo-1234
+
+5. Se genera la carpeta NUEVA con matriz-original-INALTERADA.json,
+   copias-revision-no-publicar.json y manifiesto-verificacion.json.
+   El primero conserva los BYTES originales; el tercero incluye SHA-256 por
+   archivo y el inventario. No se sobrescriben respaldos existentes.
+6. Auditoría independiente, con segunda lectura:
+
+   node scripts/verificar-resguardo-matriz.mjs --directory /privado/resguardo-1234
+
+7. Revisar por orientación todos los agrupamientos y contenidos, los planes,
+   sus cuatro etapas, las ubicaciones C1-C10, las excepciones de Sociales
+   10/12 y cada conflicto. El sistema no elimina ni recoloca nada.
+8. Obtener OK institucional para una versión EXACTA del respaldo y el mapa;
+   si el original cambió, el OK previo queda invalidado.
+9. Antes de habilitar escritura, desarrollar un destino separado, con clave
+   school_id + orientation_id, historial, permisos, versión esperada y
+   transacciones. El registro original no debe sobrescribirse.
+10. Verificar recuperación desde una sesión nueva y simular un rollback
+    con restauración y cotejo de SHA-256.
+
+### Política de publicación: fail-closed
+
+Sin backup original verificable, igualdad literal, homologaciones confirmadas,
+OK institucional específico, control de escrituras concurrentes y una prueba
+de rollback, la operación NO puede habilitar escrituras en Supabase.
+
+No modificar main, producción ni pci-sec-aprendeV2. La UI de revisión anterior
+solo registra un OK de prueba en memoria: NO autoriza migraciones reales.
+
+### Archivos
+
+- src/integracion-curricular/resguardo-migracion-segura.js: clones literales,
+  copia del documento entero por orientación, auditoría de campos completos.
+- scripts/resguardar-matriz-por-orientacion.mjs: copia local + SHA-256,
+  permisos restrictivos y archivos originales inmutables.
+- scripts/verificar-resguardo-matriz.mjs: verificación repetible de checksums,
+  inventarios y conservación de todas las áreas.
+- tests/integracion-resguardo-seguro.test.js: casos sintéticos de 12 Sociales,
+  etapas, propiedades desconocidas, independencia y corrupción detectada.
+
+**Pendiente bloqueante:** respaldos reales autorizados, persistencia
+transaccional, seguridad multiescuela, pruebas de rollback y habilitación final.
