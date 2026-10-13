@@ -194,3 +194,7 @@ solo registra un OK de prueba en memoria: NO autoriza migraciones reales.
 
 **Pendiente bloqueante:** respaldos reales autorizados, persistencia
 transaccional, seguridad multiescuela, pruebas de rollback y habilitación final.
+
+### Guardia temporal del acceso escolar de la rama
+
+El archivo escuela-online.html de ESTA RAMA tiene MIGRATION_WRITE_LOCK=true. Tanto la interfaz del acceso escolar como saveNow permanecen en consulta sin ninguna llamada de guardado; no se modifica main ni producción. **No desplegar esta rama como reemplazo del acceso habitual**, porque el guardado está intencionalmente deshabilitado. Antes de una futura habilitación, sustituir ese bloqueo por persistencia transaccional versionada por escuela y orientación con respaldo y rollback comprobados.
