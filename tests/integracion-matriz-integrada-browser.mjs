@@ -40,6 +40,7 @@ async function testDesktop(page) {
   assert.deepEqual(await page.locator('#pciDemoFoCards [data-pci-fo-format]').evaluateAll(items=>
     items.map(item=>item.dataset.pciFoFormat)), ['laboratorios','talleres','proyecto']);
   assert.equal(await page.locator('#pciDemoOrientationTabs button').count(),2);
+  assert.equal(await page.locator('#pciDemoOrientationSelect').isVisible(),false,'El desplegable no debe duplicar las orientaciones');
   assert.match(await page.locator('#pciDemoFoCards [data-pci-fo-format="proyecto"]').innerText(),/Proyecto de Vinculación con el Futuro/);
   assert.match(await page.locator('#pciDemoFoCards [data-pci-fo-format="proyecto"]').innerText(),/C9 y C10/);
   assert.equal(await page.locator('body').innerText().then(txt=>txt.includes('V2')),false,
@@ -166,6 +167,15 @@ async function testMobile(page) {
   assert.ok(layout.right>layout.left,'En móvil el panel y los mosaicos deben apilarse');
   assert.equal(layout.overflow,false,'La Matriz principal no debe desbordar horizontalmente');
   assert.equal(await page.locator('#pciDemoFoCards [data-pci-fo-format]').count(),3);
+  assert.equal(await page.locator('#pciDemoOrientationTabs button').count(),2);
+  assert.equal(await page.locator('#pciDemoOrientationTabs').isVisible(),true);
+  assert.equal(await page.locator('#pciDemoOrientationSelect').isVisible(),false);
+  const first=page.locator('#pciDemoOrientationTabs button').first();
+  const second=page.locator('#pciDemoOrientationTabs button').nth(1);
+  await second.click();
+  assert.equal(await second.getAttribute('aria-pressed'),'true');
+  await first.click();
+  assert.equal(await first.getAttribute('aria-pressed'),'true');
   const gridGeometry=await page.locator('#pciDemoFoCards').evaluate((el)=>{
     const cards=[...el.querySelectorAll('.pci-fo-card')];
     return cards.map(card=>({
