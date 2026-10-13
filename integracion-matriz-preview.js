@@ -294,6 +294,25 @@
     const workspace = document.querySelector('#overview .pci-integrated-workspace');
     if (!workspace || !classicButton) return;
     workspace.classList.toggle('pci-classic-view', Boolean(on));
+    for (const tile of document.querySelectorAll('#areaGrid button[data-area]')) {
+      const area = tile.dataset.area;
+      const pill = tile.querySelector('.pill');
+      const label = tile.querySelector('footer strong[data-pci-legacy-label]');
+      const groups = window.PCIApp?.getState?.()?.areas?.[area]?.groups;
+      if (on && pill && Array.isArray(groups)) {
+        if (!pill.dataset.pciOfferLabel) pill.dataset.pciOfferLabel = pill.textContent;
+        const kind = groups[0]?.kind;
+        const category = kind === 'trunk' ? 'niveles anuales'
+          : kind === 'laboratory' ? 'laboratorios'
+          : kind === 'workshop' ? 'talleres' : 'formatos';
+        pill.textContent = groups.length + ' ' + category;
+      } else if (!on && pill && pill.dataset.pciOfferLabel) {
+        pill.textContent = pill.dataset.pciOfferLabel;
+      }
+      if (label) label.textContent = on
+        ? label.dataset.pciLegacyLabel
+        : 'Contenidos anteriores: ' + label.dataset.pciLegacyLabel.replace(/ contenidos ubicados$/, '');
+    }
     classicButton.setAttribute('aria-pressed', String(Boolean(on)));
     classicButton.textContent = on ? 'Volver a vista integrada' : 'Ver Matriz original';
     const status = $('pciClassicStatus');
