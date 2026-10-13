@@ -167,30 +167,22 @@
       : 'Mapa de la Oferta pendiente de validar';
     if (!container) return;
     const placements = map?.placements && typeof map.placements === 'object' ? map.placements : {};
-    const years = [3, 4, 5];
+    const years = projection?.deriveFoProjection(map) || [];
     container.innerHTML = years.map((year) => {
-      const terms = new Set([year * 2 - 1, year * 2]);
-      const foIds = new Set();
-      const activeSlots = new Set();
-      for (const [slot, ids] of Object.entries(placements)) {
-        if (!Array.isArray(ids)) continue;
-        const term = slot.match(/-c(\d+)$/);
-        const annual = slot.match(/-n(\d+)$/);
-        if (!((term && terms.has(Number(term[1]))) || (annual && Number(annual[1]) === year))) continue;
-        const selected = ids.filter((id) => typeof id === 'string' && id.startsWith('fo-'));
-        if (!selected.length) continue;
-        activeSlots.add(slot);
-        selected.forEach((id) => foIds.add(id));
-      }
-      return '<button type="button" class="area-card pci-fo-card" data-pci-map-year="' + year +
+      const foIds = new Set(year.groups.flatMap(group => group.subjectIds.filter(id => id.startsWith('fo-'))));
+      return '<button type="button" class="area-card pci-fo-card" data-pci-map-year="' + year.year +
         '" style="--area-color:#b6a2df">' +
-        '<div><span class="pill">Formación Orientada</span>' +
-        '<h3>' + year + '.º año</h3>' +
-        '<p>Materias de la orientación ' + esc(active) + '</p></div>' +
+        '<div><span class="pill">Formación Orientada · ' + year.year + '.º</span>' +
+        '<h3>' + year.year + '.º año</h3>' +
+        '<p>Laboratorios, talleres y materias de ' + esc(active) + '</p></div>' +
         '<footer><div><strong>' + foIds.size + ' materias FO ubicadas</strong>' +
-        '<small>' + activeSlots.size + ' espacios con materias · sin % hasta homologar</small></div>' +
+        '<small>' + year.occupied + '/' + year.count + ' espacios con materias · sin % homologado</small></div>' +
         '<strong aria-hidden="true">→</strong></footer></button>';
-    }).join('');
+    }).join('') + '<button type="button" class="area-card pci-fo-card pci-project-card" data-pci-map-year="5" style="--area-color:#8dd2be">' +
+      '<div><span class="pill">Proyecto · 5.º año</span><h3>Proyecto de Vinculación con el Futuro</h3>' +
+      '<p>Espacio anual de Formación Orientada · C9 y C10</p></div>' +
+      '<footer><div><strong>' + ((Array.isArray(map?.placements?.['proyecto-n5']) && map.placements['proyecto-n5'].length) ? 'Con materias ubicadas' : 'Sin materias ubicadas') +
+      '</strong><small>Se conforma en el Mapa de la Oferta</small></div><strong aria-hidden="true">→</strong></footer></button>';
     container.querySelectorAll('[data-pci-map-year]').forEach((button) => {
       button.addEventListener('click', () => openMap(Number(button.dataset.pciMapYear)));
     });
@@ -208,6 +200,15 @@
       '<label><input type="checkbox" value="' + esc(name) + '"' +
       (enabled.includes(name) ? ' checked' : '') + '><span>' + esc(name) + '</span></label>'
     ).join('');
+    const tabs = $('pciDemoOrientationTabs');
+    if (tabs) {
+      tabs.innerHTML = enabled.map(name =>
+        '<button type="button" aria-pressed="' + String(name === active) +
+        '" data-orientation="' + esc(name) + '">' + esc(name) + '</button>'
+      ).join('');
+      tabs.querySelectorAll('button[data-orientation]').forEach(button =>
+        button.addEventListener('click', () => setActive(button.dataset.orientation)));
+    }
     if (count) count.textContent = enabled.length === 1 ? '1 habilitada' : enabled.length + ' habilitadas';
     remember();
     updateOfferSummary();
@@ -317,7 +318,7 @@
       sendToMap('matriz-preview:set-context', Number(yearSelect.value));
       updateOfferSummary();
     }
-    if (data.type === 'matriz-preview:changed') {
+    if (data.type === 'matriz-preview:changed' || data.type === 'matriz-preview:validated') {
       const v2state = readOffer();
       const m = v2state?.maps?.[active];
       if (m?.bagYear >= 1 && m.bagYear <= 5) yearSelect.value = String(m.bagYear);
