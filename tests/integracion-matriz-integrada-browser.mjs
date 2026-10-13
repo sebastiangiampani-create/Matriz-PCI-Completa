@@ -54,7 +54,7 @@ async function testDesktop(page) {
   await page.locator('#pciDemoFoCards [data-pci-fo-format="laboratorios"]').click();
   assert.match(await page.locator('#pciAreaDetailStatus').innerText(),/Restan definir 4 formatos/);
   await page.locator('#pciAreaDetailClose').click();
-  await page.locator('#pciDemoOrientationSelect').selectOption('Matemática y Física');
+  await page.locator('#pciDemoOrientationTabs button[data-orientation="Matemática y Física"]').click();
   assert.match(await page.locator('#pciDemoOrientationContext').innerText(),/Matemática y Física/);
   await page.locator('#pciMapOpen').click();
   await page.waitForFunction(()=>!document.querySelector('#pciMapPrint').disabled,{timeout:65000});
@@ -127,9 +127,9 @@ async function testDesktop(page) {
     };
     localStorage.setItem(key,JSON.stringify(data));
   });
-  await page.locator('#pciDemoOrientationSelect').selectOption('Economía y Administración');
+  await page.locator('#pciDemoOrientationTabs button[data-orientation="Economía y Administración"]').click();
   assert.match(await socialTile.locator('.pill').innerText(),/10 laboratorios/);
-  await page.locator('#pciDemoOrientationSelect').selectOption('Matemática y Física');
+  await page.locator('#pciDemoOrientationTabs button[data-orientation="Matemática y Física"]').click();
   assert.match(await socialTile.locator('.pill').innerText(),/12 laboratorios/);
   await socialTile.click();
   assert.match(await page.locator('#pciAreaDetailStatus').innerText(),/12 laboratorios/);
