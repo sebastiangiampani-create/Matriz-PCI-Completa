@@ -34,7 +34,7 @@
           <div class="section-heading pci-orientation-heading"><div><h2>Espacios curriculares</h2><p class="pci-context">Orientación activa: <span id="pciDemoOrientationContext">Economía y Administración</span></p></div><div class="pci-orientation-top-controls"><span class="pci-orientation-top-label">Orientaciones</span><div id="pciDemoOrientationTabs" class="pci-orientation-tabs" role="group" aria-label="Elegir orientación de la escuela"></div></div></div>
           <div id="areaGrid" class="area-grid"></div>
           <div class="section-heading"><div><h2>Formación Orientada</h2><p class="pci-context">Oferta de <span id="pciDemoActiveHeading">Economía y Administración</span></p></div></div>
-          <div id="pciDemoFoCards" class="area-grid" aria-live="polite"></div>
+          <div id="pciDemoFoCards" class="area-grid pci-fo-format-grid" aria-live="polite"></div>
           <p class="pci-integration-notice"><strong>Vista aislada:</strong> la Formación General previa y sus secuencias no se alteran. Las materias de FO de la prueba se muestran sin porcentajes hasta completar la homologación. No se escribe en Supabase ni en las matrices escolares.</p>
         </div>
       </div></section>
@@ -60,15 +60,15 @@
   </dialog>
   <div id="pci-map-overlay" role="dialog" aria-modal="true" aria-label="Mapa de la Oferta por orientación" hidden>
     <div class="pci-map-toolbar">
-      <div class="pci-map-heading"><strong>Mapa de la Oferta · <span id="pciMapActive">Economía y Administración</span></strong><small>Motor curricular V2 · vista aislada</small></div>
+      <div class="pci-map-heading"><strong>Mapa de la Oferta · <span id="pciMapActive">Economía y Administración</span></strong><small>Organización curricular por año · C1–C10</small></div>
       <div class="pci-map-actions">
         <label for="pciMapYear">Año <select id="pciMapYear"><option value="1">1.º</option><option value="2">2.º</option><option value="3">3.º</option><option value="4">4.º</option><option value="5">5.º</option></select></label>
         <button id="pciMapPrint" class="button secondary" type="button">Imprimir año / PDF</button>
         <button id="pciMapClose" class="button primary" type="button">← Volver a Matriz</button>
       </div>
     </div>
-    <div class="pci-map-note">Componé el mapa por año utilizando las materias FG/FO y C1–C10 de V2. La impresión abre una vista previa para elegir Imprimir / PDF.</div>
-    <iframe id="pci-map-iframe" title="Mapa de la Oferta curricular V2 en pruebas" loading="eager"></iframe>
+    <div class="pci-map-note">Componé el mapa por año con materias de Formación General y Orientada. Podés imprimir el año seleccionado o guardar su PDF.</div>
+    <iframe id="pci-map-iframe" title="Mapa de la Oferta curricular en pruebas" loading="eager"></iframe>
   </div>
   <footer class="site-footer no-print"><img class="logo-blanco" src="assets/em-logo-footer.svg?v=20260902" alt="Escuela de Maestros"><img class="ministerio" src="assets/ministerio-footer.svg?v=20260902" alt="Ministerio de Educación · Buenos Aires Ciudad"></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
