@@ -154,3 +154,36 @@ export function deriveFoProjection(map = null) {
     };
   });
 }
+
+/**
+ * Agrupación de la oferta orientada por formato. Se deriva exclusivamente de
+ * los espacios curriculares seleccionados en el mapa, nunca de datos supuestos.
+ * Para 3.º y 4.º, mientras no se defina LAB/TALLER, el espacio queda pendiente.
+ */
+export function deriveFoFormatSummary(map = null) {
+  const annual = deriveFoProjection(map);
+  const groups = annual.flatMap(row => row.groups);
+  const categories = [
+    { id: 'laboratorios', format: 'laboratorio', label: 'Laboratorios de la orientación', year: 3 },
+    { id: 'talleres', format: 'taller', label: 'Talleres de la orientación', year: 3 },
+    { id: 'proyecto', format: 'proyecto de vinculación', label: 'Proyecto de Vinculación con el Futuro', year: 5 }
+  ];
+  const pending = groups.filter(group => group.format === 'por definir');
+  return categories.map(category => {
+    const chosen = groups.filter(group => group.format === category.format);
+    const subjectIds = new Set(chosen.flatMap(group => group.subjectIds));
+    return {
+      ...category,
+      groups: chosen,
+      count: chosen.length,
+      occupied: chosen.filter(group => group.subjectIds.length > 0).length,
+      distinctSubjects: subjectIds.size,
+      pendingDefinitions: category.id === 'proyecto' ? 0 : pending.length,
+      years: [3,4,5].map(year => ({
+        year,
+        groups: chosen.filter(group => group.year === year)
+      })).filter(entry => entry.groups.length > 0),
+      coveragePercent: null
+    };
+  });
+}
