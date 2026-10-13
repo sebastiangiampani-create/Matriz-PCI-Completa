@@ -289,6 +289,17 @@
       showAreaDetail(button.dataset.area);
     }, true);
   }
+  const classicButton = $('pciClassicToggle');
+  function setClassic(on) {
+    const workspace = document.querySelector('#overview .pci-integrated-workspace');
+    if (!workspace || !classicButton) return;
+    workspace.classList.toggle('pci-classic-view', Boolean(on));
+    classicButton.setAttribute('aria-pressed', String(Boolean(on)));
+    classicButton.textContent = on ? 'Volver a vista integrada' : 'Ver Matriz original';
+    const status = $('pciClassicStatus');
+    if (status) status.hidden = !on;
+  }
+  classicButton?.addEventListener('click', () => setClassic(classicButton.getAttribute('aria-pressed') !== 'true'));
   $('pciAreaDetailClose')?.addEventListener('click', () => $('pci-area-detail').close());
   $('pciAreaDetailLegacy')?.addEventListener('click', () => {
     const area = $('pci-area-detail').dataset.area;
