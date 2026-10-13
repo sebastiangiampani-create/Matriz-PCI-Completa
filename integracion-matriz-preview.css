@@ -133,12 +133,27 @@ body.pci-map-expanded{overflow:hidden}
 #overview #pciDemoOfferState[data-status="draft"]{color:var(--muted)}
 #overview .pci-project-card{--area-color:#8dd2be}
 #overview .pci-project-card .pci-map-count{display:block}
-@media(min-width:921px){
-  #overview .pci-offer-sidebar > label[for="pciDemoOrientationSelect"],
-  #overview .pci-offer-sidebar > #pciDemoOrientationSelect{display:none!important}
+/* El desplegable queda solo como control interno de compatibilidad. */
+#overview .pci-offer-sidebar > label[for="pciDemoOrientationSelect"],
+#overview .pci-offer-sidebar > #pciDemoOrientationSelect{
+  display:none!important;
 }
 @media(max-width:920px){
-  #overview .pci-orientation-top-controls{display:none}
+  #overview .pci-workspace-content .pci-orientation-heading{
+    align-items:stretch;flex-direction:column;gap:11px;
+  }
+  #overview .pci-orientation-top-controls{
+    display:flex;align-items:stretch;width:100%;gap:7px;
+  }
+  #overview .pci-orientation-tabs{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));
+    justify-content:stretch;gap:8px;width:100%;
+  }
+  #overview .pci-orientation-tabs button{
+    display:flex;justify-content:center;align-items:center;
+    max-width:none;min-height:44px;padding:10px 9px;
+    font-size:.76rem;
+  }
 }
 @media(max-width:540px){
   #overview .pci-project-card h3{font-size:.88rem}
@@ -190,4 +205,7 @@ body.pci-map-expanded{overflow:hidden}
 @media(max-width:420px){
   #overview .pci-workspace-content #areaGrid{grid-template-columns:minmax(0,1fr)}
   #overview .pci-workspace-content .area-card{min-height:130px;padding:14px}
+}
+@media(max-width:420px){
+  #overview .pci-orientation-tabs{grid-template-columns:minmax(0,1fr)}
 }
