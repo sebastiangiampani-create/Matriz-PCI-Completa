@@ -86,7 +86,7 @@
       if (pill) {
         pill.textContent = area === 'Otros formatos pedagógicos'
           ? offer.count + ' formatos en el mapa'
-          : offer.count + ' ' + noun + (offer.count === 1 ? '' : 's') + ' · Mapa V2';
+          : offer.count + ' ' + noun + (offer.count === 1 ? '' : 's') + ' · Mapa de la Oferta';
       }
       let summary = tile.querySelector('.pci-map-count');
       if (!summary) {
@@ -123,9 +123,13 @@
     const modal = $('pci-area-detail');
     if (!modal) return;
     modal.dataset.area = area;
+    modal.dataset.year = '';
+    const legacy = modal.querySelector('.pci-area-detail-legacy');
+    if (legacy) legacy.hidden = false;
+    $('pciAreaDetailMap').textContent = 'Abrir Mapa de la Oferta para editar';
     $('pciAreaDetailTitle').textContent = area;
     $('pciAreaDetailOrientation').textContent = 'Orientación: ' + active;
-    const source = map ? 'Mapa de la Oferta de la orientación' : 'Estructura inicial V2 pendiente de conformación';
+    const source = map ? 'Mapa de la Oferta de la orientación' : 'Estructura inicial de la oferta pendiente de conformación';
     const type = area === 'Ciencias Sociales'
       ? (offer.socialOption === 'B'
         ? ' · opción de 12 laboratorios (2 + 2 en 3.º)'
@@ -148,7 +152,7 @@
     const historic = Array.isArray(saved) ? saved.length : 0;
     $('pciAreaDetailLegacyInfo').textContent = historic + ' agrupamientos históricos conservados en Matriz. ' +
       'Sus contenidos, objetivos, planes y secuencias no se modifican por elegir la opción de ' + offer.count +
-      ' espacios del Mapa V2. Abrirlos muestra la FG anterior, no una migración automática.';
+      ' espacios del Mapa de la Oferta. Abrirlos muestra la FG anterior, no una migración automática.';
     $('pciAreaDetailLegacy').disabled = !Array.isArray(saved);
     if (!modal.open) modal.showModal();
   }
@@ -166,26 +170,63 @@
       ? 'Mapa de la Oferta validado en la prueba'
       : 'Mapa de la Oferta pendiente de validar';
     if (!container) return;
-    const placements = map?.placements && typeof map.placements === 'object' ? map.placements : {};
-    const years = projection?.deriveFoProjection(map) || [];
-    container.innerHTML = years.map((year) => {
-      const foIds = new Set(year.groups.flatMap(group => group.subjectIds.filter(id => id.startsWith('fo-'))));
-      return '<button type="button" class="area-card pci-fo-card" data-pci-map-year="' + year.year +
-        '" style="--area-color:#b6a2df">' +
-        '<div><span class="pill">Formación Orientada · ' + year.year + '.º</span>' +
-        '<h3>' + year.year + '.º año</h3>' +
-        '<p>Laboratorios, talleres y materias de ' + esc(active) + '</p></div>' +
-        '<footer><div><strong>' + foIds.size + ' materias FO ubicadas</strong>' +
-        '<small>' + year.occupied + '/' + year.count + ' espacios con materias · sin % homologado</small></div>' +
-        '<strong aria-hidden="true">→</strong></footer></button>';
-    }).join('') + '<button type="button" class="area-card pci-fo-card pci-project-card" data-pci-map-year="5" style="--area-color:#8dd2be">' +
-      '<div><span class="pill">Proyecto · 5.º año</span><h3>Proyecto de Vinculación con el Futuro</h3>' +
-      '<p>Espacio anual de Formación Orientada · C9 y C10</p></div>' +
-      '<footer><div><strong>' + ((Array.isArray(map?.placements?.['proyecto-n5']) && map.placements['proyecto-n5'].length) ? 'Con materias ubicadas' : 'Sin materias ubicadas') +
-      '</strong><small>Se conforma en el Mapa de la Oferta</small></div><strong aria-hidden="true">→</strong></footer></button>';
-    container.querySelectorAll('[data-pci-map-year]').forEach((button) => {
-      button.addEventListener('click', () => openMap(Number(button.dataset.pciMapYear)));
-    });
+    // Una sola sección de orientación: tres formatos, no una tarjeta por año.
+    const categories = projection?.deriveFoFormatSummary(map) || [];
+    container.innerHTML = categories.map(item => {
+      const available = item.pendingDefinitions > 0
+        ? ' · ' + item.pendingDefinitions + ' formatos de 3.º/4.º por definir'
+        : '';
+      const placed = item.occupied + '/' + item.count + ' espacios con materias';
+      const lines = item.id === 'proyecto'
+        ? 'Espacio anual de 5.º año · C9 y C10'
+        : '3.º, 4.º y 5.º año · según el mapa de esta orientación';
+      const tint = item.id === 'laboratorios' ? '#b6a2df'
+        : item.id === 'talleres' ? '#a9c9f1' : '#8dd2be';
+      const badge = item.id === 'proyecto' ? 'Anual · 5.º' : item.count + ' espacios definidos';
+      return '<button type="button" class="area-card pci-fo-card pci-fo-' + esc(item.id) +
+        '" data-pci-fo-format="' + esc(item.id) + '" style="--area-color:' + tint + '">' +
+        '<div><span class="pill">' + esc(badge) + '</span>' +
+        '<h3>' + esc(item.label) + '</h3><p>' + esc(lines) + '</p></div>' +
+        '<footer><div><strong>' + esc(placed) + '</strong>' +
+        '<small class="pci-fo-pending">' + esc(available || 'Sin porcentajes hasta homologar contenidos') + '</small>' +
+        '</div><strong aria-hidden="true">→</strong></footer></button>';
+    }).join('');
+    container.querySelectorAll('[data-pci-fo-format]').forEach(button =>
+      button.addEventListener('click', () => showFoDetail(button.dataset.pciFoFormat)));
+  }
+
+  function showFoDetail(formatId) {
+    if (!projection) return;
+    const category = projection.deriveFoFormatSummary(orientationMap())
+      .find(item => item.id === formatId);
+    if (!category) return;
+    const modal = $('pci-area-detail');
+    if (!modal) return;
+    modal.dataset.area = '';
+    modal.dataset.year = String(category.year);
+    $('pciAreaDetailTitle').textContent = category.label;
+    $('pciAreaDetailOrientation').textContent = 'Orientación: ' + active;
+    $('pciAreaDetailStatus').textContent =
+      category.count + ' espacios de la oferta, ' + category.occupied + ' con materias ubicadas.' +
+      (category.pendingDefinitions
+        ? ' Restan definir ' + category.pendingDefinitions + ' formatos de 3.º y 4.º año.'
+        : '') + ' Los porcentajes se habilitarán cuando concluya la homologación.';
+    $('pciAreaDetailGroups').innerHTML = category.years.map(entry =>
+      '<section class="pci-offer-year-card"><h3>' + entry.year + '.º año · C' +
+      (entry.year * 2 - 1) + ' y C' + (entry.year * 2) + '</h3>' +
+      entry.groups.map(group => {
+        const term = group.term ? 'C' + group.term : 'C9 + C10 (anual)';
+        const subjects = group.subjectIds.length
+          ? group.subjectIds.map(id => subjectName(id, orientationMap())).join(' + ')
+          : 'Sin materias ubicadas todavía';
+        return '<div class="pci-offer-group"><strong>' + esc(term) + '</strong>' +
+          '<p>' + esc(subjects) + '</p></div>';
+      }).join('') + '</section>'
+    ).join('') || '<p>La distribución de este formato todavía no está definida.</p>';
+    const legacy = modal.querySelector('.pci-area-detail-legacy');
+    if (legacy) legacy.hidden = true;
+    $('pciAreaDetailMap').textContent = 'Abrir Mapa de la Oferta para configurar';
+    if (!modal.open) modal.showModal();
   }
 
   function renderSelections() {
@@ -249,7 +290,7 @@
   });
   $('pciAreaDetailMap')?.addEventListener('click', () => {
     $('pci-area-detail').close();
-    openMap(Number(yearSelect.value) || 1);
+    openMap(Number($('pci-area-detail').dataset.year || yearSelect.value) || 1);
   });
 
   orientationSelect.addEventListener('change', () => setActive(orientationSelect.value));
@@ -346,7 +387,7 @@
       updateOfferSummary();
     })
     .catch((error) => {
-      console.error('No se pudo leer la proyección del Mapa V2:', error);
+      console.error('No se pudo leer la composición de la oferta:', error);
       const hint = $('pciDemoCatalogStatus');
       if (hint) hint.textContent = 'No se pudo leer la composición del mapa en esta prueba.';
     });
