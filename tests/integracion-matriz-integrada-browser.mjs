@@ -23,6 +23,21 @@ async function testDesktop(page) {
   page.on('request', (r)=>{if (/supabase\.co/.test(r.url())) remote.push(r.url());});
   await page.goto(url, {waitUntil:'domcontentloaded'});
   await page.locator('#areaGrid .area-card').first().waitFor({timeout:60000});
+  await page.locator('#pciImportSavedStatus').waitFor({state:'visible'});
+  assert.match(await page.locator('#pciImportSavedStatus').innerText(),/En esta sesión todavía no se detecta trabajo previo/);
+  await page.evaluate(() => {
+    const state=window.PCIApp.getState();
+    state.areas.Matemática.groups[0].items.push('contenido-de-prueba-para-detectar');
+    window.dispatchEvent(new CustomEvent('pci-state-change'));
+  });
+  assert.match(await page.locator('#pciImportSavedStatus').innerText(),/Hay trabajo cargado en esta Matriz/);
+  assert.match(await page.locator('#pciImportSavedStatus').innerText(),/1 contenidos ubicados/);
+  await page.evaluate(() => {
+    const state=window.PCIApp.getState();
+    state.areas.Matemática.groups[0].items.pop();
+    window.dispatchEvent(new CustomEvent('pci-state-change'));
+  });
+  assert.match(await page.locator('#pciImportSavedStatus').innerText(),/En esta sesión todavía no se detecta trabajo previo/);
   // La importación es una revisión aislada, NO una escritura ni un merge.
   const originalBefore = await page.evaluate(() => localStorage.getItem('pciAppV2'));
   await page.locator('#pciImportOpen').click();
