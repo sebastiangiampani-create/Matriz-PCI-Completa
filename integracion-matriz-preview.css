@@ -225,3 +225,27 @@ body.pci-map-expanded{overflow:hidden}
 #overview .pci-classic-view .area-card footer strong[data-pci-legacy-label]{font-size:.75rem;color:var(--ink)}
 #overview .pci-classic-status{font-size:.8rem;color:var(--ink-soft);padding:10px 14px;border-left:3px solid var(--mint-dark);background:var(--band);margin:10px 0}
 #overview #pciClassicStatus[hidden]{display:none!important}
+
+#overview .pci-import-open{width:100%;margin-top:9px;min-height:40px}
+#overview .pci-import-aside-note{margin:8px 0 0;font-size:.72rem;color:var(--muted)}
+.pci-import-review{width:min(860px,96vw);max-width:96vw;max-height:90dvh;padding:0;overflow:auto;border:1px solid var(--line);border-radius:18px;color:var(--ink);font-family:Archivo,Arial,sans-serif;box-shadow:0 22px 65px #12395c33}
+.pci-import-review::backdrop{background:#0c263d99}
+.pci-import-head{display:flex;align-items:start;justify-content:space-between;gap:16px;padding:20px 24px;background:var(--band)}
+.pci-import-head h2{margin:3px 0;font-size:1.45rem}
+.pci-import-head p{margin:4px 0;font-size:.78rem}
+.pci-import-body{padding:20px 24px}
+.pci-import-body p{font-size:.83rem;line-height:1.5}
+.pci-import-source-warning{border-left:3px solid var(--mint-dark);padding:10px 13px;background:var(--band)}
+.pci-import-actions{display:flex;flex-wrap:wrap;gap:9px;margin:16px 0}
+.pci-import-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:15px 0}
+.pci-import-metrics>div{padding:13px;background:var(--band);border-radius:10px}
+.pci-import-metrics strong,.pci-import-metrics small{display:block}
+.pci-import-metrics strong{font-size:1.2rem}.pci-import-metrics small{color:var(--muted);font-size:.69rem}
+.pci-import-areas{max-height:310px;overflow:auto;display:grid;gap:5px}
+.pci-import-area{display:flex;align-items:start;justify-content:space-between;gap:12px;padding:10px;border-bottom:1px solid var(--line);font-size:.76rem}
+.pci-import-area span{color:var(--muted);text-align:right}
+.pci-import-warnings p{padding:10px;background:#fff4db;border-radius:10px}
+.pci-import-check{display:flex;align-items:center;gap:9px;font-size:.82rem;font-weight:750;margin:16px 0}
+.pci-import-check input{width:20px;height:20px}
+.pci-import-result{color:var(--ink-soft);font-weight:700}
+@media(max-width:600px){.pci-import-head,.pci-import-body{padding:13px}.pci-import-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.pci-import-area{flex-direction:column;gap:4px}.pci-import-area span{text-align:left}.pci-import-actions .button{width:100%}}
