@@ -31,7 +31,7 @@ async function testDesktop(page) {
     window.dispatchEvent(new CustomEvent('pci-state-change'));
   });
   assert.match(await page.locator('#pciImportSavedStatus').innerText(),/Hay trabajo cargado en esta Matriz/);
-  assert.match(await page.locator('#pciImportSavedStatus').innerText(),/1 contenidos ubicados/);
+  assert.match(await page.locator('#pciImportSavedStatus').innerText(),/1 contenido ubicado/);
   await page.evaluate(() => {
     const state=window.PCIApp.getState();
     state.areas.Matemática.groups[0].items.pop();
