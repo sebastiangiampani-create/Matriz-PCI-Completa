@@ -12,7 +12,7 @@ if(dialog&&open){
    const side=$('pciImportSavedStatus'), detail=$('pciImportSavedDetail');
    if(found.available){
      const chunks=[
-       found.contentCount ? found.contentCount+' contenidos ubicados' : '',
+       found.contentCount ? found.contentCount+(found.contentCount===1?' contenido ubicado':' contenidos ubicados') : '',
        found.developedPlans ? found.developedPlans+' planes desarrollados' : '',
        found.sequenceCount ? found.sequenceCount+' secuencias con etapas' : '',
        found.describedGroups ? found.describedGroups+' agrupamientos con desarrollo' : ''
