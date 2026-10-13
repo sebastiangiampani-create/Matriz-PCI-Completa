@@ -34,9 +34,12 @@ async function testDesktop(page) {
   });
   assert.ok(geometry.right>geometry.left+geometry.leftWidth-3,
     'El panel de orientación debe quedar a la izquierda de Matriz: '+JSON.stringify(geometry));
-  assert.equal(await page.locator('#pciDemoFoCards .pci-fo-card').count(),3,
-    'La Formación Orientada debe mostrarse por año (3.º a 5.º) sin porcentajes ficticios');
+  assert.equal(await page.locator('#pciDemoFoCards .pci-fo-card').count(),4,
+    'La FO debe mostrar 3.º a 5.º y el Proyecto de Vinculación');
 
+  assert.equal(await page.locator('#pciDemoOrientationTabs button').count(),2);
+  assert.match(await page.locator('#pciDemoFoCards .pci-project-card').innerText(),/Proyecto de Vinculación con el Futuro/);
+  assert.match(await page.locator('#pciDemoFoCards .pci-project-card').innerText(),/C9 y C10/);
   await page.locator('#pciDemoOrientationSelect').selectOption('Matemática y Física');
   assert.match(await page.locator('#pciDemoOrientationContext').innerText(),/Matemática y Física/);
   await page.locator('#pciMapOpen').click();
