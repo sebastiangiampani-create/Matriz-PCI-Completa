@@ -1,4 +1,4 @@
-import { prepareReview, approveReview } from './src/integracion-curricular/revision-importacion-original.js';
+import { prepareReview, approveReview, assessPriorWork } from './src/integracion-curricular/revision-importacion-original.js';
 const $ = id => document.getElementById(id);
 const clean = text => String(text ?? '').replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const dialog=$('pci-import-review');
@@ -7,13 +7,35 @@ let review=null, sourceSnapshot=null;
 if(dialog&&open){
  const orientation=()=>$('pciDemoOrientationContext')?.textContent.trim()||'Orientación sin seleccionar';
  const original=()=>window.PCIApp?.getState?.();
+ function updateSavedStatus(){
+   const found=assessPriorWork(original());
+   const side=$('pciImportSavedStatus'), detail=$('pciImportSavedDetail');
+   if(found.available){
+     const chunks=[
+       found.contentCount ? found.contentCount+' contenidos ubicados' : '',
+       found.developedPlans ? found.developedPlans+' planes desarrollados' : '',
+       found.sequenceCount ? found.sequenceCount+' secuencias con etapas' : '',
+       found.describedGroups ? found.describedGroups+' agrupamientos con desarrollo' : ''
+     ].filter(Boolean);
+     const numbers=chunks.join(' · ');
+     if(side)side.textContent='Hay trabajo cargado en esta Matriz: '+numbers+'. Podés preparar una copia para revisarlo y reutilizarlo, sin perder el original.';
+     if(detail)detail.textContent='Se encontró información en la Matriz disponible en esta sesión: '+numbers+'. La copia conserva lo existente y permite revisarlo antes del OK.';
+   }else{
+     if(side)side.textContent='¿Ya trabajaste en la Matriz anterior? La información guardada se podrá reutilizar, sin empezar de cero. En esta sesión todavía no se detecta trabajo previo; ingresá desde el acceso de tu escuela para consultar los datos guardados.';
+     if(detail)detail.textContent='En la Matriz disponible en esta sesión todavía no se detectan contenidos, planes o secuencias cargados. Si tu escuela ya trabajó online, accedé con su usuario habitual para recuperar el estado guardado antes de preparar la copia.';
+   }
+   if(side)side.dataset.priorWork=found.available?'found':'unverified';
+   if(detail)detail.dataset.priorWork=found.available?'found':'unverified';
+ }
+ window.addEventListener('pci-state-change',updateSavedStatus);
+ updateSavedStatus();
  function status(message){$('pciImportResult').textContent=message;}
  function reset(){
    review=null;sourceSnapshot=null;
    $('pciImportReviewContent').hidden=true;$('pciImportReviewed').checked=false;
    $('pciImportApprove').disabled=true;$('pciImportExport').disabled=true;
  }
- open.addEventListener('click',()=>{reset();$('pciImportOrientation').textContent=orientation();status('La Matriz original no se modifica con esta revisión.');dialog.showModal();});
+ open.addEventListener('click',()=>{reset();updateSavedStatus();$('pciImportOrientation').textContent=orientation();status('La Matriz original no se modifica con esta revisión.');dialog.showModal();});
  $('pciImportClose').addEventListener('click',()=>dialog.close());
  $('pciImportPrepare').addEventListener('click',()=>{
    try{
