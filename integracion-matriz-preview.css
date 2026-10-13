@@ -209,3 +209,19 @@ body.pci-map-expanded{overflow:hidden}
 @media(max-width:420px){
   #overview .pci-orientation-tabs{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Modo de consulta de la Matriz original: mismos datos, sin transformación. */
+#overview .pci-integrated-workspace.pci-classic-view{display:block}
+#overview .pci-classic-view .pci-offer-sidebar,
+#overview .pci-classic-view .pci-orientation-top-controls,
+#overview .pci-classic-view .pci-context,
+#overview .pci-classic-view .pci-fo-format-grid,
+#overview .pci-classic-view .pci-coverage-note,
+#overview .pci-classic-view .pci-integration-notice,
+#overview .pci-classic-view .section-heading:has(#pciDemoActiveHeading){display:none!important}
+#overview .pci-classic-view .pci-workspace-content{width:100%}
+#overview .pci-classic-view .area-grid{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+#overview .pci-classic-view .pci-map-count{display:none!important}
+#overview .pci-classic-view .area-card footer strong[data-pci-legacy-label]{font-size:.75rem;color:var(--ink)}
+#overview .pci-classic-status{font-size:.8rem;color:var(--ink-soft);padding:10px 14px;border-left:3px solid var(--mint-dark);background:var(--band);margin:10px 0}
+#overview #pciClassicStatus[hidden]{display:none!important}
