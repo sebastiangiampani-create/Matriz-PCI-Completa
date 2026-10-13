@@ -34,12 +34,26 @@ async function testDesktop(page) {
   });
   assert.ok(geometry.right>geometry.left+geometry.leftWidth-3,
     'El panel de orientación debe quedar a la izquierda de Matriz: '+JSON.stringify(geometry));
-  assert.equal(await page.locator('#pciDemoFoCards .pci-fo-card').count(),4,
-    'La FO debe mostrar 3.º a 5.º y el Proyecto de Vinculación');
-
+  await page.locator('#pciDemoFoCards [data-pci-fo-format]').first().waitFor({timeout:20000});
+  assert.equal(await page.locator('#pciDemoFoCards .pci-fo-card').count(),3,
+    'FO debe tener exactamente tres mosaicos pedagógicos, no una tarjeta por año');
+  assert.deepEqual(await page.locator('#pciDemoFoCards [data-pci-fo-format]').evaluateAll(items=>
+    items.map(item=>item.dataset.pciFoFormat)), ['laboratorios','talleres','proyecto']);
   assert.equal(await page.locator('#pciDemoOrientationTabs button').count(),2);
-  assert.match(await page.locator('#pciDemoFoCards .pci-project-card').innerText(),/Proyecto de Vinculación con el Futuro/);
-  assert.match(await page.locator('#pciDemoFoCards .pci-project-card').innerText(),/C9 y C10/);
+  assert.match(await page.locator('#pciDemoFoCards [data-pci-fo-format="proyecto"]').innerText(),/Proyecto de Vinculación con el Futuro/);
+  assert.match(await page.locator('#pciDemoFoCards [data-pci-fo-format="proyecto"]').innerText(),/C9 y C10/);
+  assert.equal(await page.locator('body').innerText().then(txt=>txt.includes('V2')),false,
+    'La interfaz de Matriz no debe mostrar etiquetas técnicas V2');
+  await page.locator('#pciDemoFoCards [data-pci-fo-format="proyecto"]').click();
+  assert.equal(await page.locator('#pci-area-detail').evaluate(node=>node.open),true);
+  assert.match(await page.locator('#pciAreaDetailGroups').innerText(),/5.º año/);
+  assert.match(await page.locator('#pciAreaDetailGroups').innerText(),/C9 \+ C10/);
+  assert.equal(await page.locator('.pci-area-detail-legacy').isVisible(),false,
+    'Las materias FO no deben confundirse con la FG histórica');
+  await page.locator('#pciAreaDetailClose').click();
+  await page.locator('#pciDemoFoCards [data-pci-fo-format="laboratorios"]').click();
+  assert.match(await page.locator('#pciAreaDetailStatus').innerText(),/Restan definir 4 formatos/);
+  await page.locator('#pciAreaDetailClose').click();
   await page.locator('#pciDemoOrientationSelect').selectOption('Matemática y Física');
   assert.match(await page.locator('#pciDemoOrientationContext').innerText(),/Matemática y Física/);
   await page.locator('#pciMapOpen').click();
@@ -151,6 +165,27 @@ async function testMobile(page) {
   });
   assert.ok(layout.right>layout.left,'En móvil el panel y los mosaicos deben apilarse');
   assert.equal(layout.overflow,false,'La Matriz principal no debe desbordar horizontalmente');
+  assert.equal(await page.locator('#pciDemoFoCards [data-pci-fo-format]').count(),3);
+  const gridGeometry=await page.locator('#pciDemoFoCards').evaluate((el)=>{
+    const cards=[...el.querySelectorAll('.pci-fo-card')];
+    return cards.map(card=>({
+      left:Math.round(card.getBoundingClientRect().left),
+      top:Math.round(card.getBoundingClientRect().top),
+      width:Math.round(card.getBoundingClientRect().width)
+    }));
+  });
+  assert.ok(gridGeometry[1].top>gridGeometry[0].top,
+    'En celular cada formato debe tener su propia fila: '+JSON.stringify(gridGeometry));
+  await page.locator('#pciMapOpen').click();
+  await page.waitForFunction(()=>!document.querySelector('#pciMapPrint').disabled,{timeout:65000});
+  const mobileOverlay=await page.locator('#pci-map-overlay').evaluate((el)=>({
+    height:Math.round(el.getBoundingClientRect().height),
+    screen:innerHeight,
+    maxScroll:document.documentElement.scrollWidth>innerWidth+2
+  }));
+  assert.ok(mobileOverlay.height <= mobileOverlay.screen+1,'Mapa a pantalla completa en móvil');
+  assert.equal(mobileOverlay.maxScroll,false);
+  await page.locator('#pciMapClose').click();
   await page.screenshot({path:artifacts+'mobile-matriz-integrada.png',fullPage:true});
   assert.deepEqual(errors,[]);
 }
