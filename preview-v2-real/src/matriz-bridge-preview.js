@@ -110,6 +110,16 @@
   window.addEventListener('pci-app-ready', () => {
     booted = true;
     prepareEmbeddedStyle();
+    // Notificar al contenedor tras la validación real (incluye controles V2).
+    if (typeof validateOffer === 'function') {
+      const originalValidateOffer = validateOffer;
+      validateOffer = function(...args) {
+        const result = originalValidateOffer.apply(this, args);
+        const currentMap = ensure(state.active);
+        tellHost(currentMap.valid === true ? 'matriz-preview:validated' : 'matriz-preview:changed');
+        return result;
+      };
+    }
     applyContext(params.get('orientation'), params.get('year'));
     tellHost('matriz-preview:ready');
   }, { once: true });
