@@ -99,3 +99,32 @@ export function approveReview(draft, currentSource) {
   if (draft.approved) return draft;
   return {...draft, reviewed:true, approved:true};
 }
+
+/**
+ * Detecta trabajo sustantivo en la copia disponible en esta sesión.
+ * Los agrupamientos y los nombres de planes pueden generarse por defecto:
+ * NO constituyen evidencia de que la escuela haya cargado datos antes.
+ */
+export function assessPriorWork(source) {
+  if (!isRecord(source) || !isRecord(source.areas)) {
+    return { available:false, contentCount:0, developedPlans:0, sequenceCount:0, describedGroups:0 };
+  }
+  const contentIds = new Set();
+  let developedPlans=0, sequenceCount=0, describedGroups=0;
+  for (const entry of Object.values(source.areas)) {
+    for (const group of list(entry?.groups)) {
+      for (const id of list(group?.items)) if (id !== null && id !== undefined && String(id).trim()) contentIds.add(String(id));
+      if (['objective','synopsis','context','practiceAxis'].some(key=>hasData(group?.[key]))) describedGroups++;
+      for (const plan of list(group?.plansBimestrales)) {
+        // El "name" autogenerado no alcanza para marcar el plan como trabajado.
+        const stageWork=stageValues(plan?.stages).some(hasData);
+        if (stageWork) sequenceCount++;
+        if (stageWork || ['synopsis','objectives','contentIds','description','context'].some(key=>hasData(plan?.[key]))) developedPlans++;
+      }
+    }
+  }
+  return {
+    available:contentIds.size>0 || developedPlans>0 || describedGroups>0,
+    contentCount:contentIds.size,developedPlans,sequenceCount,describedGroups
+  };
+}
