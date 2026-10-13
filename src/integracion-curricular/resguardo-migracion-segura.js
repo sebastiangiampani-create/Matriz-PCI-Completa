@@ -98,7 +98,7 @@ export function prepareSafeMigration({rawState,schoolId,orientationIds,offerByOr
       message:'Homologación FG/FO pendiente. No calcular coberturas ni mover contenidos.'});
     copies[orientationId] = {
       id:orientationId,name:ALLOWED.get(orientationId),
-      fg:{areas:copiedAreas},offer,warnings,
+      fg:{rawState:copy(rawState),areas:copiedAreas},offer,warnings,
       origin:'copia-literal-del-estado-bruto',
       review:{status:'pendiente',approved:false}
     };
@@ -126,6 +126,8 @@ export function verifySafeMigration(rawState,staged) {
   else for (const [orientationId,entry] of Object.entries(staged.orientations)) {
     if (!ALLOWED.has(orientationId) || entry.id !== orientationId)
       failures.push('Identificador de orientación alterado.');
+    if (json(rawState) !== json(entry?.fg?.rawState))
+      failures.push('La copia del documento completo difiere del origen: '+orientationId);
     if (json(rawState.areas) !== json(entry?.fg?.areas))
       failures.push('La copia de Formación General difiere del origen: '+orientationId);
     if (!entry?.review || entry.review.approved !== false)
