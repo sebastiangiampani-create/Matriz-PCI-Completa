@@ -95,6 +95,10 @@ if(overlay){
    if(!current||!draft)return;
    // Nunca escribir el estado real pciAppV2 ni el mapa.
    draft=saveFoSpace(draft,current);
+   persistDraft();
+ }
+ function persistDraft(){
+   if(!draft)return;
    let state={version:1,orientations:{}};
    try{
      const previous=JSON.parse(localStorage.getItem(KEY)||'null');
@@ -294,6 +298,128 @@ if(overlay){
    renderAssigned();renderPlan();renderCatalog();
    savedStatus('Vista de prueba · edición local independiente del trabajo escolar');
  }
+ function startDrag(event){
+   const item=event.target.closest('[data-content-id]');
+   if(!item?.dataset.contentId)return;
+   event.dataTransfer.effectAllowed='move';
+   event.dataTransfer.setData('application/x-pci-content',item.dataset.contentId);
+   event.dataTransfer.setData('text/plain',item.dataset.contentId);
+ }
+ function updateSelection(){
+   const count=selectedContents.size;
+   $('pciFoSelection').hidden=!count;
+   $('pciFoSelectedCount').textContent=count+
+     (count===1?' contenido seleccionado':' contenidos seleccionados');
+   $('pciFoMoveSelected').disabled=!count||!slot;
+ }
+ function renderGroupCards(){
+   const container=$('pciFoGroupCards');
+   container.replaceChildren();
+   const available=groups().filter(g=>g.year===year);
+   for(const [index,group] of available.entries()){
+     const selected=group.id===slot;
+     const stored=draft?.spaces?.[group.id];
+     const contentIds=stored?.items||[];
+     const card=node('article','group-card card pci-fo-group-card'+(selected?' selected':''));
+     card.dataset.foGroup=group.id;
+     card.tabIndex=0;
+     const title=node('div','group-title-row');
+     const input=node('input');
+     input.dataset.groupName=group.id;
+     input.maxLength=140;
+     input.setAttribute('aria-label','Nombre del agrupamiento');
+     input.value=stored?.name||('Espacio '+(index+1)+(group.term?' · C'+group.term:' · C9–C10'));
+     title.appendChild(input);card.appendChild(title);
+     const meta=node('div','group-meta');
+     meta.appendChild(node('span','pill',format==='laboratorios'?'Laboratorio':
+       format==='talleres'?'Taller':'Proyecto'));
+     meta.appendChild(node('span','pill',group.term?'C'+group.term:'C9–C10'));
+     meta.appendChild(node('span','pill','Obligatorio'));
+     card.appendChild(meta);
+     card.appendChild(node('p','pci-fo-group-members',
+       group.members.length?'Materias: '+group.members.map(subjectLabel).join(' + '):
+       'Sin materias ubicadas en el mapa'));
+     const header=node('div','assigned-heading');
+     header.appendChild(node('h3','','Contenidos asignados'));
+     header.appendChild(node('span','pill',contentIds.length));
+     card.appendChild(header);
+     const assigned=node('div','assigned-list pci-fo-group-assigned');
+     if(!contentIds.length)assigned.appendChild(node('p','pci-fo-drop-hint',
+       'Arrastrá aquí contenidos de la bolsa'));
+     for(const id of contentIds){
+       const wrapper=node('div','assigned-item pci-fo-assigned-item');
+       wrapper.draggable=true;
+       wrapper.dataset.contentId=id;
+       const line=byId.get(id);
+       wrapper.appendChild(node('span','',line?.text||id));
+       const remove=node('button','pci-fo-remove','Quitar');
+       remove.dataset.removeFrom=id;
+       remove.type='button';
+       remove.title='Devolver a la bolsa';
+       wrapper.appendChild(remove);
+       assigned.appendChild(wrapper);
+     }
+     card.appendChild(assigned);
+     const edit=node('button','button secondary pci-fo-card-edit','Editar objetivos y planes →');
+     edit.type='button';
+     edit.dataset.editGroup=group.id;
+     card.appendChild(edit);
+     card.addEventListener('keydown',event=>{
+       if((event.key==='Enter'||event.key===' ')&&event.target===card){
+         event.preventDefault();slot=group.id;$('pciFoSpace').value=slot;
+         renderSpace();renderGroupCards();
+       }
+     });
+     container.appendChild(card);
+   }
+   if(!available.length)container.appendChild(node('p','pci-fo-muted',
+     'Todavía no se conformaron espacios de este tipo y año. Revisá el Mapa de la Oferta.'));
+   const all=new Set(available.flatMap(g=>draft?.spaces?.[g.id]?.items||[]));
+   const total=new Set(available.flatMap(g=>availableFor(g).map(r=>r.id))).size;
+   safeText($('pciFoCoverage'),all.size+' de '+total+
+     ' contenidos ubicados en '+(formatName[format]||'la orientación')+
+     ' · '+year+'.º año. Un contenido se mueve entre agrupamientos sin duplicarlo.');
+ }
+ function moveContents(ids,target){
+   const dest=groups().find(g=>g.id===target&&g.year===year);
+   if(!dest){savedStatus('Primero elegí un agrupamiento del año.');return;}
+   const allowed=new Set(availableFor(dest).map(row=>row.id));
+   const invalid=ids.filter(id=>!allowed.has(id));
+   if(invalid.length){
+     savedStatus('Este contenido no corresponde a este espacio y año de la orientación. No se modificó ningún dato.');
+     return;
+   }
+   const next=makeFoDraft(orientation,draft);
+   // No borrar planes ni secuencias. Solo cambia la ubicación del contenido,
+   // y sus asignaciones de planes de origen para evitar referencias colgantes.
+   for(const [id,other] of Object.entries(next.spaces)){
+     if(id===target)continue;
+     if(!other?.items?.some(item=>ids.includes(item)))continue;
+     other.items=other.items.filter(item=>!ids.includes(item));
+     for(const plan of other.plansBimestrales||[])
+       plan.contentIds=(plan.contentIds||[]).filter(item=>!ids.includes(item));
+   }
+   const payload=getFoSpace(next,dest).data;
+   payload.items=[...new Set([...(payload.items||[]),...ids])];
+   draft=saveFoSpace(next,payload);
+   selectedContents.clear();
+   slot=target;
+   $('pciFoSpace').value=target;
+   persistDraft();
+   renderSpace();renderGroupCards();
+ }
+ function removeContents(ids,source){
+   if(!draft?.spaces?.[source])return;
+   const next=makeFoDraft(orientation,draft);
+   const payload=next.spaces[source];
+   payload.items=(payload.items||[]).filter(id=>!ids.includes(id));
+   for(const plan of payload.plansBimestrales||[])
+     plan.contentIds=(plan.contentIds||[]).filter(id=>!ids.includes(id));
+   draft=saveFoSpace(next,payload);
+   selectedContents.clear();
+   persistDraft();
+   renderSpace();renderGroupCards();
+ }
  function renderAll(){
    safeText($('pciFoTitle'),formatName[format]||'Desarrollo curricular');
    safeText($('pciFoContext'),'Orientación: '+orientation);
@@ -331,7 +457,9 @@ if(overlay){
  }
  $('pciFoClose').addEventListener('click',close);
  $('pciFoYear').addEventListener('change',e=>{year=Number(e.target.value);renderSpaceOptions();});
- $('pciFoSpace').addEventListener('change',e=>{slot=e.target.value;renderSpace();});
+ $('pciFoSpace').addEventListener('change',e=>{
+   slot=e.target.value;selectedContents.clear();renderSpace();renderGroupCards();
+ });
  $('pciFoSearch').addEventListener('input',renderCatalog);
  $('pciFoBlockFilter').addEventListener('change',renderCatalog);
  $('pciFoAxisFilter').addEventListener('change',renderCatalog);
