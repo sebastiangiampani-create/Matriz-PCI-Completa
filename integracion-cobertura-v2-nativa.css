@@ -47,3 +47,14 @@ body.pci-native-v2-open{overflow:hidden!important}
 @media print{
   #pciNativeV2Coverage{display:none!important}
 }
+#overview #pciNativeV2CoverageOverview{
+  min-height:35px;align-self:flex-end;
+  color:#126e65;border:1px solid #c1dad3;
+  background:#f2f9f7;border-radius:999px;
+  font-size:.75rem;font-weight:900;padding:8px 13px
+}
+@media(max-width:800px){
+  #overview #pciNativeV2CoverageOverview{
+    align-self:stretch;width:100%;min-height:44px
+  }
+}
