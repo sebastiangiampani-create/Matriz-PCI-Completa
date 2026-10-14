@@ -99,7 +99,7 @@
       <button id="pciFoClose" type="button" class="button secondary">← Volver a espacios curriculares</button>
     </header>
     <div class="pci-fo-dev-toolbar">
-      <label for="pciFoYear">Año <select id="pciFoYear"><option value="3">3.º</option><option value="4">4.º</option><option value="5">5.º</option></select></label>
+      <label for="pciFoYear">Año <select id="pciFoYear"><option value="0">Todos los años</option><option value="3">3.º</option><option value="4">4.º</option><option value="5">5.º</option></select></label>
       <label for="pciFoSpace">Espacio curricular <select id="pciFoSpace"></select></label>
       <span id="pciFoSaved" role="status" aria-live="polite">Vista de prueba · borrador local, sin guardar en la escuela</span>
     </div>
@@ -107,8 +107,9 @@
       <aside class="pci-fo-dev-bag" aria-labelledby="pciFoBagTitle">
         <h3 id="pciFoBagTitle">Bolsa de contenidos priorizados</h3>
         <p id="pciFoBagInfo">Contenidos de Formación Orientada de la orientación seleccionada.</p>
-        <label>Buscar contenido
-          <input id="pciFoSearch" type="search" placeholder="Bloque, eje o contenido">
+        <div class="pci-fo-bag-controls">
+        <label>Buscar contenido, materia o eje
+          <input id="pciFoSearch" type="search" placeholder="Buscar contenido, materia o eje…">
         </label>
         <div class="pci-fo-bag-filters">
           <label>Bloque o materia <select id="pciFoBlockFilter"><option value="">Todos</option></select></label>
@@ -116,6 +117,7 @@
         </div>
         <label class="pci-fo-pending-label"><input type="checkbox" id="pciFoPendingOnly"> Mostrar solo pendientes</label>
         <p id="pciFoContentCount" class="muted"></p>
+        </div>
         <div id="pciFoContentList" class="pci-fo-dev-content-list"></div>
       </aside>
       <section class="pci-fo-dev-editor" aria-label="Editor de desarrollo curricular">
