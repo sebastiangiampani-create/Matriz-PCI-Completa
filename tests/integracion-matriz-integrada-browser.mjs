@@ -75,6 +75,15 @@ async function testDesktop(page) {
   assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalBefore,
     'El editor drag & drop nunca debe sobrescribir la Matriz original');
   await page.locator('#backOverview').click();
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(() =>
+    window.PCIApp?.ready &&
+    window.PCIApp.getActiveOrientation()==='Economía y Administración',{timeout:60000});
+  await page.locator('#areaGrid button[data-area="Artes"]').click();
+  assert.equal(await page.locator('#groups .group-card').first().locator('.assigned-item').count(),1,
+    'El borrador aprobado debe recuperar su drag & drop después de recargar');
+  await page.locator('#backOverview').click();
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalBefore);
   assert.ok(await page.locator('#areaGrid .area-card').count() >= 6,
     'Deben permanecer los mosaicos curriculares originales de Matriz');
   assert.equal(await page.locator('#pciDemoOrientationSelect option').count(),2,
