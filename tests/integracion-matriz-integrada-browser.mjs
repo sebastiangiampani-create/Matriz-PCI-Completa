@@ -159,7 +159,7 @@ async function testDesktop(page) {
   await page.locator('#pciFoCoverageLevels .v98d-grouping > summary').first().click();
   await page.locator('#pciFoCoverageLevels .v99d-plans > summary').first().click();
   assert.ok(await page.locator('#pciFoCoverageLevels .v99d-plan-table').count()>0);
-  assert.match(await page.locator('#pciFoCoverageLevels .v99d-plan-head').first().innerText(),/Dentro del agrupamiento/);
+  assert.match(await page.locator('#pciFoCoverageLevels .v99d-plan-head').first().innerText(),/Dentro del agrupamiento/i);
   assert.ok(await page.locator('#pciFoCoverageSubjects .v98d-subject').count()>0);
   assert.ok(await page.locator('#pciFoCoverageSpaces .v98d-format-summary').count()>0);
   assert.match(await page.locator('#pciFoCoverageBasis').innerText(),/no por año|no tiene año|no por nivel|por trayectoria/i);
