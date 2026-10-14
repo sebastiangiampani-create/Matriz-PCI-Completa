@@ -282,9 +282,13 @@ if(overlay){
    safeText($('pciFoMembers'),state.members.length?
      ('Materias ubicadas en la oferta: '+state.members.map(subjectLabel).join(' · ')):
      'Este espacio todavía no tiene materias ubicadas en el Mapa de la Oferta.');
-   $('pciFoReviewWarning').hidden=!state.needsReview;
-   safeText($('pciFoReviewWarning'),state.needsReview?
-     'Revisar espacio: cambió el formato o el año respecto del desarrollo existente. No se borró ningún plan.':'');
+   const retained=Array.isArray(current.contentRelocationReview)?
+     current.contentRelocationReview.length:0;
+   $('pciFoReviewWarning').hidden=!state.needsReview&&!retained;
+   safeText($('pciFoReviewWarning'),
+     (state.needsReview?'Revisar espacio: cambió el formato o el año. ':'')+
+     (retained?'Revisar planes: '+retained+' contenidos se trasladaron o devolvieron a la bolsa. Se conservaron sus referencias en planes y secuencias. ':'')+
+     (state.needsReview||retained?'No se eliminó ningún plan.':''));
    for(const [key,id] of [['objective','pciFoObjective'],['synopsis','pciFoSynopsis'],
      ['context','pciFoProblemContext'],['practiceAxis','pciFoPracticeAxis']]){
       $(id).value=String(current[key]||'');
@@ -397,8 +401,11 @@ if(overlay){
      if(id===target)continue;
      if(!other?.items?.some(item=>ids.includes(item)))continue;
      other.items=other.items.filter(item=>!ids.includes(item));
-     for(const plan of other.plansBimestrales||[])
-       plan.contentIds=(plan.contentIds||[]).filter(item=>!ids.includes(item));
+     // Conservamos las referencias de los planes para revisión: nunca
+     // borramos silenciosamente lo que la escuela ya planificó.
+     other.contentRelocationReview=[...new Set([
+       ...(other.contentRelocationReview||[]),...ids
+     ])];
    }
    const payload=getFoSpace(next,dest).data;
    payload.items=[...new Set([...(payload.items||[]),...ids])];
@@ -414,8 +421,9 @@ if(overlay){
    const next=makeFoDraft(orientation,draft);
    const payload=next.spaces[source];
    payload.items=(payload.items||[]).filter(id=>!ids.includes(id));
-   for(const plan of payload.plansBimestrales||[])
-     plan.contentIds=(plan.contentIds||[]).filter(id=>!ids.includes(id));
+   payload.contentRelocationReview=[...new Set([
+     ...(payload.contentRelocationReview||[]),...ids
+   ])];
    draft=saveFoSpace(next,payload);
    selectedContents.clear();
    persistDraft();
@@ -493,6 +501,7 @@ if(overlay){
  });
  $('pciFoContentList').addEventListener('dragstart',startDrag);
  $('pciFoAssignedContents').addEventListener('dragstart',startDrag);
+ $('pciFoGroupCards').addEventListener('dragstart',startDrag);
  $('pciFoGroupCards').addEventListener('dragover',e=>{
    const card=e.target.closest('[data-fo-group]');
    if(!card)return;e.preventDefault();e.dataTransfer.dropEffect='move';
