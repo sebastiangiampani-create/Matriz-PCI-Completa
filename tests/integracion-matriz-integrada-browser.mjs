@@ -114,12 +114,17 @@ async function testDesktop(page) {
   assert.equal(await page.locator('#pci-integrated-matrix').isVisible(),false);
   assert.match(await page.locator('#pciFoTitle').innerText(),/Proyecto de Vinculación/);
   assert.equal(await page.locator('#pciFoYear').inputValue(),'5');
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),1);
+  assert.equal(await page.locator('#pciFoDetails').evaluate(el=>el.open),false,
+    'El desarrollo de planes permanece plegado hasta que se elija un espacio');
+  await page.locator('#pciFoGroupCards [data-edit-group]').first().click();
   assert.equal(await page.locator('#pciFoFields').isVisible(),true);
   assert.equal(await page.locator('#pciFoStages .pci-fo-stage').count(),4);
   await page.locator('#pciFoContentList [data-fo-content]').first().waitFor({timeout:45000});
   const chosenFoContent=await page.locator('#pciFoContentList [data-fo-content]').first().getAttribute('value');
-  await page.locator('#pciFoContentList [data-fo-content]').first().check();
-  assert.equal(await page.locator('#pciFoAssignedContents .pci-fo-assigned-item').count(),1);
+  await page.locator('#pciFoContentList [data-content-id]').first().dragTo(
+    page.locator('#pciFoGroupCards [data-fo-group]').first());
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group] .assigned-item').count(),1);
   await page.locator('#pciFoObjective').fill('Objetivos curriculares del proyecto');
   await page.locator('#pciFoPlan').selectOption('2');
   await page.locator('#pciFoPlanContents [data-plan-content]').first().check();
@@ -137,6 +142,7 @@ async function testDesktop(page) {
     'El desarrollo FO no puede alterar la FG histórica');
   await page.locator('#pciFoClose').click();
   await page.locator('#pciDemoFoCards [data-pci-fo-format="proyecto"]').click();
+  await page.locator('#pciFoGroupCards [data-edit-group]').first().click();
   assert.equal(await page.locator('#pciFoObjective').inputValue(),'Objetivos curriculares del proyecto');
   await page.locator('#pciFoPlan').selectOption('2');
   assert.equal(await page.locator('#pciFoPlanObjectives').inputValue(),'Objetivos del tercer bimestre');
@@ -144,9 +150,25 @@ async function testDesktop(page) {
   await page.locator('#pciDemoFoCards [data-pci-fo-format="laboratorios"]').click();
   assert.equal(await page.locator('#pci-fo-development').isVisible(),true);
   assert.match(await page.locator('#pciFoTitle').innerText(),/Laboratorios de la orientación/);
-  assert.equal(await page.locator('#pciFoFields').isVisible(),true,
-    'Los laboratorios conformados de 5.º abren su desarrollo curricular');
   assert.equal(await page.locator('#pciFoYear').inputValue(),'5');
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),2,
+    'Los dos laboratorios de 5.º se presentan simultáneamente como tarjetas drag & drop');
+  await page.locator('#pciFoContentList [data-content-id]').first().waitFor({timeout:45000});
+  await page.locator('#pciFoContentList [data-content-id]').first().dragTo(
+    page.locator('#pciFoGroupCards [data-fo-group]').first());
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').first().locator('.assigned-item').count(),1);
+  await page.locator('#pciFoGroupCards [data-fo-group]').first().locator('.assigned-item').first().dragTo(
+    page.locator('#pciFoGroupCards [data-fo-group]').nth(1));
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').first().locator('.assigned-item').count(),0);
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').nth(1).locator('.assigned-item').count(),1);
+  const foMoved=await page.evaluate(()=>{
+    const state=JSON.parse(localStorage.getItem('pci-fo-development-drafts-preview-20261014'));
+    const spaces=state.orientations['Economía y Administración'].spaces;
+    return {a:spaces['foLab5-c9']?.items||[],b:spaces['foLab5-c10']?.items||[]};
+  });
+  assert.equal(foMoved.a.length,0);
+  assert.equal(foMoved.b.length,1);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalFoBefore);
   await page.locator('#pciFoClose').click();
   await page.locator('#overviewMatrix').click();
   assert.equal(await page.locator('#pci-integrated-matrix').isVisible(),true);
