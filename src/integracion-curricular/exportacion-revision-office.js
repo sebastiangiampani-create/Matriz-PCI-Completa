@@ -170,6 +170,7 @@ function paragraph(value,kind='normal') {
 }
 export async function exportReviewDocx(review) {
   info(review);const p=[];
+  const contentById=new Map((Array.isArray(review.catalog)?review.catalog:[]).filter(item=>item?.id!=null).map(item=>[String(item.id),String(item.text||item.content||item.name||'')]));
   p.push(paragraph('Matriz PCI · Informe previo a la importación','title'));
   p.push(paragraph('Escuela: '+(review.source.schoolName||'Sin nombre')));
   p.push(paragraph('Orientación: '+review.orientation));
@@ -183,6 +184,10 @@ export async function exportReviewDocx(review) {
     p.push(paragraph(area,'heading'));
     for(const group of (Array.isArray(entry?.groups)?entry.groups:[])){
       p.push(paragraph((group.name||'Agrupamiento')+' · '+(group.id||'sin ID')));
+      for(const id of (Array.isArray(group.items)?group.items:[])){
+        const txt=contentById.get(String(id));
+        if(txt)p.push(paragraph('Contenido '+id+': '+txt));
+      }
       for(const field of ['kind','level','startTerm','endTerm','objective','synopsis','context','practiceAxis','items']){
         if(group[field]!==undefined)p.push(paragraph(field+': '+stringify(group[field])));
       }
