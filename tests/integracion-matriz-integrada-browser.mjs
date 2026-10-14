@@ -120,8 +120,9 @@ async function testDesktop(page) {
   await page.locator('#pciDemoFoCards [data-pci-fo-format="laboratorios"]').click();
   assert.equal(await page.locator('#pci-fo-development').isVisible(),true);
   assert.match(await page.locator('#pciFoTitle').innerText(),/Laboratorios de la orientación/);
-  assert.equal(await page.locator('#pciFoEmpty').isVisible(),true,
-    'Un laboratorio no conformado explica el paso previo sin abrir otra matriz');
+  assert.equal(await page.locator('#pciFoFields').isVisible(),true,
+    'Los laboratorios conformados de 5.º abren su desarrollo curricular');
+  assert.equal(await page.locator('#pciFoYear').inputValue(),'5');
   await page.locator('#pciFoClose').click();
   await page.locator('#overviewMatrix').click();
   assert.equal(await page.locator('#pci-integrated-matrix').isVisible(),true);
