@@ -150,9 +150,29 @@ async function testDesktop(page) {
   await page.locator('#pciDemoFoCards [data-pci-fo-format="laboratorios"]').click();
   assert.equal(await page.locator('#pci-fo-development').isVisible(),true);
   assert.match(await page.locator('#pciFoTitle').innerText(),/Laboratorios de la orientación/);
-  assert.equal(await page.locator('#pciFoYear').inputValue(),'5');
+  assert.equal(await page.locator('#pciFoYear').inputValue(),'0',
+    'Laboratorios abre mostrando todos los años, no solamente tercero o quinto');
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),4,
+    'Deben verse los cuatro laboratorios conformados simultáneamente');
+  assert.deepEqual(await page.locator('#pciFoGroupCards [data-fo-group] .pci-fo-year-pill').allTextContents(),
+    ['3.º año','4.º año','5.º año','5.º año']);
+  assert.equal(await page.locator('#pciFoSearch').isVisible(),true);
+  assert.equal(await page.locator('#pciFoBlockFilter').isVisible(),true);
+  assert.equal(await page.locator('#pciFoAxisFilter').isVisible(),true);
+  assert.equal(await page.locator('#pciFoPendingOnly').isVisible(),true);
+  await page.locator('#pciFoContentList [data-content-id]').first().waitFor({timeout:45000});
+  const beforeFiltering=await page.locator('#pciFoContentList [data-fo-content]').count();
+  const firstBlock=await page.locator('#pciFoBlockFilter option').nth(1).getAttribute('value');
+  await page.locator('#pciFoBlockFilter').selectOption(firstBlock);
+  assert.ok((await page.locator('#pciFoContentList [data-fo-content]').count())<=beforeFiltering);
+  await page.locator('#pciFoBlockFilter').selectOption('');
+  const firstDescription=await page.locator('#pciFoContentList .pci-fo-content-choice small').first().innerText();
+  await page.locator('#pciFoSearch').fill(firstDescription.slice(-12));
+  assert.ok((await page.locator('#pciFoContentList [data-fo-content]').count())>=1);
+  await page.locator('#pciFoSearch').fill('');
+  await page.locator('#pciFoYear').selectOption('5');
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),2,
-    'Los dos laboratorios de 5.º se presentan simultáneamente como tarjetas drag & drop');
+    'Filtrar quinto sólo muestra sus dos laboratorios sin borrar los demás');
   await page.locator('#pciFoContentList [data-content-id]').first().waitFor({timeout:45000});
   await page.locator('#pciFoContentList [data-content-id]').first().dragTo(
     page.locator('#pciFoGroupCards [data-fo-group]').first());
@@ -181,6 +201,17 @@ async function testDesktop(page) {
   await page.locator('#pciFoGroupCards [data-fo-group]').first().click();
   assert.match(await page.locator('#pciFoReviewWarning').innerText(),/Revisar planes/);
   assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalFoBefore);
+  await page.locator('#pciFoClose').click();
+  await page.locator('#pciDemoFoCards [data-pci-fo-format="talleres"]').click();
+  assert.equal(await page.locator('#pciFoYear').inputValue(),'0',
+    'Talleres abre mostrando todos sus años');
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),4,
+    'Los cuatro talleres se muestran juntos, como Formación General');
+  assert.ok(await page.locator('#pciFoGroupCards .pci-fo-year-pill').count()===4);
+  await page.locator('#pciFoYear').selectOption('5');
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),2);
+  await page.locator('#pciFoYear').selectOption('0');
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),4);
   await page.locator('#pciFoClose').click();
   await page.locator('#overviewMatrix').click();
   assert.equal(await page.locator('#pci-integrated-matrix').isVisible(),true);
@@ -297,6 +328,16 @@ async function testMobile(page) {
   }));
   assert.ok(geometry.height<=geometry.windowHeight+1);
   assert.equal(geometry.overflow,false);
+  await page.locator('#pciFoClose').click();
+  await page.locator('#pciDemoFoCards [data-pci-fo-format="laboratorios"]').click();
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),4);
+  assert.equal(await page.locator('#pciFoYear').inputValue(),'0');
+  const mobileCards=await page.locator('#pciFoGroupCards [data-fo-group]').evaluateAll(items=>items.map(card=>({
+    top:Math.round(card.getBoundingClientRect().top),
+    width:Math.round(card.getBoundingClientRect().width)
+  })));
+  assert.ok(mobileCards[1].top>mobileCards[0].top,'En celular los 4 espacios se apilan');
+  assert.equal(await page.locator('#pciFoSearch').isVisible(),true);
   await page.locator('#pciFoClose').click();
   const gridGeometry=await page.locator('#pciDemoFoCards').evaluate((el)=>{
     const cards=[...el.querySelectorAll('.pci-fo-card')];
