@@ -1,0 +1,49 @@
+/* El panel curricular es el V93 ORIGINAL en un documento aislado.
+   Retiramos los dos tableros aproximados para evitar cifras contradictorias.
+   No cambia los agrupamientos drag & drop ni la ficha original. */
+#pciFgCoverageDashboard,
+#pciFoCoverageDashboard,
+#pciFoCoverage,
+#pciFoPlanCoverage{display:none!important}
+.pci-native-coverage-entry{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin:10px 0 13px;padding:12px 14px;
+  border:1px solid #d8e1e8;border-radius:14px;
+  background:#f8fbfd;
+}
+.pci-native-coverage-entry .button{
+  color:#12395c;background:#fff;border-color:#126e65;
+  font-weight:900;min-height:42px
+}
+.pci-native-coverage-entry small{
+  color:#5f7382;font-size:.76rem;line-height:1.5
+}
+#pciNativeV2Coverage[hidden]{display:none!important}
+#pciNativeV2Coverage{
+  position:fixed;inset:0;z-index:250000;
+  background:#f7fafb;overflow:hidden
+}
+#pciNativeV2CoverageFrame{
+  display:block;width:100%;height:100%;border:0;background:#f7fafb;
+}
+body.pci-native-v2-open{overflow:hidden!important}
+#pciNativeV2Notice[hidden]{display:none!important}
+#pciNativeV2Notice{
+  position:absolute;top:75px;left:5vw;right:5vw;
+  padding:15px 18px;border-radius:12px;background:#fff0d6;
+  border:1px solid #e6c57d;color:#795000;font-weight:700;
+  z-index:3
+}
+#pciNativeV2CoverageClose{
+  position:absolute;top:10px;right:76px;z-index:5;
+  padding:8px 13px;background:#fff;color:#12395c;border:1px solid #d3dfe5;
+  border-radius:99px;font-weight:850;font-size:.73rem;
+}
+@media(max-width:620px){
+  .pci-native-coverage-entry{align-items:stretch;flex-direction:column}
+  .pci-native-coverage-entry .button{width:100%}
+  #pciNativeV2CoverageClose{right:61px;top:6px;padding:7px}
+}
+@media print{
+  #pciNativeV2Coverage{display:none!important}
+}
