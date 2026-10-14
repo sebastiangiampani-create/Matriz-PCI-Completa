@@ -911,6 +911,12 @@ async function start() {
   }
 }
 
+// Único punto permitido de escritura para los módulos históricos auxiliares.
+function saveScopedState(candidate) {
+  if (!activeDraftKey || candidate !== app) return false;
+  localStorage.setItem(activeDraftKey, JSON.stringify(app));
+  return true;
+}
 function draftKeyFor(orientation) {
   if (typeof orientation !== 'string' || !orientation.trim()) throw Error('Falta la orientación.');
   return WORK_PREFIX + encodeURIComponent(orientation.trim());
@@ -965,6 +971,7 @@ window.PCIApp = {
   isOrientationReady: (name) => activeDraftKey === draftKeyFor(name),
   switchOrientationDraft,
   activateOrientationDraft,
+  saveScopedState,
   openOverview: () => showScreen('overview'),
   openControl: () => showScreen('control'),
   openMatrix: () => showScreen('matrix'),
