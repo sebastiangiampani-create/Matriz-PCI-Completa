@@ -25,19 +25,8 @@ async function testDesktop(page) {
   await page.locator('#areaGrid .area-card').first().waitFor({timeout:60000});
   await page.locator('#pciImportSavedStatus').waitFor({state:'visible'});
   assert.match(await page.locator('#pciImportSavedStatus').innerText(),/En esta sesión todavía no se detecta trabajo previo/);
-  await page.evaluate(() => {
-    const state=window.PCIApp.getState();
-    state.areas.Matemática.groups[0].items.push('contenido-de-prueba-para-detectar');
-    window.dispatchEvent(new CustomEvent('pci-state-change'));
-  });
-  assert.match(await page.locator('#pciImportSavedStatus').innerText(),/Hay trabajo cargado en esta Matriz/);
-  assert.match(await page.locator('#pciImportSavedStatus').innerText(),/1 contenido ubicado/);
-  await page.evaluate(() => {
-    const state=window.PCIApp.getState();
-    state.areas.Matemática.groups[0].items.pop();
-    window.dispatchEvent(new CustomEvent('pci-state-change'));
-  });
-  assert.match(await page.locator('#pciImportSavedStatus').innerText(),/En esta sesión todavía no se detecta trabajo previo/);
+  assert.equal(await page.evaluate(()=>window.PCIApp.getActiveOrientation()),null);
+  // El original se conserva y sólo se consulta: no se edita antes del OK.
   // La importación es una revisión aislada, NO una escritura ni un merge.
   const originalBefore = await page.evaluate(() => localStorage.getItem('pciAppV2'));
   await page.locator('#pciImportOpen').click();
@@ -64,9 +53,28 @@ async function testDesktop(page) {
 
   await page.locator('#pciImportReviewed').check();
   await page.locator('#pciImportApprove').click();
-  assert.match(await page.locator('#pciImportResult').innerText(),/no se escribió ningún dato escolar/);
+  assert.equal(await page.locator('#pci-import-review').evaluate(el=>el.open),false);
+  assert.equal(await page.evaluate(()=>window.PCIApp.getActiveOrientation()),'Economía y Administración');
   assert.equal(await page.evaluate(() => localStorage.getItem('pciAppV2')),originalBefore);
-  await page.locator('#pciImportClose').click();
+  assert.equal(await page.locator('#pciClassicToggle').count(),0);
+  const editKey='pci-matriz-orientacion-borrador-20261014:'+encodeURIComponent('Economía y Administración');
+  assert.ok(await page.evaluate(key=>localStorage.getItem(key),editKey),
+    'El OK debe habilitar una copia independiente por orientación');
+  assert.ok(await page.evaluate(key=>localStorage.getItem(key+':original-sin-transformar'),editKey),
+    'La copia original debe estar respaldada antes de habilitar la edición');
+  await page.locator('#areaGrid button[data-area="Artes"]').click();
+  assert.equal(await page.locator('#board.screen.active').count(),1);
+  assert.match(await page.locator('#boardTitle').innerText(),/Artes/);
+  assert.equal(await page.locator('#groups .group-card').count(),6);
+  await page.locator('#contentList [data-content-id]').first().dragTo(page.locator('#groups .group-card').first());
+  const afterDrag=await page.evaluate(key=>{
+    const state=JSON.parse(localStorage.getItem(key));
+    return state.areas.Artes.groups[0].items.length;
+  },editKey);
+  assert.equal(afterDrag,1,'La copia aprobada debe permitir drag & drop del editor original');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalBefore,
+    'El editor drag & drop nunca debe sobrescribir la Matriz original');
+  await page.locator('#backOverview').click();
   assert.ok(await page.locator('#areaGrid .area-card').count() >= 6,
     'Deben permanecer los mosaicos curriculares originales de Matriz');
   assert.equal(await page.locator('#pciDemoOrientationSelect option').count(),2,
@@ -136,12 +144,6 @@ async function testDesktop(page) {
   assert.match(await page.locator('#pciIntegratedHead').innerText(),/C1/);
   assert.match(await page.locator('#pciIntegratedBody').innerText(),/Formación Orientada/);
   await page.locator('#pciIntegratedClose').click();
-  await page.locator('#pciClassicToggle').click();
-  await page.locator('#overviewMatrix').click();
-  assert.equal(await page.locator('#matrix.screen.active').count(),1,
-    'La matriz histórica debe seguir abriendo desde la vista original');
-  await page.locator('#matrix [data-screen-link="overview"]').first().click();
-  await page.locator('#pciClassicToggle').click();
   await page.locator('#pciDemoOrientationTabs button[data-orientation="Matemática y Física"]').click();
   assert.match(await page.locator('#pciDemoOrientationContext').innerText(),/Matemática y Física/);
   await page.locator('#pciMapOpen').click();
@@ -189,54 +191,32 @@ async function testDesktop(page) {
     document.querySelector('#areaGrid [data-area="Ciencias Sociales"] .pill')?.textContent.includes('10 laboratorios'),
     {timeout:15000});
   assert.match(await socialTile.locator('.pill').innerText(),/10 laboratorios/);
+  // Tras importar no hay popup "Matriz original": se edita el área directamente.
+  // Al cambiar de orientación, la edición previa queda en su propia clave.
   await socialTile.click();
-  assert.equal(await page.locator('#pci-area-detail').evaluate(node=>node.open),true);
-  assert.match(await page.locator('#pciAreaDetailStatus').innerText(),/10 laboratorios/);
-  assert.equal(await page.locator('#pciAreaDetailGroups .pci-offer-year-card').nth(2).locator('.pci-offer-group').count(),2);
-  assert.match(await page.locator('#pciAreaDetailLegacyInfo').innerText(),/12 agrupamientos históricos/);
-  await page.locator('#pciAreaDetailClose').click();
-
-  // Dos composiciones V2 deliberadamente distintas de la misma FG inicial.
-  // No se escribe ni se normaliza ninguna secuencia de Matriz.
-  const oldFg=await page.evaluate(()=>JSON.stringify(JSON.parse(localStorage.getItem('pciAppV2') || '{}').areas));
-  await page.evaluate(()=>{
-    const key='pci-matriz-fg-v2-original-preview-20261009';
-    const data=JSON.parse(localStorage.getItem(key) || '{}');
-    data.maps=data.maps||{};
-    data.maps['Economía y Administración']={
-      ...data.maps['Economía y Administración'],socialOption:'A',
-      placements:{'socialA-c5':['fg-3-historia','fg-3-economia'],
-        'socialA-c6':['fg-3-historia','fg-3-economia']}
-    };
-    data.maps['Matemática y Física']={
-      ...data.maps['Matemática y Física'],socialOption:'B',
-      placements:{'socialA-c5':['fg-3-historia'],'socialA-c6':['fg-3-historia'],
-        'socialB-c5':['fg-3-geografia'],'socialB-c6':['fg-3-geografia']}
-    };
-    localStorage.setItem(key,JSON.stringify(data));
-  });
-  await page.locator('#pciDemoOrientationTabs button[data-orientation="Economía y Administración"]').click();
-  assert.match(await socialTile.locator('.pill').innerText(),/10 laboratorios/);
-  await page.locator('#pciDemoOrientationTabs button[data-orientation="Matemática y Física"]').click();
-  assert.match(await socialTile.locator('.pill').innerText(),/12 laboratorios/);
+  assert.equal(await page.locator('#pci-import-review').evaluate(el=>el.open),true,
+    'Sin importar la orientación nueva, se debe solicitar primero el OK');
+  await page.locator('#pciImportPrepare').click();
+  await page.locator('#pciImportReviewed').check();
+  await page.locator('#pciImportApprove').click();
+  assert.equal(await page.evaluate(()=>window.PCIApp.getActiveOrientation()),'Matemática y Física');
   await socialTile.click();
-  assert.match(await page.locator('#pciAreaDetailStatus').innerText(),/12 laboratorios/);
-  assert.equal(await page.locator('#pciAreaDetailGroups .pci-offer-year-card').nth(2).locator('.pci-offer-group').count(),4);
-  assert.match(await page.locator('#pciAreaDetailGroups').innerText(),/C5/);
-  assert.match(await page.locator('#pciAreaDetailGroups').innerText(),/C6/);
-  assert.match(await page.locator('#pciAreaDetailLegacyInfo').innerText(),/12 agrupamientos históricos/);
-  const newFg=await page.evaluate(()=>JSON.stringify(JSON.parse(localStorage.getItem('pciAppV2') || '{}').areas));
-  assert.equal(newFg,oldFg,'Cambiar de orientación/opción V2 no puede tocar las secuencias originales');
-  await page.screenshot({path:artifacts+'desktop-detalle-12-sociales.png',fullPage:true});
-  await page.locator('#pciAreaDetailLegacy').click();
-  assert.equal(await page.locator('#board.screen.active').count(),1,
-    'La FG histórica conserva su pantalla de edición independiente del mapa');
+  assert.equal(await page.locator('#board.screen.active').count(),1);
+  assert.equal(await page.locator('#groups .group-card').count(),12);
+  const secondKey='pci-matriz-orientacion-borrador-20261014:'+encodeURIComponent('Matemática y Física');
+  await page.locator('#groups .group-card').first().locator('[data-field="name"]').fill('Sociales editado solo en Matemática y Física');
+  await page.locator('#groups .group-card').first().locator('[data-field="name"]').blur();
+  assert.equal((await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),secondKey)).areas['Ciencias Sociales'].groups[0].name,
+    'Sociales editado solo en Matemática y Física');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalBefore);
   await page.locator('#backOverview').click();
-  await page.waitForFunction(()=>
-    document.querySelector('#areaGrid [data-area="Ciencias Sociales"] .pill')?.textContent.includes('12 laboratorios'),
-    {timeout:15000});
-  await page.screenshot({path:artifacts+'desktop-matriz-opcion-12.png',fullPage:true});
-
+  await page.locator('#pciDemoOrientationTabs button[data-orientation="Economía y Administración"]').click();
+  assert.equal(await page.evaluate(()=>window.PCIApp.getActiveOrientation()),'Economía y Administración');
+  await page.locator('#areaGrid button[data-area="Artes"]').click();
+  assert.equal(await page.locator('#groups .group-card').count(),6);
+  assert.equal(await page.locator('#groups .group-card').first().locator('.assigned-item').count(),1,
+    'La orientación inicial recupera su drag & drop sin mezclar otra orientación');
+  await page.locator('#backOverview').click();
   assert.deepEqual(remote,[],'La vista aislada no debe contactar Supabase');
   assert.deepEqual(errors,[],'Errores JavaScript en la vista integrada: '+errors.join(' | '));
 }
