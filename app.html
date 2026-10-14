@@ -93,6 +93,62 @@
       <button id="pciAreaDetailMap" class="button primary" type="button">Abrir Mapa de la Oferta para editar</button>
     </div>
   </dialog>
+  <div id="pci-fo-development" role="dialog" aria-modal="true" aria-labelledby="pciFoTitle" hidden>
+    <header class="pci-fo-dev-header">
+      <div>
+        <p class="eyebrow">Desarrollo curricular · Formación Orientada</p>
+        <h2 id="pciFoTitle">Laboratorios de la orientación</h2>
+        <p id="pciFoContext"></p>
+      </div>
+      <button id="pciFoClose" type="button" class="button secondary">← Volver a espacios curriculares</button>
+    </header>
+    <div class="pci-fo-dev-toolbar">
+      <label for="pciFoYear">Año <select id="pciFoYear"><option value="3">3.º</option><option value="4">4.º</option><option value="5">5.º</option></select></label>
+      <label for="pciFoSpace">Espacio curricular <select id="pciFoSpace"></select></label>
+      <span id="pciFoSaved" role="status" aria-live="polite">Vista de prueba · borrador local, sin guardar en la escuela</span>
+    </div>
+    <div class="pci-fo-dev-content">
+      <aside class="pci-fo-dev-bag" aria-labelledby="pciFoBagTitle">
+        <h3 id="pciFoBagTitle">Bolsa de contenidos priorizados</h3>
+        <p id="pciFoBagInfo">Contenidos de Formación Orientada de la orientación seleccionada.</p>
+        <label>Buscar contenido
+          <input id="pciFoSearch" type="search" placeholder="Bloque, eje o contenido">
+        </label>
+        <p id="pciFoContentCount" class="muted"></p>
+        <div id="pciFoContentList" class="pci-fo-dev-content-list"></div>
+      </aside>
+      <section class="pci-fo-dev-editor" aria-label="Editor de desarrollo curricular">
+        <div id="pciFoEmpty" class="pci-fo-dev-empty" hidden>
+          <h3>Este formato todavía no está conformado</h3>
+          <p>Definí primero los laboratorios o talleres de este año en el Mapa de la Oferta. El desarrollo existente no se borra.</p>
+          <button id="pciFoMapOpen" type="button" class="button secondary">Abrir Mapa de la Oferta</button>
+        </div>
+        <div id="pciFoFields">
+          <p id="pciFoMembers" class="pci-fo-members"></p>
+          <p id="pciFoReviewWarning" class="pci-fo-review-warning" hidden></p>
+          <div class="pci-fo-fields-grid">
+            <label>Objetivos de aprendizaje<textarea id="pciFoObjective" rows="3" placeholder="¿Qué aprendizajes se espera desarrollar?"></textarea></label>
+            <label>Sinopsis<textarea id="pciFoSynopsis" rows="3" placeholder="¿Cómo se organiza la propuesta?"></textarea></label>
+            <label id="pciFoContextField">Contexto problematizador<textarea id="pciFoProblemContext" rows="3" placeholder="Problema que organiza el laboratorio"></textarea></label>
+            <label id="pciFoPracticeField">Práctica, producto o eje<textarea id="pciFoPracticeAxis" rows="3" placeholder="Práctica o producto del taller"></textarea></label>
+          </div>
+          <h3>Contenidos seleccionados para el espacio</h3>
+          <div id="pciFoAssignedContents" class="pci-fo-assigned"></div>
+          <div class="pci-fo-plan-head">
+            <h3>Planes bimestrales y secuencias</h3>
+            <label>Plan <select id="pciFoPlan"><option value="0">Bimestre 1</option><option value="1">Bimestre 2</option><option value="2">Bimestre 3</option><option value="3">Bimestre 4</option></select></label>
+          </div>
+          <div class="pci-fo-fields-grid">
+            <label>Nombre del plan<input id="pciFoPlanName" type="text" placeholder="Nombre del plan de aprendizaje"></label>
+            <label>Objetivos del plan<textarea id="pciFoPlanObjectives" rows="2"></textarea></label>
+            <label class="pci-fo-full">Síntesis del plan<textarea id="pciFoPlanSynopsis" rows="2"></textarea></label>
+          </div>
+          <fieldset class="pci-fo-dev-plan-contents"><legend>Contenidos de este plan</legend><div id="pciFoPlanContents"></div></fieldset>
+          <div id="pciFoStages" class="pci-fo-stages"></div>
+        </div>
+      </section>
+    </div>
+  </div>
   <div id="pci-integrated-matrix" role="dialog" aria-modal="true" aria-labelledby="pciIntegratedTitle" hidden>
     <div class="pci-integrated-toolbar">
       <div class="pci-integrated-heading">
@@ -148,6 +204,7 @@
   <script type="module" src="common-final-fixes.js?v=20260828-commonaxis1"></script>
   <script defer src="integracion-matriz-preview.js?v=20261010-1"></script>
   <script type="module" src="integracion-matriz-tablero.js?v=20261014-1"></script>
+  <script type="module" src="integracion-fo-desarrollo.js?v=20261014-1"></script>
   <script type="module" src="integracion-matriz-import-preview.js?v=20261013-1"></script>
 </body>
 </html>
