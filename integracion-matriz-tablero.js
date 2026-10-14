@@ -200,7 +200,9 @@ if(board && tableBody && head && yearPicker){
     if(!card)return;
     event.preventDefault();event.stopImmediatePropagation();
     const format=card.dataset.pciFoFormat;
-    openMatrix(format,format==='proyecto'?5:null);
+    // El desarrollo curricular se abre de forma directa: el mapa y la
+    // matriz son herramientas distintas, no pasos de acceso obligatorios.
+    window.PCIFoDesarrollo?.open(format,format==='proyecto'?5:null);
   },true);
 
   yearPicker.addEventListener('change',render);
