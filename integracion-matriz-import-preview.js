@@ -1,4 +1,5 @@
 import { prepareReview, approveReview, assessPriorWork } from './src/integracion-curricular/revision-importacion-original.js';
+import { exportReviewXlsx, exportReviewDocx } from './src/integracion-curricular/exportacion-revision-office.js';
 const $ = id => document.getElementById(id);
 const clean = text => String(text ?? '').replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const dialog=$('pci-import-review');
@@ -33,7 +34,7 @@ if(dialog&&open){
  function reset(){
    review=null;sourceSnapshot=null;
    $('pciImportReviewContent').hidden=true;$('pciImportReviewed').checked=false;
-   $('pciImportApprove').disabled=true;$('pciImportExport').disabled=true;
+   $('pciImportApprove').disabled=true;$('pciImportExport').disabled=true;$('pciImportExcel').disabled=true;$('pciImportWord').disabled=true;
  }
  open.addEventListener('click',()=>{reset();updateSavedStatus();$('pciImportOrientation').textContent=orientation();status('La Matriz original no se modifica con esta revisión.');dialog.showModal();});
  $('pciImportClose').addEventListener('click',()=>dialog.close());
@@ -59,7 +60,7 @@ if(dialog&&open){
        ? review.warnings.map(w=>'<p><strong>'+clean(w.area)+':</strong> '+clean(w.message)+'</p>').join('')
        : '<p>Sin diferencias estructurales detectadas por esta revisión preliminar. Todavía falta verificar la homologación de contenidos y la persistencia por orientación.</p>';
      $('pciImportReviewContent').hidden=false;
-     $('pciImportExport').disabled=false;
+     $('pciImportExport').disabled=false;$('pciImportExcel').disabled=false;$('pciImportWord').disabled=false;
      $('pciImportReviewed').checked=false;
      $('pciImportApprove').disabled=true;
      status('Copia de revisión preparada en memoria. Nada se importó ni se guardó online.');
@@ -77,6 +78,33 @@ if(dialog&&open){
      status('OK de revisión registrado solo en esta ventana. Importación definitiva pendiente: no se escribió ningún dato escolar.');
    }catch(e){status(e.message);}
  });
+
+ async function saveReviewOffice(kind){
+   if(!review) return;
+   const button=$(kind==='Excel'?'pciImportExcel':'pciImportWord');
+   const oldText=button.textContent;
+   button.disabled=true;
+   button.textContent='Preparando '+kind+'…';
+   try{
+     // Asegurar que el trabajo de la escuela no cambió después de preparar
+     // la copia. Si cambió, no exportar un documento desactualizado.
+     if(JSON.stringify(original())!==review.sourceSnapshot)
+       throw new Error('La Matriz cambió desde que preparaste la copia. Volvé a prepararla antes de descargar.');
+     const stamp=review.orientation.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/gi,'_');
+     const blob=kind==='Excel'?await exportReviewXlsx(review):await exportReviewDocx(review);
+     const href=URL.createObjectURL(blob);
+     const link=document.createElement('a');
+     link.href=href;
+     link.download='Revision_Matriz_'+stamp+(kind==='Excel'?'.xlsx':'.docx');
+     link.click();
+     setTimeout(()=>URL.revokeObjectURL(href),30000);
+     status(kind+' listo para descargar. Revisá el archivo antes de dar tu OK. Ningún dato escolar fue modificado.');
+   }catch(err){status('No se pudo exportar: '+err.message);}
+   finally{button.textContent=oldText;button.disabled=false;}
+ }
+ $('pciImportExcel').addEventListener('click',()=>saveReviewOffice('Excel'));
+ $('pciImportWord').addEventListener('click',()=>saveReviewOffice('Word'));
+
  $('pciImportExport').addEventListener('click',()=>{
    if(!review)return;
    const payload={format:review.format,orientation:review.orientation,
