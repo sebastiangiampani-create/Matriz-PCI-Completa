@@ -122,6 +122,16 @@
       </aside>
       <section class="pci-fo-dev-editor" aria-label="Editor de desarrollo curricular">
         <div id="pciFoCoverage" class="pci-fo-coverage" role="status" aria-live="polite"></div>
+        <details id="pciFoCoverageDashboard" class="pci-fo-coverage-dashboard">
+          <summary>Cobertura curricular · niveles, materias, agrupamientos y planes</summary>
+          <div class="pci-fo-cover-tools">
+            <span id="pciFoCoverageBasis">Los porcentajes oficiales se calculan con el universo curricular disponible.</span>
+            <button id="pciFoCoveragePrint" class="button secondary" type="button">Imprimir cobertura</button>
+          </div>
+          <div id="pciFoCoverageLevels"></div>
+          <div id="pciFoCoverageSubjects"></div>
+          <div id="pciFoCoverageSpaces"></div>
+        </details>
         <div id="pciFoGroupCards" class="pci-fo-group-grid" aria-label="Agrupamientos editables para arrastrar contenidos"></div>
         <div id="pciFoSelection" class="pci-fo-selection" hidden><strong id="pciFoSelectedCount">0 seleccionados</strong><button id="pciFoMoveSelected" class="button primary" type="button">Mover al espacio seleccionado</button></div>
         <div id="pciFoEmpty" class="pci-fo-dev-empty" hidden>
@@ -152,6 +162,7 @@
             <label class="pci-fo-full">Síntesis del plan<textarea id="pciFoPlanSynopsis" rows="2"></textarea></label>
           </div>
           <fieldset class="pci-fo-dev-plan-contents"><legend>Contenidos de este plan</legend><div id="pciFoPlanContents"></div></fieldset>
+          <div id="pciFoPlanCoverage" class="pci-fo-plan-coverage" role="status" aria-live="polite"></div>
           <div id="pciFoStages" class="pci-fo-stages"></div>
         </div>
         </details>
