@@ -215,6 +215,48 @@ async function testDesktop(page) {
   assert.equal(stored.plansBimestrales[2].stages.evaluacion.description,'Evaluar el proyecto');
   assert.deepEqual(stored.items,[chosenFoContent]);
   assert.deepEqual(stored.plansBimestrales[2].contentIds,[chosenFoContent]);
+  // El V91 ORIGINAL debe leer el mismo contenido y plan después del arrastre.
+  await page.locator('#pciNativeV2CoverageFO').click();
+  await native.locator('#v98dResults .v98d-area').first().waitFor({timeout:60000});
+  const v2AfterEdit=await page.locator('#pciNativeV2CoverageFrame').evaluate(frame=>{
+    const w=frame.contentWindow,core=w.PCICoverageV91,all=w.PCIPhase2V28.groups();
+    const project=all.find(g=>g.area==='Formación Orientada'&&g.id==='proyecto-n5');
+    const trajectory=core.trajectoryCoverage('Formación Orientada',all);
+    const group=core.formatCoverage(project);
+    const plan=core.planCoverage(project,project.data.plansBimestrales[2].contentIds);
+    return {
+      projectContentCount:project.data.contents.length,
+      trajectoryUsed:trajectory.used,
+      groupUsed:group.trajectoryUsed,groupAnnualTotal:group.total,
+      planUsed:plan.levelUsed,planBasis:plan.basisLabel,
+      componentUsed:plan.byComponent.filter(x=>x.planUsed>0).length
+    };
+  });
+  assert.equal(v2AfterEdit.projectContentCount,1);
+  assert.equal(v2AfterEdit.trajectoryUsed,1,
+    'V2 deduplica el mismo contenido en la trayectoria orientada');
+  assert.equal(v2AfterEdit.groupUsed,1);
+  assert.equal(v2AfterEdit.groupAnnualTotal,0);
+  assert.equal(v2AfterEdit.planUsed,1);
+  assert.equal(v2AfterEdit.planBasis,'Trayectoria');
+  assert.equal(v2AfterEdit.componentUsed,1);
+  await native.locator('#v98dArea').selectOption('Formación Orientada');
+  await native.locator('#v98dLevel').selectOption('5');
+  await native.locator('#v99dPrint').evaluate(el=>{
+    const w=el.ownerDocument.defaultView;
+    w.__printedNativeV2='';
+    w.open=()=>({document:{
+      open(){},write(html){w.__printedNativeV2+=html;},close(){}
+    }});
+    el.click();
+  });
+  const printedV2=await page.locator('#pciNativeV2CoverageFrame').evaluate(frame=>
+    frame.contentWindow.__printedNativeV2);
+  assert.match(printedV2,/Panel de cobertura curricular/);
+  assert.match(printedV2,/size:A4 landscape/);
+  assert.match(printedV2,/Planes del agrupamiento/);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalFoBefore);
+  await page.locator('#pciNativeV2CoverageClose').click();
   assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalFoBefore,
     'El desarrollo FO no puede alterar la FG histórica');
   await page.locator('#pciFoClose').click();
