@@ -92,7 +92,7 @@ async function testDesktop(page) {
   assert.match(await page.locator('#pciFgCoverageLevels').innerText(),/Cobertura por nivel y formato/);
   assert.match(await page.locator('#pciFgCoverageSubjects').innerText(),/Cobertura por materia y nivel/);
   assert.match(await page.locator('#pciFgCoverageGroups').innerText(),/Cobertura por espacio y plan/);
-  await page.locator('#contentList [data-content-id]').first().dragTo(page.locator('#groups .group-card').first());
+  await page.locator('#contentList [data-content-id]').first().dragTo(page.locator('#groups .group-card .assigned-list').first());
   const afterDrag=await page.evaluate(key=>{
     const state=JSON.parse(localStorage.getItem(key));
     return state.areas.Artes.groups[0].items.length;
