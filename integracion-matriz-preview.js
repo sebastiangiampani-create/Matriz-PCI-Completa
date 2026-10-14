@@ -381,6 +381,11 @@
     .then(r => { if (!r.ok) throw new Error('Bolsa curricular no disponible'); return r.json(); })
     .then(data => { subjectCatalog = data; })
     .catch(() => { subjectCatalog = null; });
+  function recoverApprovedOrientation() {
+    if (available.length && window.PCIApp?.ready)
+      window.PCIApp.switchOrientationDraft(active);
+  }
+  window.addEventListener('pci-app-ready', recoverApprovedOrientation);
   fetch(CATALOG_URL, { cache: 'no-store' })
     .then((r) => { if (!r.ok) throw new Error('Catálogo no disponible'); return r.json(); })
     .then((catalog) => {
@@ -388,10 +393,12 @@
         entry.variantes?.length ? entry.variantes.map((item) => item.nombre) : [entry.nombre]
       ).filter((name) => typeof name === 'string' && name.trim());
       renderSelections();
+      recoverApprovedOrientation();
     })
     .catch(() => {
       available = DEFAULTS.slice();
       renderSelections();
+      recoverApprovedOrientation();
       const hint = $('pciDemoCatalogStatus');
       if (hint) hint.textContent = 'No se pudo cargar el catálogo completo de orientaciones de la prueba.';
     });
