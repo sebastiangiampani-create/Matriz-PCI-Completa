@@ -45,6 +45,7 @@ if(dialog&&open){
      const selected=orientation();
      const mapState=JSON.parse(localStorage.getItem('pci-matriz-fg-v2-original-preview-20261009')||'{}');
      review=prepareReview(state,selected,mapState?.maps?.[selected]);
+     review.catalog=Array.isArray(window.PCIApp?.getData?.())?window.PCIApp.getData().map(({id,area,subject,axis,text})=>({id,area,subject,axis,text})):[];
      sourceSnapshot=JSON.stringify(state);
      const summary=review.summary;
      $('pciImportMetrics').innerHTML=[
@@ -109,7 +110,7 @@ if(dialog&&open){
    if(!review)return;
    const payload={format:review.format,orientation:review.orientation,
      summary:review.summary,warnings:review.warnings,reviewed:review.reviewed,
-     approved:review.approved,source:review.source};
+     approved:review.approved,source:review.source,catalog:review.catalog||[]};
    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
    const uri=URL.createObjectURL(blob);
    const link=document.createElement('a');
