@@ -17,7 +17,7 @@ function persistState() {
   const app = state();
   if (!app) return;
   app.schemaVersion = 10;
-  localStorage.setItem('pciAppV2', JSON.stringify(app));
+  window.PCIApp?.saveScopedState?.(app);
   window.app = app;
   window.dispatchEvent(new CustomEvent('pci-state-change', { detail: { schemaVersion: 10 } }));
 }
