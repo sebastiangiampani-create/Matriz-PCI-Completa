@@ -205,7 +205,7 @@ export async function exportReviewDocx(review) {
   const sourceText=JSON.stringify(review.source,null,2);
   for(let i=0;i<sourceText.length;){
     let end=Math.min(sourceText.length,i+1300);
-    if(end<sourceText.length&&/[\\uD800-\\uDBFF]/.test(sourceText.charAt(end-1)))end--;
+    if(end<sourceText.length&&/[\uD800-\uDBFF]/.test(sourceText.charAt(end-1)))end--;
     if(end<=i)end=i+1;
     p.push(paragraph(sourceText.slice(i,end)));i=end;
   }
