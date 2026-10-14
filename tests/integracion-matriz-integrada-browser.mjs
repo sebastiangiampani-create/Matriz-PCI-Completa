@@ -99,8 +99,13 @@ async function testDesktop(page) {
   assert.equal(await page.locator('#pciFoYear').inputValue(),'5');
   assert.equal(await page.locator('#pciFoFields').isVisible(),true);
   assert.equal(await page.locator('#pciFoStages .pci-fo-stage').count(),4);
+  await page.locator('#pciFoContentList [data-fo-content]').first().waitFor({timeout:45000});
+  const chosenFoContent=await page.locator('#pciFoContentList [data-fo-content]').first().getAttribute('value');
+  await page.locator('#pciFoContentList [data-fo-content]').first().check();
+  assert.equal(await page.locator('#pciFoAssignedContents .pci-fo-assigned-item').count(),1);
   await page.locator('#pciFoObjective').fill('Objetivos curriculares del proyecto');
   await page.locator('#pciFoPlan').selectOption('2');
+  await page.locator('#pciFoPlanContents [data-plan-content]').first().check();
   await page.locator('#pciFoPlanObjectives').fill('Objetivos del tercer bimestre');
   await page.locator('#pciFoStages [data-stage="evaluacion"][data-field="description"]').fill('Evaluar el proyecto');
   await page.waitForFunction(()=>!!localStorage.getItem('pci-fo-development-drafts-preview-20261014'));
@@ -109,6 +114,8 @@ async function testDesktop(page) {
     return s.orientations['Economía y Administración'].spaces['proyecto-n5'];
   });
   assert.equal(stored.plansBimestrales[2].stages.evaluacion.description,'Evaluar el proyecto');
+  assert.deepEqual(stored.items,[chosenFoContent]);
+  assert.deepEqual(stored.plansBimestrales[2].contentIds,[chosenFoContent]);
   assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalFoBefore,
     'El desarrollo FO no puede alterar la FG histórica');
   await page.locator('#pciFoClose').click();
