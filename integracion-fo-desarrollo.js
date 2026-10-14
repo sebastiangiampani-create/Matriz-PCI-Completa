@@ -489,22 +489,22 @@ if(overlay){
    const plan=space?.plans.find(item=>
      Number(item.number)===Number($('pciFoPlan').value)+1);
    if(!plan)return;
-   host.appendChild(node('h4','','Cobertura del plan '+plan.number));
+   host.appendChild(node('h4','','Plan '+plan.number+' · Cobertura curricular'));
    host.appendChild(node('p','pci-fo-cover-context',
-     'La referencia anual por nivel de FO está pendiente porque el catálogo oficial no identifica un universo por año.'));
-   addMetricRow(host,'Contra la trayectoria orientada',
-     plan.used,plan.totalOfficial,plan.officialPercent,'trayectoria');
-   addMetricRow(host,'Dentro del agrupamiento',
-     plan.groupingUsed,plan.groupingTotal,plan.groupingPercent,'agrupamiento');
-   for(const row of plan.byComponent.filter(item=>item.used)){
-     addMetricRow(host,(row.kind||'Bloque')+' · '+row.label,
-       row.used,row.total,row.percent,'trayectoria');
-     addMetricRow(host,'En este agrupamiento · '+row.label,
-       row.groupingUsed,row.groupingTotal,row.groupingPercent,'agrupamiento');
-   }
-   if(plan.outsideGroup.length)host.appendChild(node('p','pci-fo-cover-warning',
-     'Revisar '+plan.outsideGroup.length+' contenidos vinculados al plan que ya no están ubicados en este agrupamiento.'));
- } 
+     'Cobertura del agrupamiento. Los contenidos repetidos no se vuelven a contar. '+
+     'La base orientada actual todavía no permite calcular cobertura anual por nivel; '+
+     'la primera referencia corresponde a la trayectoria orientada.'));
+   const header=node('div','v99d-plan-summary');
+   header.appendChild(node('strong','','De la trayectoria: '+plan.used+'/'+plan.totalOfficial+
+     ' · '+(plan.officialPercent??0)+'%'));
+   header.appendChild(node('strong','','Dentro del agrupamiento: '+
+     plan.groupingUsed+'/'+plan.groupingTotal+
+     (plan.groupingPercent===null?' · —':' · '+plan.groupingPercent+'%')));
+   host.appendChild(header);
+   addV2PlanTable(host,plan,snapshot.levelBasisAvailable);
+   if(plan.outsideGroup.length)host.appendChild(node('p','v98d-pending',
+     'Revisar '+plan.outsideGroup.length+' contenidos vinculados al plan que ya no están ubicados en este agrupamiento. Se conservaron sus referencias.'));
+ }
  function startDrag(event){
    const item=event.target.closest('[data-content-id]');
    if(!item?.dataset.contentId)return;
@@ -588,10 +588,11 @@ if(overlay){
        wrapper.dataset.contentId=id;
        const line=byId.get(id);
        wrapper.appendChild(node('span','',line?.text||id));
-       const remove=node('button','pci-fo-remove','Quitar');
+       const remove=node('button','remove-content pci-fo-remove','×');
        remove.dataset.removeFrom=id;
        remove.type='button';
        remove.title='Devolver a la bolsa';
+       remove.setAttribute('aria-label','Quitar contenido y devolverlo a la bolsa');
        wrapper.appendChild(remove);
        assigned.appendChild(wrapper);
      }
@@ -808,10 +809,17 @@ if(overlay){
    removeContents([id],slot);
  });
  $('pciFoCoveragePrint').addEventListener('click',()=>{
-   if(!overlay.hidden){
-     $('pciFoCoverageDashboard').open=true;
-     window.print();
-   }
+   if(overlay.hidden)return;
+   const root=$('pciFoCoverageDashboard');
+   const all=[root,...root.querySelectorAll('details')];
+   const previous=all.map(el=>el.open);
+   all.forEach(el=>{el.open=true;});
+   const restore=()=>{
+     all.forEach((el,i)=>{el.open=previous[i];});
+     window.removeEventListener('afterprint',restore);
+   };
+   window.addEventListener('afterprint',restore);
+   window.print();
  });
  $('pciFoPlanContents').addEventListener('change',e=>{
    const id=e.target.dataset.planContent;
