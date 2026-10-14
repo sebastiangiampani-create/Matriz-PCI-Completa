@@ -247,8 +247,9 @@ if(overlay){
      (!chosenAxis||item.axis===chosenAxis)&&
      (!$('pciFoPendingOnly').checked||!taken.has(item.id)));
    safeText(count,rows.length?
-     (filtered.length+' visibles · '+rows.length+' contenidos disponibles en la trayectoria'):
-     'No hay contenidos FO específicos en este catálogo para esta orientación. No se crean datos de ejemplo.');
+     (filtered.length+' visibles · '+rows.filter(row=>!taken.has(row.id)).length+
+       ' pendientes · '+rows.length+' contenidos de la orientación'):
+     'No hay contenidos FO específicos disponibles para este espacio y año.');
    for(const row of filtered.slice(0,220)){
      const label=node('label','pci-fo-content-choice content-item');
      label.draggable=!!current;label.dataset.contentId=row.id;
@@ -569,12 +570,14 @@ if(overlay){
  // los contenidos de cada espacio y plan, sin porcentajes inventados.
  fetch('preview-v2-real/data/materias-v2.json')
    .then(res=>{if(!res.ok)throw Error('Catálogo de materias no disponible');return res.json();})
-   .then(data=>{materiaCatalog=data;if(!overlay.hidden)renderGroupCards();})
+   .then(data=>{materiaCatalog=data;
+     if(!overlay.hidden){renderCatalog();renderGroupCards();}
+   })
    .catch(()=>{materiaCatalog=null;});
  loadV2Fo().then(rows=>{
    catalog=rows;ready=true;
    for(const row of rows)byId.set(row.id,row);
-   if(!overlay.hidden)renderCatalog();
+   if(!overlay.hidden){renderCatalog();renderGroupCards();}
  }).catch(error=>{
    ready=false;loadingError='No se pudo cargar el catálogo FO: '+error.message;
    if(!overlay.hidden)renderCatalog();
