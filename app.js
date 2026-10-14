@@ -902,6 +902,8 @@ async function start() {
     window.app = app;
     persist();
     renderOverview();
+    window.PCIApp.ready = true;
+    window.dispatchEvent(new Event('pci-app-ready'));
     $('loading').remove();
   } catch (error) {
     console.error(error);
@@ -955,6 +957,7 @@ function activateOrientationDraft(orientation, source) {
   return { orientation, key, originalPreserved: true, localOnly: true };
 }
 window.PCIApp = {
+  ready: false,
   getData: () => DATA,
   getState: () => app,
   getOriginalState: () => safeCopy(originalSnapshot || {}),
