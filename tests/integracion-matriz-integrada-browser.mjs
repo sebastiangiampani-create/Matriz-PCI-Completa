@@ -162,7 +162,8 @@ async function testDesktop(page) {
   assert.match(await page.locator('#pciFoCoverageLevels .v99d-plan-head').first().innerText(),/Dentro del agrupamiento/i);
   assert.ok(await page.locator('#pciFoCoverageSubjects .v98d-subject').count()>0);
   assert.ok(await page.locator('#pciFoCoverageSpaces .v98d-format-summary').count()>0);
-  assert.match(await page.locator('#pciFoCoverageBasis').innerText(),/no por año|no tiene año|no por nivel|por trayectoria/i);
+  assert.match(await page.locator('#pciFoCoverageBasis').textContent(),/trayectoria|no permite desagregar/i,
+    'El apartado Cómo se calcula conserva la advertencia del universo FO sin base anual');
   assert.equal(await page.locator('#pciFoDetails').evaluate(el=>el.open),false,
     'El desarrollo de planes permanece plegado hasta que se elija un espacio');
   await page.locator('#pciFoGroupCards [data-edit-group]').first().click();
