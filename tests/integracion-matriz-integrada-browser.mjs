@@ -17,6 +17,27 @@ async function serve() {
   throw new Error('No arrancó la vista de prueba original de Matriz.');
 }
 
+async function conformFourFoFormats(page) {
+  // Datos exclusivamente sintéticos de la prueba: construir una oferta
+  // con un laboratorio y un taller en 3.º, lo mismo en 4.º,
+  // más dos laboratorios y dos talleres prescriptos en 5.º.
+  await page.evaluate(()=>{
+    const key='pci-matriz-fg-v2-original-preview-20261009';
+    const state=JSON.parse(localStorage.getItem(key)||'{}');
+    if(!state.maps)state.maps={};
+    if(!state.maps['Economía y Administración'])
+      state.maps['Economía y Administración']={placements:{},valid:false};
+    const map=state.maps['Economía y Administración'];
+    map.foTypes={
+      ...(map.foTypes||{}),
+      '3':{'5':'lab','6':'taller'},
+      '4':{'7':'lab','8':'taller'}
+    };
+    localStorage.setItem(key,JSON.stringify(state));
+    window.dispatchEvent(new Event('pci-matriz-offer-update'));
+  });
+}
+
 async function testDesktop(page) {
   const errors=[],remote=[];
   page.on('pageerror', (e)=>errors.push(e.message));
@@ -107,6 +128,7 @@ async function testDesktop(page) {
   assert.equal(await page.locator('body').innerText().then(txt=>txt.includes('V2')),false,
     'La interfaz de Matriz no debe mostrar etiquetas técnicas V2');
   await page.waitForFunction(()=>Boolean(window.PCIFoDesarrollo),{timeout:25000});
+  await conformFourFoFormats(page);
   const originalFoBefore=await page.evaluate(()=>localStorage.getItem('pciAppV2'));
   await page.locator('#pciDemoFoCards [data-pci-fo-format="proyecto"]').click();
   assert.equal(await page.locator('#pci-fo-development').isVisible(),true,
@@ -318,6 +340,7 @@ async function testMobile(page) {
   await first.click();
   assert.equal(await first.getAttribute('aria-pressed'),'true');
   await page.waitForFunction(()=>Boolean(window.PCIFoDesarrollo),{timeout:25000});
+  await conformFourFoFormats(page);
   await page.locator('#pciDemoFoCards [data-pci-fo-format="proyecto"]').click();
   assert.equal(await page.locator('#pci-fo-development').isVisible(),true);
   assert.equal(await page.locator('#pciFoYear').inputValue(),'5');
