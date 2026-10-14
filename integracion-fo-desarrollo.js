@@ -10,6 +10,7 @@ import { loadV2Fo, selectFoByOrientation }
   from './src/integracion-curricular/catalogos.js';
 import { foGroups, FO_STAGES, makeFoDraft, getFoSpace, saveFoSpace, orphanedSpaces }
   from './src/integracion-curricular/desarrollo-fo-modelo.js';
+import {foCoverageSnapshot} from './src/integracion-curricular/cobertura-fo-v2.js';
 
 const $=id=>document.getElementById(id);
 const overlay=$('pci-fo-development');
@@ -109,6 +110,7 @@ if(overlay){
    try{
      localStorage.setItem(KEY,JSON.stringify(state));
      savedStatus('Borrador local guardado · No publicado en la escuela');
+     renderCoverageDashboard();
    }catch(e){
      savedStatus('El navegador no pudo guardar el borrador: '+e.message);
    }
@@ -170,6 +172,7 @@ if(overlay){
  function renderPlan(){
    const plan=activePlan();
    if(!plan)return;
+   renderPlanMetric();
    $('pciFoPlanName').value=plan.name||'';
    $('pciFoPlanObjectives').value=plan.objectives||'';
    $('pciFoPlanSynopsis').value=plan.synopsis||'';
@@ -308,9 +311,138 @@ if(overlay){
    const indices=group.term===null?[0,1,2,3]:(group.term%2===1?[0,1]:[2,3]);
    for(const idx of indices)planSelector.appendChild(new Option('Bimestre '+(idx+1),String(idx)));
    planSelector.value=String(indices[0]);
-   renderAssigned();renderPlan();renderCatalog();
+   renderAssigned();renderPlan();renderCatalog();renderCoverageDashboard();
    savedStatus('Vista de prueba · edición local independiente del trabajo escolar');
  }
+ function coverageSnapshot(){
+   const id=orientId(orientation);
+   if(!id||!ready)return null;
+   return foCoverageSnapshot({
+     rows:catalog,orientationId:id,orientations:ORIENTATIONS,
+     map:getMap(),draft
+   });
+ }
+ const numberText = (used,total,percent,basis='trayectoria')=>
+   Number.isInteger(total)&&total>0 ?
+     used+'/'+total+' · '+percent+'% ('+basis+')' :
+     used+' ubicados · sin base anual validada';
+ function addCoverageProgress(host,used,total){
+   const track=node('div','pci-fo-cover-track');
+   const fill=node('span','');
+   fill.style.width=total>0?(Math.min(100,Math.round(used/total*1000)/10)+'%'):'0%';
+   track.appendChild(fill);host.appendChild(track);
+ }
+ function addMetricRow(host,name,used,total,percent,basis='trayectoria'){
+   const wrap=node('div','pci-fo-metric-row');
+   const title=node('strong','',name);
+   const summary=node('span','',numberText(used,total,percent,basis));
+   wrap.append(title,summary);
+   addCoverageProgress(wrap,used,total);
+   host.appendChild(wrap);
+ }
+ function renderCoverageDashboard(){
+   const snap=coverageSnapshot();
+   if(!snap)return;
+   const isAnnual=snap.levelBasisAvailable;
+   safeText($('pciFoCoverageBasis'),isAnnual?
+     'Universos oficiales por año disponibles. Los contenidos repetidos se cuentan una sola vez.':
+     'La bolsa oficial FO está definida por trayectoria y orientación, no por año. Por nivel se muestran contenidos ubicados y la cobertura anual queda pendiente. No se presentan porcentajes anuales inventados.');
+   const years=$('pciFoCoverageLevels'),subjects=$('pciFoCoverageSubjects'),
+     spaces=$('pciFoCoverageSpaces');
+   years.replaceChildren();subjects.replaceChildren();spaces.replaceChildren();
+   years.appendChild(node('h3','','Cobertura por nivel y formato'));
+   for(const level of snap.years){
+     const card=node('section','pci-fo-cover-level');
+     const head=node('div','pci-fo-cover-level-title');
+     head.appendChild(node('strong','',level.year+'.º año · '+level.spaceCount+' espacios'));
+     head.appendChild(node('span','',
+       level.level?.total!==null?
+         numberText(level.level.used,level.level.total,level.level.percent,'nivel'):
+         level.used+' contenidos distintos ubicados · % anual pendiente'));
+     card.appendChild(head);
+     const formats=snap.formatsByLevel.filter(x=>x.year===level.year);
+     for(const item of formats){
+       card.appendChild(node('p','pci-fo-cover-subline',
+         (formatName[item.format]||item.format)+': '+item.used+' contenidos distintos · '+item.spaceCount+' espacios'));
+     }
+     years.appendChild(card);
+   }
+   subjects.appendChild(node('h3','','Cobertura por materia o bloque'));
+   subjects.appendChild(node('p','pci-fo-cover-context',
+     'Denominador: bolsa oficial de la orientación completa. Historia y Tecnología orientadas se distinguen por materia.'));
+   for(const subject of snap.bySubject)
+     addMetricRow(subjects,subject.kind+' · '+subject.label,
+       subject.used,subject.total,subject.percent,'trayectoria');
+   spaces.appendChild(node('h3','','Cobertura por espacio y por plan'));
+   for(const item of snap.spaces){
+     const detail=node('details','pci-fo-cover-space');
+     const heading=node('summary','',
+       item.year+'.º · '+(item.term?'C'+item.term:'C9–C10')+
+       ' · '+item.used+' contenidos ubicados · '+item.plans.length+' planes');
+     detail.appendChild(heading);
+     const body=node('div','pci-fo-cover-space-body');
+     addMetricRow(body,'Espacio · referencia oficial de trayectoria',
+       item.trajectory.used,item.trajectory.total,item.trajectory.percent,'trayectoria');
+     for(const comp of item.byComponent.filter(r=>r.used))
+       addMetricRow(body,comp.kind+' · '+comp.label,comp.used,comp.total,comp.percent,'trayectoria');
+     for(const plan of item.plans){
+       const planCard=node('div','pci-fo-cover-plan');
+       planCard.appendChild(node('strong','',plan.name+' · Bimestre '+plan.number));
+       addMetricRow(planCard,'Contra contenidos oficiales de trayectoria',
+         plan.used,plan.totalOfficial,plan.officialPercent,'trayectoria');
+       addMetricRow(planCard,'Dentro de este agrupamiento',
+         plan.groupingUsed,plan.groupingTotal,plan.groupingPercent,'agrupamiento');
+       if(plan.outsideGroup.length)planCard.appendChild(node('small','pci-fo-cover-warning',
+         plan.outsideGroup.length+' referencias de plan fuera del agrupamiento: revisar, no se eliminaron'));
+       body.appendChild(planCard);
+     }
+     detail.appendChild(body);spaces.appendChild(detail);
+   }
+   $('pciFoCoverage').textContent=
+     snap.trajectory.used+'/'+snap.trajectory.total+' contenidos de la orientación · '+
+     (snap.trajectory.percent===null?'sin denominador oficial':
+       snap.trajectory.percent+'% de trayectoria')+
+     ' · '+snap.spaces.length+' espacios en toda la orientación'+
+     (isAnnual?'':' · Sin base oficial de cobertura anual por nivel.');
+   syncCardCoverage(snap);
+   renderPlanMetric(snap);
+ }
+ function syncCardCoverage(snap){
+   for(const card of $('pciFoGroupCards').querySelectorAll('[data-fo-group]')){
+     const info=snap.spaces.find(item=>item.id===card.dataset.foGroup);
+     if(!info)continue;
+     const el=card.querySelector('[data-fo-card-coverage]');
+     if(el)el.textContent=info.used+' contenidos únicos · '+
+       (info.trajectory.percent===null?'sin base':
+        info.trajectory.percent+'% de la trayectoria FO');
+     const chips=card.querySelector('[data-fo-card-subjects]');
+     if(chips)chips.textContent=info.byComponent.filter(x=>x.used)
+       .map(x=>x.label+': '+x.used+'/'+x.total).join(' · ')||
+       'Sin contenidos ubicados';
+   }
+ }
+ function renderPlanMetric(snapshot=coverageSnapshot()){
+   const host=$('pciFoPlanCoverage');
+   host.replaceChildren();
+   const space=snapshot?.spaces.find(row=>row.id===slot);
+   const plan=space?.plans[Number($('pciFoPlan').value)||0];
+   if(!plan)return;
+   host.appendChild(node('h4','','Cobertura del plan '+plan.number));
+   host.appendChild(node('p','pci-fo-cover-context',
+     'La referencia anual por nivel de FO está pendiente porque el catálogo oficial no identifica un universo por año.'));
+   addMetricRow(host,'Contra la trayectoria orientada',
+     plan.used,plan.totalOfficial,plan.officialPercent,'trayectoria');
+   addMetricRow(host,'Dentro del agrupamiento',
+     plan.groupingUsed,plan.groupingTotal,plan.groupingPercent,'agrupamiento');
+   for(const row of plan.byComponent.filter(item=>item.used)){
+     addMetricRow(host,(row.kind||'Bloque')+' · '+row.label,
+       row.used,row.total,row.percent,'trayectoria');
+     addMetricRow(host,'En este agrupamiento · '+row.label,
+       row.groupingUsed,row.groupingTotal,row.groupingPercent,'agrupamiento');
+   }
+   if(plan.outsideGroup.length)host.appendChild(node('p','pci-fo-cover-warning',
+     'Revisar '+plan.outsideGroup.length+' contenidos vinculados al plan que ya no están ubicados en este agrupamiento.'));
+ } 
  function startDrag(event){
    const item=event.target.closest('[data-content-id]');
    if(!item?.dataset.contentId)return;
@@ -386,6 +518,7 @@ if(overlay){
      });
      container.appendChild(card);
    }
+   renderCoverageDashboard();
    if(!available.length)container.appendChild(node('p','pci-fo-muted',
      'Todavía no se conformaron espacios de este tipo y año. Revisá el Mapa de la Oferta.'));
    const all=new Set(available.flatMap(g=>draft?.spaces?.[g.id]?.items||[]));
@@ -570,6 +703,12 @@ if(overlay){
    if(!id||!current)return;
    removeContents([id],slot);
  });
+ $('pciFoCoveragePrint').addEventListener('click',()=>{
+   if(!overlay.hidden){
+     $('pciFoCoverageDashboard').open=true;
+     window.print();
+   }
+ });
  $('pciFoPlanContents').addEventListener('change',e=>{
    const id=e.target.dataset.planContent;
    const plan=activePlan();
@@ -598,7 +737,7 @@ if(overlay){
  loadV2Fo().then(rows=>{
    catalog=rows;ready=true;
    for(const row of rows)byId.set(row.id,row);
-   if(!overlay.hidden){renderCatalog();renderGroupCards();}
+   if(!overlay.hidden){renderCatalog();renderGroupCards();renderCoverageDashboard();}
  }).catch(error=>{
    ready=false;loadingError='No se pudo cargar el catálogo FO: '+error.message;
    if(!overlay.hidden)renderCatalog();
