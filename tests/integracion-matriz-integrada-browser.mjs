@@ -87,6 +87,11 @@ async function testDesktop(page) {
   assert.equal(await page.locator('#board.screen.active').count(),1);
   assert.match(await page.locator('#boardTitle').innerText(),/Artes/);
   assert.equal(await page.locator('#groups .group-card').count(),6);
+  await page.locator('#pciFgCoverageDashboard').waitFor({state:'visible',timeout:60000});
+  await page.locator('#pciFgCoverageDashboard > summary').click();
+  assert.match(await page.locator('#pciFgCoverageLevels').innerText(),/Cobertura por nivel y formato/);
+  assert.match(await page.locator('#pciFgCoverageSubjects').innerText(),/Cobertura por materia y nivel/);
+  assert.match(await page.locator('#pciFgCoverageGroups').innerText(),/Cobertura por espacio y plan/);
   await page.locator('#contentList [data-content-id]').first().dragTo(page.locator('#groups .group-card').first());
   const afterDrag=await page.evaluate(key=>{
     const state=JSON.parse(localStorage.getItem(key));
@@ -137,10 +142,18 @@ async function testDesktop(page) {
   assert.match(await page.locator('#pciFoTitle').innerText(),/Proyecto de Vinculación/);
   assert.equal(await page.locator('#pciFoYear').inputValue(),'5');
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),1);
+  await page.locator('#pciFoCoverage').waitFor({state:'visible'});
+  await page.waitForFunction(()=>document.querySelector('#pciFoCoverage')?.textContent?.includes('trayectoria'),{timeout:45000});
+  await page.locator('#pciFoCoverageDashboard > summary').click();
+  assert.equal(await page.locator('#pciFoCoverageLevels .pci-fo-cover-level').count(),3);
+  assert.ok(await page.locator('#pciFoCoverageSubjects .pci-fo-metric-row').count()>0);
+  assert.ok(await page.locator('#pciFoCoverageSpaces .pci-fo-cover-space').count()>0);
+  assert.match(await page.locator('#pciFoCoverageBasis').innerText(),/no por año|no tiene año|no por nivel|por trayectoria/i);
   assert.equal(await page.locator('#pciFoDetails').evaluate(el=>el.open),false,
     'El desarrollo de planes permanece plegado hasta que se elija un espacio');
   await page.locator('#pciFoGroupCards [data-edit-group]').first().click();
   assert.equal(await page.locator('#pciFoFields').isVisible(),true);
+  assert.match(await page.locator('#pciFoPlanCoverage').innerText(),/trayectoria orientada|trayectoria/i);
   assert.equal(await page.locator('#pciFoStages .pci-fo-stage').count(),4);
   await page.locator('#pciFoContentList [data-fo-content]').first().waitFor({timeout:45000});
   const chosenFoContent=await page.locator('#pciFoContentList [data-fo-content]').first().getAttribute('value');
@@ -178,6 +191,9 @@ async function testDesktop(page) {
     'Deben verse los cuatro laboratorios conformados simultáneamente');
   assert.deepEqual(await page.locator('#pciFoGroupCards [data-fo-group] .pci-fo-year-pill').allTextContents(),
     ['3.º año','4.º año','5.º año','5.º año']);
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group] .pci-fo-card-fields').count(),4);
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group] .pci-fo-card-coverage').count(),4);
+  assert.match(await page.locator('#pciFoGroupCards [data-fo-group]').first().innerText(),/Carácter del agrupamiento|Contexto problematizador/);
   assert.equal(await page.locator('#pciFoSearch').isVisible(),true);
   assert.equal(await page.locator('#pciFoBlockFilter').isVisible(),true);
   assert.equal(await page.locator('#pciFoAxisFilter').isVisible(),true);
