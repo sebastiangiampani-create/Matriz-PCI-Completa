@@ -198,3 +198,15 @@ transaccional, seguridad multiescuela, pruebas de rollback y habilitación final
 ### Guardia temporal del acceso escolar de la rama
 
 El archivo escuela-online.html de ESTA RAMA tiene MIGRATION_WRITE_LOCK=true. Tanto la interfaz del acceso escolar como saveNow permanecen en consulta sin ninguna llamada de guardado; no se modifica main ni producción. **No desplegar esta rama como reemplazo del acceso habitual**, porque el guardado está intencionalmente deshabilitado. Antes de una futura habilitación, sustituir ese bloqueo por persistencia transaccional versionada por escuela y orientación con respaldo y rollback comprobados.
+
+### Exportación pedagógica antes de validar cualquier cruce
+
+La vista de prueba ofrece **tres descargas tras preparar la copia de revisión, ANTES del OK**:
+
+- **Excel (.xlsx):** siete hojas — Resumen, Agrupamientos, Contenidos, Planes, Secuencias, Observaciones y Datos completos. Mantiene los identificadores de contenido, las ubicaciones y las cuatro etapas de los planes.
+- **Word (.docx):** informe legible organizado por área, agrupamiento y plan, con descripción de cada etapa y anexo de campos completos.
+- **Respaldo JSON:** representación completa de la copia disponible en la sesión, no transforma los datos en tablas. Es el único de esos tres que puede reconstruir el estado de la sesión íntegramente.
+
+Los .xlsx y .docx se generan **localmente en el navegador** mediante Open XML, sin solicitudes a terceros. No modifican datos, no cambian la orientación, no alteran el mapa ni habilitan publicación. Si se modifica el estado después de preparar la revisión, la exportación Office se bloquea para evitar archivos obsoletos.
+
+**Límite importante:** la copia disponible en el editor puede estar ya NORMALIZADA. Los tres archivos de la pantalla NO sustituyen el respaldo original del JSON de Supabase anterior a abrir el editor, con SHA-256 y copia fuera del repositorio. Una exportación legible no acredita por sí sola que se conservaron todos los datos históricos. La futura aprobación de la escuela debe comparar la copia exportada, el origen bruto y la estructura de destino.
