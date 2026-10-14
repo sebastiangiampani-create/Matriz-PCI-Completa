@@ -552,15 +552,11 @@ if(overlay){
      });
      container.appendChild(card);
    }
-   renderCoverageDashboard();
    if(!available.length)container.appendChild(node('p','pci-fo-muted',
      'Todavía no se conformaron espacios de este tipo y año. Revisá el Mapa de la Oferta.'));
-   const all=new Set(available.flatMap(g=>draft?.spaces?.[g.id]?.items||[]));
-   const total=new Set(available.flatMap(g=>availableFor(g).map(r=>r.id))).size;
-   safeText($('pciFoCoverage'),all.size+' de '+total+
-     ' contenidos ubicados en '+(formatName[format]||'la orientación')+
-     ' · '+(year===0?'todos los años':year+'.º año')+
-     ' · '+available.length+' espacios visibles. Un contenido se mueve entre agrupamientos sin duplicarlo.');
+   // El panel curricular tiene la fuente única del contador,
+   // las referencias oficiales y la cobertura de trayectoria.
+   renderCoverageDashboard();
  }
  function moveContents(ids,target){
    const dest=visibleGroups().find(g=>g.id===target);
