@@ -41,6 +41,7 @@ function readZipEntries(bytes){
 test('Excel verdadero contiene inventario, planes, contenidos, secuencias y campos completos',async()=>{
  const source=structuredClone(data);
  const review=prepareReview(source,'Economía y Administración',{socialOption:'A'});
+ review.catalog=[{id:'historia-1',text:'La organización de las sociedades antiguas'}];
  const before=JSON.stringify(source);
  const file=await exportReviewXlsx(review);
  assert.match(file.type,/spreadsheetml.sheet/);
@@ -54,6 +55,7 @@ test('Excel verdadero contiene inventario, planes, contenidos, secuencias y camp
  for(const title of ['Resumen','Agrupamientos','Contenidos','Planes','Secuencias','Observaciones','Datos completos'])
    assert.ok(names.includes(title),title);
  assert.match(entries.get('xl/worksheets/sheet5.xml'),/Rúbrica final/);
+ assert.match(entries.get('xl/worksheets/sheet3.xml'),/La organización de las sociedades antiguas/);
  assert.match(entries.get('xl/worksheets/sheet2.xml'),/Interrogar fuentes/);
  assert.match(entries.get('xl/worksheets/sheet7.xml'),/mustKeep/);
  assert.match(entries.get('xl/worksheets/sheet2.xml'),/&lt;prueba&gt; &amp; revisión/);
@@ -62,6 +64,7 @@ test('Excel verdadero contiene inventario, planes, contenidos, secuencias y camp
 });
 test('Word verdadero incluye cuatro etapas y anexo íntegro sin tocar la fuente',async()=>{
  const review=prepareReview(data,'Matemática y Física',{socialOption:'B'});
+ review.catalog=[{id:'historia-1',text:'La organización de las sociedades antiguas'}];
  const before=JSON.stringify(data);
  const file=await exportReviewDocx(review);
  assert.match(file.type,/wordprocessingml.document/);
@@ -70,6 +73,7 @@ test('Word verdadero incluye cuatro etapas y anexo íntegro sin tocar la fuente'
  assert.ok(entries.has('word/styles.xml'));
  const text=entries.get('word/document.xml');
  assert.match(text,/Problema inicial/);
+ assert.match(text,/La organización de las sociedades antiguas/);
  assert.match(text,/Investigación/);
  assert.match(text,/Relato histórico/);
  assert.match(text,/Rúbrica final/);
