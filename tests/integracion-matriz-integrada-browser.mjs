@@ -89,16 +89,41 @@ async function testDesktop(page) {
   assert.match(await page.locator('#pciDemoFoCards [data-pci-fo-format="proyecto"]').innerText(),/C9 y C10/);
   assert.equal(await page.locator('body').innerText().then(txt=>txt.includes('V2')),false,
     'La interfaz de Matriz no debe mostrar etiquetas técnicas V2');
+  await page.waitForFunction(()=>Boolean(window.PCIMatrizTablero),{timeout:20000});
   await page.locator('#pciDemoFoCards [data-pci-fo-format="proyecto"]').click();
-  assert.equal(await page.locator('#pci-area-detail').evaluate(node=>node.open),true);
-  assert.match(await page.locator('#pciAreaDetailGroups').innerText(),/5.º año/);
-  assert.match(await page.locator('#pciAreaDetailGroups').innerText(),/C9 \+ C10/);
-  assert.equal(await page.locator('.pci-area-detail-legacy').isVisible(),false,
-    'Las materias FO no deben confundirse con la FG histórica');
-  await page.locator('#pciAreaDetailClose').click();
+  assert.equal(await page.locator('#pci-integrated-matrix').isVisible(),true,
+    'Proyecto FO debe abrir una matriz real, no sólo un resumen');
+  assert.match(await page.locator('#pciIntegratedTitle').innerText(),/Proyecto de Vinculación/);
+  assert.equal(await page.locator('#pciIntegratedYear').inputValue(),'5');
+  assert.match(await page.locator('#pciIntegratedHead').innerText(),/C9/);
+  assert.match(await page.locator('#pciIntegratedHead').innerText(),/C10/);
+  assert.ok(await page.locator('#pciIntegratedBody .pci-matrix-space').count()>=2);
+  await page.locator('#pciIntegratedClose').click();
   await page.locator('#pciDemoFoCards [data-pci-fo-format="laboratorios"]').click();
-  assert.match(await page.locator('#pciAreaDetailStatus').innerText(),/Restan definir 4 formatos/);
-  await page.locator('#pciAreaDetailClose').click();
+  assert.equal(await page.locator('#pci-integrated-matrix').isVisible(),true);
+  assert.match(await page.locator('#pciIntegratedTitle').innerText(),/Laboratorios de la orientación/);
+  assert.match(await page.locator('#pciIntegratedBody').innerText(),/Formatos pendientes de definir/);
+  await page.locator('#pciIntegratedYear').selectOption('3');
+  await page.locator('#pciIntegratedBody .pci-matrix-space').first().click();
+  await page.waitForFunction(()=>!document.querySelector('#pciMapPrint').disabled,{timeout:65000});
+  assert.equal(await page.locator('#pci-map-overlay').isVisible(),true,
+    'Tocar un cuatrimestre de FO debe abrir el editor completo');
+  assert.equal(await page.locator('#pciMapYear').inputValue(),'3');
+  await page.locator('#pciMapClose').click();
+  assert.equal(await page.locator('#pci-integrated-matrix').isVisible(),true,
+    'Al volver del editor se conserva la matriz de la orientación');
+  await page.locator('#pciIntegratedClose').click();
+  await page.locator('#overviewMatrix').click();
+  assert.equal(await page.locator('#pci-integrated-matrix').isVisible(),true);
+  assert.match(await page.locator('#pciIntegratedHead').innerText(),/C1/);
+  assert.match(await page.locator('#pciIntegratedBody').innerText(),/Formación Orientada/);
+  await page.locator('#pciIntegratedClose').click();
+  await page.locator('#pciClassicToggle').click();
+  await page.locator('#overviewMatrix').click();
+  assert.equal(await page.locator('#matrix.screen.active').count(),1,
+    'La matriz histórica debe seguir abriendo desde la vista original');
+  await page.locator('#matrix [data-screen-link="overview"]').first().click();
+  await page.locator('#pciClassicToggle').click();
   await page.locator('#pciDemoOrientationTabs button[data-orientation="Matemática y Física"]').click();
   assert.match(await page.locator('#pciDemoOrientationContext').innerText(),/Matemática y Física/);
   await page.locator('#pciMapOpen').click();
@@ -220,6 +245,17 @@ async function testMobile(page) {
   assert.equal(await second.getAttribute('aria-pressed'),'true');
   await first.click();
   assert.equal(await first.getAttribute('aria-pressed'),'true');
+  await page.waitForFunction(()=>Boolean(window.PCIMatrizTablero),{timeout:20000});
+  await page.locator('#pciDemoFoCards [data-pci-fo-format="proyecto"]').click();
+  assert.equal(await page.locator('#pci-integrated-matrix').isVisible(),true);
+  assert.equal(await page.locator('#pciIntegratedYear').inputValue(),'5');
+  const geometry=await page.locator('#pci-integrated-matrix').evaluate(el=>({
+    height:Math.round(el.getBoundingClientRect().height),windowHeight:innerHeight,
+    overflow:document.documentElement.scrollWidth>innerWidth+2
+  }));
+  assert.ok(geometry.height<=geometry.windowHeight+1);
+  assert.equal(geometry.overflow,false);
+  await page.locator('#pciIntegratedClose').click();
   const gridGeometry=await page.locator('#pciDemoFoCards').evaluate((el)=>{
     const cards=[...el.querySelectorAll('.pci-fo-card')];
     return cards.map(card=>({
