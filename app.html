@@ -14,7 +14,7 @@
   <div id="loading" class="loading" role="status" aria-live="polite"><div class="loading-card"><span class="spinner" aria-hidden="true"></span><strong>Cargando contenidos priorizados…</strong></div></div>
   <header class="site-top no-print"><a class="brand" href="index.html" target="_top" aria-label="Escuela de Maestros · Inicio"><img src="assets/em-logo-header.svg?v=20260902" alt="Escuela de Maestros"></a><div class="top-right"><button class="pill-btn" type="button" data-screen-link="control">Panel de control</button><img class="ba" src="assets/ba-logo.png?v=20260827" alt="Buenos Aires Ciudad"></div></header>
   <main>
-    <section id="overview" class="screen active" aria-labelledby="overviewTitle"><div class="hero-card"><div><a class="text-button" href="index.html" target="_top">← Inicio</a><h1 id="overviewTitle">Escuela Muestra</h1><p>Organizá los contenidos priorizados en niveles, laboratorios, talleres y otros formatos pedagógicos durante C1–C10.</p><div class="button-row"><button id="overviewMatrix" class="button secondary" type="button">Matriz completa</button><button id="pciClassicToggle" class="button secondary" type="button" aria-pressed="false">Ver Matriz original</button></div></div><label class="school-name-field"><span>Nombre visible de la escuela</span><input id="schoolName" maxlength="100" value="Escuela Muestra"></label></div><div id="structureStatus" class="notice" role="status"></div><p id="pciClassicStatus" class="pci-classic-status" hidden>Estás consultando la Matriz original de esta sesión. El trabajo escolar guardado online solo está disponible desde el acceso autorizado de su escuela. Los datos no se importan ni se duplican al cambiar de vista.</p>
+    <section id="overview" class="screen active" aria-labelledby="overviewTitle"><div class="hero-card"><div><a class="text-button" href="index.html" target="_top">← Inicio</a><h1 id="overviewTitle">Escuela Muestra</h1><p>Organizá los contenidos priorizados en niveles, laboratorios, talleres y otros formatos pedagógicos durante C1–C10.</p><div class="button-row"><button id="overviewMatrix" class="button secondary" type="button">Matriz completa</button></div></div><label class="school-name-field"><span>Nombre visible de la escuela</span><input id="schoolName" maxlength="100" value="Escuela Muestra"></label></div><div id="structureStatus" class="notice" role="status"></div>
       <div class="pci-integrated-workspace">
         <aside class="pci-offer-sidebar" aria-label="Construcción curricular por orientación">
           <p class="eyebrow">Tu espacio de trabajo</p>
@@ -25,7 +25,7 @@
           <p id="pciDemoOfferState" class="pci-small-status" aria-live="polite">Mapa de la Oferta: pendiente de validar</p>
           <button id="pciMapOpen" class="button primary pci-map-open" type="button">Abrir Mapa de la Oferta →</button>
           <button id="pciImportOpen" class="button secondary pci-import-open" type="button">Importar Matriz original</button>
-          <p id="pciImportSavedStatus" class="pci-import-aside-note" role="status" aria-live="polite">¿Ya trabajaste en la Matriz anterior? La información guardada se podrá reutilizar mediante una copia para revisión, sin volver a cargarla desde cero.</p>
+          <p id="pciImportSavedStatus" class="pci-import-aside-note" role="status" aria-live="polite">¿Ya trabajaste en la Matriz anterior? Prepará una copia, revisala y, después del OK, continuá con la bolsa curricular y los agrupamientos editables. El original queda protegido.</p>
           <details>
             <summary>Configurar orientaciones <span id="pciDemoCount">2 habilitadas</span></summary>
             <p class="pci-small-status" id="pciDemoCatalogStatus">Solo orientaciones de prueba. No modifica los datos ni las orientaciones reales de las escuelas.</p>
@@ -73,7 +73,7 @@
           <button id="pciImportApprove" type="button" class="button primary" disabled>Dar OK de revisión</button>
         </div>
       </div>
-      <p class="pci-import-download-tip">Descargá los archivos <strong>antes de dar el OK</strong>. Excel permite controlar agrupamientos, contenidos, planes y etapas; Word permite leer las secuencias completas. El JSON conserva todos los campos disponibles en esta sesión, pero el resguardo original debe hacerse directamente desde la base escolar.</p>
+      <p class="pci-import-download-tip">Descargá los archivos <strong>antes de dar el OK</strong>. Después se habilitará una copia editable por orientación con la bolsa curricular y el drag &amp; drop de Matriz. El original queda intacto. Esta edición de prueba se guarda únicamente en este navegador, nunca en los registros escolares.</p>
       <p id="pciImportResult" class="pci-import-result" role="status" aria-live="polite">El trabajo original no se modifica con esta operación.</p>
     </div>
   </dialog>
@@ -84,11 +84,7 @@
     </div>
     <p id="pciAreaDetailStatus" class="pci-integration-notice"></p>
     <div id="pciAreaDetailGroups" class="pci-offer-year-list"></div>
-    <div class="pci-area-detail-legacy">
-      <strong>Formación General anterior conservada</strong>
-      <p id="pciAreaDetailLegacyInfo"></p>
-      <button id="pciAreaDetailLegacy" type="button" class="button secondary">Abrir en Matriz original</button>
-    </div>
+    
     <div class="pci-area-detail-actions">
       <button id="pciAreaDetailMap" class="button primary" type="button">Abrir Mapa de la Oferta para editar</button>
     </div>
