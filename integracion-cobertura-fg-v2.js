@@ -56,7 +56,7 @@ function display(){
     }).fg;
     pane.hidden=false;
     $('pciFgCoverageIntro').textContent=
-      'Referencia FG anual por nivel: catálogo curricular V2. Los contenidos '+
+      'Referencia FG anual por nivel: contenidos priorizados oficiales. Los contenidos '+
       'que todavía no estén homologados no se presentan como cobertura confirmada. '+
       'Los porcentajes solo se verifican cuando coinciden los identificadores y las materias.';
     const levels=$('pciFgCoverageLevels'),subjects=$('pciFgCoverageSubjects'),
