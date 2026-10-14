@@ -7,7 +7,7 @@
  * No realiza ninguna escritura ni depende de Supabase.
  */
 import {selectFoByOrientation} from './catalogos.js';
-import {foGroups} from './desarrollo-fo-modelo.js';
+import {foGroups,getFoSpace} from './desarrollo-fo-modelo.js';
 
 const unique = values => [...new Set((Array.isArray(values)?values:[]).map(String))];
 const ratio = (used,total) => Number.isInteger(total)&&total>0 ?
@@ -56,8 +56,10 @@ function catalogRows(rows,ids,opts={}) {
 const dataFor=(draft,group)=>draft?.spaces?.[group.id]||{};
 function idsForGroup(draft,group) {return unique(dataFor(draft,group).items);}
 function groupSnapshot(group,draft,pool,byId,hasOfficialYears){
-  const data=dataFor(draft,group);
-  const ids=idsForGroup(draft,group);
+  const data=draft?.spaces?.[group.id] || getFoSpace({
+    orientation:draft?.orientation||'Vista de prueba',spaces:{}
+  },group).data;
+  const ids=unique(data.items);
   const trajectory=metric(ids,pool);
   const levelRows=hasOfficialYears?pool.filter(row=>Number(row.year)===group.year):[];
   const level=hasOfficialYears?metric(ids,levelRows):{
@@ -66,7 +68,12 @@ function groupSnapshot(group,draft,pool,byId,hasOfficialYears){
   };
   const plans=Array.isArray(data.plansBimestrales)?data.plansBimestrales:[];
   const usedSet=new Set(trajectory.ids);
-  const planReports=plans.map((plan,index)=>{
+  const effectiveIndices=group.term===null?[0,1,2,3]:
+    group.term%2===1?[0,1]:[2,3];
+  const planReports=effectiveIndices
+    .filter(i=>plans[i])
+    .map(index=>{
+    const plan=plans[index];
     const planIds=unique(plan?.contentIds);
     const recognized=planIds.filter(id=>byId.has(id));
     const inGroup=recognized.filter(id=>usedSet.has(id));
@@ -89,7 +96,8 @@ function groupSnapshot(group,draft,pool,byId,hasOfficialYears){
           groupingPercent:ratio(Math.min(row.used,g.used),g.used)};
       }),
       annualTotal:hasOfficialYears?level.total:null,
-      annualPercent:hasOfficialYears?ratio(trajectoryMetric.used,level.total):null,
+      annualPercent:hasOfficialYears?ratio(
+        recognized.filter(id=>levelRows.some(row=>String(row.id)===id)).length,level.total):null,
       basis:hasOfficialYears?'nivel':'trayectoria'
     };
   });
