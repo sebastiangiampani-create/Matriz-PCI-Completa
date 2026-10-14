@@ -126,6 +126,16 @@
     // No duplicar el editor original: tras el OK, la misma bolsa curricular
     // y los agrupamientos se editan en una copia independiente por orientación.
     if (window.PCIApp?.isOrientationReady?.(active)) {
+      const target = $('pciImportedAreaWarning');
+      const offer = projection?.deriveAreaProjection(area,orientationMap());
+      const saved = window.PCIApp.getState()?.areas?.[area]?.groups || [];
+      if(target) {
+        const mismatch = offer && saved.length !== offer.count;
+        target.hidden = !mismatch;
+        if(mismatch)target.textContent='Revisar agrupamientos: el Mapa de la Oferta define '+
+          offer.count+' espacios y la copia importada conserva '+saved.length+
+          '. Todos los agrupamientos, contenidos y planes originales permanecen en la copia. Revisá la distribución antes de aprobar la migración definitiva.';
+      }
       window.PCIApp.openArea(area);
       return;
     }
