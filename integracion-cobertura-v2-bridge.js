@@ -105,6 +105,7 @@ if(overlay&&frame){
     }
   };
   window.addEventListener('message',load);
+  $('pciNativeV2CoverageOverview')?.addEventListener('click',open);
   $('pciNativeV2CoverageFG')?.addEventListener('click',open);
   $('pciNativeV2CoverageFO')?.addEventListener('click',open);
   $('pciNativeV2CoverageClose')?.addEventListener('click',close);
