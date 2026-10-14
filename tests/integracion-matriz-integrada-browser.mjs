@@ -280,6 +280,33 @@ async function testDesktop(page) {
     'Laboratorios abre mostrando todos los años, no solamente tercero o quinto');
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),4,
     'Deben verse los cuatro laboratorios conformados simultáneamente');
+  await page.waitForFunction(()=>{
+    const txt=document.querySelector('#pciFoContentCount')?.textContent||'';
+    return /Historia orientada: 6/.test(txt)&&/Tecnologías de la Información orientada: 8/.test(txt);
+  },{timeout:45000});
+  assert.match(await page.locator('#pciFoContentCount').textContent(),/Historia orientada: 6/);
+  assert.match(await page.locator('#pciFoContentCount').textContent(),/Tecnologías de la Información orientada: 8/);
+  const techBlock=await page.locator('#pciFoBlockFilter option').evaluateAll(ops=>
+    ops.map(op=>op.value).find(x=>/tecnolog.*informaci/i.test(x))||'');
+  const historyBlock=await page.locator('#pciFoBlockFilter option').evaluateAll(ops=>
+    ops.map(op=>op.value).find(x=>/historia.*orientad/i.test(x))||'');
+  assert.ok(techBlock&&historyBlock,'V2 debe contener Historia y Tecnologías orientadas por separado');
+  await page.locator('#pciFoBlockFilter').selectOption(techBlock);
+  assert.equal(await page.locator('#pciFoContentList [data-fo-component="materia"]').count(),8,
+    'Tecnologías de la Información orientada debe figurar como materia');
+  assert.match(await page.locator('#pciFoContentList .pci-fo-component-type').first().innerText(),/Materia/);
+  await page.locator('#pciFoBlockFilter').selectOption(historyBlock);
+  assert.equal(await page.locator('#pciFoContentList [data-fo-component="materia"]').count(),6);
+  await page.locator('#pciFoBlockFilter').selectOption('');
+  assert.ok(await page.locator('#pciFoContentList [data-fo-component="eje"]').count()>0,
+    'Todos los demás bloques y ejes deben aparecer clasificados como ejes');
+  const v2Css=await page.locator('#pciNativeV2CoverageFrame').evaluate(frame=>{
+    const doc=frame.contentDocument;
+    return {css:!!doc.querySelector('link[href*="integracion-cobertura-v2-base-original.css"]'),
+      font:getComputedStyle(doc.body).fontFamily};
+  });
+  assert.equal(v2Css.css,true);
+  assert.match(v2Css.font,/Archivo/i,'El panel debe usar la misma tipografía base de V2');
   assert.deepEqual(await page.locator('#pciFoGroupCards [data-fo-group] .pci-fo-year-pill').allTextContents(),
     ['3.º año','4.º año','5.º año','5.º año']);
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group] .pci-fo-card-fields').count(),4);
