@@ -425,7 +425,8 @@ if(overlay){
    const host=$('pciFoPlanCoverage');
    host.replaceChildren();
    const space=snapshot?.spaces.find(row=>row.id===slot);
-   const plan=space?.plans[Number($('pciFoPlan').value)||0];
+   const plan=space?.plans.find(item=>
+     Number(item.number)===Number($('pciFoPlan').value)+1);
    if(!plan)return;
    host.appendChild(node('h4','','Cobertura del plan '+plan.number));
    host.appendChild(node('p','pci-fo-cover-context',
