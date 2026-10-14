@@ -124,10 +124,13 @@ if(overlay){
    return [...new Set(available)].sort();
  }
  function subjectCatalog(){
-   const unique=new Map();
-   for(const group of visibleGroups())
-     for(const row of availableFor(group))unique.set(row.id,row);
-   return [...unique.values()];
+   const id=orientId(orientation);
+   if(!id)return [];
+   // La bolsa muestra la totalidad de la base oficial de esta orientación.
+   // Antes los filtros dependían de los agrupamientos visibles: eso OCULTABA
+   // Historia y Tecnologías de la Información orientadas en años anteriores.
+   // La elegibilidad del destino sigue verificándose en moveContents().
+   return selectFoByOrientation(catalog,id,ORIENTATIONS);
  }
  function resetYear(asked=null){
    const list=years();
@@ -257,22 +260,42 @@ if(overlay){
      (!chosenBlock||item.block===chosenBlock)&&
      (!chosenAxis||item.axis===chosenAxis)&&
      (!$('pciFoPendingOnly').checked||!taken.has(item.id)));
+   const history=rows.filter(row=>specialKind(row)==='historia').length;
+   const technology=rows.filter(row=>specialKind(row)==='tecnologia').length;
+   const ejes=rows.length-history-technology;
    safeText(count,rows.length?
      (filtered.length+' visibles · '+rows.filter(row=>!taken.has(row.id)).length+
-       ' pendientes · '+rows.length+' contenidos de la orientación'):
-     'No hay contenidos FO específicos disponibles para este espacio y año.');
+       ' pendientes · '+rows.length+' contenidos de la orientación'+
+       ' · Historia orientada: '+history+
+       ' · Tecnologías de la Información orientada: '+technology+
+       ' · Bloques/ejes: '+ejes):
+     'Sin contenidos oficiales de esta orientación en la base curricular V2 disponible. No se agregan datos de ejemplo.');
    for(const row of filtered.slice(0,220)){
      const label=node('label','pci-fo-content-choice content-item');
      label.draggable=!!current;label.dataset.contentId=row.id;
-     label.title='Arrastrá este contenido a un agrupamiento';
+     const type=specialKind(row);
+     label.dataset.foComponent=type?'materia':'eje';
+     label.title=type?
+       'Materia orientada: ubicar exclusivamente en el espacio correspondiente de 5.º año':
+       'Eje curricular: arrastrar al agrupamiento de la orientación';
      const check=node('input');check.type='checkbox';
      check.value=row.id;check.dataset.foContent=row.id;
      check.checked=selectedContents.has(row.id);
      check.disabled=!current;
      const body=node('span');
-     body.appendChild(node('strong','',row.block||'Formación Orientada'));
-     body.appendChild(node('small','',row.axis+
-       (row.subaxis?' · '+row.subaxis:'')+' · '+row.text));
+     const heading=node('strong','');
+     heading.appendChild(node('span','pci-fo-component-type',type?'Materia':'Eje'));
+     heading.appendChild(document.createTextNode(' '+
+       (type?(row.block||'Formación Orientada'):(row.axis||row.block||'Eje curricular'))));
+     body.appendChild(heading);
+     body.appendChild(node('small','',
+       (type?(row.axis||''):
+         ((row.block&&row.axis)?'Bloque: '+row.block:'') )+
+       (row.subaxis?' · '+row.subaxis:'')+
+       ' · '+row.text));
+     if(type)body.appendChild(node('small','pci-fo-fifth-note',
+       'Componente específico de 5.º año · verificar su espacio en el Mapa de la Oferta'));
+
      label.append(check,body);list.appendChild(label);
    }
    if(filtered.length>220)list.appendChild(node('p','pci-fo-muted',
