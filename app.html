@@ -110,15 +110,25 @@
         <label>Buscar contenido
           <input id="pciFoSearch" type="search" placeholder="Bloque, eje o contenido">
         </label>
+        <div class="pci-fo-bag-filters">
+          <label>Bloque o materia <select id="pciFoBlockFilter"><option value="">Todos</option></select></label>
+          <label>Eje <select id="pciFoAxisFilter"><option value="">Todos</option></select></label>
+        </div>
+        <label class="pci-fo-pending-label"><input type="checkbox" id="pciFoPendingOnly"> Mostrar solo pendientes</label>
         <p id="pciFoContentCount" class="muted"></p>
         <div id="pciFoContentList" class="pci-fo-dev-content-list"></div>
       </aside>
       <section class="pci-fo-dev-editor" aria-label="Editor de desarrollo curricular">
+        <div id="pciFoCoverage" class="pci-fo-coverage" role="status" aria-live="polite"></div>
+        <div id="pciFoGroupCards" class="pci-fo-group-grid" aria-label="Agrupamientos editables para arrastrar contenidos"></div>
+        <div id="pciFoSelection" class="pci-fo-selection" hidden><strong id="pciFoSelectedCount">0 seleccionados</strong><button id="pciFoMoveSelected" class="button primary" type="button">Mover al espacio seleccionado</button></div>
         <div id="pciFoEmpty" class="pci-fo-dev-empty" hidden>
           <h3>Este formato todavía no está conformado</h3>
           <p>Definí primero los laboratorios o talleres de este año en el Mapa de la Oferta. El desarrollo existente no se borra.</p>
           <button id="pciFoMapOpen" type="button" class="button secondary">Abrir Mapa de la Oferta</button>
         </div>
+        <details id="pciFoDetails" class="pci-fo-details" open>
+          <summary>Desarrollo pedagógico del espacio seleccionado: objetivos, planes y secuencias</summary>
         <div id="pciFoFields">
           <p id="pciFoMembers" class="pci-fo-members"></p>
           <p id="pciFoReviewWarning" class="pci-fo-review-warning" hidden></p>
@@ -142,6 +152,7 @@
           <fieldset class="pci-fo-dev-plan-contents"><legend>Contenidos de este plan</legend><div id="pciFoPlanContents"></div></fieldset>
           <div id="pciFoStages" class="pci-fo-stages"></div>
         </div>
+        </details>
       </section>
     </div>
   </div>
