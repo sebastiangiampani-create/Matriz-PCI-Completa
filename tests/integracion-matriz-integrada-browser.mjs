@@ -160,7 +160,7 @@ async function testDesktop(page) {
   await page.locator('#pciFoContentList [data-fo-content]').first().waitFor({timeout:45000});
   const chosenFoContent=await page.locator('#pciFoContentList [data-fo-content]').first().getAttribute('value');
   await page.locator('#pciFoContentList [data-content-id]').first().dragTo(
-    page.locator('#pciFoGroupCards [data-fo-group]').first());
+    page.locator('#pciFoGroupCards [data-fo-group]').first().locator('.pci-fo-group-assigned'));
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group] .assigned-item').count(),1);
   await page.locator('#pciFoObjective').fill('Objetivos curriculares del proyecto');
   await page.locator('#pciFoPlan').selectOption('2');
@@ -220,7 +220,7 @@ async function testDesktop(page) {
   await page.locator('#pciFoGroupCards [data-edit-group]').first().click();
   await page.locator('#pciFoPlanContents [data-plan-content]').first().check();
   await page.locator('#pciFoGroupCards [data-fo-group]').first().locator('.assigned-item').first().dragTo(
-    page.locator('#pciFoGroupCards [data-fo-group]').nth(1));
+    page.locator('#pciFoGroupCards [data-fo-group]').nth(1).locator('.pci-fo-group-assigned'));
   const moveDebug=await page.evaluate(()=>{
     const cards=[...document.querySelectorAll('#pciFoGroupCards [data-fo-group]')];
     return {status:document.querySelector('#pciFoSaved')?.textContent,
