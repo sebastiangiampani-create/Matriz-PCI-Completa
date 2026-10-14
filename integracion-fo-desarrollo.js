@@ -114,29 +114,37 @@ if(overlay){
    }
  }
  function groups(){return foGroups(getMap(),format);}
+ // El filtro "Todos los años" muestra simultáneamente los agrupamientos
+ // reales de 3.º, 4.º y 5.º. El año propio siempre viene del grupo/slot.
+ function visibleGroups(){return groups().filter(g=>year===0||g.year===year);}
  function years(){
    const available=groups().map(g=>g.year);
    return [...new Set(available)].sort();
  }
  function subjectCatalog(){
-   return availableFor(groups().find(g=>g.id===slot&&g.year===year));
+   const unique=new Map();
+   for(const group of visibleGroups())
+     for(const row of availableFor(group))unique.set(row.id,row);
+   return [...unique.values()];
  }
  function resetYear(asked=null){
    const list=years();
    const next=Number(asked);
-   year=list.includes(next)?next:(format==='proyecto'?5:list[0]??3);
+   // Por defecto FO muestra toda la trayectoria: 4 laboratorios o 4 talleres
+   // juntos, y el selector permite acotar por año para trabajar con más detalle.
+   year=(next===0||list.includes(next))?next:(format==='proyecto'?5:0);
    $('pciFoYear').value=String(year);
    renderSpaceOptions();
  }
  function renderSpaceOptions(preferred=''){
-   const values=groups().filter(g=>g.year===year);
+   const values=visibleGroups();
    if(preferred&&values.some(g=>g.id===preferred))slot=preferred;
    else if(!values.some(g=>g.id===slot))slot=values[0]?.id||'';
    const select=$('pciFoSpace');
    select.replaceChildren();
    for(const [index,group] of values.entries()){
-     const opt=node('option','',group.term===null?'Espacio anual · C9–C10':
-       'Espacio '+(index+1)+' · C'+group.term);
+     const opt=node('option','',group.term===null?'5.º año · Espacio anual · C9–C10':
+       group.year+'.º año · Espacio '+(index+1)+' · C'+group.term);
      opt.value=group.id;
      select.appendChild(opt);
    }
@@ -270,7 +278,7 @@ if(overlay){
  }
  function renderSpace(){
    const empty=$('pciFoEmpty'),fields=$('pciFoFields');
-   const group=groups().find(g=>g.id===slot && g.year===year);
+   const group=visibleGroups().find(g=>g.id===slot);
    empty.hidden=!!group;fields.hidden=!group;
    if(!group){
      current=null;renderCatalog();
@@ -320,7 +328,7 @@ if(overlay){
  function renderGroupCards(){
    const container=$('pciFoGroupCards');
    container.replaceChildren();
-   const available=groups().filter(g=>g.year===year);
+   const available=visibleGroups();
    for(const [index,group] of available.entries()){
      const selected=group.id===slot;
      const stored=draft?.spaces?.[group.id];
@@ -336,6 +344,7 @@ if(overlay){
      input.value=stored?.name||('Espacio '+(index+1)+(group.term?' · C'+group.term:' · C9–C10'));
      title.appendChild(input);card.appendChild(title);
      const meta=node('div','group-meta');
+     meta.appendChild(node('span','pill pci-fo-year-pill',group.year+'.º año'));
      meta.appendChild(node('span','pill',format==='laboratorios'?'Laboratorio':
        format==='talleres'?'Taller':'Proyecto'));
      meta.appendChild(node('span','pill',group.term?'C'+group.term:'C9–C10'));
@@ -383,10 +392,11 @@ if(overlay){
    const total=new Set(available.flatMap(g=>availableFor(g).map(r=>r.id))).size;
    safeText($('pciFoCoverage'),all.size+' de '+total+
      ' contenidos ubicados en '+(formatName[format]||'la orientación')+
-     ' · '+year+'.º año. Un contenido se mueve entre agrupamientos sin duplicarlo.');
+     ' · '+(year===0?'todos los años':year+'.º año')+
+     ' · '+available.length+' espacios visibles. Un contenido se mueve entre agrupamientos sin duplicarlo.');
  }
  function moveContents(ids,target){
-   const dest=groups().find(g=>g.id===target&&g.year===year);
+   const dest=visibleGroups().find(g=>g.id===target);
    if(!dest){savedStatus('Primero elegí un agrupamiento del año.');return;}
    const allowed=new Set(availableFor(dest).map(row=>row.id));
    const invalid=ids.filter(id=>!allowed.has(id));
@@ -433,6 +443,8 @@ if(overlay){
    safeText($('pciFoTitle'),formatName[format]||'Desarrollo curricular');
    safeText($('pciFoContext'),'Orientación: '+orientation);
    const w=$('pciFoYear');w.replaceChildren();
+   const allYears=new Option('Todos los años','0');
+   w.appendChild(allYears);
    for(const n of [3,4,5]){
      const option=node('option','',n+'.º año');option.value=String(n);
      w.appendChild(option);
@@ -453,7 +465,7 @@ if(overlay){
    previousFocus=document.activeElement;
    orientation=name;format=formatId;
    draft=loadDraft();
-   year=Number(requestedYear)||(format==='proyecto'?5:3);
+   year=requestedYear===null?(format==='proyecto'?5:0):Number(requestedYear);
    overlay.hidden=false;
    document.body.classList.add('pci-fo-development-open');
    renderAll();
