@@ -681,7 +681,7 @@ if(overlay){
    const card=e.target.closest('[data-fo-group]');
    if(!card)return;e.preventDefault();e.dataTransfer.dropEffect='move';
    card.classList.add('drop-target');
- });
+ },true);
  $('pciFoGroupCards').addEventListener('dragleave',e=>{
    if(!e.currentTarget.contains(e.relatedTarget))
      e.currentTarget.querySelectorAll('.drop-target').forEach(card=>card.classList.remove('drop-target'));
@@ -693,7 +693,7 @@ if(overlay){
    const id=e.dataTransfer.getData('application/x-pci-content')||
      e.dataTransfer.getData('text/plain');
    if(id)moveContents([id],card.dataset.foGroup);
- });
+ },true);
  $('pciFoGroupCards').addEventListener('click',e=>{
    const card=e.target.closest('[data-fo-group]');
    if(!card)return;
