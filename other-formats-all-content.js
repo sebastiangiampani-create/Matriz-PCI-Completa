@@ -175,7 +175,7 @@ function assign() {
   selected.clear();
   const app = state();
   app.schemaVersion = 10;
-  localStorage.setItem('pciAppV2', JSON.stringify(app));
+  window.PCIApp?.saveScopedState?.(app);
   window.app = app;
   window.dispatchEvent(new CustomEvent('pci-state-change', { detail: { schemaVersion: 10 } }));
   window.PCIApp?.openArea?.(OTHER_AREA, target.id);
