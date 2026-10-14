@@ -29,10 +29,11 @@ function metric(ids,universe) {
     unmatched:placed.filter(id=>!valid.has(id))
   };
 }
-function catalogRows(rows,ids,opts={}) {
-  const {year,allowYear=true}=opts;
+function catalogRows(rows,ids) {
   const used=new Set(ids);
-  const source=allowYear?rows.filter(row=>Number(row.year)===Number(year)):rows;
+  // El llamador proporciona el universo correcto. FO V96 no trae año:
+  // filtrar por un año indefinido ocultaría todos los bloques y materias.
+  const source=rows;
   const by=new Map();
   for(const row of source){
     const label=keyFor(row);
