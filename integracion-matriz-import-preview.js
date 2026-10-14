@@ -11,6 +11,16 @@ if(dialog&&open){
  function updateSavedStatus(){
    const found=assessPriorWork(original());
    const side=$('pciImportSavedStatus'), detail=$('pciImportSavedDetail');
+   if(window.PCIApp?.isOrientationReady?.(orientation())){
+     open.textContent='Consultar importación y respaldo';
+     if(side)side.textContent='Copia editable de '+orientation()+
+       ' habilitada. Elegí cualquier área para trabajar con contenidos y drag & drop. Los cambios permanecen solo en este navegador.';
+     if(detail)detail.textContent='El original permanece conservado. Podés seguir trabajando en la copia editable por orientación; los cambios no están publicados.';
+     if(side)side.dataset.priorWork='found';
+     if(detail)detail.dataset.priorWork='found';
+     return;
+   }
+   open.textContent='Importar Matriz original';
    if(found.available){
      const chunks=[
        found.contentCount ? found.contentCount+(found.contentCount===1?' contenido ubicado':' contenidos ubicados') : '',
@@ -29,6 +39,7 @@ if(dialog&&open){
    if(detail)detail.dataset.priorWork=found.available?'found':'unverified';
  }
  window.addEventListener('pci-state-change',updateSavedStatus);
+ window.addEventListener('pci-orientation-changed',updateSavedStatus);
  updateSavedStatus();
  function status(message){$('pciImportResult').textContent=message;}
  function reset(){
