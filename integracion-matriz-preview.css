@@ -798,3 +798,45 @@ body.pci-fo-development-open{overflow:hidden}
   #pci-fo-development .pci-fo-coverage-dashboard{display:block!important;break-inside:auto}
   #pci-fo-development .pci-fo-cover-space{break-inside:avoid}
 }
+
+/* Cobertura FG: panel propio bajo la cobertura histórica. Cotejo V2 v103
+   solo si existe homologación por nivel, para no fabricar porcentajes. */
+#pciFgCoverageDashboard[hidden]{display:none!important}
+#pciFgCoverageDashboard{
+  border:1px solid var(--line);border-radius:13px;
+  background:#fff;margin:12px 0 14px;overflow:hidden;
+}
+#pciFgCoverageDashboard>summary{
+  cursor:pointer;padding:13px 16px;background:#edf5f7;
+  font-size:.82rem;font-weight:850
+}
+#pciFgCoverageDashboard>p,
+#pciFgCoverageDashboard>div{
+  padding:12px 15px;margin:0;
+}
+#pciFgCoverageDashboard>p{
+  font-size:.75rem;line-height:1.5;color:var(--muted)
+}
+#pciFgCoverageDashboard>div{border-top:1px solid var(--line)}
+#pciFgCoverageDashboard h3{font-size:.9rem;margin:8px 0 10px}
+#pciFgCoverageDashboard .pci-fg-cover-row{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:8px;flex-wrap:wrap;padding:9px 0;
+  font-size:.77rem;border-bottom:1px solid #e9f0f2
+}
+#pciFgCoverageDashboard .pci-fg-cover-row>span{font-weight:800}
+#pciFgCoverageDashboard .pci-fg-cover-row>small{
+  width:100%;color:#735600;font-size:.69rem
+}
+#pciFgCoverageDashboard .pci-fg-cover-group{
+  border:1px solid var(--line);border-radius:9px;margin:8px 0
+}
+#pciFgCoverageDashboard .pci-fg-cover-group>summary{
+  cursor:pointer;font-size:.78rem;font-weight:750;padding:11px
+}
+#pciFgCoverageDashboard .pci-fg-cover-plan-list{padding:9px}
+#pciFgCoverageDashboard .pci-fg-cover-plan{
+  border:1px solid var(--line);border-radius:8px;
+  margin:10px 0;padding:10px;font-size:.77rem
+}
+#pciFgCoverageDashboard .pci-fg-cover-plan p{margin:7px 0}
