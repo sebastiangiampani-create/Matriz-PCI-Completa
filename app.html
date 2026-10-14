@@ -59,7 +59,9 @@
       <p class="pci-import-source-warning">Esta vista de prueba utiliza la Matriz cargada en esta sesión. Para incorporar los PCI reales de cada escuela hará falta una copia respaldada de la base original y una migración validada.</p>
       <div class="pci-import-actions">
         <button id="pciImportPrepare" type="button" class="button primary">Preparar copia para revisar</button>
-        <button id="pciImportExport" type="button" class="button secondary" disabled>Descargar copia de revisión</button>
+        <button id="pciImportExport" type="button" class="button secondary" disabled>Respaldo JSON</button>
+        <button id="pciImportExcel" type="button" class="button secondary" disabled>Exportar Excel (.xlsx)</button>
+        <button id="pciImportWord" type="button" class="button secondary" disabled>Exportar Word (.docx)</button>
       </div>
       <div id="pciImportReviewContent" hidden>
         <div id="pciImportMetrics" class="pci-import-metrics"></div>
@@ -71,6 +73,7 @@
           <button id="pciImportApprove" type="button" class="button primary" disabled>Dar OK de revisión</button>
         </div>
       </div>
+      <p class="pci-import-download-tip">Descargá los archivos <strong>antes de dar el OK</strong>. Excel permite controlar agrupamientos, contenidos, planes y etapas; Word permite leer las secuencias completas. El JSON conserva todos los campos disponibles en esta sesión, pero el resguardo original debe hacerse directamente desde la base escolar.</p>
       <p id="pciImportResult" class="pci-import-result" role="status" aria-live="polite">El trabajo original no se modifica con esta operación.</p>
     </div>
   </dialog>
