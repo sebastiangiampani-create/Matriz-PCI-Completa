@@ -123,45 +123,13 @@
   }
 
   function showAreaDetail(area) {
-    if (!projection) return;
-    const offer = projection.deriveAreaProjection(area, orientationMap());
-    if (!offer) return;
-    const map = orientationMap();
-    const modal = $('pci-area-detail');
-    if (!modal) return;
-    modal.dataset.area = area;
-    modal.dataset.year = '';
-    const legacy = modal.querySelector('.pci-area-detail-legacy');
-    if (legacy) legacy.hidden = false;
-    $('pciAreaDetailMap').textContent = 'Abrir Mapa de la Oferta para editar';
-    $('pciAreaDetailTitle').textContent = area;
-    $('pciAreaDetailOrientation').textContent = 'Orientación: ' + active;
-    const source = map ? 'Mapa de la Oferta de la orientación' : 'Estructura inicial de la oferta pendiente de conformación';
-    const type = area === 'Ciencias Sociales'
-      ? (offer.socialOption === 'B'
-        ? ' · opción de 12 laboratorios (2 + 2 en 3.º)'
-        : ' · opción de 10 laboratorios (4 materias juntas en 3.º)')
-      : '';
-    $('pciAreaDetailStatus').textContent = source + type + '. ' +
-      offer.count + ' espacios previstos, ' + offer.occupied + ' con materias ubicadas. ' +
-      'La homologación de contenidos y sus porcentajes todavía está pendiente.';
-    $('pciAreaDetailGroups').innerHTML = offer.years
-      .filter(year => year.count > 0)
-      .map(year =>
-        '<section class="pci-offer-year-card"><h3>' + year.year + '.º año · ' +
-        year.count + ' espacio' + (year.count === 1 ? '' : 's') +
-        ' · C' + (year.year * 2 - 1) + ' y C' + (year.year * 2) +
-        '</h3><p class="pci-year-note">' + year.occupied + ' con materias en el mapa de esta orientación</p>' +
-        year.groups.map(group => describeGroup(group, offer, map)).join('') + '</section>'
-      ).join('') || '<p>No se definieron ubicaciones en el mapa de esta orientación.</p>';
-
-    const saved = window.PCIApp?.getState?.()?.areas?.[area]?.groups;
-    const historic = Array.isArray(saved) ? saved.length : 0;
-    $('pciAreaDetailLegacyInfo').textContent = historic + ' agrupamientos históricos conservados en Matriz. ' +
-      'Sus contenidos, objetivos, planes y secuencias no se modifican por elegir la opción de ' + offer.count +
-      ' espacios del Mapa de la Oferta. Abrirlos muestra la FG anterior, no una migración automática.';
-    $('pciAreaDetailLegacy').disabled = !Array.isArray(saved);
-    if (!modal.open) modal.showModal();
+    // No duplicar el editor original: tras el OK, la misma bolsa curricular
+    // y los agrupamientos se editan en una copia independiente por orientación.
+    if (window.PCIApp?.isOrientationReady?.(active)) {
+      window.PCIApp.openArea(area);
+      return;
+    }
+    $('pciImportOpen')?.click();
   }
 
   function updateOfferSummary() {
@@ -275,6 +243,8 @@
   function setActive(name) {
     if (!enabled.includes(name)) return;
     active = name;
+    // Cada orientación mantiene su copia editable independiente.
+    window.PCIApp?.switchOrientationDraft?.(active);
     remember();
     renderSelections();
     if (!overlay.hidden) sendToMap('matriz-preview:set-context', Number(yearSelect.value));
@@ -293,42 +263,7 @@
       showAreaDetail(button.dataset.area);
     }, true);
   }
-  const classicButton = $('pciClassicToggle');
-  function setClassic(on) {
-    const workspace = document.querySelector('#overview .pci-integrated-workspace');
-    if (!workspace || !classicButton) return;
-    workspace.classList.toggle('pci-classic-view', Boolean(on));
-    for (const tile of document.querySelectorAll('#areaGrid button[data-area]')) {
-      const area = tile.dataset.area;
-      const pill = tile.querySelector('.pill');
-      const label = tile.querySelector('footer strong[data-pci-legacy-label]');
-      const groups = window.PCIApp?.getState?.()?.areas?.[area]?.groups;
-      if (on && pill && Array.isArray(groups)) {
-        if (!pill.dataset.pciOfferLabel) pill.dataset.pciOfferLabel = pill.textContent;
-        const kind = groups[0]?.kind;
-        const category = kind === 'trunk' ? 'niveles anuales'
-          : kind === 'laboratory' ? 'laboratorios'
-          : kind === 'workshop' ? 'talleres' : 'formatos';
-        pill.textContent = groups.length + ' ' + category;
-      } else if (!on && pill && pill.dataset.pciOfferLabel) {
-        pill.textContent = pill.dataset.pciOfferLabel;
-      }
-      if (label) label.textContent = on
-        ? label.dataset.pciLegacyLabel
-        : 'Contenidos anteriores: ' + label.dataset.pciLegacyLabel.replace(/ contenidos ubicados$/, '');
-    }
-    classicButton.setAttribute('aria-pressed', String(Boolean(on)));
-    classicButton.textContent = on ? 'Volver a vista integrada' : 'Ver Matriz original';
-    const status = $('pciClassicStatus');
-    if (status) status.hidden = !on;
-  }
-  classicButton?.addEventListener('click', () => setClassic(classicButton.getAttribute('aria-pressed') !== 'true'));
   $('pciAreaDetailClose')?.addEventListener('click', () => $('pci-area-detail').close());
-  $('pciAreaDetailLegacy')?.addEventListener('click', () => {
-    const area = $('pci-area-detail').dataset.area;
-    $('pci-area-detail').close();
-    window.PCIApp?.openArea?.(area);
-  });
   $('pciAreaDetailMap')?.addEventListener('click', () => {
     $('pci-area-detail').close();
     openMap(Number($('pci-area-detail').dataset.year || yearSelect.value) || 1);
