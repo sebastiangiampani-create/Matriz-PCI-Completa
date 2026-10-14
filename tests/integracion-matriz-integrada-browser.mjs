@@ -147,9 +147,21 @@ async function testDesktop(page) {
   assert.match(await page.locator('#pciFoCoverage').innerText(),/trayectoria/i,
     'La cobertura FO debe aparecer al cargar el catálogo oficial.');
   await page.locator('#pciFoCoverageDashboard > summary').click();
-  assert.equal(await page.locator('#pciFoCoverageLevels .pci-fo-cover-level').count(),3);
-  assert.ok(await page.locator('#pciFoCoverageSubjects .pci-fo-metric-row').count()>0);
-  assert.ok(await page.locator('#pciFoCoverageSpaces .pci-fo-cover-space').count()>0);
+  assert.equal(await page.locator('#pciFoCoverageLevels .v98d-level').count(),3);
+  assert.match(await page.locator('#pciFoCoverageLevels').innerText(),
+    /Cobertura anual por materia/);
+  assert.match(await page.locator('#pciFoCoverageLevels').innerText(),
+    /Agrupamientos del nivel/);
+  assert.match(await page.locator('#pciFoCoverageLevels').innerText(),
+    /Planes del agrupamiento/);
+  assert.equal(await page.locator('#pciFoCoverageLevels .v99d-plan-table').count()>0,false,
+    'Las tablas de planes V2 se mantienen plegadas hasta consultar el agrupamiento');
+  await page.locator('#pciFoCoverageLevels .v98d-grouping > summary').first().click();
+  await page.locator('#pciFoCoverageLevels .v99d-plans > summary').first().click();
+  assert.ok(await page.locator('#pciFoCoverageLevels .v99d-plan-table').count()>0);
+  assert.match(await page.locator('#pciFoCoverageLevels .v99d-plan-head').first().innerText(),/Dentro del agrupamiento/);
+  assert.ok(await page.locator('#pciFoCoverageSubjects .v98d-subject').count()>0);
+  assert.ok(await page.locator('#pciFoCoverageSpaces .v98d-format-summary').count()>0);
   assert.match(await page.locator('#pciFoCoverageBasis').innerText(),/no por año|no tiene año|no por nivel|por trayectoria/i);
   assert.equal(await page.locator('#pciFoDetails').evaluate(el=>el.open),false,
     'El desarrollo de planes permanece plegado hasta que se elija un espacio');
@@ -194,6 +206,20 @@ async function testDesktop(page) {
   assert.deepEqual(await page.locator('#pciFoGroupCards [data-fo-group] .pci-fo-year-pill').allTextContents(),
     ['3.º año','4.º año','5.º año','5.º año']);
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group] .pci-fo-card-fields').count(),4);
+  const parity=await page.locator('#pciFoGroupCards .group-card').first().evaluate(card=>{
+    const style=getComputedStyle(card);
+    const selected=card.classList.contains('selected');
+    return {padding:style.padding,borderRadius:style.borderRadius,
+      background:style.backgroundColor,borderWidth:style.borderTopWidth,
+      selected,title:card.querySelector('.group-title-row')!==null,
+      fields:card.querySelector('.form-grid')!==null,
+      tags:card.querySelector('.group-meta')!==null,
+      assigned:card.querySelector('.assigned-list')!==null};
+  });
+  assert.equal(parity.padding,'18px');
+  assert.equal(parity.borderRadius,'20px');
+  assert.equal(parity.borderWidth,'2px');
+  assert.equal(parity.title&&parity.fields&&parity.tags&&parity.assigned,true);
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group] .pci-fo-card-coverage').count(),4);
   assert.match(await page.locator('#pciFoGroupCards [data-fo-group]').first().innerText(),/Carácter del agrupamiento|Contexto problematizador/);
   assert.equal(await page.locator('#pciFoSearch').isVisible(),true);
