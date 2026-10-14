@@ -41,7 +41,7 @@
           <p class="pci-integration-notice"><strong>Vista aislada:</strong> la Formación General previa y sus secuencias no se alteran. Las materias de FO de la prueba se muestran sin porcentajes hasta completar la homologación. No se escribe en Supabase ni en las matrices escolares.</p>
         </div>
       </div></section>
-    <section id="board" class="screen" aria-labelledby="boardTitle"><div class="section-heading board-heading hero-band"><div><button id="backOverview" class="text-button" type="button">← Volver al PCI</button><h1 id="boardTitle"></h1><p id="boardDescription" class="lead"></p></div><div class="button-row"><button id="addOther" class="button accent" type="button" hidden>＋ Crear otro formato</button><button id="openBagMobile" class="button primary mobile-only" type="button">Elegir contenidos</button></div></div><div class="coverage-card"><div><strong id="coverageLabel">0 de 0 contenidos ubicados</strong><span id="coverageHint">Un mismo contenido puede formar parte de más de un espacio.</span></div><div class="progress-track" aria-hidden="true"><span id="coverageBar"></span></div></div><details id="pciFgCoverageDashboard" class="pci-fg-coverage-dashboard" hidden>
+    <section id="board" class="screen" aria-labelledby="boardTitle"><div class="section-heading board-heading hero-band"><div><button id="backOverview" class="text-button" type="button">← Volver al PCI</button><h1 id="boardTitle"></h1><p id="boardDescription" class="lead"></p></div><div class="button-row"><button id="addOther" class="button accent" type="button" hidden>＋ Crear otro formato</button><button id="openBagMobile" class="button primary mobile-only" type="button">Elegir contenidos</button></div></div><div class="coverage-card"><div><strong id="coverageLabel">0 de 0 contenidos ubicados</strong><span id="coverageHint">Un mismo contenido puede formar parte de más de un espacio.</span></div><div class="progress-track" aria-hidden="true"><span id="coverageBar"></span></div></div><div class="pci-native-coverage-entry"><button id="pciNativeV2CoverageFG" class="button secondary" type="button">Panel de cobertura curricular</button><small>Lectura oficial por nivel, materia, agrupamiento y plan</small></div><details id="pciFgCoverageDashboard" class="pci-fg-coverage-dashboard" hidden>
   <summary>Cobertura curricular por nivel, materia, agrupamiento y plan</summary>
   <p id="pciFgCoverageIntro">Calculando cobertura con los contenidos priorizados prescriptos…</p>
   <div id="pciFgCoverageLevels"></div>
@@ -128,7 +128,7 @@
         <div id="pciFoContentList" class="pci-fo-dev-content-list"></div>
       </aside>
       <section class="pci-fo-dev-editor" aria-label="Editor de desarrollo curricular">
-        <div id="pciFoCoverage" class="pci-fo-coverage" role="status" aria-live="polite"></div>
+        <div class="pci-native-coverage-entry"><button id="pciNativeV2CoverageFO" class="button secondary" type="button">Panel de cobertura curricular</button><small>Ver niveles, bloques o materias, agrupamientos y planes</small></div><div id="pciFoCoverage" class="pci-fo-coverage" role="status" aria-live="polite"></div>
         <details id="pciFoCoverageDashboard" class="pci-fo-coverage-dashboard">
           <summary>Panel de cobertura curricular · Ver cobertura por nivel, materia, agrupamiento y plan</summary>
           <div class="pci-fo-cover-tools">
@@ -216,6 +216,11 @@
     <div class="pci-map-note">Componé el mapa por año con materias de Formación General y Orientada. Podés imprimir el año seleccionado o guardar su PDF.</div>
     <iframe id="pci-map-iframe" title="Mapa de la Oferta curricular en pruebas" loading="eager"></iframe>
   </div>
+  <div id="pciNativeV2Coverage" role="dialog" aria-modal="true" aria-label="Panel de cobertura curricular" hidden>
+    <iframe id="pciNativeV2CoverageFrame" title="Panel de cobertura curricular" loading="eager"></iframe>
+    <div id="pciNativeV2Notice" role="alert" hidden></div>
+    <button id="pciNativeV2CoverageClose" class="pci-native-v2-fallback-close" type="button" title="Cerrar cobertura">Cerrar</button>
+  </div>
   <footer class="site-footer no-print"><img class="logo-blanco" src="assets/em-logo-footer.svg?v=20260902" alt="Escuela de Maestros"><img class="ministerio" src="assets/ministerio-footer.svg?v=20260902" alt="Ministerio de Educación · Buenos Aires Ciudad"></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="arts-multiple-workshops.js?v=20260814-2"></script>
@@ -234,5 +239,6 @@
   <script type="module" src="integracion-fo-desarrollo.js?v=20261014-1"></script>
   <script type="module" src="integracion-cobertura-fg-v2.js?v=20261014-1"></script>
   <script type="module" src="integracion-matriz-import-preview.js?v=20261013-1"></script>
+  <script type="module" src="integracion-cobertura-v2-bridge.js?v=20261014-1"></script>
 </body>
 </html>
