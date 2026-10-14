@@ -107,10 +107,14 @@ async function initialize(){
 }
 if(pane){
   initialize();
-  window.addEventListener('pci-state-change',display);
-  window.addEventListener('pci-orientation-changed',display);
-  window.addEventListener('pci-app-ready',display);
-  $('areaGrid')?.addEventListener('click',()=>setTimeout(display,0));
+  // El editor dispara pci-state-change ANTES de actualizar boardTitle
+  // y la interfaz de mosaicos detiene la propagación en captura.
+  // Recalcular después del render evita dejar el tablero oculto.
+  const afterRender=()=>setTimeout(display,0);
+  window.addEventListener('pci-state-change',afterRender);
+  window.addEventListener('pci-orientation-changed',afterRender);
+  window.addEventListener('pci-app-ready',afterRender);
+  $('areaGrid')?.addEventListener('click',afterRender,true);
   $('backOverview')?.addEventListener('click',()=>{
     pane.hidden=true;
   });
