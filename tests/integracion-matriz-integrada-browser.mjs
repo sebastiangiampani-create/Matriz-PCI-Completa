@@ -157,6 +157,8 @@ async function testDesktop(page) {
   await page.locator('#pciFoContentList [data-content-id]').first().dragTo(
     page.locator('#pciFoGroupCards [data-fo-group]').first());
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').first().locator('.assigned-item').count(),1);
+  await page.locator('#pciFoGroupCards [data-edit-group]').first().click();
+  await page.locator('#pciFoPlanContents [data-plan-content]').first().check();
   await page.locator('#pciFoGroupCards [data-fo-group]').first().locator('.assigned-item').first().dragTo(
     page.locator('#pciFoGroupCards [data-fo-group]').nth(1));
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').first().locator('.assigned-item').count(),0);
@@ -168,6 +170,16 @@ async function testDesktop(page) {
   });
   assert.equal(foMoved.a.length,0);
   assert.equal(foMoved.b.length,1);
+  const retained=await page.evaluate(()=>{
+    const root=JSON.parse(localStorage.getItem('pci-fo-development-drafts-preview-20261014'));
+    const space=root.orientations['Economía y Administración'].spaces['foLab5-c9'];
+    return {contentRefs:space.plansBimestrales[0].contentIds,
+      relocated:space.contentRelocationReview};
+  });
+  assert.equal(retained.contentRefs.length,1,'Un traslado no puede borrar el plan ya elaborado');
+  assert.equal(retained.relocated.length,1,'El espacio anterior debe quedar marcado para revisión');
+  await page.locator('#pciFoGroupCards [data-fo-group]').first().click();
+  assert.match(await page.locator('#pciFoReviewWarning').innerText(),/Revisar planes/);
   assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalFoBefore);
   await page.locator('#pciFoClose').click();
   await page.locator('#overviewMatrix').click();
