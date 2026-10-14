@@ -188,6 +188,8 @@ if(board && tableBody && head && yearPicker){
 
   // Captura para anular el click heredado, que abría sólo FG (matriz antigua).
   $('overviewMatrix')?.addEventListener('click',event=>{
+    // En "Ver Matriz original" conservar la navegación histórica y su editor.
+    if(document.querySelector('#overview .pci-integrated-workspace.pci-classic-view'))return;
     event.preventDefault();event.stopImmediatePropagation();
     openMatrix('todos');
   },true);
