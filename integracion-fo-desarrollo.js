@@ -430,6 +430,7 @@ if(overlay){
    }
    $('pciFoSearch').value='';
    $('pciFoPendingOnly').checked=false;
+   $('pciFoDetails').open=false;
    selectedContents.clear();
    resetYear(year);
    const unused=orphanedSpaces(draft,getMap());
@@ -518,6 +519,14 @@ if(overlay){
      return;
    }
    if(e.target.matches('input,textarea,select'))return;
+   if(e.target.closest('[data-edit-group]')){
+     $('pciFoDetails').open=true;
+     slot=card.dataset.foGroup;
+     $('pciFoSpace').value=slot;
+     renderSpace();renderGroupCards();
+     $('pciFoDetails').scrollIntoView({behavior:'smooth',block:'start'});
+     return;
+   }
    slot=card.dataset.foGroup;
    $('pciFoSpace').value=slot;
    renderSpace();renderGroupCards();
