@@ -57,7 +57,7 @@
 
   function writeState(current, announce = true) {
     if (!current) return;
-    localStorage.setItem('pciAppV2', JSON.stringify(current));
+    window.PCIApp?.saveScopedState?.(current);
     window.app = current;
     if (announce) {
       window.dispatchEvent(new CustomEvent('pci-state-change', {
