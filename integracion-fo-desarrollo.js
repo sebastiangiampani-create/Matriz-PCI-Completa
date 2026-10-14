@@ -30,7 +30,45 @@ const formatName={
 if(overlay){
  let orientation='',format='',year=3,slot='',draft=null,current=null;
  let catalog=[],ready=false,loadingError='',previousFocus=null;
- const byId=new Map();
+ let materiaCatalog=null;
+ const byId=new Map(),selectedContents=new Set();
+ const normalized=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+   .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+ const slug=value=>normalized(value).replace(/ /g,'-');
+ const specialKind=row=>{
+   const text=normalized(row.block||row.subject);
+   if(text.includes('historia')&&text.includes('orientad'))return 'historia';
+   if(text.includes('tecnolog')&&text.includes('informacion'))return 'tecnologia';
+   return '';
+ };
+ function subjectLabel(id){
+   const map=getMap();
+   const custom=(map?.custom||[]).find(row=>row.id===id);
+   if(custom?.name)return String(custom.name);
+   const matched=String(id).match(/^fo-(.+)-([345])-(\d+)$/);
+   if(matched&&matched[1]===slug(orientation)){
+     const fo=materiaCatalog?.formacion_orientada?.[orientation];
+     const list=matched[2]==='3'?fo?.['3']:fo?.[map?.alt==='B'?'B':'A']?.[matched[2]];
+     if(Array.isArray(list)&&list[Number(matched[3])])return String(list[Number(matched[3])]);
+   }
+   return String(id);
+ }
+ function availableFor(group){
+   const id=orientId(orientation);
+   if(!id||!group)return [];
+   const specific=selectFoByOrientation(catalog,id,ORIENTATIONS);
+   const placed=group.members.map(subjectLabel).map(normalized);
+   return specific.filter(row=>{
+     const kind=specialKind(row);
+     if(!kind)return true;
+     if(group.year!==5)return false;
+     if(kind==='tecnologia'&&group.format!=='taller')return false;
+     return placed.some(name=>kind==='historia'?
+       name.includes('historia')&&name.includes('orientad'):
+       name.includes('tecnolog')&&name.includes('informacion'));
+   });
+ }
+
  const orientId=name=>ORIENTATIONS.find(item=>item.name===name)?.id;
  const savedStatus=(message)=>{$('pciFoSaved').textContent=message;};
  const safeText=(element,value)=>{element.textContent=String(value??'');return element;};
@@ -77,10 +115,7 @@ if(overlay){
    return [...new Set(available)].sort();
  }
  function subjectCatalog(){
-   const id=orientId(orientation);
-   if(!id)return [];
-   const selection=selectFoByOrientation(catalog,id,ORIENTATIONS);
-   return selection;
+   return availableFor(groups().find(g=>g.id===slot&&g.year===year));
  }
  function resetYear(asked=null){
    const list=years();
@@ -103,7 +138,9 @@ if(overlay){
    }
    select.disabled=!values.length;
    if(slot)select.value=slot;
+   selectedContents.clear();
    renderSpace();
+   renderGroupCards();
  }
  function saveInput(name,value) {
    if(!current)return;
@@ -169,6 +206,7 @@ if(overlay){
    }
    for(const id of current.items){
      const item=node('div','pci-fo-assigned-item');
+     item.draggable=true;item.dataset.contentId=id;item.title='Arrastrá a otro agrupamiento';
      const desc=byId.get(id);
      item.appendChild(node('span','',desc?
        (desc.block+' · '+desc.text):id));
@@ -187,17 +225,33 @@ if(overlay){
    }
    const rows=subjectCatalog();
    const query=$('pciFoSearch').value.trim().toLowerCase();
+   const chosenBlock=$('pciFoBlockFilter').value;
+   const chosenAxis=$('pciFoAxisFilter').value;
+   const taken=new Set(Object.values(draft?.spaces||{}).flatMap(data=>data.items||[]));
+   const blocks=[...new Set(rows.map(row=>row.block).filter(Boolean))].sort();
+   const axes=[...new Set(rows.map(row=>row.axis).filter(Boolean))].sort();
+   for(const [control,items] of [['pciFoBlockFilter',blocks],['pciFoAxisFilter',axes]]){
+     const select=$(control),keep=select.value;
+     select.replaceChildren(new Option('Todos',''));
+     for(const item of items)select.appendChild(new Option(item,item));
+     select.value=items.includes(keep)?keep:'';
+   }
    const filtered=rows.filter(item=>
-     !query||[item.block,item.axis,item.subaxis,item.text].some(v=>
-       String(v||'').toLowerCase().includes(query)));
+     (!query||[item.block,item.axis,item.subaxis,item.text].some(v=>
+       String(v||'').toLowerCase().includes(query))) &&
+     (!chosenBlock||item.block===chosenBlock)&&
+     (!chosenAxis||item.axis===chosenAxis)&&
+     (!$('pciFoPendingOnly').checked||!taken.has(item.id)));
    safeText(count,rows.length?
      (filtered.length+' visibles · '+rows.length+' contenidos disponibles en la trayectoria'):
      'No hay contenidos FO específicos en este catálogo para esta orientación. No se crean datos de ejemplo.');
    for(const row of filtered.slice(0,220)){
-     const label=node('label','pci-fo-content-choice');
+     const label=node('label','pci-fo-content-choice content-item');
+     label.draggable=!!current;label.dataset.contentId=row.id;
+     label.title='Arrastrá este contenido a un agrupamiento';
      const check=node('input');check.type='checkbox';
      check.value=row.id;check.dataset.foContent=row.id;
-     check.checked=!!current?.items.includes(row.id);
+     check.checked=selectedContents.has(row.id);
      check.disabled=!current;
      const body=node('span');
      body.appendChild(node('strong','',row.block||'Formación Orientada'));
@@ -207,6 +261,7 @@ if(overlay){
    }
    if(filtered.length>220)list.appendChild(node('p','pci-fo-muted',
      'Refiná la búsqueda para ver los demás contenidos.'));
+   updateSelection();
  }
  function renderSpace(){
    const empty=$('pciFoEmpty'),fields=$('pciFoFields');
@@ -220,7 +275,7 @@ if(overlay){
    const state=getFoSpace(draft,group);
    current=state.data;
    safeText($('pciFoMembers'),state.members.length?
-     ('Materias ubicadas en la oferta: '+state.members.join(' · ')):
+     ('Materias ubicadas en la oferta: '+state.members.map(subjectLabel).join(' · ')):
      'Este espacio todavía no tiene materias ubicadas en el Mapa de la Oferta.');
    $('pciFoReviewWarning').hidden=!state.needsReview;
    safeText($('pciFoReviewWarning'),state.needsReview?
@@ -231,7 +286,11 @@ if(overlay){
    }
    $('pciFoContextField').hidden=format!=='laboratorios';
    $('pciFoPracticeField').hidden=format!=='talleres';
-   $('pciFoPlan').value='0';
+   const planSelector=$('pciFoPlan');
+   planSelector.replaceChildren();
+   const indices=group.term===null?[0,1,2,3]:(group.term%2===1?[0,1]:[2,3]);
+   for(const idx of indices)planSelector.appendChild(new Option('Bimestre '+(idx+1),String(idx)));
+   planSelector.value=String(indices[0]);
    renderAssigned();renderPlan();renderCatalog();
    savedStatus('Vista de prueba · edición local independiente del trabajo escolar');
  }
@@ -243,6 +302,9 @@ if(overlay){
      const option=node('option','',n+'.º año');option.value=String(n);
      w.appendChild(option);
    }
+   $('pciFoSearch').value='';
+   $('pciFoPendingOnly').checked=false;
+   selectedContents.clear();
    resetYear(year);
    const unused=orphanedSpaces(draft,getMap());
    if(unused.length)$('pciFoReviewWarning').title=
@@ -271,6 +333,9 @@ if(overlay){
  $('pciFoYear').addEventListener('change',e=>{year=Number(e.target.value);renderSpaceOptions();});
  $('pciFoSpace').addEventListener('change',e=>{slot=e.target.value;renderSpace();});
  $('pciFoSearch').addEventListener('input',renderCatalog);
+ $('pciFoBlockFilter').addEventListener('change',renderCatalog);
+ $('pciFoAxisFilter').addEventListener('change',renderCatalog);
+ $('pciFoPendingOnly').addEventListener('change',renderCatalog);
  for(const [id,key] of [['pciFoObjective','objective'],['pciFoSynopsis','synopsis'],
     ['pciFoProblemContext','context'],['pciFoPracticeAxis','practiceAxis']]){
    $(id).addEventListener('input',e=>saveInput(key,e.target.value));
@@ -289,24 +354,62 @@ if(overlay){
  });
  $('pciFoContentList').addEventListener('change',e=>{
    const id=e.target.dataset.foContent;
-   if(!id||!current||!byId.has(id))return;
-   const selected=new Set(current.items);
-   if(e.target.checked)selected.add(id);
-   else selected.delete(id);
-   current.items=[...selected];
-   if(!e.target.checked){
-     for(const plan of current.plansBimestrales)
-       plan.contentIds=plan.contentIds.filter(x=>x!==id);
+   if(!id)return;
+   if(e.target.checked)selectedContents.add(id);else selectedContents.delete(id);
+   updateSelection();
+ });
+ $('pciFoMoveSelected').addEventListener('click',()=>{
+   moveContents([...selectedContents],slot);
+ });
+ $('pciFoContentList').addEventListener('dragstart',startDrag);
+ $('pciFoAssignedContents').addEventListener('dragstart',startDrag);
+ $('pciFoGroupCards').addEventListener('dragover',e=>{
+   const card=e.target.closest('[data-fo-group]');
+   if(!card)return;e.preventDefault();e.dataTransfer.dropEffect='move';
+   card.classList.add('drop-target');
+ });
+ $('pciFoGroupCards').addEventListener('dragleave',e=>{
+   if(!e.currentTarget.contains(e.relatedTarget))
+     e.currentTarget.querySelectorAll('.drop-target').forEach(card=>card.classList.remove('drop-target'));
+ });
+ $('pciFoGroupCards').addEventListener('drop',e=>{
+   const card=e.target.closest('[data-fo-group]');
+   if(!card)return;
+   e.preventDefault();card.classList.remove('drop-target');
+   const id=e.dataTransfer.getData('application/x-pci-content')||
+     e.dataTransfer.getData('text/plain');
+   if(id)moveContents([id],card.dataset.foGroup);
+ });
+ $('pciFoGroupCards').addEventListener('click',e=>{
+   const card=e.target.closest('[data-fo-group]');
+   if(!card)return;
+   if(e.target.matches('[data-remove-from]')){
+     const id=e.target.dataset.removeFrom;
+     const selected=card.dataset.foGroup;
+     removeContents([id],selected);
+     return;
    }
-   persist();renderAssigned();renderPlanContents();
+   if(e.target.matches('input,textarea,select'))return;
+   slot=card.dataset.foGroup;
+   $('pciFoSpace').value=slot;
+   renderSpace();renderGroupCards();
+ });
+ $('pciFoGroupCards').addEventListener('input',e=>{
+   if(!e.target.matches('[data-group-name]'))return;
+   const id=e.target.dataset.groupName;
+   if(!id)return;
+   const group=groups().find(g=>g.id===id);
+   if(!group)return;
+   const payload=getFoSpace(draft,group).data;
+   payload.name=e.target.value;
+   draft=saveFoSpace(draft,payload);
+   if(current?.slot===id)current.name=e.target.value;
+   persistDraft();
  });
  $('pciFoAssignedContents').addEventListener('click',e=>{
    const id=e.target.closest('button[data-remove]')?.dataset.remove;
    if(!id||!current)return;
-   current.items=current.items.filter(x=>x!==id);
-   for(const plan of current.plansBimestrales)
-     plan.contentIds=plan.contentIds.filter(x=>x!==id);
-   persist();renderAssigned();renderPlanContents();renderCatalog();
+   removeContents([id],slot);
  });
  $('pciFoPlanContents').addEventListener('change',e=>{
    const id=e.target.dataset.planContent;
@@ -327,6 +430,10 @@ if(overlay){
  window.PCIFoDesarrollo={open,close};
  // Los contenidos oficiales no tienen año FO explícito: el docente determina
  // los contenidos de cada espacio y plan, sin porcentajes inventados.
+ fetch('preview-v2-real/data/materias-v2.json')
+   .then(res=>{if(!res.ok)throw Error('Catálogo de materias no disponible');return res.json();})
+   .then(data=>{materiaCatalog=data;if(!overlay.hidden)renderGroupCards();})
+   .catch(()=>{materiaCatalog=null;});
  loadV2Fo().then(rows=>{
    catalog=rows;ready=true;
    for(const row of rows)byId.set(row.id,row);
