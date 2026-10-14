@@ -221,7 +221,15 @@ async function testDesktop(page) {
   await page.locator('#pciFoPlanContents [data-plan-content]').first().check();
   await page.locator('#pciFoGroupCards [data-fo-group]').first().locator('.assigned-item').first().dragTo(
     page.locator('#pciFoGroupCards [data-fo-group]').nth(1));
-  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').first().locator('.assigned-item').count(),0);
+  const moveDebug=await page.evaluate(()=>{
+    const cards=[...document.querySelectorAll('#pciFoGroupCards [data-fo-group]')];
+    return {status:document.querySelector('#pciFoSaved')?.textContent,
+      groups:cards.map(x=>({id:x.dataset.foGroup,
+        items:[...x.querySelectorAll('.assigned-item')].map(y=>y.dataset.contentId)})),
+      selected:document.querySelector('#pciFoSpace')?.value};
+  });
+  assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').first().locator('.assigned-item').count(),0,
+    'Traslado FO entre tarjetas: '+JSON.stringify(moveDebug));
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').nth(1).locator('.assigned-item').count(),1);
   const foMoved=await page.evaluate(()=>{
     const state=JSON.parse(localStorage.getItem('pci-fo-development-drafts-preview-20261014'));
