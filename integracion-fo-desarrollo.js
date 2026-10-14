@@ -341,6 +341,7 @@ if(overlay){
    host.appendChild(wrap);
  }
  function renderCoverageDashboard(){
+  try {
    const snap=coverageSnapshot();
    if(!snap)return;
    const isAnnual=snap.levelBasisAvailable;
@@ -406,6 +407,10 @@ if(overlay){
      (isAnnual?'':' · Sin base oficial de cobertura anual por nivel.');
    syncCardCoverage(snap);
    renderPlanMetric(snap);
+  }catch(error){
+   $('pciFoCoverage').textContent='Cobertura pendiente de recalcular: '+error.message;
+   console.error('Error de cobertura curricular:',error);
+  }
  }
  function syncCardCoverage(snap){
    for(const card of $('pciFoGroupCards').querySelectorAll('[data-fo-group]')){
