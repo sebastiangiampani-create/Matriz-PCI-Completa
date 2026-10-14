@@ -152,7 +152,7 @@ async function testDesktop(page) {
     /Cobertura anual por materia/);
   assert.match(await page.locator('#pciFoCoverageLevels').innerText(),
     /Agrupamientos del nivel/);
-  assert.match(await page.locator('#pciFoCoverageLevels').innerText(),
+  assert.match(await page.locator('#pciFoCoverageLevels').textContent(),
     /Planes del agrupamiento/);
   assert.equal(await page.locator('#pciFoCoverageLevels .v99d-plan-table').first().isVisible(),false,
     'Las tablas de planes V2 se mantienen plegadas hasta consultar el agrupamiento');
