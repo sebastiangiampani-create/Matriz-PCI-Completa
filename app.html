@@ -93,6 +93,34 @@
       <button id="pciAreaDetailMap" class="button primary" type="button">Abrir Mapa de la Oferta para editar</button>
     </div>
   </dialog>
+  <div id="pci-integrated-matrix" role="dialog" aria-modal="true" aria-labelledby="pciIntegratedTitle" hidden>
+    <div class="pci-integrated-toolbar">
+      <div class="pci-integrated-heading">
+        <p class="eyebrow">Espacios curriculares por orientación</p>
+        <h2 id="pciIntegratedTitle">Matriz curricular</h2>
+        <p id="pciIntegratedOrientation" class="pci-context"></p>
+      </div>
+      <div class="pci-integrated-actions">
+        <label for="pciIntegratedYear">Año
+          <select id="pciIntegratedYear">
+            <option value="0">Todos</option>
+            <option value="1">1.º</option><option value="2">2.º</option>
+            <option value="3">3.º</option><option value="4">4.º</option>
+            <option value="5">5.º</option>
+          </select>
+        </label>
+        <button id="pciIntegratedClose" type="button" class="button secondary">← Volver a espacios</button>
+      </div>
+    </div>
+    <p class="pci-integrated-help">La matriz refleja los espacios del Mapa de la Oferta de esta orientación. Tocá un cuatrimestre para abrirlo y editar las materias. La planificación histórica permanece intacta.</p>
+    <div class="pci-integrated-scroll">
+      <table id="pciIntegratedTable" aria-label="Matriz curricular de Formación General y Formación Orientada">
+        <thead id="pciIntegratedHead"></thead>
+        <tbody id="pciIntegratedBody"></tbody>
+      </table>
+    </div>
+    <p id="pciIntegratedStatus" class="pci-integrated-status" aria-live="polite"></p>
+  </div>
   <div id="pci-map-overlay" role="dialog" aria-modal="true" aria-label="Mapa de la Oferta por orientación" hidden>
     <div class="pci-map-toolbar">
       <div class="pci-map-heading"><strong>Mapa de la Oferta · <span id="pciMapActive">Economía y Administración</span></strong><small>Organización curricular por año · C1–C10</small></div>
@@ -119,6 +147,7 @@
   <script type="module" src="other-format-types-extension.js?v=20260821-1"></script>
   <script type="module" src="common-final-fixes.js?v=20260828-commonaxis1"></script>
   <script defer src="integracion-matriz-preview.js?v=20261010-1"></script>
+  <script type="module" src="integracion-matriz-tablero.js?v=20261014-1"></script>
   <script type="module" src="integracion-matriz-import-preview.js?v=20261013-1"></script>
 </body>
 </html>
