@@ -468,6 +468,23 @@ async function testMobile(page) {
   assert.equal(await page.locator('#pci-fo-development').isVisible(),true);
   assert.equal(await page.locator('#pciFoYear').inputValue(),'5');
   assert.equal(await page.locator('#pciFoStages .pci-fo-stage').count(),4);
+  await page.locator('#pciNativeV2CoverageFO').click();
+  const frame=page.frameLocator('#pciNativeV2CoverageFrame');
+  await frame.locator('#v98dResults .v98d-area').first().waitFor({timeout:60000});
+  assert.equal(await frame.locator('#v98dArea').isVisible(),true);
+  assert.equal(await frame.locator('#v98dLevel').isVisible(),true);
+  assert.equal(await frame.locator('#v98dStatus').isVisible(),true);
+  const nativeMobile=await page.locator('#pciNativeV2CoverageFrame').evaluate(element=>{
+    const w=element.contentWindow,doc=w.document;
+    const box=doc.querySelector('.v98d-shell').getBoundingClientRect();
+    return {width:Math.round(box.width),viewport:w.innerWidth,
+      horizontalOverflow:doc.documentElement.scrollWidth>w.innerWidth+2};
+  });
+  assert.ok(nativeMobile.width<=nativeMobile.viewport,
+    'La cobertura original debe caber en pantalla móvil');
+  assert.equal(nativeMobile.horizontalOverflow,false,
+    'La cobertura V93 original no debe generar desborde horizontal');
+  await page.locator('#pciNativeV2CoverageClose').click();
   const geometry=await page.locator('#pci-fo-development').evaluate(el=>({
     height:Math.round(el.getBoundingClientRect().height),windowHeight:innerHeight,
     overflow:document.documentElement.scrollWidth>innerWidth+2
