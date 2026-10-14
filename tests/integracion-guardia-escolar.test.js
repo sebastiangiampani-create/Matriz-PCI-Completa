@@ -12,3 +12,21 @@ test('el acceso escolar de la rama de prueba bloquea antes de save-state y sólo
  assert.match(html,/Protección activa: guardado online deshabilitado/);
  assert.match(html,/Vista de prueba protegida: podés consultar el PCI original sin guardar/);
 });
+
+test('los módulos auxiliares nunca escriben directamente sobre la Matriz original',async()=>{
+ const modules=[
+ 'common-workshop-guard.js','curriculum-ui.js','arts-multiple-workshops.js',
+ 'curriculum-ui-tuning.js','planes-bimestrales.js','plan-name-defaults.js',
+ 'other-formats-all-content.js','other-format-types-extension.js',
+ 'common-final-fixes.js'
+ ];
+ for(const path of modules){
+   const source=await readFile(new URL('../'+path,import.meta.url),'utf8');
+   assert.ok(source.includes('saveScopedState'),path+' debe utilizar la copia aprobada');
+   assert.doesNotMatch(source,/localStorage\.setItem\(\s*(?:'pciAppV2'|STORAGE_KEY)/,
+     path+' no debe sobrescribir el original');
+ }
+ const main=await readFile(new URL('../app.js',import.meta.url),'utf8');
+ assert.match(main,/if \(activeDraftKey\) localStorage\.setItem\(activeDraftKey,/);
+ assert.match(main,/if \(!activeDraftKey \|\| candidate !== app\) return false/);
+});
