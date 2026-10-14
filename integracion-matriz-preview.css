@@ -361,3 +361,152 @@ body.pci-integrated-expanded{overflow:hidden}
   #pci-integrated-matrix .pci-integrated-help,
   #pci-integrated-matrix .pci-integrated-status{padding:8px 12px;font-size:.7rem}
 }
+
+/* Desarrollo curricular de Formación Orientada: editor propio tipo Matriz,
+   no un tablero de distribución. Todos los cambios son borradores locales. */
+#pci-fo-development[hidden]{display:none!important}
+#pci-fo-development{
+  position:fixed;inset:0;z-index:250;background:#f5f9f8;
+  height:100dvh;display:flex;flex-direction:column;overflow:hidden;
+  color:var(--ink);font-family:Archivo,Arial,sans-serif;
+}
+body.pci-fo-development-open{overflow:hidden}
+#pci-fo-development .pci-fo-dev-header{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:15px 22px;background:#edf3f8;border-bottom:1px solid var(--line);
+}
+#pci-fo-development .pci-fo-dev-header h2{
+  margin:3px 0 6px;font-size:clamp(1.22rem,2.3vw,1.8rem);
+}
+#pci-fo-development .pci-fo-dev-header .eyebrow{margin:0;font-size:.68rem}
+#pci-fo-development .pci-fo-dev-header p:last-child{
+  font-size:.8rem;color:var(--muted);margin:0
+}
+#pci-fo-development .pci-fo-dev-toolbar{
+  flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:12px;
+  padding:10px 22px;background:#fff;border-bottom:1px solid var(--line);
+}
+#pci-fo-development .pci-fo-dev-toolbar label{
+  display:flex;align-items:center;gap:8px;font-size:.77rem;font-weight:800
+}
+#pci-fo-development select,#pci-fo-development input,#pci-fo-development textarea{
+  border:1px solid var(--line);border-radius:9px;background:#fff;
+  min-height:40px;padding:10px;font:inherit;font-size:.81rem;color:var(--ink);
+  max-width:100%;
+}
+#pci-fo-development #pciFoSpace{min-width:190px;max-width:320px}
+#pci-fo-development #pciFoSaved{
+  margin-left:auto;color:var(--muted);font-size:.72rem;line-height:1.4
+}
+#pci-fo-development .pci-fo-dev-content{
+  display:grid;grid-template-columns:minmax(260px,33%) minmax(0,1fr);
+  flex:1 1 auto;min-height:0;overflow:hidden;gap:14px;padding:14px 22px 24px
+}
+#pci-fo-development .pci-fo-dev-bag,
+#pci-fo-development .pci-fo-dev-editor{
+  min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  background:#fff;border:1px solid var(--line);border-radius:16px;
+  padding:18px;
+}
+#pci-fo-development .pci-fo-dev-bag h3,
+#pci-fo-development .pci-fo-dev-editor h3{font-size:1rem;margin:2px 0 10px}
+#pci-fo-development .pci-fo-dev-bag p{font-size:.76rem;color:var(--muted);line-height:1.5}
+#pci-fo-development .pci-fo-dev-bag>label{display:block;font-size:.77rem;font-weight:800}
+#pci-fo-development .pci-fo-dev-bag>label input{width:100%;margin-top:7px}
+#pci-fo-development .pci-fo-dev-content-list{display:grid;gap:7px;margin-top:9px}
+#pci-fo-development .pci-fo-content-choice{
+  display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line);
+  border-radius:10px;padding:9px 10px;cursor:pointer;font-size:.75rem
+}
+#pci-fo-development .pci-fo-content-choice:has(input:checked){
+  background:#e8f7f1;border-color:#90d9c8
+}
+#pci-fo-development .pci-fo-content-choice input,
+#pci-fo-development .pci-fo-check-row input{
+  flex:0 0 auto;width:18px;height:18px;min-height:18px;accent-color:#126e65
+}
+#pci-fo-development .pci-fo-content-choice span{min-width:0}
+#pci-fo-development .pci-fo-content-choice strong{
+  display:block;font-size:.74rem;margin-bottom:4px
+}
+#pci-fo-development .pci-fo-content-choice small{
+  display:block;font-size:.72rem;line-height:1.4;color:var(--ink-soft)
+}
+#pci-fo-development .pci-fo-fields-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:10px 0 19px
+}
+#pci-fo-development .pci-fo-fields-grid label{
+  display:flex;flex-direction:column;gap:6px;font-size:.78rem;font-weight:800;min-width:0
+}
+#pci-fo-development .pci-fo-fields-grid textarea{resize:vertical;min-height:75px}
+#pci-fo-development .pci-fo-full{grid-column:1 / -1}
+#pci-fo-development .pci-fo-members{
+  font-size:.76rem;line-height:1.5;background:var(--band);
+  border-radius:10px;padding:11px;margin:0 0 13px
+}
+#pci-fo-development .pci-fo-review-warning{
+  padding:10px;border-radius:10px;background:#fff3d7;color:#755000;font-size:.76rem
+}
+#pci-fo-development .pci-fo-muted{
+  font-size:.74rem;color:var(--muted);line-height:1.45
+}
+#pci-fo-development .pci-fo-assigned{display:grid;gap:7px;margin:9px 0 24px}
+#pci-fo-development .pci-fo-assigned-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 12px;background:#f1f7f7;border:1px solid var(--line);
+  border-radius:9px;font-size:.74rem;line-height:1.5
+}
+#pci-fo-development .pci-fo-remove{
+  border:1px solid var(--line);border-radius:8px;background:white;
+  color:var(--ink);font-size:.72rem;padding:6px 9px;cursor:pointer
+}
+#pci-fo-development .pci-fo-plan-head{
+  display:flex;flex-wrap:wrap;justify-content:space-between;
+  align-items:center;gap:10px;border-top:1px solid var(--line);
+  padding-top:18px;margin-top:14px;
+}
+#pci-fo-development .pci-fo-plan-head label{font-size:.76rem;font-weight:800}
+#pci-fo-development .pci-fo-dev-plan-contents{
+  border:1px solid var(--line);border-radius:12px;
+  padding:12px;margin:10px 0 19px
+}
+#pci-fo-development .pci-fo-dev-plan-contents legend{font-size:.77rem;font-weight:850}
+#pci-fo-development .pci-fo-check-row{
+  display:flex;align-items:flex-start;gap:9px;font-size:.75rem;
+  line-height:1.4;margin:7px 0
+}
+#pci-fo-development .pci-fo-stages{display:grid;gap:13px}
+#pci-fo-development .pci-fo-stage{
+  border:1px solid var(--line);border-radius:12px;padding:15px;background:#fbfcfd
+}
+#pci-fo-development .pci-fo-stage h4{
+  color:var(--mint-dark);font-size:.93rem;margin:0 0 11px
+}
+#pci-fo-development .pci-fo-dev-empty{padding:20px;text-align:center}
+#pci-fo-development .pci-fo-dev-empty h3{font-size:1.12rem}
+#pci-fo-development .pci-fo-dev-empty p{
+  max-width:570px;margin:10px auto 20px;color:var(--muted);
+  line-height:1.5;font-size:.83rem
+}
+#pci-fo-development [hidden]{display:none!important}
+@media(max-width:860px){
+  #pci-fo-development .pci-fo-dev-content{
+    display:flex;flex-direction:column;overflow:auto;padding:9px;
+  }
+  #pci-fo-development .pci-fo-dev-bag,
+  #pci-fo-development .pci-fo-dev-editor{
+    flex:0 0 auto;overflow:visible;min-height:0;padding:14px
+  }
+  #pci-fo-development .pci-fo-dev-header{padding:10px 12px;gap:8px;flex-wrap:wrap}
+  #pci-fo-development .pci-fo-dev-header button{min-height:39px}
+  #pci-fo-development .pci-fo-dev-toolbar{padding:9px 12px}
+  #pci-fo-development #pciFoSaved{width:100%;margin:0}
+}
+@media(max-width:540px){
+  #pci-fo-development .pci-fo-dev-header button{width:100%}
+  #pci-fo-development .pci-fo-dev-toolbar label{width:100%;justify-content:space-between}
+  #pci-fo-development .pci-fo-dev-toolbar select{flex:1 1 auto;max-width:75%}
+  #pci-fo-development .pci-fo-fields-grid{grid-template-columns:1fr}
+  #pci-fo-development .pci-fo-full{grid-column:auto}
+  #pci-fo-development .pci-fo-plan-head label{width:100%}
+}
