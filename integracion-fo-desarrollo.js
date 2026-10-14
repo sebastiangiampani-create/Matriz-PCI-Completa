@@ -485,6 +485,34 @@ if(overlay){
      card.appendChild(node('p','pci-fo-group-members',
        group.members.length?'Materias: '+group.members.map(subjectLabel).join(' + '):
        'Sin materias ubicadas en el mapa'));
+     // Se respeta la jerarquía visual y los mismos campos de las tarjetas FG.
+     // La ubicación del mapa sigue siendo de solo lectura aquí para no mover
+     // materias ni alterar otros agrupamientos por accidente.
+     const fields=node('div','form-grid pci-fo-card-fields');
+     const formLabel=(caption,value,key,tag='textarea')=>{
+       const wrap=node('label','field-label '+(tag==='textarea'?'full':''));
+       wrap.appendChild(node('span','',caption));
+       const el=node(tag);
+       if(tag==='textarea'){el.rows=2;el.value=String(value||'');}
+       else {el.value=String(value||'');el.readOnly=true;}
+       if(key){el.dataset.foCardField=key;el.dataset.groupId=group.id;}
+       wrap.appendChild(el);fields.appendChild(wrap);
+     };
+     formLabel('Carácter del agrupamiento',stored?.type||'Obligatorio',null,'input');
+     formLabel('Ubicación temporal',group.term?'C'+group.term:'C9–C10',null,'input');
+     if(format==='laboratorios')
+       formLabel('Contexto problematizador',stored?.context,'context');
+     if(format==='talleres')
+       formLabel('Práctica / producto / eje',stored?.practiceAxis,'practiceAxis');
+     formLabel('Objetivos de aprendizaje',stored?.objective,'objective');
+     formLabel('Sinopsis (opcional)',stored?.synopsis,'synopsis');
+     card.appendChild(fields);
+     const info=node('div','pci-fo-card-coverage');
+     info.dataset.foCardCoverage=group.id;
+     card.appendChild(info);
+     const components=node('p','pci-fo-card-subjects');
+     components.dataset.foCardSubjects=group.id;
+     card.appendChild(components);
      const header=node('div','assigned-heading');
      header.appendChild(node('h3','','Contenidos asignados'));
      header.appendChild(node('span','pill',contentIds.length));
@@ -685,6 +713,24 @@ if(overlay){
    slot=card.dataset.foGroup;
    $('pciFoSpace').value=slot;
    renderSpace();renderGroupCards();
+ });
+ $('pciFoGroupCards').addEventListener('input',e=>{
+   const field=e.target.dataset.foCardField;
+   const groupId=e.target.dataset.groupId;
+   if(!field||!groupId)return;
+   if(!['objective','synopsis','context','practiceAxis'].includes(field))return;
+   const found=groups().find(item=>item.id===groupId);
+   if(!found)return;
+   const data=getFoSpace(draft,found).data;
+   data[field]=e.target.value;
+   draft=saveFoSpace(draft,data);
+   if(current?.slot===groupId)current[field]=e.target.value;
+   if(current?.slot===groupId){
+     const inputId={objective:'pciFoObjective',synopsis:'pciFoSynopsis',
+       context:'pciFoProblemContext',practiceAxis:'pciFoPracticeAxis'}[field];
+     if(inputId)$(inputId).value=e.target.value;
+   }
+   persistDraft();
  });
  $('pciFoGroupCards').addEventListener('input',e=>{
    if(!e.target.matches('[data-group-name]'))return;
