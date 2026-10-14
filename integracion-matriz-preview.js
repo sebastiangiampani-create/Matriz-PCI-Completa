@@ -199,7 +199,11 @@
         '</div><strong aria-hidden="true">→</strong></footer></button>';
     }).join('');
     container.querySelectorAll('[data-pci-fo-format]').forEach(button =>
-      button.addEventListener('click', () => showFoDetail(button.dataset.pciFoFormat)));
+      button.addEventListener('click', () => {
+        if(window.PCIMatrizTablero) window.PCIMatrizTablero.open(button.dataset.pciFoFormat,button.dataset.pciFoFormat === 'proyecto'?5:null);
+        else showFoDetail(button.dataset.pciFoFormat);
+      }));
+    window.dispatchEvent(new Event('pci-matriz-offer-update'));
   }
 
   function showFoDetail(formatId) {
