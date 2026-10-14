@@ -7,7 +7,7 @@ const open=$('pciImportOpen');
 let review=null, sourceSnapshot=null;
 if(dialog&&open){
  const orientation=()=>$('pciDemoOrientationContext')?.textContent.trim()||'Orientación sin seleccionar';
- const original=()=>window.PCIApp?.getState?.();
+ const original=()=>window.PCIApp?.getOriginalState?.() || window.PCIApp?.getState?.();
  function updateSavedStatus(){
    const found=assessPriorWork(original());
    const side=$('pciImportSavedStatus'), detail=$('pciImportSavedDetail');
@@ -75,8 +75,21 @@ if(dialog&&open){
      if(!review||!$('pciImportReviewed').checked)throw new Error('Primero revisá y confirmá la copia.');
      if(orientation()!==review.orientation)throw new Error('Cambiaste de orientación. Prepará una nueva copia para revisarla.');
      review=approveReview(review,original());
+     // Activar la copia para edición con el constructor histórico de Matriz,
+     // pero usando otra clave local por orientación. Nada se publica online.
+     const activated=window.PCIApp?.activateOrientationDraft?.(review.orientation,review.source);
+     if(!activated?.originalPreserved)throw new Error('No pudo verificarse la copia editable.');
      $('pciImportApprove').disabled=true;$('pciImportReviewed').disabled=true;
-     status('OK de revisión registrado solo en esta ventana. Importación definitiva pendiente: no se escribió ningún dato escolar.');
+     status('Copia editable habilitada para '+review.orientation+
+       '. La bolsa, agrupamientos y drag & drop están disponibles. El original sigue intacto y el guardado online permanece bloqueado.');
+     $('pciImportOpen').textContent='Revisar copia importada';
+     const panel=$('pciImportSavedStatus');
+     if(panel)panel.textContent='Copia editable activa para '+review.orientation+
+       '. Abrí cualquier área curricular y continuá con el drag & drop. Los cambios de prueba se guardan solo en este navegador.';
+     // Mostrar la portada de las áreas; al elegir una se abre directamente
+     // el mismo editor de contenidos y agrupamientos que ya funcionaba.
+     window.PCIApp.openOverview();
+     dialog.close();
    }catch(e){status(e.message);}
  });
 
