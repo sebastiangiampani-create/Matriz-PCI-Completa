@@ -654,3 +654,147 @@ body.pci-fo-development-open{overflow:hidden}
   #pci-fo-development .pci-fo-dev-toolbar #pciFoYear,
   #pci-fo-development .pci-fo-dev-toolbar #pciFoSpace{min-width:0;max-width:100%}
 }
+
+/* Igualdad estética: FO usa las mismas cards, campos y jerarquía que FG.
+   La cobertura se muestra compacta y el detalle permanece plegable. */
+#pci-fo-development .pci-fo-group-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));
+  gap:14px;align-items:start
+}
+#pci-fo-development .pci-fo-group-card{
+  background:var(--paper);padding:18px;min-width:0;
+  border:2px solid transparent;border-radius:20px;
+  box-shadow:0 8px 22px rgba(25,58,77,.08);
+  display:block;height:auto;
+}
+#pci-fo-development .pci-fo-group-card.selected{
+  border-color:var(--mint-dark);box-shadow:0 16px 38px rgba(18,110,101,.15)
+}
+#pci-fo-development .pci-fo-group-card.drop-target{
+  outline:4px dashed var(--mint);outline-offset:2px
+}
+#pci-fo-development .pci-fo-group-card .group-title-row{margin-bottom:10px}
+#pci-fo-development .pci-fo-group-card .group-title-row input{
+  font-size:1.05rem;font-weight:900
+}
+#pci-fo-development .pci-fo-group-card .group-meta{margin-bottom:12px;gap:6px}
+#pci-fo-development .pci-fo-card-fields{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+  margin:12px 0
+}
+#pci-fo-development .pci-fo-card-fields .full{grid-column:1/-1}
+#pci-fo-development .pci-fo-card-fields input[readonly]{
+  background:#f4f8f8;color:var(--ink-soft)
+}
+#pci-fo-development .pci-fo-card-fields textarea{
+  min-height:68px;resize:vertical;width:100%
+}
+#pci-fo-development .pci-fo-group-card .assigned-heading{margin:16px 0 8px}
+#pci-fo-development .pci-fo-group-card .assigned-heading h3{font-size:.98rem}
+#pci-fo-development .pci-fo-group-card .assigned-list{
+  min-height:54px;display:grid;gap:7px
+}
+#pci-fo-development .pci-fo-card-coverage{
+  font-size:.76rem;font-weight:800;color:var(--ink);
+  background:#eff8f5;border-radius:8px;padding:8px 10px;line-height:1.5;
+  margin:10px 0 5px
+}
+#pci-fo-development .pci-fo-card-subjects{
+  font-size:.7rem;line-height:1.45;color:var(--muted);
+  overflow-wrap:anywhere;margin:4px 0 8px
+}
+#pci-fo-development .pci-fo-card-edit{margin-top:12px}
+#pci-fo-development .pci-fo-coverage-dashboard{
+  margin-bottom:14px;border:1px solid var(--line);
+  border-radius:14px;background:#fff;overflow:hidden
+}
+#pci-fo-development .pci-fo-coverage-dashboard>summary{
+  padding:13px 14px;background:#edf4f7;font-weight:850;
+  font-size:.82rem;cursor:pointer
+}
+#pci-fo-development .pci-fo-coverage-dashboard>div:not(.pci-fo-cover-tools){
+  padding:10px 14px;border-top:1px solid var(--line)
+}
+#pci-fo-development .pci-fo-coverage-dashboard h3{
+  font-size:.9rem;margin:10px 0 9px
+}
+#pci-fo-development .pci-fo-cover-tools{
+  display:flex;align-items:center;gap:14px;justify-content:space-between;
+  padding:12px 14px;font-size:.73rem;line-height:1.4;color:var(--muted);
+}
+#pci-fo-development .pci-fo-cover-tools button{flex-shrink:0}
+#pci-fo-development .pci-fo-cover-level,
+#pci-fo-development .pci-fo-cover-space{
+  border:1px solid var(--line);border-radius:11px;margin:8px 0;
+  overflow:hidden
+}
+#pci-fo-development .pci-fo-cover-level{padding:12px}
+#pci-fo-development .pci-fo-cover-level-title{
+  display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;
+  font-size:.78rem
+}
+#pci-fo-development .pci-fo-cover-subline{
+  margin:7px 0 0;font-size:.72rem;color:var(--muted)
+}
+#pci-fo-development .pci-fo-cover-context{
+  font-size:.72rem;line-height:1.5;color:var(--muted);margin:7px 0 12px
+}
+#pci-fo-development .pci-fo-metric-row{
+  display:grid;grid-template-columns:minmax(100px,1fr) auto;
+  gap:6px 12px;font-size:.74rem;padding:8px 0;
+  border-bottom:1px solid #edf2f4;align-items:center
+}
+#pci-fo-development .pci-fo-metric-row strong{font-weight:750}
+#pci-fo-development .pci-fo-metric-row span{font-weight:700;white-space:nowrap}
+#pci-fo-development .pci-fo-cover-track{
+  grid-column:1/-1;height:5px;border-radius:99px;overflow:hidden;
+  background:#e7eeee
+}
+#pci-fo-development .pci-fo-cover-track>span{
+  display:block;height:100%;background:var(--mint-dark);border-radius:inherit
+}
+#pci-fo-development .pci-fo-cover-space>summary{
+  padding:12px;font-size:.76rem;font-weight:850;
+  background:#f8fafb;cursor:pointer
+}
+#pci-fo-development .pci-fo-cover-space-body{padding:10px 13px}
+#pci-fo-development .pci-fo-cover-plan{
+  border:1px solid #e1e9ec;border-radius:9px;
+  padding:11px;margin:11px 0
+}
+#pci-fo-development .pci-fo-cover-plan>strong{font-size:.78rem}
+#pci-fo-development .pci-fo-cover-warning{
+  display:block;padding:8px 10px;border-radius:8px;
+  background:#fff4de;color:#715007;font-size:.72rem;line-height:1.4
+}
+#pci-fo-development .pci-fo-plan-coverage{
+  border:1px solid #cddfda;background:#f8fcfa;
+  border-radius:12px;padding:13px;margin:14px 0
+}
+#pci-fo-development .pci-fo-plan-coverage h4{
+  margin:0 0 8px;font-size:.85rem
+}
+@media(max-width:590px){
+  #pci-fo-development .pci-fo-group-grid{grid-template-columns:1fr}
+  #pci-fo-development .pci-fo-group-card{padding:12px}
+  #pci-fo-development .pci-fo-card-fields{grid-template-columns:1fr}
+  #pci-fo-development .pci-fo-cover-tools{flex-direction:column;align-items:stretch}
+  #pci-fo-development .pci-fo-metric-row{grid-template-columns:1fr;gap:4px}
+  #pci-fo-development .pci-fo-metric-row span{white-space:normal}
+}
+@media print{
+  body.pci-fo-development-open > :not(#pci-fo-development){display:none!important}
+  #pci-fo-development{position:static!important;height:auto!important;overflow:visible!important;background:white!important}
+  #pci-fo-development .pci-fo-dev-header{background:white}
+  #pci-fo-development .pci-fo-dev-content{display:block;overflow:visible!important;padding:0}
+  #pci-fo-development .pci-fo-dev-bag,
+  #pci-fo-development .pci-fo-group-grid,
+  #pci-fo-development .pci-fo-selection,
+  #pci-fo-development .pci-fo-details,
+  #pci-fo-development .pci-fo-dev-toolbar,
+  #pci-fo-development .pci-fo-dev-header button,
+  #pci-fo-development .pci-fo-cover-tools button{display:none!important}
+  #pci-fo-development .pci-fo-dev-editor{overflow:visible!important;border:0!important;padding:0!important}
+  #pci-fo-development .pci-fo-coverage-dashboard{display:block!important;break-inside:auto}
+  #pci-fo-development .pci-fo-cover-space{break-inside:avoid}
+}
