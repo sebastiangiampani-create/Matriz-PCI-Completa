@@ -256,3 +256,13 @@ body.pci-map-expanded{overflow:hidden}
 .pci-import-review #pciImportSavedDetail{font-size:.82rem;line-height:1.5;margin:10px 0 14px;color:var(--ink-soft)}
 .pci-import-review #pciImportSavedDetail[data-prior-work="found"]{font-weight:700;color:var(--ink)}
 @media(max-width:600px){#overview #pciImportSavedStatus{font-size:.77rem}.pci-import-review #pciImportSavedDetail{font-size:.8rem}}
+
+/* Exportaciones verificables antes de aprobar la revisión. */
+.pci-import-download-tip{font-size:.78rem;line-height:1.5;color:var(--ink-soft);margin-top:12px}
+.pci-import-review .pci-import-actions button{min-height:41px}
+.pci-import-review #pciImportExcel,.pci-import-review #pciImportWord{border-color:var(--mint-dark);font-weight:800}
+.pci-import-review #pciImportExcel:disabled,.pci-import-review #pciImportWord:disabled{opacity:.45}
+@media(max-width:600px){
+  .pci-import-review .pci-import-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+  .pci-import-review .pci-import-actions button{width:100%;text-align:center;white-space:normal}
+}
