@@ -939,6 +939,7 @@ function switchOrientationDraft(orientation) {
   selectedContentIds.clear();
   window.app = app;
   renderOverview();
+  window.dispatchEvent(new Event('pci-orientation-changed'));
   return Boolean(activeDraftKey);
 }
 function activateOrientationDraft(orientation, source) {
