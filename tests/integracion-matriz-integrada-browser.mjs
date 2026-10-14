@@ -46,6 +46,22 @@ async function testDesktop(page) {
   await page.locator('#pciImportReviewContent').waitFor({state:'visible'});
   assert.match(await page.locator('#pciImportMetrics').innerText(),/Agrupamientos/);
   assert.equal(await page.locator('#pciImportApprove').isDisabled(),true);
+  assert.equal(await page.locator('#pciImportExcel').isEnabled(),true);
+  assert.equal(await page.locator('#pciImportWord').isEnabled(),true);
+  const beforeExport=await page.evaluate(()=>localStorage.getItem('pciAppV2'));
+  const [xlsxDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#pciImportExcel').click()
+  ]);
+  assert.match(xlsxDownload.suggestedFilename(),/\.xlsx$/);
+  const [wordDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#pciImportWord').click()
+  ]);
+  assert.match(wordDownload.suggestedFilename(),/\.docx$/);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),beforeExport,
+    'Exportar no puede alterar la Matriz previa');
+
   await page.locator('#pciImportReviewed').check();
   await page.locator('#pciImportApprove').click();
   assert.match(await page.locator('#pciImportResult').innerText(),/no se escribió ningún dato escolar/);
