@@ -837,7 +837,38 @@ if(overlay){
  document.addEventListener('keydown',e=>{
    if(e.key==='Escape'&&!overlay.hidden)close();
  });
- window.PCIFoDesarrollo={open,close};
+ // Adaptador de solo lectura para el motor de cobertura ORIGINAL de V2.
+ // Los IDs y los planes existentes nunca se copian ni se reescriben aquí.
+ function coverageDataFor(name){
+   if(typeof name!=='string'||!name.trim())return null;
+   const selected=name.trim();
+   let offer=null,previous=null;
+   try{offer=JSON.parse(localStorage.getItem(V2_KEY)||'null')?.maps?.[selected]||null;}catch(_){}
+   try{previous=JSON.parse(localStorage.getItem(KEY)||'null')?.orientations?.[selected]||null;}catch(_){}
+   const copied=makeFoDraft(selected,previous);
+   const groupList=['laboratorios','talleres','proyecto'].flatMap(id=>
+     foGroups(offer,id).map(group=>{
+       const data=getFoSpace(copied,group).data;
+       return {
+         id:group.id,area:'Formación Orientada',year:group.year,
+         term:group.term,
+         type:group.format==='laboratorio'?'laboratorio':
+           group.format==='taller'?'taller':'proyecto',
+         members:group.members.slice(),
+         data:{
+           name:data.name||('Espacio '+(group.term?'C'+group.term:'C9–C10')),
+           contents:[...new Set((data.items||[]).map(String))],
+           plansBimestrales:data.plansBimestrales.map(p=>({
+             number:p.number,name:p.name,
+             contentIds:[...new Set((p.contentIds||[]).map(String))]
+           }))
+         }
+       };
+     })
+   );
+   return {orientation:selected,groups:groupList};
+ }
+ window.PCIFoDesarrollo={open,close,coverageDataFor};
  // Los contenidos oficiales no tienen año FO explícito: el docente determina
  // los contenidos de cada espacio y plan, sin porcentajes inventados.
  fetch('preview-v2-real/data/materias-v2.json')
