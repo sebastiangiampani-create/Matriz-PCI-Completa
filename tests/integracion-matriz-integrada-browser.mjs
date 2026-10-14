@@ -246,8 +246,9 @@ async function testDesktop(page) {
   });
   assert.equal(retained.contentRefs.length,1,'Un traslado no puede borrar el plan ya elaborado');
   assert.equal(retained.relocated.length,1,'El espacio anterior debe quedar marcado para revisión');
-  await page.locator('#pciFoGroupCards [data-fo-group]').first().click();
-  assert.match(await page.locator('#pciFoReviewWarning').innerText(),/Revisar planes/);
+  await page.locator('#pciFoGroupCards [data-edit-group]').first().click();
+  assert.equal(await page.locator('#pciFoDetails').evaluate(el=>el.open),true);
+  assert.match(await page.locator('#pciFoReviewWarning').textContent(),/Revisar planes/);
   assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalFoBefore);
   await page.locator('#pciFoClose').click();
   await page.locator('#pciDemoFoCards [data-pci-fo-format="talleres"]').click();
