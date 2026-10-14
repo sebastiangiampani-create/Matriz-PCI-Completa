@@ -143,7 +143,9 @@ async function testDesktop(page) {
   assert.equal(await page.locator('#pciFoYear').inputValue(),'5');
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),1);
   await page.locator('#pciFoCoverage').waitFor({state:'visible'});
-  await page.waitForFunction(()=>document.querySelector('#pciFoCoverage')?.textContent?.includes('trayectoria'),{timeout:45000});
+  await page.waitForFunction(()=>document.querySelector('#pciFoCoverage')?.textContent?.trim().length>0,{timeout:45000});
+  assert.match(await page.locator('#pciFoCoverage').innerText(),/trayectoria/i,
+    'La cobertura FO debe aparecer al cargar el catálogo oficial.');
   await page.locator('#pciFoCoverageDashboard > summary').click();
   assert.equal(await page.locator('#pciFoCoverageLevels .pci-fo-cover-level').count(),3);
   assert.ok(await page.locator('#pciFoCoverageSubjects .pci-fo-metric-row').count()>0);
