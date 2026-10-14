@@ -83,6 +83,13 @@ async function testDesktop(page) {
     'El OK debe habilitar una copia independiente por orientación');
   assert.ok(await page.evaluate(key=>localStorage.getItem(key+':original-sin-transformar'),editKey),
     'La copia original debe estar respaldada antes de habilitar la edición');
+  await page.locator('#pciNativeV2CoverageOverview').click();
+  const coverHome=page.frameLocator('#pciNativeV2CoverageFrame');
+  await coverHome.locator('#v98dResults .v98d-area').first().waitFor({timeout:60000});
+  assert.equal(await page.locator('#pciNativeV2CoverageFrame').evaluate(frame=>
+    frame.contentWindow.state.active),'Economía y Administración',
+    'El tablero original V2 debe usar la orientación activa, también desde portada');
+  await page.locator('#pciNativeV2CoverageClose').click();
   await page.locator('#areaGrid button[data-area="Artes"]').click();
   assert.equal(await page.locator('#board.screen.active').count(),1);
   assert.match(await page.locator('#boardTitle').innerText(),/Artes/);
@@ -456,6 +463,12 @@ async function testMobile(page) {
   assert.equal(await page.locator('#pciDemoOrientationTabs button').count(),2);
   assert.equal(await page.locator('#pciDemoOrientationTabs').isVisible(),true);
   assert.equal(await page.locator('#pciDemoOrientationSelect').isVisible(),false);
+  assert.equal(await page.locator('#pciNativeV2CoverageOverview').isVisible(),true);
+  const coverageButton=await page.locator('#pciNativeV2CoverageOverview').evaluate(el=>{
+    const box=el.getBoundingClientRect();
+    return {width:box.width,x:box.x,viewport:innerWidth};
+  });
+  assert.ok(coverageButton.x+coverageButton.width<=coverageButton.viewport+1);
   const first=page.locator('#pciDemoOrientationTabs button').first();
   const second=page.locator('#pciDemoOrientationTabs button').nth(1);
   await second.click();
