@@ -42,6 +42,15 @@ function flatData(review) {
   const plans=[['Área','Agrupamiento','ID de agrupamiento','Año','Plan','Nombre del plan','Objetivos','Síntesis','IDs de contenidos','Campos completos (JSON)']];
   const stages=[['Área','Agrupamiento','Plan','Etapa','Descripción','Duración','Recursos','Actividades','Evidencias','Etapa completa (JSON)']];
   const extras=[['Ruta del dato','Valor completo (JSON)']];
+  function appendCompleteValue(path,value){
+    const raw=JSON.stringify(value);
+    const size=30000;
+    if(raw.length<=size){extras.push([path,raw]);return;}
+    const parts=Math.ceil(raw.length/size);
+    for(let offset=0;offset<raw.length;offset+=size){
+      extras.push([path+' · parte '+(Math.floor(offset/size)+1)+'/'+parts,raw.slice(offset,offset+size)]);
+    }
+  }
   const catalog=Array.isArray(review.catalog)?new Map(review.catalog.filter(x=>x&&x.id!=null).map(x=>[String(x.id), String(x.content||x.contenido||x.text||x.name||x.titulo||'')])):new Map();
   for(const [area,entry] of Object.entries(source.areas||{})) {
     const all=Array.isArray(entry?.groups)?entry.groups:[];
@@ -68,9 +77,9 @@ function flatData(review) {
   function dive(value,path) {
     if(value && typeof value==='object'){
       const keys=Object.keys(value);
-      if(!keys.length){extras.push([path,JSON.stringify(value)]);return;}
+      if(!keys.length){appendCompleteValue(path,value);return;}
       for(const key of keys)dive(value[key],path+'/'+key.replace(/~/g,'~0').replace(/\//g,'~1'));
-    }else extras.push([path,JSON.stringify(value)]);
+    }else appendCompleteValue(path,value);
   }
   dive(source,'');
   const warnings=[['Área','Tipo','Detalle'],...review.warnings.map(w=>[w.area,w.type,w.message])];
@@ -194,7 +203,12 @@ export async function exportReviewDocx(review) {
   // El anexo deja ver todos los datos no listados, incluso metadatos o futuras
   // propiedades; el archivo JSON descargable es el respaldo lógico legible.
   const sourceText=JSON.stringify(review.source,null,2);
-  for(let i=0;i<sourceText.length;i+=1300)p.push(paragraph(sourceText.slice(i,i+1300)));
+  for(let i=0;i<sourceText.length;){
+    let end=Math.min(sourceText.length,i+1300);
+    if(end<sourceText.length&&/[\\uD800-\\uDBFF]/.test(sourceText.charAt(end-1)))end--;
+    if(end<=i)end=i+1;
+    p.push(paragraph(sourceText.slice(i,end)));i=end;
+  }
   const body=p.join('');
   const document='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+
     body+'<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1200" w:right="1150" w:bottom="1200" w:left="1150"/></w:sectPr></w:body></w:document>';
