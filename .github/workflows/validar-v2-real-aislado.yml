@@ -35,6 +35,7 @@ jobs:
       - name: Probar Matriz original con mapa V2 por año, impresión y retorno
         run: node tests/integracion-matriz-integrada-browser.mjs
       - name: Cobertura original dentro de niveles, espacios y planes
+        if: always()
         run: node tests/integracion-cobertura-inline-browser.mjs
       - name: Guardar capturas de la vista real
         if: always()
