@@ -6,15 +6,15 @@ on:
       - 'preview-v2-real/**'
       - 'tests/integracion-v2-original*'
       - 'tests/integracion-matriz-integrada-browser.mjs'
+      - 'tests/integracion-cobertura-inline-browser.mjs'
+      - 'integracion-cobertura-*'
       - 'app.html'
       - 'integracion-matriz-preview.js'
       - 'integracion-matriz-preview.css'
       - '.github/workflows/validar-v2-real-aislado.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   mapa-autentico:
     runs-on: ubuntu-latest
@@ -34,6 +34,8 @@ jobs:
         run: node tests/integracion-v2-original-browser.mjs
       - name: Probar Matriz original con mapa V2 por año, impresión y retorno
         run: node tests/integracion-matriz-integrada-browser.mjs
+      - name: Cobertura original dentro de niveles, espacios y planes
+        run: node tests/integracion-cobertura-inline-browser.mjs
       - name: Guardar capturas de la vista real
         if: always()
         uses: actions/upload-artifact@v4
@@ -42,5 +44,6 @@ jobs:
           path: |
             test-artifacts/integracion-v2-real/
             test-artifacts/integracion-matriz/
+            test-artifacts/integracion-inline/
           if-no-files-found: ignore
           retention-days: 7
