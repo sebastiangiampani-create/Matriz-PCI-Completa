@@ -62,6 +62,12 @@ const escapeHtml = (value) =>
 
 let DATA = [];
 let app = migrateState(readStoredState());
+// Esta rama sólo escribe borradores por orientación. Jamás la clave histórica.
+const WORK_PREFIX = 'pci-matriz-orientacion-borrador-20261014:';
+let originalSnapshot = null;
+let activeDraftKey = null;
+let activeOrientation = null;
+const safeCopy = value => JSON.parse(JSON.stringify(value));
 let currentArea = app.current && AREA_CONFIG[app.current] ? app.current : null;
 let selectedGroupId = null;
 let selectedContentIds = new Set();
@@ -103,9 +109,11 @@ async function loadCurriculum() {
 
 function persist({ announce = false } = {}) {
   app.schemaVersion = 10;
-  localStorage.setItem('pciAppV2', JSON.stringify(app));
+  if (activeDraftKey) localStorage.setItem(activeDraftKey, JSON.stringify(app));
   window.app = app;
-  window.dispatchEvent(new CustomEvent('pci-state-change', { detail: { schemaVersion: 10 } }));
+  window.dispatchEvent(new CustomEvent('pci-state-change', {
+    detail: { schemaVersion: 10, orientation: activeOrientation, draft: !!activeDraftKey }
+  }));
   if (announce) toast('Cambios guardados');
 }
 
@@ -208,6 +216,10 @@ function renderOverview() {
 
 function openArea(area, groupId = null) {
   if (!AREA_CONFIG[area]) return;
+  if (!activeDraftKey) {
+    document.getElementById('pciImportOpen')?.click();
+    return;
+  }
   currentArea = area;
   app.current = area;
   const groups = app.areas[area].groups;
@@ -882,12 +894,16 @@ async function start() {
   bindEvents();
   try {
     DATA = await loadCurriculum();
-    app = migrateState(readStoredState());
+    const raw = readStoredState();
+    originalSnapshot = safeCopy(raw?.areas ? raw : migrateState(raw));
+    app = migrateState(originalSnapshot);
     currentArea = app.current && AREA_CONFIG[app.current] ? app.current : null;
     window.DATA = DATA;
     window.app = app;
     persist();
     renderOverview();
+    window.PCIApp.ready = true;
+    window.dispatchEvent(new Event('pci-app-ready'));
     $('loading').remove();
   } catch (error) {
     console.error(error);
@@ -895,9 +911,68 @@ async function start() {
   }
 }
 
+// Único punto permitido de escritura para los módulos históricos auxiliares.
+function saveScopedState(candidate) {
+  if (!activeDraftKey || candidate !== app) return false;
+  localStorage.setItem(activeDraftKey, JSON.stringify(app));
+  return true;
+}
+function draftKeyFor(orientation) {
+  if (typeof orientation !== 'string' || !orientation.trim()) throw Error('Falta la orientación.');
+  return WORK_PREFIX + encodeURIComponent(orientation.trim());
+}
+function switchOrientationDraft(orientation) {
+  const key = draftKeyFor(orientation);
+  let stored = null;
+  try { stored = JSON.parse(localStorage.getItem(key) || 'null'); } catch { stored = null; }
+  if (!stored || typeof stored.areas !== 'object') {
+    activeDraftKey = null;
+    activeOrientation = null;
+    app = migrateState(originalSnapshot || {});
+  } else {
+    activeDraftKey = key;
+    activeOrientation = orientation;
+    app = migrateState(stored);
+  }
+  currentArea = app.current && AREA_CONFIG[app.current] ? app.current : null;
+  selectedGroupId = null;
+  selectedContentIds.clear();
+  window.app = app;
+  renderOverview();
+  window.dispatchEvent(new Event('pci-orientation-changed'));
+  return Boolean(activeDraftKey);
+}
+function activateOrientationDraft(orientation, source) {
+  const key = draftKeyFor(orientation);
+  const backupKey = key + ':original-sin-transformar';
+  if (!source || typeof source.areas !== 'object' || Array.isArray(source.areas))
+    throw Error('La copia revisada no contiene Formación General.');
+  if (!localStorage.getItem(key)) {
+    const raw = JSON.stringify(source);
+    // Siempre se guarda la copia literal antes de habilitar edición.
+    if (!localStorage.getItem(backupKey)) {
+      localStorage.setItem(backupKey, raw);
+      if (localStorage.getItem(backupKey) !== raw)
+        throw Error('No se pudo verificar el respaldo de revisión.');
+    }
+    const editable = JSON.stringify(migrateState(safeCopy(source)));
+    localStorage.setItem(key, editable);
+    if (localStorage.getItem(key) !== editable)
+      throw Error('No se pudo guardar una copia editable independiente.');
+  }
+  if (!switchOrientationDraft(orientation)) throw Error('No se pudo abrir la copia de la orientación.');
+  return { orientation, key, originalPreserved: true, localOnly: true };
+}
 window.PCIApp = {
+  ready: false,
   getData: () => DATA,
   getState: () => app,
+  getOriginalState: () => safeCopy(originalSnapshot || {}),
+  getActiveOrientation: () => activeOrientation,
+  isOrientationReady: (name) => activeDraftKey === draftKeyFor(name),
+  switchOrientationDraft,
+  activateOrientationDraft,
+  saveScopedState,
   openOverview: () => showScreen('overview'),
   openControl: () => showScreen('control'),
   openMatrix: () => showScreen('matrix'),
