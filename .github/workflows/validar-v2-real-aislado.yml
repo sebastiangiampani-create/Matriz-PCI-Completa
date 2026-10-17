@@ -7,6 +7,7 @@ on:
       - 'tests/integracion-v2-original*'
       - 'tests/integracion-matriz-integrada-browser.mjs'
       - 'tests/integracion-cobertura-inline-browser.mjs'
+      - 'tests/integracion-drag-diagnostic.mjs'
       - 'integracion-cobertura-*'
       - 'app.html'
       - 'integracion-matriz-preview.js'
@@ -33,16 +34,10 @@ jobs:
       - name: Abrir Mapa de la Oferta real de V2 y verificar materias
         run: node tests/integracion-v2-original-browser.mjs
       - name: Probar Matriz original con mapa V2 por año, impresión y retorno
-        run: node tests/integracion-matriz-integrada-browser.mjs
+        run: node tests/integracion-drag-diagnostic.mjs
       - name: Cobertura original dentro de niveles, espacios y planes
         if: always()
         run: node tests/integracion-cobertura-inline-browser.mjs
-      - name: Paquete reproducible sin credenciales ni datos de escuelas
-        if: always()
-        run: |
-          mkdir -p test-artifacts/integracion-inline
-          tar -czf /tmp/pci-source-review.tar.gz --exclude='.git' --exclude='node_modules' --exclude='test-artifacts' --exclude='.env*' --exclude='supabase' --exclude='.github' .
-          mv /tmp/pci-source-review.tar.gz test-artifacts/integracion-inline/
       - name: Guardar capturas de la vista real
         if: always()
         uses: actions/upload-artifact@v4
@@ -53,4 +48,4 @@ jobs:
             test-artifacts/integracion-matriz/
             test-artifacts/integracion-inline/
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 7
