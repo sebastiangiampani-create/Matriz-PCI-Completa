@@ -4,15 +4,13 @@
  */
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let timer=null,running=false,dirty=false,lastKey='',lastResult=null,fgPlanGroup='';
+let timer=null,running=false,dirty=false,lastKey='',lastResult=null,fgPlanGroup='',lastError='',refreshes=0;
 const rendered=new WeakMap();
 let frameReady=null;
 function activeContext(){
-  if(!$('pciNativeV2Coverage')?.hidden)return null;
-  if($('pci-fo-development')&&!$('pci-fo-development').hidden)
-    return {area:'Formación Orientada',fo:true};
-  if($('board')?.classList.contains('active'))
-    return {area:$('boardTitle')?.textContent.trim(),fo:false};
+  if($('pciNativeV2Coverage')&&!$('pciNativeV2Coverage').hidden)return null;
+  if($('pci-fo-development')&&!$('pci-fo-development').hidden)return {area:'Formación Orientada',fo:true};
+  if($('board')?.classList.contains('active'))return {area:$('boardTitle')?.textContent.trim(),fo:false};
   return null;
 }
 function frameApi(){
@@ -49,22 +47,19 @@ function styles(result){
   const link=document.createElement('link');link.rel='stylesheet';link.href='integracion-cobertura-inline.css';document.head.appendChild(link);
 }
 function areaCoverage(ctx,result){
-  const parent=ctx.fo?$('pci-fo-development'): $('board');
+  const parent=ctx.fo?$('pci-fo-development'):$('board');
   const target=ctx.fo?parent.querySelector('.pci-fo-dev-content'):parent.querySelector('.workspace');
   if(!target)return;
-  const block=own(parent,'area');block.classList.add('pci-inline-area');
-  // FO: franja de nivel antes de la bolsa y los agrupamientos, como las fotos.
-  // FG: junto a la cobertura histórica, que se oculta solo tras cálculo válido.
+  const block=own(parent,'area');
+  if(!block.classList.contains('pci-inline-area'))block.classList.add('pci-inline-area');
   if(block.nextElementSibling!==target)target.before(block);
-  const t=result.trajectory;
-  const count=Number(t.used)||0,total=Number(t.total)||0,pct=total?Math.round(count/total*100):0;
+  const t=result.trajectory,count=Number(t.used)||0,total=Number(t.total)||0,pct=total?Math.round(count/total*100):0;
   const component=ctx.fo?'Formación Orientada':'Formación General';
   paint(block,'<div class="pci-inline-total"><div><strong>'+count+' de '+total+' contenidos de '+component+' cubiertos · '+pct+'%</strong><small>Un mismo contenido puede utilizarse en varios espacios y, para la cobertura, cuenta una sola vez.</small></div><div class="pci-inline-total-bar"><span style="width:'+Math.min(100,pct)+'%"></span></div></div>'+result.areaHtml);
-  parent.classList.add('pci-inline-ready');
+  if(!parent.classList.contains('pci-inline-ready'))parent.classList.add('pci-inline-ready');
 }
 function groupingCoverage(ctx,result){
-  const cards=ctx.fo?document.querySelectorAll('#pciFoGroupCards [data-fo-group]'):
-    document.querySelectorAll('#groups .group-card[data-group-id]');
+  const cards=ctx.fo?document.querySelectorAll('#pciFoGroupCards [data-fo-group]'):document.querySelectorAll('#groups .group-card[data-group-id]');
   cards.forEach(card=>{
     const id=ctx.fo?card.dataset.foGroup:card.dataset.groupId;
     const g=result.groups.find(x=>x.id===id&&x.area===ctx.area);
@@ -73,7 +68,8 @@ function groupingCoverage(ctx,result){
     if(!assigned)return;
     const block=own(card,'group');
     if(assigned.nextElementSibling!==block)assigned.after(block);
-    paint(block,g.html);card.classList.add('pci-inline-ready');
+    paint(block,g.html);
+    if(!card.classList.contains('pci-inline-ready'))card.classList.add('pci-inline-ready');
   });
 }
 function fgPlans(result){
@@ -85,73 +81,64 @@ function fgPlans(result){
     const number=Number(card.querySelector('[data-open-plan]')?.dataset.openPlan);
     const p=g.plans.find(plan=>plan.number===number);
     if(!p)return;
-    const block=own(card,'plan');const button=card.querySelector('[data-open-plan]');
-    if(block.nextElementSibling!==button)button.before(block);
+    const block=own(card,'plan'),button=card.querySelector('[data-open-plan]');
+    if(button&&block.nextElementSibling!==button)button.before(block);
     paint(block,p.html);
   });
   const form=$('pciPlanForm');
   if(form){
     const number=Number($('pciPlansTitle')?.textContent.match(/bimestral\s+(\d+)/i)?.[1]);
     const p=g.plans.find(plan=>plan.number===number);
-    if(p){
-      const block=own(form,'plan-current');
-      if(form.firstElementChild!==block)form.prepend(block);
-      paint(block,p.html);
-    }
+    if(p){const block=own(form,'plan-current');if(form.firstElementChild!==block)form.prepend(block);paint(block,p.html);}
   }
 }
 function foPlans(result){
-  const slot=$('pciFoSpace')?.value,g=result.groups.find(x=>x.area==='Formación Orientada'&&x.id===slot);
-  const details=$('pciFoDetails');
+  const slot=$('pciFoSpace')?.value,g=result.groups.find(x=>x.area==='Formación Orientada'&&x.id===slot),details=$('pciFoDetails');
   if(!g||!details)return;
-  const list=own(details,'plans');list.classList.add('pci-inline-plan-grid');
+  const list=own(details,'plans');
+  if(!list.classList.contains('pci-inline-plan-grid'))list.classList.add('pci-inline-plan-grid');
   const fields=$('pciFoFields');if(list.nextElementSibling!==fields)fields.before(list);
   paint(list,g.plans.map(p=>'<article class="v38-card v94-plan-card"><div class="v94-plan-title"><h3>Plan '+p.displayNumber+'</h3><p>'+esc(p.name)+'</p></div>'+p.html+'<button class="button secondary" type="button" data-inline-select-plan="'+p.index+'">Abrir plan</button></article>').join(''));
-  const index=Number($('pciFoPlan')?.value)||0,p=g.plans.find(plan=>plan.index===index);
-  const target=$('pciFoPlanContents')?.closest('fieldset');
-  if(p&&target){
-    const block=own(fields,'plan-current');
-    if(target.nextElementSibling!==block)target.after(block);
-    paint(block,p.html);
-  }
+  const index=Number($('pciFoPlan')?.value)||0,p=g.plans.find(plan=>plan.index===index),target=$('pciFoPlanContents')?.closest('fieldset');
+  if(p&&target){const block=own(fields,'plan-current');if(target.nextElementSibling!==block)target.after(block);paint(block,p.html);}
 }
 function apply(ctx,result){
   styles(result);areaCoverage(ctx,result);groupingCoverage(ctx,result);
   if(ctx.fo)foPlans(result);else fgPlans(result);
+  (ctx.fo?$('pci-fo-development'):$('board'))?.querySelector(':scope > [data-pci-inline="error"]')?.remove();
 }
 async function refresh(){
   if(running){dirty=true;return;}
   const ctx=activeContext();
   if(!ctx?.area||!window.PCIV2OriginalCoverage)return;
-  running=true;
+  running=true;refreshes++;
   try{
-    const payload=window.PCIV2OriginalCoverage.payload();
-    const key=JSON.stringify([ctx.area,payload]);
+    const payload=window.PCIV2OriginalCoverage.payload(),key=JSON.stringify([ctx.area,payload]);
     if(key!==lastKey){
-      const api=await frameApi();
-      const result=await api.render(payload,ctx.area);
-      // No aplicar una respuesta de otra orientación o área que dejó de estar abierta.
+      const api=await frameApi(),result=await api.render(payload,ctx.area);
       if(activeContext()?.area!==ctx.area||window.PCIV2OriginalCoverage.payload().orientation!==payload.orientation)return;
       lastKey=key;lastResult=result;
     }
     if(lastResult)apply(ctx,lastResult);
+    lastError='';
   }catch(error){
-    console.error('Cobertura interna:',error);
+    lastError=error.message;console.error('Cobertura interna:',error);
     const parent=ctx.fo?$('pci-fo-development'):$('board');
     if(parent){
       parent.classList.remove('pci-inline-ready');
       const notice=own(parent,'error');notice.setAttribute('role','status');
-      notice.textContent='No se pudo actualizar la cobertura: '+error.message;
+      if(notice.textContent!=='No se pudo actualizar la cobertura: '+error.message)notice.textContent='No se pudo actualizar la cobertura: '+error.message;
     }
-  }finally{
-    running=false;
-    if(dirty){dirty=false;schedule();}
-  }
+  }finally{running=false;if(dirty){dirty=false;schedule();}}
 }
-function schedule(){clearTimeout(timer);timer=setTimeout(refresh,120);}
+// Throttle: los observadores históricos pueden emitir eventos cada 80 ms.
+// Reiniciar permanentemente un debounce de 120 ms impediría la actualización.
+function schedule(){if(timer!==null)return;timer=setTimeout(()=>{timer=null;refresh();},120);}
 function isOwned(node){return node instanceof Element&&!!node.closest('[data-pci-inline]');}
 const observer=new MutationObserver(records=>{
-  if(records.every(r=>isOwned(r.target)||[...r.addedNodes,...r.removedNodes].every(n=>n instanceof Element&&n.matches('[data-pci-inline]'))))return;
+  if(records.every(r=>isOwned(r.target)||(r.type==='childList'&&
+    [...r.addedNodes,...r.removedNodes].length>0&&
+    [...r.addedNodes,...r.removedNodes].every(n=>n instanceof Element&&n.matches('[data-pci-inline]')))))return;
   if(records.some(r=>{
     const el=r.target instanceof Element?r.target:r.target.parentElement;
     return el?.closest('#board,#pci-fo-development,#pciPlansShell,#pciPlansBackdrop')||
@@ -160,21 +147,16 @@ const observer=new MutationObserver(records=>{
 });
 observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class','open']});
 document.addEventListener('click',event=>{
-  const target=event.target;
-  if(!(target instanceof Element))return;
+  const target=event.target;if(!(target instanceof Element))return;
   const entry=target.closest('.pci-plan-entry button,[data-open-bimestral-plans]');
   if(entry)fgPlanGroup=entry.closest('[data-group-id]')?.dataset.groupId||fgPlanGroup;
   const select=target.closest('[data-inline-select-plan]');
-  if(select){
-    const picker=$('pciFoPlan');picker.value=select.dataset.inlineSelectPlan;
-    picker.dispatchEvent(new Event('change',{bubbles:true}));
-    $('pciFoPlanName')?.scrollIntoView({block:'center',behavior:'smooth'});
-  }
-  if(target.closest('#pciNativeV2CoverageClose')||target.closest('#board,#pci-fo-development,#pciPlansShell'))schedule();
+  if(select){const picker=$('pciFoPlan');picker.value=select.dataset.inlineSelectPlan;picker.dispatchEvent(new Event('change',{bubbles:true}));$('pciFoPlanName')?.scrollIntoView({block:'center',behavior:'smooth'});}
+  if(target.closest('#pciNativeV2CoverageClose,#areaGrid,#pciDemoFoCards,#board,#pci-fo-development,#pciPlansShell'))schedule();
 },true);
-document.addEventListener('input',event=>{if(event.target.closest?.('#board,#pci-fo-development,#pciPlansShell'))schedule();},true);
-document.addEventListener('change',event=>{if(event.target.closest?.('#board,#pci-fo-development,#pciPlansShell'))schedule();},true);
-for(const name of ['pci-state-change','pci-orientation-changed','pci-app-ready'])window.addEventListener(name,schedule);
+for(const event of ['input','change'])document.addEventListener(event,e=>{if(e.target.closest?.('#board,#pci-fo-development,#pciPlansShell'))schedule();},true);
+for(const event of ['pci-state-change','pci-orientation-changed','pci-app-ready'])window.addEventListener(event,schedule);
 window.addEventListener('message',e=>{if(e.origin===location.origin&&e.source===$('pciNativeV2CoverageFrame')?.contentWindow&&e.data?.type==='pci-native-v2-close')schedule();});
-window.PCIInlineCoverage={refresh:schedule,getLastResult:()=>lastResult};
+window.PCIInlineCoverage={refresh:schedule,getLastResult:()=>lastResult,
+  diagnostics:()=>({context:activeContext(),running,dirty,lastError,refreshes,area:lastResult?.area,groups:lastResult?.groups.length})};
 schedule();
