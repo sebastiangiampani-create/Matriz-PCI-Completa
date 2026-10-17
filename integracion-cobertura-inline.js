@@ -1,7 +1,7 @@
 /** Coberturas internas: HTML y cálculo originales V91/V94, solo lectura. */
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let timer=null,running=false,dirty=false,lastKey='',lastResult=null,fgPlanGroup='',lastError='',refreshes=0,gesture=false;
+let timer=null,running=false,dirty=false,lastKey='',lastResult=null,fgPlanGroup='',lastError='',refreshes=0,gesture=false,htmlDrag=false;
 const rendered=new WeakMap();let frameReady=null;
 function activeContext(){
   if($('pciNativeV2Coverage')&&!$('pciNativeV2Coverage').hidden)return null;
@@ -39,7 +39,6 @@ function paint(el,html){
 function styles(result){
   if($('pciInlineOriginalStyles'))return;
   const s=document.createElement('style');s.id='pciInlineOriginalStyles';s.textContent=result.styles.join('\n');document.head.appendChild(s);
-  const link=document.createElement('link');link.rel='stylesheet';link.href='integracion-cobertura-inline.css';document.head.appendChild(link);
 }
 function areaCoverage(ctx,result){
   const parent=ctx.fo?$('pci-fo-development'):$('board');
@@ -110,13 +109,13 @@ const observer=new MutationObserver(records=>{
     return el?.closest('#board,#pci-fo-development,#pciPlansShell,#pciPlansBackdrop')||[...r.addedNodes].some(n=>n instanceof Element&&n.id==='pciPlansBackdrop');}))schedule();
 });
 observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class','open']});
-// Ninguna respuesta asíncrona puede mover el objetivo mientras se arrastra.
-for(const event of ['pointerdown','dragstart'])document.addEventListener(event,e=>{
-  if(e.target instanceof Element&&e.target.closest('[draggable="true"]')&&e.target.closest('#board,#pci-fo-development'))gesture=true;
-},true);
-for(const event of ['pointerup','pointercancel','dragend','drop'])document.addEventListener(event,()=>{
-  if(gesture)setTimeout(()=>{gesture=false;dirty=false;schedule();},0);
-},true);
+function sourceDrag(e){return e.target instanceof Element&&e.target.closest('[draggable="true"]')&&e.target.closest('#board,#pci-fo-development');}
+document.addEventListener('pointerdown',e=>{if(sourceDrag(e))gesture=true;},true);
+document.addEventListener('dragstart',e=>{if(sourceDrag(e)){htmlDrag=true;gesture=true;}},true);
+function finishGesture(){setTimeout(()=>{if(!htmlDrag){gesture=false;dirty=false;schedule();}},0);}
+// pointercancel sucede al EMPEZAR el drag nativo, no significa que terminó.
+for(const event of ['pointerup','pointercancel'])document.addEventListener(event,()=>{if(gesture&&!htmlDrag)finishGesture();},true);
+for(const event of ['dragend','drop'])document.addEventListener(event,()=>{if(gesture){htmlDrag=false;finishGesture();}},true);
 document.addEventListener('click',event=>{
   const target=event.target;if(!(target instanceof Element))return;
   const entry=target.closest('.pci-plan-entry button,[data-open-bimestral-plans]');if(entry)fgPlanGroup=entry.closest('[data-group-id]')?.dataset.groupId||fgPlanGroup;
@@ -127,5 +126,5 @@ document.addEventListener('click',event=>{
 for(const event of ['input','change'])document.addEventListener(event,e=>{if(e.target.closest?.('#board,#pci-fo-development,#pciPlansShell'))schedule();},true);
 for(const event of ['pci-state-change','pci-orientation-changed','pci-app-ready'])window.addEventListener(event,schedule);
 window.addEventListener('message',e=>{if(e.origin===location.origin&&e.source===$('pciNativeV2CoverageFrame')?.contentWindow&&e.data?.type==='pci-native-v2-close')schedule();});
-window.PCIInlineCoverage={refresh:schedule,getLastResult:()=>lastResult,diagnostics:()=>({context:activeContext(),running,dirty,gesture,lastError,refreshes,area:lastResult?.area,groups:lastResult?.groups.length})};
+window.PCIInlineCoverage={refresh:schedule,getLastResult:()=>lastResult,diagnostics:()=>({context:activeContext(),running,dirty,gesture,htmlDrag,lastError,refreshes,area:lastResult?.area,groups:lastResult?.groups.length})};
 schedule();
