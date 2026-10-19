@@ -401,6 +401,25 @@ function assignedItems(group) {
   }).join('');
 }
 
+function officialFgAssignedItems(group) {
+  const ids=officialIdsInGroup(group);
+  if(!ids.length)return '';
+  const locationYear=Number(group.level)||0;
+  return '<section class="pci-fg-official-assigned" aria-label="Contenidos FG vigente homologables">' +
+    '<div class="assigned-heading"><h3>FG vigente · por año</h3><span class="pill">'+ids.length+'</span></div>' +
+    '<p class="pci-fg-source-note">Borrador nuevo: la base original, sus agrupamientos y planes no se modifican.</p>' +
+    '<div class="assigned-list">' +
+    ids.map(id=>{
+      const row=officialFgById.get(id);
+      return '<article class="assigned-item" draggable="true" data-content-id="'+escapeHtml(id)+'" data-fg-source="vigente">' +
+        '<div><small>'+escapeHtml(row?.subject||'Contenido oficial')+' · '+(row?.year||'?')+'.º año de origen' +
+        (row&&Number(row.year)!==locationYear?' · otro año':'')+
+        '</small><p>'+escapeHtml(row?.text||id)+'</p></div>' +
+        '<button class="remove-content" type="button" data-remove-fg-v2="'+escapeHtml(id)+'" aria-label="Quitar contenido FG vigente">×</button>' +
+        '</article>';
+    }).join('')+'</div></section>';
+}
+
 function renderGroups() {
   const groups = app.areas[currentArea].groups;
   if (!groups.length) {
@@ -430,6 +449,7 @@ function renderGroups() {
       <div class="form-grid">${groupFields(group)}</div>
       <div class="assigned-heading"><h3>Contenidos asignados</h3><span class="pill">${group.items.length}</span></div>
       <div class="assigned-list">${assignedItems(group)}</div>
+      ${officialFgAssignedItems(group)}
       ${group.kind === 'other' ? '<div class="group-footer"><button class="button danger" type="button" data-delete-other>Eliminar formato</button></div>' : ''}
     </article>`).join('');
 
@@ -459,8 +479,8 @@ function bindGroupEvents() {
     card.addEventListener('drop', (event) => {
       event.preventDefault();
       card.classList.remove('drop-target');
-      const id = readDraggedContent(event);
-      if (id) assignContents(groupId, [id]);
+      const dragged = readDraggedContent(event);
+      if (dragged) assignContents(groupId, [dragged.id], dragged.source);
     });
 
     card.querySelectorAll('[data-field]').forEach((field) => {
@@ -476,6 +496,17 @@ function bindGroupEvents() {
         toast('Contenido devuelto a la bolsa');
       });
     });
+    card.querySelectorAll('[data-remove-fg-v2]').forEach(button=>{
+      button.addEventListener('click',event=>{
+        event.stopPropagation();
+        const found=findGroup(app,groupId);
+        if(!found)return;
+        removeOfficialFgFromGroup(found.group,button.dataset.removeFgV2);
+        persist();
+        renderBoard();
+        toast('Contenido FG vigente retirado de este espacio; el original sigue intacto');
+      });
+    });
     card.querySelector('[data-delete-other]')?.addEventListener('click', (event) => {
       event.stopPropagation();
       removeOtherFormat(groupId);
@@ -483,7 +514,7 @@ function bindGroupEvents() {
   });
 
   document.querySelectorAll('.assigned-item').forEach((item) => {
-    item.addEventListener('dragstart', (event) => writeDraggedContent(event, item.dataset.contentId));
+    item.addEventListener('dragstart', (event) => writeDraggedContent(event, item.dataset.contentId, item.dataset.fgSource||'historica'));
   });
 }
 
