@@ -562,37 +562,52 @@ function renderContents() {
   const subject = $('subjectFilter').value;
   const axis = $('axisFilter').value;
   const pendingOnly = $('pendingFilter').checked;
-  const source = sourceContents(currentArea);
-  const assignments = assignmentMap();
+  const official = isOfficialFgBag();
+  const source = bagSourceRows();
+  const assignments = official ? officialFgAssignments() : assignmentMap();
   const visible = source.filter((content) => {
-    const location = assignments.get(content.id) ?? [];
-    const haystack = `${content.subject} ${content.axis} ${content.text}`.toLocaleLowerCase('es');
+    const locations = assignments.get(String(content.id)) ?? [];
+    const haystack = [content.subject, content.axis, content.subaxis, content.text]
+      .join(' ').toLocaleLowerCase('es');
     return (!query || haystack.includes(query))
       && (!subject || content.subject === subject)
       && (!axis || content.axis === axis)
-      && (!pendingOnly || !location.length);
+      && (!pendingOnly || !locations.length);
   });
-  const pending = source.filter((content) => !(assignments.get(content.id)?.length)).length;
-  $('bagMeta').textContent = `${visible.length} visibles · ${pending} pendientes`;
+  const pending = source.filter((content) => !(assignments.get(String(content.id))?.length)).length;
+  $('bagMeta').textContent = official
+    ? officialFgReady
+      ? visible.length + ' visibles · ' + pending + ' pendientes · FG por año'
+      : 'Cargando FG oficial de 1.º a 5.º…'
+    : visible.length + ' visibles · ' + pending + ' pendientes · Matriz original';
   $('contentList').innerHTML = visible.length
     ? visible.map((content) => {
-        const locations = assignments.get(content.id) ?? [];
-        const selected = selectedContentIds.has(content.id);
-        return `
-          <article class="content-item ${selected ? 'selected' : ''} ${locations.length ? 'assigned' : ''}" draggable="true" data-content-id="${escapeHtml(content.id)}">
-            <input type="checkbox" tabindex="-1" ${selected ? 'checked' : ''} aria-hidden="true">
-            <div>
-              <small>${escapeHtml(content.subject)} · ${escapeHtml(content.axis || 'Sin eje / bloque')}</small>
-              <p>${escapeHtml(content.text)}</p>
-              ${locations.length ? `<span class="content-location">En ${escapeHtml(locations.map((location) => location.groupName).join(' · '))}</span>` : '<span class="content-location pending-text">Pendiente</span>'}
-            </div>
-          </article>`;
+        const locations = assignments.get(String(content.id)) ?? [];
+        const selected = selectedContentIds.has(String(content.id));
+        return '<article class="content-item ' +
+          (selected ? 'selected ' : '') + (locations.length ? 'assigned' : '') +
+          '" draggable="true" data-content-id="' + escapeHtml(content.id) +
+          '" data-fg-source="' + (official ? 'vigente' : 'historica') + '"' +
+          (official ? ' data-fg-year="' + Number(content.year) + '"' : '') + '>' +
+          '<input type="checkbox" tabindex="-1" ' + (selected ? 'checked' : '') + ' aria-hidden="true">' +
+          '<div><small>' + escapeHtml(content.subject) + ' · ' +
+          escapeHtml(content.axis || 'Sin eje / bloque') +
+          (official ? ' · <strong>' + Number(content.year) + '.º año</strong>' : '') +
+          '</small><p>' + escapeHtml(content.text) + '</p>' +
+          (locations.length ? '<span class="content-location">En ' +
+           escapeHtml(locations.map((x) => x.groupName).join(' · ')) + '</span>'
+           : '<span class="content-location pending-text">Pendiente</span>') +
+          '</div></article>';
       }).join('')
-    : '<div class="empty-state">No hay contenidos que coincidan con estos filtros.</div>';
-
-  document.querySelectorAll('.content-item').forEach((item) => {
+    : '<div class="empty-state">' +
+      (official && !officialFgReady
+        ? escapeHtml(officialFgLoadError || 'Cargando contenidos de FG por año…')
+        : 'No hay contenidos que coincidan con estos filtros.') + '</div>';
+  document.querySelectorAll('#contentList .content-item').forEach((item) => {
+    if(item.classList.contains('pci-tutoria-item')) return;
     item.addEventListener('click', () => toggleContentSelection(item.dataset.contentId));
-    item.addEventListener('dragstart', (event) => writeDraggedContent(event, item.dataset.contentId));
+    item.addEventListener('dragstart', (event) =>
+      writeDraggedContent(event, item.dataset.contentId, item.dataset.fgSource || 'historica'));
   });
   updateSelectionBar();
 }
@@ -606,31 +621,49 @@ function toggleContentSelection(contentId) {
 function updateSelectionBar() {
   const found = selectedGroupId ? findGroup(app, selectedGroupId) : null;
   const count = selectedContentIds.size;
-  $('selectionCount').textContent = `${count} seleccionado${count === 1 ? '' : 's'}`;
-  $('selectionTarget').textContent = found ? `Destino: ${found.group.name}` : 'Creá o elegí un espacio de destino';
-  $('moveSelected').disabled = !count || !found;
-  $('moveSelected').textContent = count ? `Mover ${count}` : 'Mover seleccionados';
+  const official = isOfficialFgBag();
+  $('selectionCount').textContent = count + ' seleccionado' + (count===1 ? '' : 's');
+  $('selectionTarget').textContent = found ? 'Destino: ' + found.group.name : 'Creá o elegí un espacio de destino';
+  $('moveSelected').disabled = !count || !found || (official && !officialFgReady);
+  $('moveSelected').textContent = count
+    ? (official ? 'Ubicar ' + count + ' en FG vigente' : 'Mover ' + count)
+    : (official ? 'Ubicar seleccionados · FG vigente' : 'Mover seleccionados');
 }
 
-function writeDraggedContent(event, contentId) {
-  event.dataTransfer.effectAllowed = 'move';
+function writeDraggedContent(event, contentId, catalog='historica') {
+  event.dataTransfer.effectAllowed = catalog === 'vigente' ? 'copy' : 'move';
   event.dataTransfer.setData('text/plain', String(contentId));
   event.dataTransfer.setData('application/x-pci-content', String(contentId));
+  event.dataTransfer.setData('application/x-pci-catalog', catalog);
 }
 
 function readDraggedContent(event) {
-  return event.dataTransfer.getData('application/x-pci-content') || event.dataTransfer.getData('text/plain');
+  const id = event.dataTransfer.getData('application/x-pci-content') ||
+    event.dataTransfer.getData('text/plain');
+  if(!id) return null;
+  return {id, source: event.dataTransfer.getData('application/x-pci-catalog') || 'historica'};
 }
 
-function assignContents(groupId, contentIds) {
+function assignContents(groupId, contentIds, sourceOverride=null) {
   try {
-    moveContents(app, groupId, contentIds);
+    const source = sourceOverride || (isOfficialFgBag() ? 'vigente' : 'historica');
+    if (source === 'vigente') {
+      if (!officialFgReady) throw new Error('Esperá que se cargue la FG priorizada por año.');
+      const target = findGroup(app, groupId);
+      if (!target) throw new Error('No existe el espacio curricular de destino.');
+      stageOfficialFgInGroup(target.group, contentIds, officialFgCatalog,
+        sourceAreaFor(target.area));
+    } else if (source === 'historica') {
+      moveContents(app, groupId, contentIds);
+    } else throw new Error('Base curricular de origen inválida.');
     selectedGroupId = groupId;
     selectedContentIds.clear();
     persist();
     renderBoard();
     closeContentBag();
-    toast(contentIds.length === 1 ? 'Contenido ubicado' : `${contentIds.length} contenidos ubicados`);
+    toast(source==='vigente'
+      ? 'FG vigente: ubicación guardada en el borrador independiente; la Matriz original no se modifica.'
+      : (contentIds.length===1 ? 'Contenido ubicado' : contentIds.length+' contenidos ubicados'));
   } catch (error) {
     toast(error.message);
   }
