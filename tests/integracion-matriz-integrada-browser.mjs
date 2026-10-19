@@ -305,6 +305,10 @@ async function testDesktop(page) {
     'Laboratorios abre mostrando todos los años, no solamente tercero o quinto');
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),4,
     'Deben verse los cuatro laboratorios conformados simultáneamente');
+  assert.equal(await page.locator('#pciArticulationEditor').evaluate(el=>el.open),false,
+    'Al cambiar de proyecto a laboratorios debe plegarse la articulación, sin borrar vínculos.');
+  assert.equal(await page.locator('.pci-fo-bag-eyebrow').textContent(),'Bolsa curricular',
+    'La bolsa FO debe tener la misma jerarquía visual de FG.');
   // Paridad estética real FG/FO: misma marca, ancho, columnas y tarjetas legibles.
   const foLayout=await page.locator('#pci-fo-development').evaluate(root=>{
     const rect=el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
@@ -337,6 +341,15 @@ async function testDesktop(page) {
   },{timeout:45000});
   assert.match(await page.locator('#pciFoContentCount').textContent(),/Historia orientada: 6/);
   assert.match(await page.locator('#pciFoContentCount').textContent(),/Tecnologías de la Información orientada: 8/);
+  await page.locator('#pci-fo-development > [data-pci-inline="area"]').waitFor({timeout:45000});
+  const alignedCoverage=await page.locator('#pci-fo-development').evaluate(root=>{
+    const coverage=root.querySelector(':scope > [data-pci-inline="area"]').getBoundingClientRect();
+    const content=root.querySelector('.pci-fo-dev-content').getBoundingClientRect();
+    return {coverageX:coverage.x,contentX:content.x,coverageWidth:coverage.width,contentWidth:content.width};
+  });
+  assert.ok(Math.abs(alignedCoverage.coverageX-alignedCoverage.contentX)<=2 &&
+    Math.abs(alignedCoverage.coverageWidth-alignedCoverage.contentWidth)<=2,
+    'La cobertura original de FO debe alinearse con la bolsa y las tarjetas de FG.');
   await page.screenshot({path:artifacts+'desktop-fo-paridad-fg.png',fullPage:false});
   const techBlock=await page.locator('#pciFoBlockFilter option').evaluateAll(ops=>
     ops.map(op=>op.value).find(x=>/tecnolog.*informaci/i.test(x))||'');
