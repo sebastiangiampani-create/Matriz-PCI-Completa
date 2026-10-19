@@ -160,7 +160,7 @@ export function fgCoverageByLevel({areas,matrixRows,v2FgRows,area,level,approved
   const universe=alpha(v2FgRows).filter(r=>r.year===year&&norm(r.area)===areaKey);
   const sourceGroups=alpha(areas?.[area]?.groups).filter(g=>Number(g.level)===year);
   const ids=[...new Set(sourceGroups.flatMap(g=>alpha(g.items).map(String)))];
-  const matched=new Set(),unmatched=[],ambiguous=[];
+  const matched=new Set(),unmatched=[],ambiguous=[],crossYear=[];
   for(const id of ids){
     const result=matchMatrixToV2Fg({matrixRows,v2FgRows,contentId:id,level:year,area,approvedMappings});
     if(result.status==='matched')
@@ -168,13 +168,22 @@ export function fgCoverageByLevel({areas,matrixRows,v2FgRows,area,level,approved
     else if(result.status==='ambiguous')ambiguous.push({id,reason:result.reason});
     else unmatched.push({id,reason:result.reason});
   }
+  const byOfficialId=new Map(alpha(v2FgRows).map(x=>[String(x.id),x]));
+  for(const g of sourceGroups){
+    for(const id of [...new Set(alpha(g.fgV2ContentIds).map(String))]){
+      const direct=byOfficialId.get(id);
+      if(!direct)unmatched.push({id,reason:'ID de FG vigente no encontrado'});
+      else if(direct.year===year&&norm(direct.area)===areaKey)matched.add(id);
+      else crossYear.push({id,originYear:direct.year,destinationYear:year});
+    }
+  }
   return {area,level:year,sourceGroups:sourceGroups.length,locatedLegacyContents:ids.length,
     mappedUniqueContents:matched.size,prescribedTotal:universe.length,
     // A partial mapping is a documented lower bound, not verified coverage.
     verifiedPercent:unmatched.length||ambiguous.length?null:
       universe.length?Math.round(matched.size/universe.length*1000)/10:null,
     minimumMappedPercent:universe.length?Math.round(matched.size/universe.length*1000)/10:null,
-    unmatched,ambiguous,
+    unmatched,ambiguous,crossYear,
     coverageStatus:unmatched.length||ambiguous.length?'partial-homologation':'verified',
     note:'No se cuentan dos veces los contenidos repetidos en laboratorios o planes.'};
 }
