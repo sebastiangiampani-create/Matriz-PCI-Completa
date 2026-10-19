@@ -123,6 +123,36 @@ async function testDesktop(page) {
     return state.areas.Artes.groups[0].items.length;
   },editKey);
   assert.equal(afterDrag,1,'La copia aprobada debe permitir drag & drop del editor original');
+
+  // La bolsa FG recupera los años prescriptos de V2 en un proceso separado.
+  // El original de Matriz sigue intacto, con la secuencia guardada previamente.
+  await page.locator('#fgBagSource').selectOption('vigente');
+  await page.locator('#fgBagYear').waitFor({state:'visible'});
+  await page.waitForFunction(() => {
+    const control=document.getElementById('fgBagYear');
+    return control && !control.disabled;
+  },{timeout:45000});
+  await page.locator('#fgBagYear').selectOption('1');
+  const officialCount=await page.locator('#contentList .content-item[data-fg-source="vigente"][data-fg-year="1"]').count();
+  assert.ok(officialCount>0,'La bolsa FG debe mostrar contenidos oficiales de 1.º año');
+  assert.equal(await page.locator('#contentList .content-item[data-fg-source="vigente"]:not([data-fg-year="1"])').count(),0,
+    'El filtro debe excluir contenidos FG V2 de otros años');
+  await page.locator('#contentList .content-item[data-fg-source="vigente"]').first().dragTo(
+    page.locator('#groups .group-card .assigned-list').first()
+  );
+  const mix=await page.evaluate(key=>{
+    const state=JSON.parse(localStorage.getItem(key));
+    return {items:state.areas.Artes.groups[0].items,
+      official:state.areas.Artes.groups[0].fgV2ContentIds||[]};
+  },editKey);
+  assert.equal(mix.items.length,1,'La ubicación FG v103 no puede reescribir el contenido original');
+  assert.equal(mix.official.length,1,'El contenido FG V2 debe guardarse en el borrador versionado');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalBefore,
+    'Ubicar FG V2 no modifica la Matriz original');
+  await page.locator('#fgBagSource').selectOption('historica');
+  assert.ok(await page.locator('#contentList [data-fg-source="historica"]').count()>0,
+    'La bolsa original no debe desaparecer al activar el filtro por año');
+
   assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalBefore,
     'El editor drag & drop nunca debe sobrescribir la Matriz original');
   await page.locator('#backOverview').click();
