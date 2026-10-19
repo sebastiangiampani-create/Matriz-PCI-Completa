@@ -222,6 +222,31 @@ async function testDesktop(page) {
   assert.equal(stored.plansBimestrales[2].stages.evaluacion.description,'Evaluar el proyecto');
   assert.deepEqual(stored.items,[chosenFoContent]);
   assert.deepEqual(stored.plansBimestrales[2].contentIds,[chosenFoContent]);
+  // La articulación local no reemplaza contenidos, secuencias ni denominadores.
+  await page.locator('#pciArticulationEditor > summary').click();
+  await page.locator('#pciArtFgVersion').selectOption('fg-matriz-historica/1');
+  const fgOrigin=await page.locator('#pciArtFgContent option').first().getAttribute('value');
+  assert.ok(fgOrigin&&fgOrigin.startsWith('['),
+    'Los vínculos FG/FO exigen un agrupamiento y contenido concretos del proceso importado');
+  assert.equal(await page.locator('#pciArtFoContent option').count(),1);
+  const fgBeforeLink=await page.evaluate(()=>localStorage.getItem('pciAppV2'));
+  const foBeforeLink=await page.evaluate(()=>localStorage.getItem('pci-fo-development-drafts-preview-20261014'));
+  await page.locator('#pciArtSave').click();
+  assert.match(await page.locator('#pciArtStatus').textContent(),/Articulación guardada/);
+  const linked=await page.evaluate(()=>{
+    const key='pci-articulacion-borradores-versionados/1:'+encodeURIComponent('Economía y Administración');
+    return JSON.parse(localStorage.getItem(key));
+  });
+  assert.equal(linked.links.length,1);
+  assert.equal(linked.links[0].fg.baseVersion,'fg-matriz-historica/1');
+  assert.equal(linked.links[0].fo.contentId,chosenFoContent);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),fgBeforeLink);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pci-fo-development-drafts-preview-20261014')),foBeforeLink);
+  await page.locator('#pciArtSave').click();
+  assert.equal(await page.evaluate(()=>{
+    const key='pci-articulacion-borradores-versionados/1:'+encodeURIComponent('Economía y Administración');
+    return JSON.parse(localStorage.getItem(key)).links.length;
+  }),1,'No se deben duplicar vínculos curriculares');
   // El V91 ORIGINAL debe leer el mismo contenido y plan después del arrastre.
   await page.locator('#pciNativeV2CoverageFO').click();
   await native.locator('#v98dResults .v98d-area').first().waitFor({timeout:60000});
