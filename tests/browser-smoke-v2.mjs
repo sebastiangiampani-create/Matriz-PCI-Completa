@@ -177,6 +177,16 @@ try {
   const mobileErrors = collectBrowserErrors(mobile);
   await waitForApp(mobile, mobileErrors, '07-error-carga-mobile.png');
 
+  // También en móvil se debe confirmar la copia del proceso antes de editar.
+  // Un contexto Playwright nuevo no conserva el borrador revisado de escritorio.
+  await mobile.locator('#pciImportOpen').click();
+  await mobile.locator('#pciImportPrepare').click();
+  await mobile.locator('#pciImportReviewContent').waitFor({state:'visible'});
+  await mobile.locator('#pciImportReviewed').check();
+  await mobile.locator('#pciImportApprove').click();
+  assert.ok(await mobile.evaluate(() => window.PCIApp.getActiveOrientation()),
+    'En móvil, la edición requiere orientación aprobada');
+
   await mobile.click('#overviewMatrix');
   await mobile.waitForSelector('#pci-integrated-matrix:not([hidden])');
   await mobile.locator('#pciIntegratedClassic').click();
