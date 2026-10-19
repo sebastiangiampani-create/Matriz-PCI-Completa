@@ -150,6 +150,37 @@ export class AreaSyncSession {
     }).catch(() => {});
     return result;
   }
+  /**
+   * Consulta cambios de otros editores, sin escribir en Supabase ni modificar
+   * el borrador. Una revisión nueva bloquea la publicación hasta revisión.
+   */
+  async checkRemote(area, localDocument) {
+    const state = this.areas.get(area);
+    if (!state) throw new SyncError('Primero hay que consultar la versión remota.', 412);
+    if (!validDoc(localDocument)) throw new SyncError('Borrador de área inválido.', 400);
+    if (this.pending.has(area)) return { status: 'saving', revision: state.revision };
+
+    const latest = await this.transport.getUnit(this.scope(area));
+    const exists = latest?.exists === true;
+    const revision = exists ? Number(latest.revision) : 0;
+    if (!Number.isSafeInteger(revision) || revision < 0 || (exists && revision === 0))
+      throw new SyncError('Revisión remota inválida.', 502);
+    if (revision === state.revision) return { status: 'unchanged', revision };
+    if (revision < state.revision)
+      throw new SyncError('La revisión remota retrocedió inesperadamente.', 502);
+    if (!exists || !validDoc(latest.document))
+      throw new SyncError('La unidad remota desapareció o es inválida.', 409);
+
+    const dirty = state.remote === null
+      ? !equal(localDocument, latest.document)
+      : !equal(localDocument, state.remote);
+    state.revision = revision;
+    state.remote = copy(latest.document);
+    state.status = dirty ? 'conflict' : 'review_required';
+    this.onEvent({ type: 'remote_updated', area, revision, dirty });
+    return { status: state.status, revision, remote: copy(latest.document) };
+  }
+
   getStatus(area) {
     const state = this.areas.get(area);
     return state ? Object.freeze({ status: state.status, revision: state.revision }) : null;
