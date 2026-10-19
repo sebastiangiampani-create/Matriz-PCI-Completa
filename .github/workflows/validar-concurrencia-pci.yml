@@ -27,8 +27,10 @@ jobs:
           node --check src/concurrencia-pci/scoped-store.test.mjs
           node --check src/concurrencia-pci/sync-session.mjs
           node --check src/concurrencia-pci/sync-session.test.mjs
+          node --check src/concurrencia-pci/iframe-bridge.mjs
+          node --check src/concurrencia-pci/iframe-bridge.test.mjs
       - name: Pruebas aisladas sin datos reales
-        run: node --test src/concurrencia-pci/scoped-store.test.mjs src/concurrencia-pci/sync-session.test.mjs
+        run: node --test src/concurrencia-pci/*.test.mjs
 
   concurrencia-postgres:
     runs-on: ubuntu-latest
