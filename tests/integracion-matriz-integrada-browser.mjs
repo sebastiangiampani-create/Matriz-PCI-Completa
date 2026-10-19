@@ -305,12 +305,39 @@ async function testDesktop(page) {
     'Laboratorios abre mostrando todos los años, no solamente tercero o quinto');
   assert.equal(await page.locator('#pciFoGroupCards [data-fo-group]').count(),4,
     'Deben verse los cuatro laboratorios conformados simultáneamente');
+  // Paridad estética real FG/FO: misma marca, ancho, columnas y tarjetas legibles.
+  const foLayout=await page.locator('#pci-fo-development').evaluate(root=>{
+    const rect=el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};};
+    const cards=[...root.querySelectorAll('#pciFoGroupCards [data-fo-group]')].map(rect);
+    const brand=root.querySelector('.pci-fo-brand');
+    return {
+      brandLoaded:brand?.complete&&brand?.naturalWidth>0,
+      width:rect(root.querySelector('.pci-fo-dev-content')).width,
+      bag:rect(root.querySelector('.pci-fo-dev-bag')),
+      editor:rect(root.querySelector('.pci-fo-dev-editor')),
+      cards,
+      overflow:root.scrollWidth>root.clientWidth+2,
+      columnCount:getComputedStyle(root.querySelector('#pciFoGroupCards')).gridTemplateColumns.split(' ').length
+    };
+  });
+  assert.equal(foLayout.brandLoaded,true,'FO debe conservar el mismo logo de Escuela de Maestros que FG');
+  assert.ok(foLayout.width<=1140,'FO debe compartir el ancho de lectura de la Matriz FG');
+  assert.ok(foLayout.bag.x<foLayout.editor.x,'La bolsa FO debe permanecer a la izquierda del editor');
+  assert.equal(foLayout.columnCount,2,'Los cuatro laboratorios deben verse en dos columnas, no tres comprimidas');
+  assert.ok(foLayout.cards[0].width>=310,'Las tarjetas FO requieren ancho suficiente para los formularios');
+  assert.ok(Math.abs(foLayout.cards[0].y-foLayout.cards[1].y)<=2,
+    'Dos laboratorios deben compartir la primera fila');
+  assert.ok(foLayout.cards[2].y>foLayout.cards[0].y+30,
+    'Los otros dos laboratorios deben estar en la segunda fila');
+  assert.equal(foLayout.overflow,false,'La FO no puede desbordar la pantalla horizontalmente');
+
   await page.waitForFunction(()=>{
     const txt=document.querySelector('#pciFoContentCount')?.textContent||'';
     return /Historia orientada: 6/.test(txt)&&/Tecnologías de la Información orientada: 8/.test(txt);
   },{timeout:45000});
   assert.match(await page.locator('#pciFoContentCount').textContent(),/Historia orientada: 6/);
   assert.match(await page.locator('#pciFoContentCount').textContent(),/Tecnologías de la Información orientada: 8/);
+  await page.screenshot({path:artifacts+'desktop-fo-paridad-fg.png',fullPage:false});
   const techBlock=await page.locator('#pciFoBlockFilter option').evaluateAll(ops=>
     ops.map(op=>op.value).find(x=>/tecnolog.*informaci/i.test(x))||'');
   const historyBlock=await page.locator('#pciFoBlockFilter option').evaluateAll(ops=>
@@ -565,6 +592,8 @@ async function testMobile(page) {
     width:Math.round(card.getBoundingClientRect().width)
   })));
   assert.ok(mobileCards[1].top>mobileCards[0].top,'En celular los 4 espacios se apilan');
+  assert.equal(await page.locator('#pci-fo-development .pci-fo-brand').evaluate(el=>el.complete&&el.naturalWidth>0),true);
+  await page.screenshot({path:artifacts+'mobile-fo-paridad-fg.png',fullPage:false});
   assert.equal(await page.locator('#pciFoSearch').isVisible(),true);
   await page.locator('#pciFoClose').click();
   const gridGeometry=await page.locator('#pciDemoFoCards').evaluate((el)=>{
