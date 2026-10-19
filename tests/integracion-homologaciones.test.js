@@ -150,3 +150,80 @@ test('arrastre pendiente -> revisión pedagógica -> incorporación no altera pl
   assert.deepEqual(old,original());
   assert.equal(promoted.orientations.ciencias_naturales.fg.areas['Ciencias Sociales'].groups[0].items.includes(extra.id),false);
 });
+
+
+test('un contenido amplio Matriz puede equivaler a varios contenidos FG V2 del mismo año',()=>{
+  const previous=pack();
+  const links=['v2-e3','v2-e3b'];
+  const checked=approveHomologation(previous,{
+    ...args,referenceId:undefined,referenceIds:links,
+    reason:'Un concepto amplio de mercados cubre ambos ejes desagregados de la referencia V2.'
+  });
+  const row=getApprovedHomologations(checked,'economia_administracion')
+    [mappingKey('Ciencias Sociales',3,'legacy-e3')];
+  assert.deepEqual(row.referenceIds,links);
+  assert.equal(row.mappingType,'one-to-many');
+  assert.equal(row.referenceVersion,'fg-sec-aprende-v2/1');
+  const individual=matchMatrixToV2Fg({matrixRows:matrix,v2FgRows:v2,
+    contentId:'legacy-e3',level:3,area:'Ciencias Sociales',
+    approvedMappings:getApprovedHomologations(checked,'economia_administracion')});
+  assert.equal(individual.status,'matched');
+  assert.deepEqual(individual.referenceIds,links);
+  const tracking=report(checked);
+  const level=tracking.fg.areasByLevel.find(r=>r.area==='Ciencias Sociales'&&r.year===3);
+  assert.equal(level.used,3);
+  assert.equal(level.total,3);
+  assert.equal(level.confirmedPercent,100);
+  const plan=tracking.fg.plans.find(p=>p.name==='Secuencia conservada');
+  assert.equal(plan.used,2,'Un contenido del plan puede homologarse a dos IDs V2 distintos');
+  assert.equal(plan.legacyContents,1,'El plan original no se desdobla ni reescribe');
+  assert.equal(tracking.fg.preservedTeachingSequences,1);
+  assert.equal(checked.orientations.ciencias_naturales.fg.homologations,undefined);
+  assert.deepEqual(previous,pack());
+});
+
+test('no acepta una equivalencia múltiple con referencias de otro año, área ni duplicadas',()=>{
+  const originalPack=pack();
+  for(const bad of [
+    ['v2-e3','v2-e4'],
+    ['v2-e3','v2-m3'],
+    ['v2-e3','no-existe'],
+    ['v2-e3','v2-e3']
+  ]){
+    assert.throws(()=>approveHomologation(originalPack,{
+      ...args,referenceId:undefined,referenceIds:bad
+    }));
+  }
+  assert.throws(()=>approveHomologation(originalPack,{
+    ...args,referenceId:undefined,referenceIds:[]
+  }));
+});
+
+test('si una referencia aprobada queda inválida no se contabiliza parcialmente',()=>{
+  const first=approveHomologation(pack(),{
+    ...args,referenceIds:['v2-e3','v2-e3b'],referenceId:undefined
+  });
+  const saved=getApprovedHomologations(first,'economia_administracion');
+  saved[mappingKey('Ciencias Sociales',3,'legacy-e3')].referenceIds.push('v2-e4');
+  const matched=matchMatrixToV2Fg({matrixRows:matrix,v2FgRows:v2,
+    area:'Ciencias Sociales',level:3,contentId:'legacy-e3',approvedMappings:saved});
+  assert.equal(matched.status,'unresolved');
+  const incorrect=structuredClone(first);
+  incorrect.orientations.economia_administracion.fg.homologations=saved;
+  assert.equal(inspectHomologations(incorrect,'economia_administracion',{
+    matrixRows:matrix,v2FgRows:v2
+  }).stale,1);
+  assert.equal(report(incorrect).fg.areasByLevel.find(r=>r.area==='Ciencias Sociales').used,1);
+});
+
+test('la homologación múltiple conserva historia cuando cambia la cantidad de referencias',()=>{
+  const first=approveHomologation(pack(),args);
+  const next=approveHomologation(first,{...args,referenceId:undefined,
+    referenceIds:['v2-e3','v2-e3b']});
+  assert.equal(next.orientations.economia_administracion.fg.homologationHistory.length,2);
+  assert.deepEqual(next.orientations.economia_administracion.fg.homologationHistory[1].record.referenceIds,
+    ['v2-e3','v2-e3b']);
+  const repeated=approveHomologation(next,{...args,referenceId:undefined,
+    referenceIds:['v2-e3','v2-e3b']});
+  assert.deepEqual(repeated,next,'Aprobar lo mismo dos veces no genera un nuevo evento');
+});
