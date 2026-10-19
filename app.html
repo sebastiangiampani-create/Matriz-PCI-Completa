@@ -140,6 +140,29 @@
           <div id="pciFoCoverageSubjects"></div>
           <div id="pciFoCoverageSpaces"></div>
         </details>
+        <details id="pciArticulationEditor" class="pci-articulation-editor">
+          <summary>Articulación con Formación General · Bases versionadas</summary>
+          <p>Relacioná contenidos del proceso FG con los de la orientación sin cambiar la base de origen ni modificar la cobertura.</p>
+          <div class="pci-articulation-grid">
+            <label>Versión curricular del proceso FG
+              <select id="pciArtFgVersion">
+                <option value="">Identificar versión de origen</option>
+                <option value="fg-matriz-historica/1">FG histórica · Matriz anterior</option>
+                <option value="fg-sec-aprende-v2/1">FG vigente · V2</option>
+              </select>
+            </label>
+            <label>Contenido FG ubicado en el proceso
+              <select id="pciArtFgContent"></select>
+            </label>
+            <label>Contenido FO ubicado en este espacio
+              <select id="pciArtFoContent"></select>
+            </label>
+            <label>Observación <input id="pciArtNote" type="text" placeholder="Vinculación pedagógica (opcional)"></label>
+          </div>
+          <button id="pciArtSave" type="button" class="button secondary">Guardar vínculo en borrador</button>
+          <p id="pciArtStatus" role="status" aria-live="polite"></p>
+          <div id="pciArtList"></div>
+        </details>
         <div id="pciFoGroupCards" class="pci-fo-group-grid" aria-label="Agrupamientos editables para arrastrar contenidos"></div>
         <div id="pciFoSelection" class="pci-fo-selection" hidden><strong id="pciFoSelectedCount">0 seleccionados</strong><button id="pciFoMoveSelected" class="button primary" type="button">Mover al espacio seleccionado</button></div>
         <div id="pciFoEmpty" class="pci-fo-dev-empty" hidden>
@@ -241,5 +264,6 @@
   <script type="module" src="integracion-cobertura-fg-v2.js?v=20261014-1"></script>
   <script type="module" src="integracion-matriz-import-preview.js?v=20261013-1"></script>
   <script type="module" src="integracion-cobertura-v2-bridge.js?v=20261014-1"></script>
+  <script type="module" src="integracion-articulacion-ui.js?v=20261019-1"></script>
 </body>
 </html>
