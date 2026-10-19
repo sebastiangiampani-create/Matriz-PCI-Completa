@@ -79,6 +79,22 @@ export class FGAreaBridge {
       this.flushing = false;
     }
   }
+  async checkRemoteChanges() {
+    if (this.disposed || !this.initialized) return [];
+    const areas = this.currentAreas();
+    if (!areas) return [];
+    const updates = [];
+    for (const [area, document] of Object.entries(areas)) {
+      if (!this.seen.has(area) || !plain(document)) continue;
+      const response = await this.session.checkRemote(area, document);
+      if (response.status === 'conflict' || response.status === 'review_required') {
+        updates.push({ area, ...response });
+        this.onStatus({ type: 'remote_pending', area, status: response.status,
+          revision: response.revision });
+      }
+    }
+    return updates;
+  }
   reviewedLocal(area) { return this.session.markReviewedLocal(area); }
   receiveRemote(area) {
     // Devuelve la revisión remota. Nunca muta la copia local silenciosamente.
