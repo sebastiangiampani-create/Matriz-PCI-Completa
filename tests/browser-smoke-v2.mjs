@@ -85,6 +85,18 @@ try {
     'Deben cargarse los 35 contenidos de Tutoría.',
   );
 
+  // La rama de integración exige revisar y aprobar la copia FG antes de editar.
+  // Respetar ese flujo evita que el test saltee la protección histórica.
+  const unchangedOriginal = await page.evaluate(() => localStorage.getItem('pciAppV2'));
+  await page.locator('#pciImportOpen').click();
+  await page.locator('#pciImportPrepare').click();
+  await page.locator('#pciImportReviewContent').waitFor({state:'visible'});
+  await page.locator('#pciImportReviewed').check();
+  await page.locator('#pciImportApprove').click();
+  assert.equal(await page.evaluate(() => localStorage.getItem('pciAppV2')), unchangedOriginal,
+    'Aprobar la copia FG no puede reemplazar la matriz original');
+  assert.ok(await page.evaluate(() => window.PCIApp.getActiveOrientation()),
+    'El proceso aprobado debe tener orientación identificada');
   await page.evaluate(() => window.PCIApp.openArea('Artes'));
   await page.waitForSelector('#board.active');
   await page.waitForFunction(() => document.querySelector('#boardAlert')?.textContent.includes('Regla curricular de Artes'));
