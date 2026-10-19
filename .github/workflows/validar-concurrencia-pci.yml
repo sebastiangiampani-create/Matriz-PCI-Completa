@@ -1,0 +1,27 @@
+name: Validar concurrencia PCI aislada
+
+on:
+  pull_request:
+    paths:
+      - 'src/concurrencia-pci/**'
+      - 'migration/concurrencia/**'
+      - '.github/workflows/validar-concurrencia-pci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxis
+        run: |
+          node --check src/concurrencia-pci/scoped-store.mjs
+          node --check src/concurrencia-pci/scoped-store.test.mjs
+      - name: Probar concurrencia sin acceso a producción
+        run: node --test src/concurrencia-pci/scoped-store.test.mjs
