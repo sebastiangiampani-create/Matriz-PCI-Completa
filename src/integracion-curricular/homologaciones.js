@@ -138,3 +138,90 @@ export function inspectHomologations(pack,orientationId,{matrixRows,v2FgRows}){
   }
   return out;
 }
+
+
+/**
+ * Vista previa de homologación por lotes, sin cambios de estado.
+ *
+ * Un contenido amplio puede sugerir 0..N desagregaciones del catálogo V2.
+ * La lista se arma por AÑO de la tarjeta de Matriz (no del texto histórico,
+ * que no tiene año), AREA y MATERIA. Una coincidencia léxica NO acredita
+ * equivalencia ni es evidencia de cobertura.
+ *
+ * IMPORTANTE: si un mismo contenido original se reutilizara en diferentes
+ * niveles, cada nivel genera su propia revisión curricular independiente.
+ */
+export function buildHomologationReviewQueue({
+  matrixRows,v2FgRows,areas,area,year,maxSuggestions=6
+}){
+  const level=Number(year);
+  if(!Number.isInteger(level)||level<1||level>5)
+    throw new Error('Seleccioná un año entre 1.º y 5.º.');
+  const name=String(area??'');
+  if(!name.trim())throw new Error('Falta el área de Formación General.');
+  const groups=array(areas?.[name]?.groups)
+    .filter(g=>Number(g?.level)===level);
+  const byId=new Map(array(matrixRows)
+    .filter(r=>norm(r?.area)===norm(name)).map(r=>[String(r.id),r]));
+  const assigned=new Map();
+  for(const g of groups){
+    for(const id of array(g?.items)){
+      const key=String(id);
+      if(!assigned.has(key))assigned.set(key,{id:key,groups:[]});
+      assigned.get(key).groups.push({id:String(g.id||''),name:String(g.name||'')});
+    }
+    for(const id of array(g?.provisionalContentIds)){
+      const key=String(id);
+      if(!assigned.has(key))assigned.set(key,{id:key,groups:[]});
+      const record=assigned.get(key);
+      if(!record.groups.some(x=>x.id===String(g.id||'')))
+        record.groups.push({id:String(g.id||''),name:String(g.name||'')});
+    }
+  }
+  const count=Math.max(1,Math.min(12,Number(maxSuggestions)||6));
+  const rows=[...assigned.values()].map(entry=>{
+    const old=byId.get(entry.id);
+    if(!old)return {
+      matrixId:entry.id,groups:entry.groups,year:level,
+      status:'missing-original',candidates:[],
+      warning:'El ID original no existe en el catálogo: no se debe homologar.'
+    };
+    const result=suggestHomologations({
+      matrixRows,v2FgRows,area:name,year:level,
+      matrixId:entry.id,limit:count
+    });
+    // Solo son candidatos del mismo año, área y materia. Un caso
+    // transversal o sin terminología común necesita revisión aparte.
+    const candidates=result.candidates.map(x=>({
+      ...x,
+      matchKind:x.exact?'textual':'possible',
+      suggestedOnly:true
+    }));
+    const supported=candidates.filter(x=>x.exact||x.similarity>=0.15);
+    return {
+      matrixId:entry.id,groups:entry.groups,year:level,
+      source:{...result.source},status:
+        supported.length?'needs-pedagogical-review':'manual-search',
+      suggestedReferenceIds:supported.map(x=>x.id),
+      candidates,
+      suggestedOnly:true,
+      warning:supported.length?
+        'Los contenidos sugeridos requieren revisión individual. No cuentan como cobertura.'
+        :'No se hallaron coincidencias textuales suficientes: revisar significado, ejes y progresión.'
+    };
+  });
+  return {
+    area:name,year:level,
+    sourceVersion:'fg-matriz-historica/1',
+    referenceVersion:'fg-sec-aprende-v2/1',
+    rows,
+    summary:{
+      placedOriginals:rows.length,
+      needsReview:rows.filter(r=>r.status==='needs-pedagogical-review').length,
+      manualSearch:rows.filter(r=>r.status==='manual-search').length,
+      missingOriginals:rows.filter(r=>r.status==='missing-original').length,
+      approvedByThisOperation:0
+    },
+    safety:'Previsualización exclusivamente: no aprueba relaciones ni altera contenidos, agrupamientos, planes o coberturas.'
+  };
+}
