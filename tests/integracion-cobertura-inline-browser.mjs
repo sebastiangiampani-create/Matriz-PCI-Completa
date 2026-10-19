@@ -30,7 +30,7 @@ const errors=[],network=[],consoleErrors=[];
 let page;
 try{
  const context=await browser.newContext({viewport:{width:1440,height:1000}});
- page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));
+ page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)+' | '+String(e.stack||'sin pila').slice(0,900)));
  page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});
  page.on('request',r=>{if(/supabase\.(co|com)/.test(r.url()))network.push(r.url());});
  await page.goto(base+'/app.html',{waitUntil:'domcontentloaded'});
