@@ -144,6 +144,10 @@ try {
 
   await page.evaluate(() => window.PCIApp.openOverview());
   await page.click('#overviewMatrix');
+  await page.waitForSelector('#pci-integrated-matrix:not([hidden])');
+  assert.equal(await page.locator('#matrix.active').count(), 0,
+    'Matriz completa abre la oferta integrada, no sustituye la Matriz original');
+  await page.locator('#pciIntegratedClassic').click();
   await page.waitForSelector('#matrix.active');
   const desktopHeaderBox = await page.locator('.matrix-header').boundingBox();
   const desktopFirstRowBox = await page.locator('.matrix-area-row').first().boundingBox();
@@ -174,6 +178,8 @@ try {
   await waitForApp(mobile, mobileErrors, '07-error-carga-mobile.png');
 
   await mobile.click('#overviewMatrix');
+  await mobile.waitForSelector('#pci-integrated-matrix:not([hidden])');
+  await mobile.locator('#pciIntegratedClassic').click();
   await mobile.waitForSelector('#matrix.active');
   const headerBox = await mobile.locator('.matrix-header').boundingBox();
   const firstRowBox = await mobile.locator('.matrix-area-row').first().boundingBox();
