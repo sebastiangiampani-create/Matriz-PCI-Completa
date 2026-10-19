@@ -412,6 +412,37 @@
     grid-column: auto;
   }
 }
+/* FG: selección por año recuperada sin mezclar bases de contenido. */
+#contentBag .pci-fg-year-controls {
+  grid-template-columns: minmax(0,1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+#contentBag .pci-fg-year-controls label,
+#contentBag .pci-fg-year-controls select {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+#contentBag .pci-fg-source-note {
+  margin: 3px 0 8px;
+  font-size: .73rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+#groups .pci-fg-official-assigned {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+#groups .pci-fg-official-assigned .assigned-heading h3 {
+  font-size: .94rem;
+}
+#contentBag [data-fg-source="vigente"] small strong {
+  color: var(--mint-dark);
+  font-weight: 900;
+}
+
 @media print {
   #pci-fo-development .pci-fo-brand,
   #pci-fo-development .pci-fo-overview {
