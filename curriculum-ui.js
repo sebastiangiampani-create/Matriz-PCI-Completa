@@ -405,8 +405,14 @@ function refresh() {
 }
 
 function scheduleRefresh() {
-  clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(refresh, 30);
+  // El Mapa de la Oferta y las coberturas pueden mutar el DOM continuamente.
+  // No reiniciar el temporizador por cada mutacion: eso posponia indefinidamente
+  // la regla visible de Artes y Educacion Fisica en el editor.
+  if (refreshTimer !== null) return;
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null;
+    refresh();
+  }, 30);
 }
 
 async function waitForApp() {
