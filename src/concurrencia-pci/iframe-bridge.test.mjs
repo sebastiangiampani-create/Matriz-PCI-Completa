@@ -80,3 +80,41 @@ test('la orientación no seleccionada no puede guardarse', async () => {
   await assert.rejects(bridge.initialize(),/Primero elegí una orientación/);
   assert.equal(store.history.length,0);
 });
+
+
+test('los cambios remotos se detectan sin sobrescribir el trabajo abierto', async () => {
+  const store = new MemoryScopedStore(), f = fixture(store);
+  const before = structuredClone(f.state);
+  await f.bridge.initialize();
+  await store.save(actor, scope('Ciencias Sociales'), {
+    groups: [{ id: 'externo', items: ['geografía'] }]
+  }, 0);
+  const updates = await f.bridge.checkRemoteChanges();
+  assert.equal(updates.length, 1);
+  assert.equal(updates[0].area, 'Ciencias Sociales');
+  assert.equal(updates[0].status, 'review_required');
+  assert.equal(updates[0].revision, 1);
+  assert.deepEqual(f.state, before, 'No se reemplaza el borrador local');
+  f.state.areas['Ciencias Sociales'].groups[0].items.push('historia-2');
+  await f.bridge.notifyChange();
+  assert.equal(store.history.length, 1, 'No se sobrescribe la actualización remota');
+  assert.ok(f.events.some(x => x.type === 'remote_pending'));
+});
+
+test('una edición local pendiente y cambios externos obligan a resolver conflicto', async () => {
+  const store = new MemoryScopedStore(), f = fixture(store);
+  await f.bridge.initialize();
+  f.state.areas['Ciencias Sociales'].groups[0].items.push('borrador-sin-publicar');
+  await store.save(actor, scope('Ciencias Sociales'), {
+    groups: [{ id: 'nuevo-externo', items: ['historia-3'] }]
+  }, 0);
+  const updates = await f.bridge.checkRemoteChanges();
+  assert.equal(updates[0].status, 'conflict');
+  assert.equal(f.bridge.session.getStatus('Ciencias Sociales').status, 'conflict');
+  await f.bridge.notifyChange();
+  assert.deepEqual(
+    f.state.areas['Ciencias Sociales'].groups[0].items,
+    ['historia', 'borrador-sin-publicar']
+  );
+  assert.equal(store.history.length, 1);
+});
