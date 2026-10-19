@@ -29,7 +29,7 @@ function sourceRows(c){
    list(scope?.groups).flatMap(group=>list(group.items).map(id=>({
      label:area+' · '+(group.name||group.id)+' · contenido '+id,
      value:JSON.stringify([area,String(group.id),String(id)])
-   })));
+   }))));
 }
 function foRows(c){
  const ids=list(c.fo?.spaces?.[c.selected]?.items);
