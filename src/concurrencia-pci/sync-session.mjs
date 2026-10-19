@@ -120,19 +120,20 @@ export class AreaSyncSession {
     const state = this.areas.get(area);
     if (!state) throw new SyncError('Primero hay que consultar la versión remota.', 412);
     if (!validDoc(localDocument)) throw new SyncError('Borrador de área inválido.', 400);
+    const plannedDocument = copy(localDocument); // evitar mutaciones durante un guardado en cola
     if (state.status === 'review_required' || state.status === 'conflict')
       throw new ReviewRequiredError(area);
     const previous = this.pending.get(area) || Promise.resolve();
     const result = previous.catch(() => {}).then(async () => {
       if (state.status !== 'ready') throw new ReviewRequiredError(area);
-      if (state.remote !== null && equal(state.remote, localDocument))
+      if (state.remote !== null && equal(state.remote, plannedDocument))
         return { ok: true, unchanged: true, revision: state.revision };
       try {
-        const saved = await this.transport.saveUnit(this.scope(area), localDocument, state.revision);
+        const saved = await this.transport.saveUnit(this.scope(area), plannedDocument, state.revision);
         if (!saved?.ok || !Number.isSafeInteger(saved.revision) || saved.revision !== state.revision + 1)
           throw new SyncError('El servidor no confirmó una revisión consistente.', 502);
         state.revision = saved.revision;
-        state.remote = copy(localDocument);
+        state.remote = copy(plannedDocument);
         this.onEvent({ type: 'saved', area, revision: saved.revision });
         return { ...saved, unchanged: false };
       } catch (err) {
