@@ -111,6 +111,7 @@ if(overlay){
      localStorage.setItem(KEY,JSON.stringify(state));
      savedStatus('Borrador local guardado · No publicado en la escuela');
      renderCoverageDashboard();
+     window.dispatchEvent(new CustomEvent('pci-fo-draft-change', { detail: {orientation, slot} }));
    }catch(e){
      savedStatus('El navegador no pudo guardar el borrador: '+e.message);
    }
@@ -336,6 +337,7 @@ if(overlay){
    planSelector.value=String(indices[0]);
    renderAssigned();renderPlan();renderCatalog();renderCoverageDashboard();
    savedStatus('Vista de prueba · edición local independiente del trabajo escolar');
+   window.dispatchEvent(new CustomEvent('pci-fo-context-change', { detail: {orientation, slot} }));
  }
  function coverageSnapshot(){
    const id=orientId(orientation);
