@@ -207,6 +207,12 @@ if(board && tableBody && head && yearPicker){
 
   yearPicker.addEventListener('change',render);
   $('pciIntegratedClose')?.addEventListener('click',closeMatrix);
+  // Conserva el editor histórico: la Matriz integrada no reemplaza el
+  // trabajo FG anterior ni sus planes. Acceso voluntario desde la nueva vista.
+  $('pciIntegratedClassic')?.addEventListener('click',()=>{
+    closeMatrix();
+    window.PCIApp?.openMatrix?.();
+  });
   document.addEventListener('keydown',event=>{
     if(event.key==='Escape'&&!board.hidden&&!document.querySelector('#pci-map-overlay:not([hidden])')){
       closeMatrix();
