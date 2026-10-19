@@ -472,7 +472,8 @@ function bindGroupEvents() {
     card.addEventListener('pointerdown', () => selectGroup(groupId));
     card.addEventListener('dragover', (event) => {
       event.preventDefault();
-      event.dataTransfer.dropEffect = 'move';
+      event.dataTransfer.dropEffect =
+        event.dataTransfer.types.includes('application/x-pci-official-fg') ? 'copy' : 'move';
       card.classList.add('drop-target');
     });
     card.addEventListener('dragleave', () => card.classList.remove('drop-target'));
@@ -666,6 +667,7 @@ function writeDraggedContent(event, contentId, catalog='historica') {
   event.dataTransfer.setData('text/plain', String(contentId));
   event.dataTransfer.setData('application/x-pci-content', String(contentId));
   event.dataTransfer.setData('application/x-pci-catalog', catalog);
+  if(catalog==='vigente')event.dataTransfer.setData('application/x-pci-official-fg', '1');
 }
 
 function readDraggedContent(event) {
