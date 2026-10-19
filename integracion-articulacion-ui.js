@@ -120,5 +120,8 @@ if($('pciArticulationEditor')){
  });
  window.addEventListener('pci-orientation-changed',render);
  window.addEventListener('pci-state-change',render);
+ // El selector FO se actualiza por código al abrir un espacio; no dispara change nativo.
+ window.addEventListener('pci-fo-context-change',render);
+ window.addEventListener('pci-fo-draft-change',render);
  window.PCIArticulacionVersionada={render,collect:()=>{const c=context();return c?collect(c):[]}};
 }
