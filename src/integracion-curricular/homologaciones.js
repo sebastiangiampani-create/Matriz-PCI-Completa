@@ -54,8 +54,19 @@ function knownGroup(areas,area,year,id){
   return array(areas?.[area]?.groups).some(g=>Number(g.level)===Number(year)&&
     [...array(g.items),...array(g.provisionalContentIds)].map(String).includes(String(id)));
 }
+/**
+ * Cada registro une UN contenido amplio de Matriz con 1..N unidades FG V2
+ * del MISMO nivel. Distintos niveles usan claves independientes.
+ * Un vínculo sugerido nunca suma cobertura sin revisión pedagógica.
+ */
+export function approvedReferenceIds(mapping) {
+  if(!mapping||typeof mapping!=='object')return [];
+  const arr=Array.isArray(mapping.referenceIds)?mapping.referenceIds:
+    mapping.referenceId!==undefined?[mapping.referenceId]:[];
+  return [...new Set(arr.map(String))];
+}
 export function approveHomologation(pack,{
-  orientationId,area,year,matrixId,referenceId,reason,reviewer,
+  orientationId,area,year,matrixId,referenceId,referenceIds,reason,reviewer,
   matrixRows,v2FgRows
 }){
   const w=pack?.orientations?.[orientationId];
@@ -63,12 +74,19 @@ export function approveHomologation(pack,{
   if(!knownGroup(w.fg.areas,area,year,matrixId))
     throw new Error('Este contenido no está ubicado en FG en ese nivel y orientación.');
   const src=array(matrixRows).find(r=>String(r.id)===String(matrixId));
-  const target=array(v2FgRows).find(r=>String(r.id)===String(referenceId));
-  if(!src||!target)throw new Error('Se requiere un contenido válido de ambas bases.');
-  if(norm(src.area)!==norm(area)||norm(target.area)!==norm(area)||
-      Number(target.year)!==Number(year))
+  const rawRefs=Array.isArray(referenceIds)?referenceIds:
+    referenceId!==undefined?[referenceId]:[];
+  const ids=rawRefs.map(String);
+  if(!src||!ids.length||ids.some(id=>!id.trim())||
+      ids.length!==new Set(ids).size)
+    throw new Error('Se requiere un contenido original y referencias V2 únicas.');
+  const byId=new Map(array(v2FgRows).map(r=>[String(r.id),r]));
+  const targets=ids.map(id=>byId.get(id));
+  if(targets.some(r=>!r))throw new Error('Una referencia V2 no existe.');
+  if(norm(src.area)!==norm(area)||targets.some(r=>
+      norm(r.area)!==norm(area)||Number(r.year)!==Number(year)))
     throw new Error('No se permite vincular contenidos de otra área o nivel.');
-  if(subjectKey(src.subject)!==subjectKey(target.subject))
+  if(targets.some(r=>subjectKey(src.subject)!==subjectKey(r.subject)))
     throw new Error('Las materias son diferentes: la homologación requiere análisis institucional.');
   if(String(reason||'').trim().length<10)
     throw new Error('La homologación necesita una justificación pedagógica.');
@@ -78,12 +96,16 @@ export function approveHomologation(pack,{
   fg.homologations=fg.homologations||{};
   fg.homologationHistory=array(fg.homologationHistory);
   const key=mappingKey(area,year,matrixId),previous=fg.homologations[key]||null;
-  if(previous?.referenceId===String(referenceId))return updated;
+  if(previous && JSON.stringify(approvedReferenceIds(previous))===JSON.stringify(ids))
+    return updated;
   const record={
     status:'approved',
-    area,year:Number(year),matrixId:String(matrixId),referenceId:String(referenceId),
-    sourceSubject:src.subject,targetSubject:target.subject,
-    textExact:norm(src.text)===norm(target.text),
+    area,year:Number(year),matrixId:String(matrixId),
+    referenceId:ids[0],referenceIds:ids,
+    referenceVersion:'fg-sec-aprende-v2/1',
+    mappingType:ids.length>1?'one-to-many':'one-to-one',
+    sourceSubject:src.subject,targetSubject:targets[0].subject,
+    textExact:ids.length===1&&norm(src.text)===norm(targets[0].text),
     reason:String(reason).trim(),reviewer:String(reviewer).trim()
   };
   fg.homologations[key]=record;
@@ -101,14 +123,18 @@ export function inspectHomologations(pack,orientationId,{matrixRows,v2FgRows}){
   const out={valid:0,stale:0,records:[]};
   for(const [key,m] of Object.entries(w.fg.homologations||{})){
     const src=array(matrixRows).find(r=>String(r.id)===String(m.matrixId));
-    const v2=array(v2FgRows).find(r=>String(r.id)===String(m.referenceId));
-    const ok=!!src&&!!v2&&m.status==='approved'&&
-      norm(src.area)===norm(m.area)&&norm(v2.area)===norm(m.area)&&
-      subjectKey(src.subject)===subjectKey(v2.subject)&&Number(v2.year)===Number(m.year)&&
+    const refs=approvedReferenceIds(m);
+    const byId=new Map(array(v2FgRows).map(r=>[String(r.id),r]));
+    const targets=refs.map(id=>byId.get(id));
+    const ok=!!src&&refs.length>0&&targets.every(r=>!!r)&&m.status==='approved'&&
+      norm(src.area)===norm(m.area)&&
+      targets.every(r=>norm(r.area)===norm(m.area)&&
+        subjectKey(src.subject)===subjectKey(r.subject)&&Number(r.year)===Number(m.year))&&
+      String(m.reason||'').trim().length>=10&&String(m.reviewer||'').trim().length>0&&
       knownGroup(w.fg.areas,m.area,m.year,m.matrixId);
     if(ok)out.valid++;else out.stale++;
     out.records.push({key,status:ok?'valid':'stale',area:m.area,year:m.year,
-      matrixId:m.matrixId,referenceId:m.referenceId});
+      matrixId:m.matrixId,referenceId:refs[0]||null,referenceIds:refs});
   }
   return out;
 }
