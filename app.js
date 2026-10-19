@@ -970,6 +970,24 @@ function bindEvents() {
   });
   $('schoolName').addEventListener('change', () => toast('Nombre guardado'));
   $('addOther').addEventListener('click', createOtherFormat);
+  $('fgBagSource').addEventListener('change', () => {
+    selectedContentIds.clear();
+    $('subjectFilter').value='';
+    $('axisFilter').value='';
+    $('fgBagYear').value='0';
+    if(currentArea){
+      populateBagFilters();
+      renderContents();
+      renderGroups();
+    }
+  });
+  $('fgBagYear').addEventListener('change', () => {
+    selectedContentIds.clear();
+    if(currentArea){
+      populateBagFilters();
+      renderContents();
+    }
+  });
   $('contentSearch').addEventListener('input', renderContents);
   $('subjectFilter').addEventListener('change', renderContents);
   $('axisFilter').addEventListener('change', renderContents);
@@ -999,6 +1017,26 @@ async function start() {
   bindEvents();
   try {
     DATA = await loadCurriculum();
+    // Cargar por separado el catálogo oficial con año 1.º..5.º.
+    // No se modifican los contenidos antiguos, ni sus IDs ni sus planes.
+    void loadV2Fg().then(rows=>{
+      officialFgCatalog=rows;
+      officialFgById=new Map(rows.map(row=>[String(row.id),row]));
+      officialFgReady=true;
+      officialFgLoadError='';
+      if(currentArea){
+        populateBagFilters();
+        renderContents();
+        renderGroups();
+      }
+    }).catch(error=>{
+      officialFgReady=false;
+      officialFgLoadError=String(error?.message||error);
+      if(currentArea){
+        populateBagFilters();
+        renderContents();
+      }
+    });
     const raw = readStoredState();
     originalSnapshot = safeCopy(raw?.areas ? raw : migrateState(raw));
     app = migrateState(originalSnapshot);
