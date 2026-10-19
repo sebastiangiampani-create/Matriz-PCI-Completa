@@ -1,7 +1,5 @@
 import {
-  ART_LANGUAGES,
   EF_NUCLEI,
-  artLanguageForContent,
   evaluateArts,
   evaluatePhysicalEducation,
   isTutoriaContent,
@@ -30,12 +28,11 @@ function data() {
 function ensureRules() {
   const current = state();
   if (!current) return;
-  current.curriculumRules ??= {};
-  const valid = [...new Set(
-    (Array.isArray(current.curriculumRules.artLanguages) ? current.curriculumRules.artLanguages : [])
-      .filter((language) => ART_LANGUAGES.includes(language)),
-  )].slice(0, 2);
-  current.curriculumRules.artLanguages = valid;
+  // Se conserva cualquier selección histórica; la regla vigente no limita
+  // lenguajes artísticos ni reescribe procesos FG existentes.
+  if (!current.curriculumRules || typeof current.curriculumRules !== 'object') {
+    current.curriculumRules = {};
+  }
 }
 
 function persistState() {
@@ -85,9 +82,8 @@ function updateOverviewCard(area, label, percent) {
 }
 
 function artsPercent(result) {
-  const languageRatio = result.selectedLanguages.length / 2;
   const workshopRatio = result.totalWorkshops ? result.completeWorkshops / result.totalWorkshops : 0;
-  return Math.round(Math.min(languageRatio, workshopRatio) * 100);
+  return Math.round(workshopRatio * 100);
 }
 
 function efPercent(result) {
@@ -104,7 +100,7 @@ function updateOverviewCoverage() {
   const ef = evaluatePhysicalEducation(current, rows);
   updateOverviewCard(
     'Artes',
-    `Cumplimiento: ${arts.completeWorkshops}/${arts.totalWorkshops} talleres · ${arts.selectedLanguages.length}/2 lenguajes`,
+    `Cumplimiento: ${arts.completeWorkshops}/${arts.totalWorkshops} talleres · tres ejes`,
     artsPercent(arts),
   );
   updateOverviewCard(
@@ -129,52 +125,22 @@ function renderArtsRule() {
   const alert = $('boardAlert');
   if (!current || !alert) return;
   const result = evaluateArts(current, rows);
-  const selected = result.selectedLanguages;
   const missingWorkshops = result.workshops.filter((workshop) => !workshop.complete);
-  const uncheckedDisabled = selected.length >= 2;
 
   alert.hidden = false;
   alert.className = `notice ${result.complete ? 'success' : 'warning'}`;
   alert.innerHTML = `
     <strong>Regla curricular de Artes</strong>
-    <p style="margin:.45rem 0 .7rem">Elegí exactamente dos lenguajes. La cobertura se calcula solo sobre esos dos y cada taller debe incluir, como mínimo, contenidos de Producción, Apreciación y Contextualización.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:.6rem 1rem;margin:.4rem 0 .7rem">
-      ${ART_LANGUAGES.map((language) => {
-        const checked = selected.includes(language);
-        return `<label class="check-row"><input type="checkbox" data-pci-art-language="${escapeHtml(language)}" ${checked ? 'checked' : ''} ${!checked && uncheckedDisabled ? 'disabled' : ''}> ${escapeHtml(language)}</label>`;
-      }).join('')}
-    </div>
+    <p style="margin:.45rem 0 .7rem">Los talleres pueden combinar Artes Visuales, Música y Teatro sin restringir la elección de lenguajes. Cada taller debe abordar los tres ejes: Producción, Apreciación y Contextualización.</p>
     <p style="margin:.35rem 0"><strong>${result.completeWorkshops}/${result.totalWorkshops} talleres</strong> cumplen los tres ejes.</p>
-    ${result.unselectedAssignments.length ? `<p style="margin:.35rem 0">⚠ Hay ${result.unselectedAssignments.length} contenido${result.unselectedAssignments.length === 1 ? '' : 's'} de un lenguaje no seleccionado; no cuentan para la cobertura.</p>` : ''}
-    ${missingWorkshops.length ? `<p style="margin:.35rem 0">Revisar: ${missingWorkshops.map((workshop) => `${escapeHtml(workshop.groupName)} (${workshop.missingAxes.length ? `falta ${workshop.missingAxes.map(escapeHtml).join(', ')}` : 'contiene un lenguaje no seleccionado'})`).join(' · ')}</p>` : ''}
+    ${missingWorkshops.length ? `<p style="margin:.35rem 0">Revisar: ${missingWorkshops.map((workshop) => `${escapeHtml(workshop.groupName)} (falta ${workshop.missingAxes.map(escapeHtml).join(', ')})`).join(' · ')}</p>` : ''}
   `;
-
-  alert.querySelectorAll('[data-pci-art-language]').forEach((input) => {
-    input.addEventListener('change', () => {
-      const language = input.dataset.pciArtLanguage;
-      const currentRules = state().curriculumRules;
-      const next = new Set(currentRules.artLanguages ?? []);
-      if (input.checked) {
-        if (next.size >= 2) {
-          input.checked = false;
-          toast('Artes permite elegir exactamente dos lenguajes.');
-          return;
-        }
-        next.add(language);
-      } else {
-        next.delete(language);
-      }
-      currentRules.artLanguages = [...next];
-      persistState();
-      scheduleRefresh();
-    });
-  });
 
   const label = $('coverageLabel');
   const hint = $('coverageHint');
   const bar = $('coverageBar');
-  if (label) label.textContent = `Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres · ${selected.length}/2 lenguajes`;
-  if (hint) hint.textContent = 'No se exige ubicar todos los contenidos: se validan los dos lenguajes elegidos y los tres ejes dentro de cada taller.';
+  if (label) label.textContent = `Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres · tres ejes`;
+  if (hint) hint.textContent = 'Los tres lenguajes están disponibles. La validación se hace por Producción, Apreciación y Contextualización dentro de cada taller.';
   if (bar) bar.style.width = `${artsPercent(result)}%`;
   setPendingLabel('Mostrar solo disponibles sin ubicar');
 }
@@ -219,25 +185,6 @@ function markOptionalContentItems() {
   if (!current || !['Artes', 'Educación Física'].includes(current.current)) return;
   document.querySelectorAll('#contentList .content-location.pending-text').forEach((element) => {
     element.textContent = 'Disponible';
-  });
-}
-
-function filterArtsBag() {
-  const current = state();
-  if (!current || current.current !== 'Artes') return;
-  const selected = current.curriculumRules?.artLanguages ?? [];
-  if (selected.length !== 2) return;
-  const byId = new Map(data().map((content) => [String(content.id), content]));
-  document.querySelectorAll('#contentList .content-item').forEach((item) => {
-    const content = byId.get(String(item.dataset.contentId));
-    const language = artLanguageForContent(content);
-    item.hidden = Boolean(language && !selected.includes(language));
-  });
-  const subjectFilter = $('subjectFilter');
-  subjectFilter?.querySelectorAll('option').forEach((option) => {
-    if (!option.value) return;
-    const language = artLanguageForContent({ subject: option.value, axis: '' });
-    if (language) option.disabled = !selected.includes(language);
   });
 }
 
@@ -374,7 +321,6 @@ function applyCurrentAreaRules() {
   if (!current) return;
   if (current.current === 'Artes') {
     renderArtsRule();
-    filterArtsBag();
     markOptionalContentItems();
     return;
   }
