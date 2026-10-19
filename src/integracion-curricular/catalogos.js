@@ -123,23 +123,30 @@ export function matchMatrixToV2Fg({matrixRows,v2FgRows,contentId,level,area,appr
   if(!found)return {status:'unresolved',reason:'ID original sin referencia en Matriz',matches:[]};
   if(area&&norm(area)!==norm(found.area)&&!(norm(area)==='artes'&&norm(found.area).startsWith('educacion artistica')))
     return {status:'unresolved',reason:'El contenido no pertenece al área del agrupamiento',matches:[]};
-  const approvedKey=JSON.stringify([String(area),year,String(contentId)]);
-  const approved=approvedMappings?.[approvedKey];
+  const key=JSON.stringify([String(area),year,String(contentId)]);
+  const approved=approvedMappings?.[key];
   if(approved){
-    const row=alpha(v2FgRows).find(r=>String(r.id)===String(approved.referenceId));
-    if(!row||approved.status!=='approved'||row.year!==year||
-      norm(row.area)!==norm(area)||subkey(row.subject)!==subkey(found.subject)||
+    const ids=Array.isArray(approved.referenceIds) ? approved.referenceIds.map(String):
+      approved.referenceId!==undefined ? [String(approved.referenceId)] : [];
+    // Un único ID inválido anula la aprobación entera: nunca cobertura parcial
+    // presentada como revisión completa.
+    const unique=new Set(ids),candidates=new Map(alpha(v2FgRows).map(r=>[String(r.id),r]));
+    const refs=ids.map(id=>candidates.get(id));
+    if(approved.status!=='approved'||!ids.length||unique.size!==ids.length||
+      refs.some(r=>!r||r.year!==year||norm(r.area)!==norm(area)||
+        subkey(r.subject)!==subkey(found.subject))||
       !String(approved.reason||'').trim()||!String(approved.reviewer||'').trim()){
       return {status:'unresolved',reason:'Homologación manual desactualizada o inválida',
         matrixId:String(contentId),year,matches:[]};
     }
-    return {status:'matched',matrixId:String(contentId),
-      referenceId:String(row.id),year,reference:row,approved:true};
+    return {status:'matched',matrixId:String(contentId),year,approved:true,
+      referenceId:ids[0],referenceIds:ids,references:refs};
   }
-  const matches=alpha(v2FgRows).filter(r=>
-    r.year===year&&subkey(r.subject)===subkey(found.subject)&&norm(r.text)===norm(found.text));
+  const matches=alpha(v2FgRows).filter(r=>r.year===year&&
+    subkey(r.subject)===subkey(found.subject)&&norm(r.text)===norm(found.text));
   if(matches.length===1)return {status:'matched',matrixId:String(found.id),
-    referenceId:String(matches[0].id),year,reference:matches[0]};
+    referenceId:String(matches[0].id),referenceIds:[String(matches[0].id)],
+    references:[matches[0]],year,reference:matches[0]};
   if(matches.length>1)return {status:'ambiguous',reason:'Coincidencias múltiples en el mismo nivel',
     matrixId:String(found.id),year,matches:matches.map(x=>x.id)};
   return {status:'unresolved',reason:'Sin coincidencia exacta de materia, texto y nivel',
@@ -153,7 +160,8 @@ export function fgCoverageByLevel({areas,matrixRows,v2FgRows,area,level,approved
   const matched=new Set(),unmatched=[],ambiguous=[];
   for(const id of ids){
     const result=matchMatrixToV2Fg({matrixRows,v2FgRows,contentId:id,level:year,area,approvedMappings});
-    if(result.status==='matched')matched.add(result.referenceId);
+    if(result.status==='matched')
+      (result.referenceIds||[result.referenceId]).forEach(ref=>matched.add(String(ref)));
     else if(result.status==='ambiguous')ambiguous.push({id,reason:result.reason});
     else unmatched.push({id,reason:result.reason});
   }
