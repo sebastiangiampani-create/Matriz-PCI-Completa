@@ -100,15 +100,17 @@ try {
   await page.evaluate(() => window.PCIApp.openArea('Artes'));
   await page.waitForSelector('#board.active');
   await page.waitForFunction(() => document.querySelector('#boardAlert')?.textContent.includes('Regla curricular de Artes'));
-  assert.equal(await page.locator('[data-pci-art-language]').count(), 3, 'Artes debe ofrecer tres lenguajes para elegir dos.');
-  await page.locator('[data-pci-art-language="Artes Visuales"]').check();
-  await page.locator('[data-pci-art-language="Música"]').check();
-  await page.waitForFunction(() => document.querySelector('[data-pci-art-language="Teatro"]')?.disabled === true);
-  assert.deepEqual(
-    await page.evaluate(() => window.PCIApp.getState().curriculumRules.artLanguages),
-    ['Artes Visuales', 'Música'],
-  );
-  assert.match(await page.locator('#coverageHint').textContent(), /tres ejes/);
+  // Regla vigente: cada taller aborda los tres ejes, sin restringir
+  // Artes Visuales, Música ni Teatro. Nunca forzar selección de dos lenguajes.
+  assert.equal(await page.locator('[data-pci-art-language]').count(), 0,
+    'Artes no debe exigir elegir dos lenguajes ni deshabilitar el tercero.');
+  const artsRule = await page.locator('#boardAlert').textContent();
+  for (const axis of ['Producción', 'Apreciación', 'Contextualización']) {
+    assert.match(artsRule, new RegExp(axis),
+      'El aviso de Artes debe mostrar el eje ' + axis);
+  }
+  assert.match(await page.locator('#coverageHint').textContent(),
+    /tres lenguajes están disponibles/i);
   await page.screenshot({ path: `${ARTIFACTS}/03-artes-regla-curricular.png`, fullPage: true });
 
   await page.evaluate(() => window.PCIApp.openArea('Educación Física'));
