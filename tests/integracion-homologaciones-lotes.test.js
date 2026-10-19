@@ -69,6 +69,8 @@ test('una sugerencia no suma cobertura hasta revisión y aprobación selectiva',
    matrixRows:matrix,v2FgRows:v2,area,level:year,
    approvedMappings:approved.orientations[orientationId].fg.homologations});
  assert.equal(three.mappedUniqueContents,3);
+ assert.equal(three.prescribedTotal,4);
+ assert.equal(three.verifiedPercent,75, 'Tres equivalencias aprobadas no acreditan el cuarto contenido V2');
  assert.equal(approved.orientations[orientationId].fg.homologationHistory.length,2);
  assert.deepEqual(approved.orientations[orientationId].fg.areas,areas());
  assert.deepEqual(original,pack());
