@@ -227,3 +227,28 @@ test('la homologación múltiple conserva historia cuando cambia la cantidad de 
     referenceIds:['v2-e3','v2-e3b']});
   assert.deepEqual(repeated,next,'Aprobar lo mismo dos veces no genera un nuevo evento');
 });
+
+
+test('homologaciones múltiples y nuevos IDs del catálogo no duplican cobertura por nivel',()=>{
+  const draft=pack();
+  const group=draft.orientations.economia_administracion.fg.areas['Ciencias Sociales'].groups[0];
+  group.fgV2ContentIds=['v2-e3','v2-e4']; // C5: contenido de 4.º permitido, pero excluido del conteo de 3.º
+  const review=approveHomologation(draft,{...args,referenceId:undefined,
+    referenceIds:['v2-e3','v2-e3b']});
+  const totals=report(review);
+  const r=totals.fg.areasByLevel.find(x=>x.area==='Ciencias Sociales'&&x.year===3);
+  assert.equal(r.used,3,'v2-e3 aparece dos veces (directa y homologación) pero cuenta una sola');
+  const g=totals.fg.groupings.find(x=>x.groupId==='social3');
+  assert.equal(g.directV2Contents,2);
+  assert.deepEqual(g.crossYearContents,[{id:'v2-e4',originYear:4,destinationYear:3}]);
+  assert.equal(g.total,3);
+  assert.equal(g.used,3);
+  assert.equal(totals.fg.plans.find(p=>p.name==='Secuencia conservada').legacyContents,1);
+  const detailed=fgCoverageByLevel({areas:review.orientations.economia_administracion.fg.areas,
+    matrixRows:matrix,v2FgRows:v2,area:'Ciencias Sociales',level:3,
+    approvedMappings:getApprovedHomologations(review,'economia_administracion')});
+  assert.equal(detailed.mappedUniqueContents,3);
+  assert.equal(detailed.crossYear.length,1);
+  assert.equal(detailed.prescribedTotal,3);
+  assert.equal(review.orientations.ciencias_naturales.fg.areas['Ciencias Sociales'].groups[0].fgV2ContentIds,undefined);
+});
