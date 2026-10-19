@@ -133,16 +133,19 @@ export function matchMatrixToV2Fg({matrixRows,v2FgRows,contentId,level,area,appr
     const unique=new Set(ids),candidates=new Map(alpha(v2FgRows).map(r=>[String(r.id),r]));
     const refs=ids.map(id=>candidates.get(id));
     if(approved.status!=='approved'||!ids.length||unique.size!==ids.length||
+      (approved.referenceVersion&&approved.referenceVersion!=='fg-sec-aprende-v2/1')||
+      String(approved.area)!==String(area)||Number(approved.year)!==year||
+      String(approved.matrixId)!==String(contentId)||
       refs.some(r=>!r||r.year!==year||norm(r.area)!==norm(area)||
         subkey(r.subject)!==subkey(found.subject))||
-      !String(approved.reason||'').trim()||!String(approved.reviewer||'').trim()){
+      String(approved.reason||'').trim().length<10||!String(approved.reviewer||'').trim()){
       return {status:'unresolved',reason:'Homologación manual desactualizada o inválida',
         matrixId:String(contentId),year,matches:[]};
     }
     return {status:'matched',matrixId:String(contentId),year,approved:true,
       referenceId:ids[0],referenceIds:ids,references:refs};
   }
-  const matches=alpha(v2FgRows).filter(r=>r.year===year&&
+  const matches=alpha(v2FgRows).filter(r=>r.year===year&&norm(r.area)===norm(area)&&
     subkey(r.subject)===subkey(found.subject)&&norm(r.text)===norm(found.text));
   if(matches.length===1)return {status:'matched',matrixId:String(found.id),
     referenceId:String(matches[0].id),referenceIds:[String(matches[0].id)],
