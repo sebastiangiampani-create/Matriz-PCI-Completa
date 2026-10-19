@@ -85,6 +85,19 @@ export function curriculumTracking({pack,orientationId,matrixRows,v2FgRows,v2FoR
     const denominatorValidated=!!subjectNames&&subjectNames.every(s=>
       fullUniverse.some(row=>norm(row.subject)===norm(s)));
     const links=useMap({ids:g.items,area,year,matrixRows,v2FgRows,approvedMappings});
+    // La bolsa vigente puede agregar IDs V2 directos, sin tocar g.items
+    // ni rehomologar el contenido histórico. Otro año se permite como
+    // propuesta didáctica, pero no se suma en la cobertura de este nivel.
+    const officialReference=new Map(arr(v2FgRows).map(r=>[String(r.id),r]));
+    const direct=unique(g.fgV2ContentIds);
+    const crossYear=[];
+    for(const id of direct){
+      const row=officialReference.get(id);
+      if(!row)links.pending.push({id,status:'unresolved',
+        reason:'Identificador FG oficial ya no disponible'});
+      else if(row.year===year&&norm(row.area)===norm(area))links.mapped.add(id);
+      else crossYear.push({id,originYear:row.year,destinationYear:year});
+    }
     const gResult=report(links.mapped,universe,links.pending,denominatorValidated);
     const plans=arr(g.plansBimestrales).map(plan=>planReport({
       plan,g,area,year,matrixRows,v2FgRows,universe,denominatorValidated,approvedMappings
@@ -94,6 +107,7 @@ export function curriculumTracking({pack,orientationId,matrixRows,v2FgRows,v2FoR
       format:typeNames[g.kind]||g.kind,
       startTerm:g.startTerm??null,endTerm:g.endTerm??null,
       legacyContents:links.legacyCount,
+      directV2Contents:direct.length,crossYearContents:crossYear,
       denominatorType:subjectNames?'materias-explicitas':'area-nivel-provisional',
       subjects:subjectNames,
       ...gResult,plans
