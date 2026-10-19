@@ -59,7 +59,7 @@ test('una sugerencia no suma cobertura hasta revisión y aprobación selectiva',
    matrixRows:matrix,v2FgRows:v2,area,level:year,
    approvedMappings:first.orientations[orientationId].fg.homologations});
  assert.equal(one.mappedUniqueContents,1);
- assert.equal(one.prescribedTotal,3);
+ assert.equal(one.prescribedTotal,4, 'El universo del nivel incluye también Historia; la homologación es de Economía');
  const approved=approveHomologation(first,{
    orientationId,area,year,matrixId:broad.id,referenceIds:['v2-a','v2-b','v2-c'],
    reason:'Se verificaron individualmente actores, oferta-demanda y circulación en la propuesta didáctica.',
