@@ -697,6 +697,9 @@ if(overlay){
    $('pciFoSearch').value='';
    $('pciFoPendingOnly').checked=false;
    $('pciFoDetails').open=false;
+   // Solo cerrar el panel visual al pasar de proyecto a laboratorios/talleres:
+   // vínculos y borradores versionados se conservan íntegros.
+   if($('pciArticulationEditor'))$('pciArticulationEditor').open=false;
    selectedContents.clear();
    resetYear(year);
    const unused=orphanedSpaces(draft,getMap());
