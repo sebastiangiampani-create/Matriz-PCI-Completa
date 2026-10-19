@@ -267,6 +267,24 @@
   margin-top: 13px;
 }
 
+/* La cobertura original V91 se inserta como hijo directo del dialogo.
+   Su ancho debe coincidir con las barras y tarjetas de FG y FO. */
+#pci-fo-development > [data-pci-inline="area"] {
+  flex: 0 0 auto;
+  width: min(var(--pci-fo-content-width), calc(100% - 32px));
+  max-height: none;
+  margin: 10px auto 14px;
+  overflow: visible;
+}
+#pci-fo-development .pci-fo-dev-bag .pci-fo-bag-eyebrow {
+  margin: 0 0 5px;
+  color: var(--mint-dark);
+  font-size: .71rem;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
 /* En pantallas medianas no comprimir cuatro laboratorios en tres columnas. */
 @media (max-width: 1060px) {
   #pci-fo-development .pci-fo-dev-content {
@@ -293,6 +311,9 @@
   #pci-fo-development .pci-fo-dev-toolbar,
   #pci-fo-development .pci-fo-overview,
   #pci-fo-development .pci-fo-dev-content {
+    width: calc(100% - 24px);
+  }
+  #pci-fo-development > [data-pci-inline="area"] {
     width: calc(100% - 24px);
   }
   #pci-fo-development .pci-fo-dev-content {
