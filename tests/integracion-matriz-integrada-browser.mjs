@@ -161,8 +161,12 @@ async function testDesktop(page) {
     window.PCIApp?.ready &&
     window.PCIApp.getActiveOrientation()==='Economía y Administración',{timeout:60000});
   await page.locator('#areaGrid button[data-area="Artes"]').click();
-  assert.equal(await page.locator('#groups .group-card').first().locator('.assigned-item').count(),1,
-    'El borrador aprobado debe recuperar su drag & drop después de recargar');
+  assert.equal(await page.locator('#groups .group-card').first()
+    .locator('.assigned-list').first().locator('.assigned-item').count(),1,
+    'El borrador aprobado debe recuperar la ubicación histórica después de recargar');
+  assert.equal(await page.locator('#groups .group-card').first()
+    .locator('[data-fg-source="vigente"]').count(),1,
+    'El borrador debe recuperar también la asignación FG V2 sin fusionar ambas bases');
   await page.locator('#backOverview').click();
   assert.equal(await page.evaluate(()=>localStorage.getItem('pciAppV2')),originalBefore);
   assert.ok(await page.locator('#areaGrid .area-card').count() >= 6,
