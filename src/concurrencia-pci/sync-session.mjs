@@ -96,6 +96,7 @@ export class AreaSyncSession {
     const state = {
       revision,
       remote,
+      baseline: copy(localDocument),
       status: exists && !equal(localDocument, remote) ? 'review_required' : 'ready'
     };
     this.areas.set(area, state);
@@ -134,6 +135,7 @@ export class AreaSyncSession {
           throw new SyncError('El servidor no confirmó una revisión consistente.', 502);
         state.revision = saved.revision;
         state.remote = copy(plannedDocument);
+        state.baseline = copy(plannedDocument);
         this.onEvent({ type: 'saved', area, revision: saved.revision });
         return { ...saved, unchanged: false };
       } catch (err) {
@@ -171,9 +173,7 @@ export class AreaSyncSession {
     if (!exists || !validDoc(latest.document))
       throw new SyncError('La unidad remota desapareció o es inválida.', 409);
 
-    const dirty = state.remote === null
-      ? !equal(localDocument, latest.document)
-      : !equal(localDocument, state.remote);
+    const dirty = state.status !== 'ready' || !equal(localDocument, state.baseline);
     state.revision = revision;
     state.remote = copy(latest.document);
     state.status = dirty ? 'conflict' : 'review_required';
