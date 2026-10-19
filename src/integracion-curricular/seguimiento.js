@@ -18,7 +18,8 @@ function useMap({ids,area,year,matrixRows,v2FgRows,approvedMappings={}}){
   const mapped=new Set(),pending=[];
   for(const id of unique(ids)){
     const match=matchMatrixToV2Fg({matrixRows,v2FgRows,contentId:id,level:year,area,approvedMappings});
-    if(match.status==='matched')mapped.add(match.referenceId);
+    if(match.status==='matched')
+      (match.referenceIds||[match.referenceId]).forEach(ref=>mapped.add(String(ref)));
     else pending.push({id,status:match.status,reason:match.reason});
   }
   return {mapped,legacyCount:unique(ids).length,pending};
