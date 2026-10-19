@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'src/integracion-curricular/**'
+      - 'integracion-articulacion-ui.js'
+      - 'integracion-fo-desarrollo.js'
       - 'tests/integracion-*.test.js'
       - 'data/integracion-curricular/**'
       - 'scripts/diagnostico-homologacion-curricular.mjs'
@@ -25,6 +27,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Comprobar sintaxis de editores curriculares
+        run: |
+          node --check integracion-articulacion-ui.js
+          node --check integracion-fo-desarrollo.js
       - name: Probar copias FG y revision de articulaciones sin persistencia
         run: node --test tests/integracion-*.test.js
       - name: Diagnosticar correspondencia de contenidos sin modificar datos
