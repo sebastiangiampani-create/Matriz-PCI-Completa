@@ -18,6 +18,11 @@ import {
   sourceAreaFor,
   validateStructure,
 } from './pci-model.js';
+import {loadV2Fg} from './src/integracion-curricular/catalogos.js';
+import {
+  officialFgRowsFor, officialIdsInGroup, stageOfficialFgInGroup,
+  removeOfficialFgFromGroup, officialFgCoverageAtYear
+} from './src/integracion-curricular/fg-year-bag.mjs';
 
 const DATA_FILES = [
   'data/db1.txt',
@@ -61,6 +66,12 @@ const escapeHtml = (value) =>
   })[character]);
 
 let DATA = [];
+let officialFgCatalog = [];
+let officialFgById = new Map();
+let officialFgReady = false;
+let officialFgLoadError = '';
+const isOfficialFgBag = () => $('fgBagSource')?.value === 'vigente';
+const fgBagYear = () => Number($('fgBagYear')?.value || 0);
 let app = migrateState(readStoredState());
 // Esta rama sólo escribe borradores por orientación. Jamás la clave histórica.
 const WORK_PREFIX = 'pci-matriz-orientacion-borrador-20261014:';
@@ -237,7 +248,27 @@ function resetBagFilters() {
   $('contentSearch').value = '';
   $('subjectFilter').value = '';
   $('axisFilter').value = '';
+  $('fgBagYear').value = '0';
   $('pendingFilter').checked = false;
+}
+
+function bagSourceRows() {
+  return isOfficialFgBag()
+    ? officialFgRowsFor({rows:officialFgCatalog,
+        area:sourceAreaFor(currentArea),year:fgBagYear()})
+    : sourceContents(currentArea);
+}
+
+function officialFgAssignments() {
+  const result = new Map();
+  for (const {area,group} of allGroups(app)) {
+    for (const id of officialIdsInGroup(group)) {
+      const locations = result.get(id) || [];
+      locations.push({area,groupId:group.id,groupName:group.name,level:group.level});
+      result.set(id,locations);
+    }
+  }
+  return result;
 }
 
 function temporalLabel(group) {
@@ -271,7 +302,17 @@ function renderBoardWarning() {
 }
 
 function populateBagFilters() {
-  const rows = sourceContents(currentArea);
+  const official = isOfficialFgBag();
+  $('fgBagYear').disabled = !official || !officialFgReady;
+  const note = $('fgBagSourceNote');
+  note.textContent = official
+    ? (officialFgLoadError
+      ? 'No se pudo cargar la FG vigente por año: '+officialFgLoadError
+      : officialFgReady
+        ? 'FG priorizada oficial por año (V2). Los contenidos se asignan a un borrador separado; la Matriz histórica y sus planes se conservan.'
+        : 'Cargando contenidos oficiales FG de 1.º a 5.º…')
+    : 'Base histórica de Matriz PCI: sus filas no tienen año oficial. Elegí FG vigente para consultar y ubicar los contenidos priorizados por año.';
+  const rows = bagSourceRows();
   const currentSubject = $('subjectFilter').value;
   const currentAxis = $('axisFilter').value;
   const subjects = [...new Set(rows.map((row) => row.subject))].sort((a, b) => a.localeCompare(b, 'es'));
