@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="app.css?v=20260902-1"><link rel="stylesheet" href="integracion-matriz-preview.css?v=20261010-1">
   <link rel="stylesheet" href="integracion-paridad-estetica.css?v=20261014-2">
   <link rel="stylesheet" href="integracion-cobertura-v2-nativa.css?v=20261014-1">
+  <link rel="stylesheet" href="integracion-paridad-fg-fo.css?v=20261019-1">
   <style>#structureStatus.notice.success{display:none!important}</style>
   <script type="importmap">{"imports":{"./pci-model.js":"./pci-model-overrides.js?v=20260827-final3"}}</script>
 </head>
@@ -99,17 +100,24 @@
   </dialog>
   <div id="pci-fo-development" role="dialog" aria-modal="true" aria-labelledby="pciFoTitle" hidden>
     <header class="pci-fo-dev-header">
-      <div>
+      <div class="pci-fo-brand-row">
+        <img class="pci-fo-brand" src="assets/em-logo-header.svg?v=20260902" alt="Escuela de Maestros">
+        <button id="pciFoClose" type="button" class="button secondary">← Volver a espacios curriculares</button>
+      </div>
+      <div class="pci-fo-titleband">
         <p class="eyebrow">Desarrollo curricular · Formación Orientada</p>
         <h2 id="pciFoTitle">Laboratorios de la orientación</h2>
         <p id="pciFoContext"></p>
       </div>
-      <button id="pciFoClose" type="button" class="button secondary">← Volver a espacios curriculares</button>
     </header>
     <div class="pci-fo-dev-toolbar">
       <label for="pciFoYear">Año <select id="pciFoYear"><option value="0">Todos los años</option><option value="3">3.º</option><option value="4">4.º</option><option value="5">5.º</option></select></label>
       <label for="pciFoSpace">Espacio curricular <select id="pciFoSpace"></select></label>
       <span id="pciFoSaved" role="status" aria-live="polite">Vista de prueba · borrador local, sin guardar en la escuela</span>
+    </div>
+    <div class="pci-fo-overview" aria-label="Cobertura de Formación Orientada">
+      <div class="pci-native-coverage-entry"><button id="pciNativeV2CoverageFO" class="button secondary" type="button">Panel de cobertura curricular</button><small>Ver niveles, bloques o materias, agrupamientos y planes</small></div>
+      <div id="pciFoCoverage" class="pci-fo-coverage" role="status" aria-live="polite"></div>
     </div>
     <div class="pci-fo-dev-content">
       <aside class="pci-fo-dev-bag" aria-labelledby="pciFoBagTitle">
@@ -129,7 +137,7 @@
         <div id="pciFoContentList" class="pci-fo-dev-content-list"></div>
       </aside>
       <section class="pci-fo-dev-editor" aria-label="Editor de desarrollo curricular">
-        <div class="pci-native-coverage-entry"><button id="pciNativeV2CoverageFO" class="button secondary" type="button">Panel de cobertura curricular</button><small>Ver niveles, bloques o materias, agrupamientos y planes</small></div><div id="pciFoCoverage" class="pci-fo-coverage" role="status" aria-live="polite"></div>
+
         <details id="pciFoCoverageDashboard" class="pci-fo-coverage-dashboard">
           <summary>Panel de cobertura curricular · Ver cobertura por nivel, materia, agrupamiento y plan</summary>
           <div class="pci-fo-cover-tools">
