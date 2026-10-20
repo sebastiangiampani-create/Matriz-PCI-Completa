@@ -3,116 +3,81 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="light">
   <meta name="robots" content="noindex,nofollow">
-  <title>Muestra de homologación FG · Matriz PCI</title>
+  <meta name="color-scheme" content="light">
+  <title>Homologar contenidos · Matriz PCI</title>
   <link rel="stylesheet" href="./demo-homologacion-fg.css">
 </head>
 <body>
-  <header class="brand">
-    <a href="./app.html" aria-label="Volver a la muestra de Matriz PCI">
-      <img src="./assets/em-logo-header.svg" alt="Escuela de Maestros">
-    </a>
-    <a class="return" href="./app.html">← Volver a Matriz PCI</a>
-  </header>
-  <div class="title-band">
-    <div class="title-wrap">
-      <p class="eyebrow">Matriz PCI Completa · Demostración curricular</p>
-      <h1>Homologación de contenidos de Formación General</h1>
-      <p>Compará un contenido de la Matriz original con uno o varios contenidos de la FG de PCI Secundaria Aprende V2. Conservamos las bases, los agrupamientos y las secuencias originales.</p>
+<header class="top">
+  <a href="./app.html" aria-label="Volver a Matriz PCI"><img src="./assets/em-logo-header.svg" alt="Escuela de Maestros"></a>
+  <a class="back" href="./app.html">← Volver a Matriz PCI</a>
+</header>
+<div class="heading"><div class="wrap">
+  <p class="eyebrow">Formación General · Matriz PCI</p>
+  <h1>Relacionar contenidos</h1>
+  <p>El trabajo que ya hizo la escuela se conserva. Solo revisamos a qué contenidos de V2 corresponde.</p>
+</div></div>
+<main>
+  <p class="notice">Esta es una <strong>muestra sin datos escolares</strong>. Usa los dos catálogos reales, pero no guarda ni modifica nada en Supabase.</p>
+  <div id="loading" class="loading" role="status">Cargando contenidos…</div>
+  <div id="workspace" hidden>
+    <div class="selectors">
+      <label>Área <select id="areaSelect" aria-label="Área de Formación General"></select></label>
+      <label>Año <select id="yearSelect" aria-label="Año de destino en V2">
+        <option value="1">1.º</option><option value="2">2.º</option>
+        <option value="3" selected>3.º</option><option value="4">4.º</option>
+        <option value="5">5.º</option>
+      </select></label>
     </div>
-  </div>
-  <main>
-    <div class="safe-banner" role="note">
-      <strong>Muestra aislada con catálogos reales.</strong>
-      Los grupos y las decisiones son de demostración. No consulta Supabase, no utiliza ninguna escuela y no guarda homologaciones reales. Las aprobaciones que realices se conservan solo mientras esta página esté abierta.
-    </div>
-    <div id="loading" class="loading" role="status" aria-live="polite">Cargando los catálogos de Matriz y FG V2…</div>
-    <section id="workspace" hidden>
-      <section class="filterbar" aria-label="Filtros de la comparación">
-        <label>Área curricular
-          <select id="areaSelect" aria-label="Seleccionar área"></select>
-        </label>
-        <label>Año de destino V2
-          <select id="yearSelect">
-            <option value="1">1.º año</option>
-            <option value="2">2.º año</option>
-            <option value="3" selected>3.º año</option>
-            <option value="4">4.º año</option>
-            <option value="5">5.º año</option>
-          </select>
-        </label>
-        <div class="filter-hint">La base histórica no tiene año por contenido. El año elegido es el del <strong>destino V2</strong>, no una clasificación inventada del original.</div>
-      </section>
-      <div class="metrics" aria-label="Conteos de la muestra">
-        <div class="metric"><span>Matriz original</span><strong id="matrixTotal">—</strong><small>contenidos del catálogo</small></div>
-        <div class="metric"><span>FG V2</span><strong id="v2Total">—</strong><small>contenidos oficiales</small></div>
-        <div class="metric"><span>Coincidencias sugeridas</span><strong id="suggestedCount">—</strong><small>para el contenido elegido</small></div>
-        <div class="metric"><span>Vínculos simulados</span><strong id="approvedCount">0</strong><small>revisados en esta sesión</small></div>
+    <section class="card origin">
+      <div class="cardline"><span class="step">1</span><strong>Contenido que ya tenés en Matriz</strong>
+        <button id="changeContent" class="link-control" type="button" aria-expanded="false" aria-controls="changePanel">Cambiar</button>
       </div>
-      <div class="columns">
-        <aside class="card originals">
-          <div class="panel-heading">
-            <span class="pill muted-pill">Base histórica</span>
-            <h2>1. Contenido de Matriz</h2>
-            <p>Elegí el contenido que una escuela ya podría tener ubicado.</p>
-          </div>
-          <label class="search-label" for="matrixSearch">Buscar contenido, materia o eje</label>
-          <input id="matrixSearch" type="search" placeholder="Buscar en la Matriz original…">
-          <div id="sourceCount" class="minor-count" aria-live="polite"></div>
-          <div id="matrixList" class="scroll-list" role="list" aria-label="Contenidos históricos"></div>
-          <button id="moreMatrix" class="quiet more-button" type="button" hidden>Mostrar más contenidos</button>
-        </aside>
-        <section class="card matches">
-          <div class="panel-heading">
-            <span class="pill green-pill">FG vigente · V2</span>
-            <h2>2. Posibles equivalencias</h2>
-            <p>Podés marcar <strong>varios contenidos V2</strong> para un único contenido de Matriz. Ninguna sugerencia se confirma automáticamente.</p>
-          </div>
-          <div id="selectedOriginal" class="selected-original" role="status" aria-live="polite">
-            Seleccioná un contenido original a la izquierda.
-          </div>
-          <div class="match-toolbar">
-            <label for="v2Search">Buscar entre las referencias V2 de la misma materia y año</label>
-            <input id="v2Search" type="search" placeholder="Buscar texto, eje o subeje…">
-            <div class="match-buttons">
-              <button id="clearSelected" type="button" class="quiet">Limpiar selección</button>
-              <span id="selectedCount" aria-live="polite">0 seleccionados</span>
-            </div>
-          </div>
-          <div id="candidateNotice" class="minor-count" role="status"></div>
-          <div id="v2List" class="candidate-list" aria-label="Candidatos a homologar"></div>
-          <button id="moreV2" class="quiet more-button" type="button" hidden>Mostrar más referencias V2</button>
-        </section>
+      <p id="originalSubject" class="meta"></p>
+      <p id="originalText" class="original-text" role="status" aria-live="polite"></p>
+      <div id="changePanel" class="change-panel" hidden>
+        <label for="matrixSearch">Buscar otro contenido de Matriz</label>
+        <input id="matrixSearch" type="search" placeholder="Escribí parte del contenido…">
+        <div id="matrixList" class="source-list" aria-label="Resultados de la Matriz"></div>
+        <button id="moreMatrix" class="light" type="button" hidden>Mostrar más</button>
       </div>
-      <section class="card review" aria-labelledby="reviewTitle">
-        <div class="review-copy">
-          <span class="eyebrow">Revisión pedagógica</span>
-          <h2 id="reviewTitle">3. Confirmación simulada de equivalencias</h2>
-          <p>Marcá solo los contenidos cuyo sentido esté efectivamente desarrollado en el trabajo original. Una coincidencia de palabras no demuestra cobertura.</p>
-        </div>
-        <div class="review-fields">
-          <label>Responsable de la revisión
-            <input id="reviewer" type="text" value="Revisor de muestra" maxlength="120">
-          </label>
-          <label>Justificación pedagógica
-            <textarea id="reason" rows="3" placeholder="Qué ejes, alcances y aprendizajes del contenido original corresponden a los seleccionados de V2…" aria-label="Justificación pedagógica"></textarea>
-          </label>
-        </div>
-        <div class="review-actions">
-          <button id="confirmDemo" type="button" class="primary">Simular aprobación de equivalencias</button>
-          <button id="downloadDemo" type="button" class="quiet" disabled>Exportar revisión de muestra (JSON)</button>
-          <button id="resetDemo" type="button" class="quiet">Reiniciar muestra</button>
-        </div>
-        <div id="reviewMessage" class="review-message" role="status" aria-live="polite"></div>
-        <div class="review-history">
-          <h3>Correspondencias confirmadas en esta muestra</h3>
-          <div id="historyList"><p class="empty">Todavía no se simuló ninguna aprobación.</p></div>
-        </div>
-      </section>
-      <footer>El sistema utiliza los catálogos incluidos en esta rama de Matriz PCI. Las equivalencias quedan sujetas a revisión pedagógica, año, materia y versiones curriculares. No se modifican planes existentes ni datos institucionales.</footer>
     </section>
-  </main>
-  <script type="module" src="./src/integracion-curricular/demo-homologacion-fg-ui.js"></script>
+    <section class="card matches">
+      <div class="cardline"><span class="step">2</span><strong>En la FG de V2 puede corresponder a:</strong></div>
+      <p class="explanation">Marcá los contenidos que efectivamente estén trabajados. Podés elegir varios.</p>
+      <div id="candidateList" class="candidate-list" aria-label="Contenidos V2 sugeridos"></div>
+      <p id="candidateNotice" class="meta" role="status"></p>
+      <button id="moreCandidates" type="button" class="link-control more" aria-expanded="false" aria-controls="extraPanel">Buscar otras equivalencias</button>
+      <div id="extraPanel" class="change-panel" hidden>
+        <label for="v2Search">Otros contenidos de esta materia y año en V2</label>
+        <input id="v2Search" type="search" placeholder="Buscar eje o contenido V2…">
+        <div id="extraList" class="candidate-list"></div>
+        <button id="moreV2" type="button" class="light" hidden>Mostrar más</button>
+      </div>
+    </section>
+    <div class="actions">
+      <span id="selectedCount" aria-live="polite">0 seleccionados</span>
+      <button id="startReview" class="primary" type="button" disabled>Confirmar correspondencias</button>
+    </div>
+    <section id="reviewPanel" class="card review" hidden>
+      <h2>Último paso: confirmar la relación</h2>
+      <p>No alcanza con que los textos se parezcan. Indicá brevemente por qué los contenidos V2 corresponden al trabajo original.</p>
+      <label for="reason">Justificación pedagógica</label>
+      <textarea id="reason" rows="3" placeholder="Ejemplo: el plan aborda estos tres aspectos del contenido original…"></textarea>
+      <div class="review-actions">
+        <button id="confirmDemo" type="button" class="primary">Confirmar en esta muestra</button>
+        <button id="cancelReview" type="button" class="light">Cancelar</button>
+      </div>
+    </section>
+    <div id="reviewMessage" role="status" aria-live="polite"></div>
+    <details id="historyDetails" class="history" hidden>
+      <summary id="historySummary">Correspondencias revisadas</summary>
+      <div id="historyList"></div>
+    </details>
+    <p class="footnote">La homologación se propone por materia y año de destino. Los años no se inventan en la base histórica. Ninguna sugerencia suma cobertura hasta ser revisada y aprobada.</p>
+  </div>
+</main>
+<script type="module" src="./src/integracion-curricular/demo-homologacion-fg-ui.js"></script>
 </body>
 </html>
