@@ -23,7 +23,7 @@ const state={
 };
 const text=(parent,tag,value,className)=>{
   const el=document.createElement(tag);
-  el.textContent=value;
+  if(value !== undefined)el.textContent=value;
   if(className)el.className=className;
   parent.append(el);
   return el;
@@ -74,14 +74,15 @@ function scoredFor(row){
 }
 function chooseExample(){
   const rows=state.matrix.filter(r=>r.area===state.area);
-  let fallback=rows.find(r=>poolFor(r).length>0)||rows[0];
-  // Elegir un ejemplo legible para mostrar 1→N sin recorrer 1.155 filas.
+  const fallback=rows.find(r=>poolFor(r).length>0)||rows[0];
+  let atLeastTwo=null;
+  // La muestra abre un caso 1→varios cuando el catálogo lo permite.
   for(const row of rows){
     const s=scoredFor(row);
     if(s.length>=3)return row.id;
-    if(s.length>=2 && fallback===rows[0])fallback=row;
+    if(s.length>=2 && atLeastTwo===null)atLeastTwo=row.id;
   }
-  return fallback?.id||null;
+  return atLeastTwo||fallback?.id||null;
 }
 function selectOriginal(id){
   if(state.sourceId===id)return;
