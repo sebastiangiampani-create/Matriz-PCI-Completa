@@ -1,365 +1,280 @@
 /**
- * Vista de demostración de homologación curricular 1 -> N.
- * Solo lee archivos estáticos originales de Matriz y V2 FG.
- * No accede a Supabase, no altera agrupamientos institucionales,
- * no persiste en localStorage ni modifica datos de la escuela.
+ * Homologación FG 1→N, DEMOSTRACIÓN simplificada.
+ * Lee solo catálogos estáticos Matriz y V2. Sin fetch de cuentas,
+ * Supabase, almacenamiento local, migraciones ni escrituras remotas.
  */
-import { loadMatrixContents, loadV2Fg } from './catalogos.js';
-import {
-  suggestHomologations, buildHomologationReviewQueue,
-  approveHomologation, mappingKey
-} from './homologaciones.js';
+import {loadMatrixContents,loadV2Fg} from './catalogos.js';
+import {suggestHomologations,approveHomologation,mappingKey} from './homologaciones.js';
 
-const $ = id => document.getElementById(id);
-const normalize = value => String(value ?? '').normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-const aliases = new Map([
-  ['lengua adicional', 'lenguas adicionales'],
-  ['formacion etica ciudadana', 'formacion etica y ciudadana'],
-  ['tecnologia de la informacion', 'tecnologias de la informacion'],
-  ['educacion artistica artes visuales', 'artes visuales']
-]);
-const subjectKey = x => aliases.get(normalize(x)) || normalize(x);
-const formatter = new Intl.NumberFormat('es-AR');
-const state = {
-  matrixRows: [], fgRows: [], area: '', year: 3, matrixId: null,
-  sourceLimit: 24, candidateLimit: 28, chosen: new Set(),
-  packs: new Map(), lastSuggestion: null, candidatePool: []
+const $=id=>document.getElementById(id);
+const norm=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const subjectAliases={
+ 'lengua adicional':'lenguas adicionales',
+ 'formacion etica ciudadana':'formacion etica y ciudadana',
+ 'tecnologia de la informacion':'tecnologias de la informacion',
+ 'educacion artistica artes visuales':'artes visuales'
 };
-
-function element(tag, text, className) {
-  const el = document.createElement(tag);
-  if (text !== undefined) el.textContent = text;
-  if (className) el.className = className;
+const subjectKey=x=>subjectAliases[norm(x)]||norm(x);
+const state={
+  matrix:[],v2:[],area:'',year:3,sourceId:null,
+  selected:new Set(),extraOpen:false,sourceOpen:false,
+  packs:new Map(),sourceLimit:7,extraLimit:9
+};
+const text=(parent,tag,value,className)=>{
+  const el=document.createElement(tag);
+  el.textContent=value;
+  if(className)el.className=className;
+  parent.append(el);
   return el;
-}
-function add(parent, tag, text, className) {
-  const child = element(tag, text, className);
-  parent.append(child);
-  return child;
-}
-function contextKey() { return JSON.stringify([state.area, state.year]); }
-function currentOriginal() {
-  return state.matrixRows.find(r => r.id === state.matrixId && r.area === state.area) || null;
-}
-function mappedRecord() {
-  const pack = state.packs.get(contextKey());
-  return pack?.orientations?.demo?.fg?.homologations?.[
-    mappingKey(state.area, state.year, state.matrixId)
-  ] || null;
-}
-function restoreChosen() {
-  const record = mappedRecord();
-  state.chosen = new Set(record?.referenceIds || (record?.referenceId ? [record.referenceId] : []));
-  $('reason').value = record?.reason || '';
-  $('reviewMessage').textContent = '';
-  $('reviewMessage').dataset.kind = '';
-}
-function makePack() {
-  // Tarjeta ficticia, exclusivamente en memoria. La base histórica original
-  // NO identifica año por fila y no se interpreta ni transforma.
-  const allIds = state.matrixRows.filter(r => r.area === state.area).map(r => r.id);
-  return {
-    orientations: {
-      demo: { fg: { areas: { [state.area]: {
-        groups: [{
-          id: 'grupo-ficticio-solo-muestra', level: state.year,
-          name: 'Simulación de agrupamiento FG',
-          items: allIds, plansBimestrales: []
-        }]
-      } }, homologations: {}, homologationHistory: [] } }
-    }
-  };
-}
-function currentPack() {
-  const key = contextKey();
-  if (!state.packs.has(key)) state.packs.set(key, makePack());
+};
+const current=()=>state.matrix.find(r=>r.id===state.sourceId && r.area===state.area) || null;
+const context=()=>JSON.stringify([state.area,state.year]);
+function getPack(){
+  const key=context();
+  if(!state.packs.has(key)){
+    const items=state.matrix.filter(x=>x.area===state.area).map(x=>x.id);
+    state.packs.set(key,{orientations:{demo:{fg:{
+      areas:{[state.area]:{groups:[{
+        id:'grupo-de-muestra',level:state.year,name:'Agrupamiento de demostración',
+        items,plansBimestrales:[]
+      }]}},
+      homologations:{},homologationHistory:[]
+    }}}});
+  }
   return state.packs.get(key);
 }
-
-function sourceRows() {
-  const q = normalize($('matrixSearch').value);
-  return state.matrixRows.filter(r => r.area === state.area &&
-    (!q || normalize([r.subject, r.axis, r.text].join(' ')).includes(q)));
+function recordFor(id=state.sourceId){
+  if(!id)return null;
+  return getPack().orientations.demo.fg.homologations[mappingKey(state.area,state.year,id)]||null;
 }
-function selectOriginal(id) {
-  if (state.matrixId === id) return;
-  state.matrixId = id;
-  state.candidateLimit = 28;
-  $('v2Search').value = '';
-  restoreChosen();
-  renderAll();
+function restoreSaved(){
+  const record=recordFor();
+  state.selected=new Set(record?.referenceIds || (record?.referenceId?[record.referenceId]:[]));
+  $('reason').value=record?.reason||'';
+  $('reviewPanel').hidden=true;
+  $('reviewMessage').textContent='';
 }
-function renderSources() {
-  const rows = sourceRows();
-  if (!rows.some(r => r.id === state.matrixId)) {
-    state.matrixId = rows[0]?.id || null;
-    restoreChosen();
-  }
-  $('sourceCount').textContent = formatter.format(rows.length) +
-    ' contenidos históricos en la búsqueda (sin año de origen).';
-  const container = $('matrixList');
-  container.replaceChildren();
-  for (const row of rows.slice(0, state.sourceLimit)) {
-    const button = element('button', undefined, 'source-option');
-    button.type = 'button';
-    button.setAttribute('role', 'listitem');
-    button.setAttribute('aria-pressed', String(row.id === state.matrixId));
-    add(button, 'span', row.subject + (row.axis ? ' · ' + row.axis : ''), 'subject');
-    add(button, 'span', row.text, 'source-text');
-    button.addEventListener('click', () => selectOriginal(row.id));
-    container.append(button);
-  }
-  $('moreMatrix').hidden = rows.length <= state.sourceLimit;
+function originals(){
+  const q=norm($('matrixSearch').value);
+  return state.matrix.filter(r=>r.area===state.area &&
+    (!q||norm([r.subject,r.axis,r.text].join(' ')).includes(q)));
 }
-function candidateData() {
-  const original = currentOriginal();
-  if (!original) return { pool: [], suggested: new Set(), preview: null };
-  const area = state.area, year = state.year;
-  const sample = {
-    [area]: {groups: [{
-      id: 'vista-ficticia',level: year,items: [original.id]
-    }]}
-  };
-  const preview = buildHomologationReviewQueue({
-    matrixRows: state.matrixRows, v2FgRows: state.fgRows,
-    areas: sample,area,year,maxSuggestions:12
+function poolFor(row){
+  return state.v2.filter(r=>r.year===state.year &&
+    norm(r.area)===norm(state.area) &&
+    subjectKey(r.subject)===subjectKey(row.subject));
+}
+function scoredFor(row){
+  const result=suggestHomologations({
+    matrixRows:state.matrix,v2FgRows:state.v2,
+    area:state.area,year:state.year,matrixId:row.id,limit:18
   });
-  const direct = suggestHomologations({
-    matrixRows: state.matrixRows, v2FgRows: state.fgRows,
-    area,year,matrixId: original.id,limit:20
+  return result.candidates.filter(c=>c.exact||c.similarity>=0.15);
+}
+function chooseExample(){
+  const rows=state.matrix.filter(r=>r.area===state.area);
+  let fallback=rows.find(r=>poolFor(r).length>0)||rows[0];
+  // Elegir un ejemplo legible para mostrar 1→N sin recorrer 1.155 filas.
+  for(const row of rows){
+    const s=scoredFor(row);
+    if(s.length>=3)return row.id;
+    if(s.length>=2 && fallback===rows[0])fallback=row;
+  }
+  return fallback?.id||null;
+}
+function selectOriginal(id){
+  if(state.sourceId===id)return;
+  state.sourceId=id;
+  state.selected=new Set();
+  state.sourceOpen=false;
+  state.extraOpen=false;
+  state.extraLimit=9;
+  $('v2Search').value='';
+  restoreSaved();
+  render();
+}
+function renderOriginal(){
+  const row=current();
+  $('originalSubject').textContent=row
+    ? 'Matriz original · '+row.subject+(row.axis?' · '+row.axis:'')
+    : 'No hay contenido histórico disponible';
+  $('originalText').textContent=row?.text||'Buscá otro contenido de la Matriz.';
+  $('changePanel').hidden=!state.sourceOpen;
+  $('changeContent').setAttribute('aria-expanded',String(state.sourceOpen));
+  if(!state.sourceOpen)return;
+  const results=originals(),list=$('matrixList');
+  list.replaceChildren();
+  for(const item of results.slice(0,state.sourceLimit)){
+    const btn=text(list,'button',undefined,'source-option');
+    btn.type='button';
+    btn.setAttribute('aria-pressed',String(item.id===state.sourceId));
+    text(btn,'span',item.subject+(item.axis?' · '+item.axis:''));
+    text(btn,'p',item.text);
+    btn.addEventListener('click',()=>selectOriginal(item.id));
+  }
+  if(!results.length)text(list,'p','Sin coincidencias. Probá otra búsqueda.','meta');
+  $('moreMatrix').hidden=results.length<=state.sourceLimit;
+}
+function newCandidate(row){
+  const label=document.createElement('label');
+  label.className='candidate';
+  const check=document.createElement('input');
+  check.type='checkbox';
+  check.value=row.id;
+  check.checked=state.selected.has(row.id);
+  check.setAttribute('aria-label','Seleccionar contenido V2: '+row.text);
+  check.addEventListener('change',()=>{
+    if(check.checked)state.selected.add(row.id);
+    else state.selected.delete(row.id);
+    updateChosen();
   });
-  const suggested = new Set(preview.rows[0]?.suggestedReferenceIds || []);
-  const ranks = new Map(direct.candidates.map((r,i) => [String(r.id),i]));
-  const pool = state.fgRows.filter(row =>
-    Number(row.year) === year && normalize(row.area) === normalize(area) &&
-    subjectKey(row.subject) === subjectKey(original.subject));
-  pool.sort((a,b) =>
-    Number(ranks.has(b.id)) - Number(ranks.has(a.id)) ||
-    (ranks.get(a.id) ?? 100000) - (ranks.get(b.id) ?? 100000) ||
-    a.text.localeCompare(b.text, 'es')
-  );
-  return { pool, suggested, preview };
+  const copy=document.createElement('span');
+  copy.className='candidate-copy';
+  text(copy,'span',[row.axis,row.subaxis,state.year+'.º año'].filter(Boolean).join(' · '),'candidate-axis');
+  text(copy,'span',row.text,'candidate-text');
+  label.append(check,copy);
+  return label;
 }
-function renderOriginal() {
-  const parent = $('selectedOriginal');
-  parent.replaceChildren();
-  const original = currentOriginal();
-  if (!original) {
-    add(parent, 'span', 'No hay contenido original para esos filtros.');
+function renderCandidates(){
+  const row=current(),out=$('candidateList'),extra=$('extraList');
+  out.replaceChildren();extra.replaceChildren();
+  if(!row){
+    $('candidateNotice').textContent='Elegí un contenido original.';
+    $('moreCandidates').hidden=true;
+    updateChosen();
     return;
   }
-  add(parent, 'small', 'MATRIZ ORIGINAL · ' + original.subject +
-    (original.axis ? ' · ' + original.axis : ''));
-  add(parent, 'strong', original.text);
-  add(parent, 'small', 'Año de referencia elegido: ' + state.year +
-    '.º (no asignado automáticamente al contenido histórico).');
-}
-function renderCandidates() {
-  const original = currentOriginal();
-  const container = $('v2List');
-  container.replaceChildren();
-  if (!original) {
-    $('candidateNotice').textContent = 'Elegí un contenido de Matriz para comenzar.';
-    $('suggestedCount').textContent = '0';
-    state.candidatePool = [];
-    renderChosen();
-    return;
+  const candidates=scoredFor(row).slice(0,4);
+  const ids=new Set(candidates.map(r=>r.id));
+  for(const suggestion of candidates)out.append(newCandidate(suggestion));
+  if(!candidates.length){
+    text(out,'p','No encontramos coincidencias textuales claras. Podés buscar otras referencias del mismo año y materia.','meta');
   }
-  const {pool,suggested} = candidateData();
-  state.candidatePool = pool;
-  $('suggestedCount').textContent = formatter.format(suggested.size);
-  const query = normalize($('v2Search').value);
-  const visible = pool.filter(r => !query ||
-    normalize([r.subject,r.axis,r.subaxis,r.text].join(' ')).includes(query));
-  $('candidateNotice').textContent = pool.length
-    ? formatter.format(pool.length) + ' referencias del mismo año, área y materia. ' +
-      formatter.format(suggested.size) + ' se destacan por proximidad textual. ' +
-      'Las demás pueden localizarse con el buscador. Ninguna está aprobada.'
-    : 'No se hallaron referencias V2 para esta materia y año. Requiere revisión curricular manual.';
-  for (const row of visible.slice(0,state.candidateLimit)) {
-    const label = element('label',undefined,'candidate');
-    const check = document.createElement('input');
-    check.type = 'checkbox';
-    check.checked = state.chosen.has(row.id);
-    check.value = row.id;
-    check.setAttribute('aria-label','Seleccionar contenido V2: ' + row.text);
-    const content = element('span',undefined,'candidate-copy');
-    add(content,'span',(row.axis || 'Sin eje') + (row.subaxis ? ' · ' + row.subaxis : '') +
-      ' · ' + row.year + '.º año','candidate-axis');
-    add(content,'span',row.text,'candidate-text');
-    add(content,'span',suggested.has(row.id) ?
-      'Sugerencia textual: requiere revisión pedagógica' :
-      'Referencia disponible para selección manual','candidate-reason');
-    check.addEventListener('change',() => {
-      if(check.checked) state.chosen.add(row.id);
-      else state.chosen.delete(row.id);
-      renderChosen();
-    });
-    label.append(check,content);
-    container.append(label);
+  $('candidateNotice').textContent='Son propuestas para revisar, no equivalencias aprobadas.';
+  const others=poolFor(row).filter(r=>!ids.has(r.id));
+  $('moreCandidates').hidden=!others.length;
+  $('extraPanel').hidden=!state.extraOpen;
+  $('moreCandidates').setAttribute('aria-expanded',String(state.extraOpen));
+  $('moreCandidates').textContent=state.extraOpen?'Ocultar otras equivalencias':'Buscar otras equivalencias';
+  if(state.extraOpen){
+    const q=norm($('v2Search').value);
+    const found=others.filter(r=>!q||norm([r.axis,r.subaxis,r.text].join(' ')).includes(q));
+    for(const candidate of found.slice(0,state.extraLimit))extra.append(newCandidate(candidate));
+    if(!found.length)text(extra,'p','No hay referencias con esa búsqueda.','meta');
+    $('moreV2').hidden=found.length<=state.extraLimit;
   }
-  if (!visible.length) add(container,'p','No hay referencias que coincidan con la búsqueda.','empty');
-  $('moreV2').hidden = visible.length <= state.candidateLimit;
-  renderChosen();
+  updateChosen();
 }
-function renderChosen() {
-  $('selectedCount').textContent = state.chosen.size + ' seleccionados de V2';
-  const selectedV2 = new Set(state.candidatePool.map(x => x.id));
-  $('confirmDemo').disabled = !currentOriginal() || !state.chosen.size ||
-    [...state.chosen].some(id => !selectedV2.has(id));
+function updateChosen(){
+  const count=state.selected.size;
+  $('selectedCount').textContent=count+' seleccionado'+(count===1?'':'s');
+  const source=current();
+  const validIds=new Set(source?poolFor(source).map(r=>r.id):[]);
+  $('startReview').disabled=!count||!source||[...state.selected].some(id=>!validIds.has(id));
 }
-function renderMetrics() {
-  $('matrixTotal').textContent = formatter.format(state.matrixRows.length);
-  $('v2Total').textContent = formatter.format(state.fgRows.length);
-  const records = [...state.packs.values()].flatMap(p =>
-    Object.values(p?.orientations?.demo?.fg?.homologations || {}));
-  const ids = new Set(records.flatMap(r => r.referenceIds || (r.referenceId ? [r.referenceId] : [])));
-  $('approvedCount').textContent = formatter.format(ids.size);
-  $('downloadDemo').disabled = records.length === 0;
-}
-function renderHistory() {
-  const parent = $('historyList');
-  parent.replaceChildren();
-  const approved = Object.values(currentPack().orientations.demo.fg.homologations || {});
-  if (!approved.length) {
-    add(parent,'p','Todavía no se simularon aprobaciones para esta área y año.','empty');
-    return;
-  }
-  const matrix = new Map(state.matrixRows.map(x => [x.id,x]));
-  for (const r of approved) {
-    const el = element('div',undefined,'history-line');
-    const source = matrix.get(r.matrixId);
-    add(el,'strong',(source?.subject || r.area) + ' · ' + r.year + '.º año');
-    add(el,'div',source?.text || r.matrixId);
-    add(el,'div',(r.referenceIds || [r.referenceId]).length +
-      ' contenidos V2 vinculados en esta muestra · ' + r.reviewer);
-    parent.append(el);
+function renderHistory(){
+  const records=Object.values(getPack().orientations.demo.fg.homologations);
+  $('historyDetails').hidden=!records.length;
+  $('historySummary').textContent='Correspondencias revisadas en esta muestra ('+records.length+')';
+  const out=$('historyList');out.replaceChildren();
+  for(const record of records){
+    const row=state.matrix.find(x=>x.id===record.matrixId);
+    const item=document.createElement('div');item.className='history-entry';
+    text(item,'strong',(row?.subject||record.area)+' · '+record.year+'.º');
+    text(item,'div',(row?.text||'Contenido original')+' → '+(record.referenceIds||[]).length+' contenidos V2');
+    out.append(item);
   }
 }
-function renderAll() {
-  renderSources();
+function render(){
+  if(!state.sourceId||!current()){
+    state.sourceId=chooseExample();
+    restoreSaved();
+  }
   renderOriginal();
   renderCandidates();
-  renderMetrics();
   renderHistory();
 }
-function changedContext() {
-  state.area = $('areaSelect').value;
-  state.year = Number($('yearSelect').value);
-  state.matrixId = null;
-  state.sourceLimit = 24;
-  state.candidateLimit = 28;
-  $('matrixSearch').value = '';
-  $('v2Search').value = '';
-  renderAll();
-}
-function message(text,kind='error') {
-  $('reviewMessage').dataset.kind = kind;
-  $('reviewMessage').textContent = text;
-}
-function approveSelected() {
-  const source = currentOriginal();
-  if (!source) return message('Seleccioná un contenido original.');
-  const chosen = [...state.chosen];
-  if (!chosen.length) return message('Elegí al menos un contenido V2.');
-  const reviewer = $('reviewer').value.trim();
-  const reason = $('reason').value.trim();
-  if (!reviewer) return message('Ingresá quién revisó la equivalencia.');
-  if (reason.length < 10) return message('Agregá una justificación pedagógica de al menos 10 caracteres.');
-  try {
-    const updated = approveHomologation(currentPack(), {
-      orientationId: 'demo',
-      area: state.area, year: state.year, matrixId: source.id,
-      referenceIds: chosen, reason, reviewer,
-      matrixRows: state.matrixRows, v2FgRows: state.fgRows
-    });
-    state.packs.set(contextKey(), updated);
-    renderMetrics();
-    renderHistory();
-    message('Aprobación simulada: 1 contenido histórico vinculado con ' +
-      chosen.length + ' referencias V2. No se guardó en Supabase ni se atribuyó cobertura escolar.','success');
-  } catch(err) {
-    message('No se pudo simular la homologación: ' + (err?.message || String(err)));
-  }
-}
-function downloadDemo() {
-  const records = [...state.packs.entries()].flatMap(([ctx,p]) =>
-    Object.values(p?.orientations?.demo?.fg?.homologations || {}).map(r =>
-      ({context:JSON.parse(ctx),...r})));
-  if (!records.length) return;
-  const payload = {
-    type:'demostracion-homologacion-fg',schoolId:null,environment:'solo-navegador',
-    source:'Matriz PCI histórica',reference:'FG Secundaria Aprende V2 v103',
-    note:'Exportación de una simulación: no representa aprobaciones institucionales ni cobertura acreditada.',
-    correspondences:records
-  };
-  const blob = new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-  const href = URL.createObjectURL(blob);
-  const link=document.createElement('a');
-  link.href=href;
-  link.download='muestra-homologacion-fg.json';
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(href),1000);
-}
-function resetDemo() {
-  state.packs.clear();
-  state.matrixId=null;
-  state.sourceLimit=24;
-  state.candidateLimit=28;
-  $('reason').value='';
+function changedContext(){
+  state.area=$('areaSelect').value;
+  state.year=Number($('yearSelect').value);
+  state.sourceId=null;
+  state.sourceOpen=false;
+  state.extraOpen=false;
+  state.sourceLimit=7;
+  state.extraLimit=9;
   $('matrixSearch').value='';
   $('v2Search').value='';
-  renderAll();
-  message('Se reinició la muestra; no se borró ningún dato real.','success');
+  $('reason').value='';
+  $('reviewPanel').hidden=true;
+  $('reviewMessage').textContent='';
+  render();
 }
-function wire() {
-  $('areaSelect').addEventListener('change',changedContext);
-  $('yearSelect').addEventListener('change',changedContext);
-  $('matrixSearch').addEventListener('input',() => {
-    state.sourceLimit=24;
-    renderAll();
-  });
-  $('v2Search').addEventListener('input',() => {
-    state.candidateLimit=28;
-    renderCandidates();
-  });
-  $('moreMatrix').addEventListener('click',() => {state.sourceLimit+=24;renderSources();});
-  $('moreV2').addEventListener('click',() => {state.candidateLimit+=28;renderCandidates();});
-  $('clearSelected').addEventListener('click',() => {
-    state.chosen.clear();
-    renderCandidates();
-  });
-  $('confirmDemo').addEventListener('click',approveSelected);
-  $('downloadDemo').addEventListener('click',downloadDemo);
-  $('resetDemo').addEventListener('click',resetDemo);
-}
-async function start() {
-  try {
-    const [matrix,fg] = await Promise.all([loadMatrixContents(),loadV2Fg()]);
-    state.matrixRows = matrix;
-    state.fgRows = fg;
-    const areas = [...new Set(matrix.map(r=>r.area))].sort((a,b)=>a.localeCompare(b,'es'));
-    const select=$('areaSelect');
-    for(const name of areas) {
-      const option=document.createElement('option');
-      option.value=name;
-      option.textContent=name;
-      select.append(option);
-    }
-    state.area = areas.includes('Ciencias Sociales') ? 'Ciencias Sociales' : areas[0];
-    select.value = state.area;
-    $('yearSelect').value=String(state.year);
-    wire();
-    renderAll();
-    $('loading').hidden=true;
-    $('workspace').hidden=false;
-  } catch (error) {
-    $('loading').textContent =
-      'No se pudieron cargar los catálogos de la muestra: ' +
-      (error?.message || String(error)) + '. Abrí la vista desde el enlace publicado de GitHub, no como archivo local.';
+function confirm(){
+  const src=current();
+  if(!src)return;
+  const reason=$('reason').value.trim();
+  if(reason.length<10){
+    $('reviewMessage').dataset.error='true';
+    $('reviewMessage').textContent='Agregá una justificación pedagógica breve.';
+    return;
+  }
+  try{
+    const selected=[...state.selected];
+    const updated=approveHomologation(getPack(),{
+      orientationId:'demo',area:state.area,year:state.year,matrixId:src.id,
+      referenceIds:selected,reason,reviewer:'Revisor de muestra',
+      matrixRows:state.matrix,v2FgRows:state.v2
+    });
+    state.packs.set(context(),updated);
+    $('reviewPanel').hidden=true;
+    $('reviewMessage').dataset.error='false';
+    $('reviewMessage').textContent='En esta muestra se vincularon '+selected.length+
+      ' contenidos V2 con 1 contenido de Matriz. No se guardaron datos escolares ni se acreditó cobertura.';
+    renderHistory();
+  }catch(e){
+    $('reviewMessage').dataset.error='true';
+    $('reviewMessage').textContent='No se pudo completar la revisión: '+(e?.message||String(e));
   }
 }
-start();
+async function boot(){
+  try{
+    const [matrix,fg]=await Promise.all([loadMatrixContents(),loadV2Fg()]);
+    state.matrix=matrix;state.v2=fg;
+    const names=[...new Set(matrix.map(x=>x.area))].sort((a,b)=>a.localeCompare(b,'es'));
+    const control=$('areaSelect');
+    for(const name of names){const op=document.createElement('option');op.value=name;op.textContent=name;control.append(op);}
+    state.area=names.includes('Ciencias Sociales')?'Ciencias Sociales':names[0];
+    control.value=state.area;
+    $('areaSelect').addEventListener('change',changedContext);
+    $('yearSelect').addEventListener('change',changedContext);
+    $('changeContent').addEventListener('click',()=>{
+      state.sourceOpen=!state.sourceOpen;
+      state.sourceLimit=7;
+      renderOriginal();
+      if(state.sourceOpen)$('matrixSearch').focus();
+    });
+    $('matrixSearch').addEventListener('input',()=>{state.sourceLimit=7;renderOriginal();});
+    $('moreMatrix').addEventListener('click',()=>{state.sourceLimit+=7;renderOriginal();});
+    $('moreCandidates').addEventListener('click',()=>{
+      state.extraOpen=!state.extraOpen;
+      state.extraLimit=9;
+      renderCandidates();
+    });
+    $('v2Search').addEventListener('input',()=>{state.extraLimit=9;renderCandidates();});
+    $('moreV2').addEventListener('click',()=>{state.extraLimit+=9;renderCandidates();});
+    $('startReview').addEventListener('click',()=>{
+      $('reviewPanel').hidden=false;
+      $('reviewMessage').textContent='';
+      $('reason').focus();
+    });
+    $('cancelReview').addEventListener('click',()=>{$('reviewPanel').hidden=true;});
+    $('confirmDemo').addEventListener('click',confirm);
+    render();
+    $('loading').hidden=true;
+    $('workspace').hidden=false;
+  }catch(err){
+    $('loading').textContent='No se pudo cargar la muestra: '+(err?.message||String(err));
+  }
+}
+boot();
