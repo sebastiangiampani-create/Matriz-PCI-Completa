@@ -53,7 +53,7 @@ function statusRow(original,source,rawRefs,existing,manual){
     area:original.area,subject:source?.subject||'',
     inheritedStatus:original.status,
     selectedV2Ids:rawRefs,
-    decision:existing?'existing-approved':manual?'corrected-manually':'auto-validated',
+    decision:manual?'corrected-manually':existing?'existing-approved':'auto-validated',
     reviewRecommended:!existing,
     label:AUTO_VALIDATION_LABEL
   };
@@ -181,7 +181,7 @@ function coverageOfficial({areas,v2FgRows}){
  */
 export function automaticallyValidateImportedFg({
   legacyState,orientationId,matrixRows,v2FgRows,
-  existingApprovals={},manualOverrides={}
+  existingApprovals={},manualOverrides={},preImportSnapshot=null
 }){
   ensureValidInput({legacyState,orientationId,matrixRows,v2FgRows});
   const initial=clone(legacyState);
@@ -263,6 +263,7 @@ export function automaticallyValidateImportedFg({
       sourceVersion:AUTO_FG_SOURCE,
       sourceSchemaVersion:initial.schemaVersion??null,
       originalState:initial,
+      preImportState:preImportSnapshot?clone(preImportSnapshot):clone(initial),
       originalCatalog:clone(matrixRows),
       missingMappings:clone(unresolved)
     }
