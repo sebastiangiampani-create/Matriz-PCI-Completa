@@ -595,8 +595,14 @@ async function testDesktop(page) {
   assert.equal(await page.evaluate(()=>window.PCIApp.getActiveOrientation()),'Economía y Administración');
   await page.locator('#areaGrid button[data-area="Artes"]').click();
   assert.equal(await page.locator('#groups .group-card').count(),6);
-  assert.equal(await page.locator('#groups .group-card').first().locator('.assigned-item').count(),1,
-    'La orientación inicial recupera su drag & drop sin mezclar otra orientación');
+  // La tarjeta de Artes contiene dos bolsas independientes: el contenido
+  // histórico y el contenido oficial FG que se arrastró para la orientación
+  // inicial. No deben confundirse, duplicarse ni perderse al volver.
+  const restoredCard=page.locator('#groups .group-card').first();
+  assert.equal(await restoredCard.locator(':scope > .assigned-list .assigned-item').count(),1,
+    'La orientación original conserva su contenido Matriz histórico');
+  assert.equal(await restoredCard.locator('.pci-fg-official-assigned .assigned-item').count(),1,
+    'La orientación original conserva su contenido oficial FG separado');
   await page.locator('#backOverview').click();
   assert.deepEqual(remote,[],'La vista aislada no debe contactar Supabase');
   assert.deepEqual(errors,[],'Errores JavaScript en la vista integrada: '+errors.join(' | '));
