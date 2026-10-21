@@ -17,7 +17,7 @@ const download=$('pciFgAutoDownload');
 const prefix='pci-matriz-fg-v2-validacion-automatica-20261021:';
 const clone=x=>JSON.parse(JSON.stringify(x));
 let latest=null,sourceText='',activeOrientation='',pending=0;
-let referencePromise=null;
+let referencePromise=null,referenceRows=[];
 const hash=s=>{
   let h=2166136261;
   for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);
@@ -177,6 +177,7 @@ async function scan(){
   statusMessage('Importando y validando automáticamente los contenidos anteriores con los años y materias de FG V2…');
   try{
     const v2Rows=await (referencePromise||(referencePromise=loadV2Fg().catch(e=>{referencePromise=null;throw e;})));
+    referenceRows=v2Rows;
     if(ticket!==pending||api.getActiveOrientation()!==orientation||
       JSON.stringify(api.getState()?.areas)!==source)return;
     const validated=automaticallyValidateImportedFg({
@@ -217,7 +218,7 @@ window.PCIAutoFgMigration={
     return latest&&o===activeOrientation&&
       JSON.stringify(api.getState()?.areas)===sourceText?clone(latest):null;
   },
-  getReferenceCatalog:()=>[],
+  getReferenceCatalog:()=>referenceRows,
   scan
 };
 if(button&&status&&details&&examples&&download){
