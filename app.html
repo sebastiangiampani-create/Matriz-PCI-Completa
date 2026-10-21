@@ -73,33 +73,33 @@
   <dialog id="pci-import-review" class="pci-import-review" aria-labelledby="pciImportTitle">
     <div class="pci-import-head">
       <div>
-        <p class="eyebrow">Revisión antes de incorporar</p>
+        <p class="eyebrow">Importación automática con respaldo</p>
         <h2 id="pciImportTitle">Importar Matriz original</h2>
         <p>Orientación de destino: <strong id="pciImportOrientation"></strong></p>
       </div>
       <button id="pciImportClose" class="button secondary" type="button">Cerrar</button>
     </div>
     <div class="pci-import-body">
-      <p class="pci-import-explainer">Primero se prepara una <strong>copia de revisión</strong>, sin cambiar nada de la Matriz original. Revisá agrupamientos, contenidos, planes y secuencias. Solo después de verificarla podés dar tu OK.</p>
+      <p class="pci-import-explainer">Se conserva una <strong>copia íntegra de la Matriz anterior</strong>. Al importarla, el sistema relaciona y valida automáticamente los contenidos con FG V2. No hay que validar cada equivalencia; después se puede corregir lo que haga falta.</p>
       <p id="pciImportSavedDetail" class="pci-import-previous-data" role="status">Si ya realizaste cargas en la Matriz original, ese trabajo se podrá recuperar para reutilizarlo cuando se habilite la importación definitiva. El original permanecerá conservado.</p>
       <p class="pci-import-source-warning">Esta vista de prueba utiliza la Matriz cargada en esta sesión. Para incorporar los PCI reales de cada escuela hará falta una copia respaldada de la base original y una migración validada.</p>
       <div class="pci-import-actions">
-        <button id="pciImportPrepare" type="button" class="button primary">Preparar copia para revisar</button>
+        <button id="pciImportPrepare" type="button" class="button primary">Preparar copia y resguardo</button>
         <button id="pciImportExport" type="button" class="button secondary" disabled>Respaldo JSON</button>
         <button id="pciImportExcel" type="button" class="button secondary" disabled>Exportar Excel (.xlsx)</button>
         <button id="pciImportWord" type="button" class="button secondary" disabled>Exportar Word (.docx)</button>
       </div>
       <div id="pciImportReviewContent" hidden>
         <div id="pciImportMetrics" class="pci-import-metrics"></div>
-        <h3>Detalle para revisar</h3>
+        <h3>Trabajo histórico que se conservará</h3>
         <div id="pciImportAreas" class="pci-import-areas"></div>
         <div id="pciImportWarnings" class="pci-import-warnings"></div>
-        <label class="pci-import-check"><input id="pciImportReviewed" type="checkbox"> Revisé la copia, los planes y las observaciones de esta orientación.</label>
+        <label class="pci-import-check"><input id="pciImportReviewed" type="checkbox"> Confirmo crear una copia independiente sin reemplazar la Matriz anterior.</label>
         <div class="pci-import-actions">
-          <button id="pciImportApprove" type="button" class="button primary" disabled>Dar OK de revisión</button>
+          <button id="pciImportApprove" type="button" class="button primary" disabled>Importar y validar FG automáticamente</button>
         </div>
       </div>
-      <p class="pci-import-download-tip">Descargá los archivos <strong>antes de dar el OK</strong>. Después se habilitará una copia editable por orientación con la bolsa curricular y el drag &amp; drop de Matriz. El original queda intacto. Esta edición de prueba se guarda únicamente en este navegador, nunca en los registros escolares.</p>
+      <p class="pci-import-download-tip">Podés descargar primero el respaldo original. Después de importar, estará disponible la exportación integral de FG V2, FO y toda la Matriz anterior con sus planes y secuencias. Esta prueba guarda sus borradores únicamente en el navegador, sin modificar registros escolares.</p>
       <p id="pciImportResult" class="pci-import-result" role="status" aria-live="polite">El trabajo original no se modifica con esta operación.</p>
     </div>
   </dialog>
