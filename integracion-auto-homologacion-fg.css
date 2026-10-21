@@ -111,3 +111,27 @@
     display: none !important;
   }
 }
+
+#groups .pci-fg-auto-badge{
+  display:inline-flex;
+  align-items:center;
+  border-radius:8px;
+  background:#e4f4ef;
+  color:#126e62;
+  border:1px solid #c1e6da;
+  padding:5px 8px;
+  font-size:.68rem;
+  line-height:1.2;
+  font-weight:800;
+}
+#pciFgAutoPanel .pci-fg-auto-example label{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  cursor:pointer;
+}
+#pciFgAutoPanel .pci-fg-auto-example label input[type="checkbox"]{
+  accent-color:#11756e;
+  margin-top:3px;
+  flex:0 0 16px;
+}
