@@ -120,6 +120,10 @@ async function testDesktop(page) {
     await autoFgDownload.path(),'utf8'));
   assert.equal(json.exportFormat,'pci-matriz-v2-con-resguardo-original/1');
   assert.equal(json.coverageCatalog,'fg-sec-aprende-v2/1');
+  assert.deepEqual(json.exportComponents,['Formación General V2','Formación Orientada V2','Resguardo íntegro de Matriz anterior']);
+  assert.equal(json.currentCurriculumV2.formacionOrientada.orientation,'Economía y Administración');
+  assert.equal(json.currentCurriculumV2.formacionOrientada.referenceVersion,'fo-sec-aprende-v2/96');
+  assert.ok(json.currentCurriculumV2.formacionOrientada.completeDraft?.spaces,'La exportación debe conservar espacios y planes FO');
   assert.ok(json.historicalArchiveFull.preImportState.areas,
     'Debe estar completo el PCI anterior y NO solo su cobertura nueva');
   assert.ok(json.historicalArchiveFull.originalCatalog.length>=1000,
