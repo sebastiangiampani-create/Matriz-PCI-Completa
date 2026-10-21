@@ -124,7 +124,7 @@ document.addEventListener('click',event=>{
   if(target.closest('#pciNativeV2CoverageClose,#areaGrid,#pciDemoFoCards,#board,#pci-fo-development,#pciPlansShell'))schedule();
 },true);
 for(const event of ['input','change'])document.addEventListener(event,e=>{if(e.target.closest?.('#board,#pci-fo-development,#pciPlansShell'))schedule();},true);
-for(const event of ['pci-state-change','pci-orientation-changed','pci-app-ready'])window.addEventListener(event,schedule);
+for(const event of ['pci-state-change','pci-orientation-changed','pci-app-ready','pci-auto-fg-ready'])window.addEventListener(event,schedule);
 window.addEventListener('message',e=>{if(e.origin===location.origin&&e.source===$('pciNativeV2CoverageFrame')?.contentWindow&&e.data?.type==='pci-native-v2-close')schedule();});
 window.PCIInlineCoverage={refresh:schedule,getLastResult:()=>lastResult,diagnostics:()=>({context:activeContext(),running,dirty,gesture,htmlDrag,lastError,refreshes,area:lastResult?.area,groups:lastResult?.groups.length})};
 schedule();
