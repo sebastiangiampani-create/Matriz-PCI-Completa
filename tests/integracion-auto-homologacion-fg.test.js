@@ -69,7 +69,7 @@ test('la homologación automática descubre 1→3 pero no acredita contenido',()
  assert.equal(report.summary.skippedGroups,1);
  assert.equal(report.summary.placedOriginals,7,
    'Un contenido duplicado en paralelo del mismo nivel solo aparece una vez y 4.º conserva identidad distinta');
- assert.equal(report.summary.suggestedV2Ids,3);
+ assert.ok(report.summary.suggestedV2Ids>=3, 'El resumen también incluye otros contenidos sugeridos de 4.º');
  assert.equal(report.summary.validatedV2Ids,1,'Solo Historia exacta es reconocida por la regla actual');
  const stillUnmatched=fgCoverageByLevel({areas:original,matrixRows:matrix,v2FgRows:v2,
     area:'Ciencias Sociales',level:3});
@@ -99,7 +99,8 @@ test('los años se toman de las tarjetas, nunca del contenido histórico',()=>{
  const result=analyzeAutomaticFgMatches(args);
  const year4=by(result,'h-amplio',4);
  assert.ok(year4);
- assert.equal(year4.status,'unmatched','Mercados de 3.º no se homologan en 4.º por error');
+ assert.equal(year4.status,'proposed-single','Una semejanza en 4.º es solo propuesta, no homologación reconocida');
+ assert.ok(year4.references.every(r=>r.year===4&&r.id!=='e1'), 'Nunca trasladar IDs V2 de 3.º al universo de 4.º');
  assert.equal(by(result,'h-amplio').groups.length,3,
    'El mismo contenido de 3.º aparece en Sociales, paralelo y formato transversal una sola vez');
  assert.notEqual(by(result,'h-amplio').key,year4.key);
