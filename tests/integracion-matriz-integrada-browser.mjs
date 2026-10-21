@@ -104,6 +104,7 @@ async function testDesktop(page) {
   }));
   assert.deepEqual(afterAutoScan,beforeAutoScan,
     'El cruce automático FG nunca debe reescribir el documento escolar.');
+  await page.locator('#pciFgAutoResults summary').click();
   const [autoFgDownload]=await Promise.all([
     page.waitForEvent('download'),
     page.locator('#pciFgAutoDownload').click()
