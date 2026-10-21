@@ -82,7 +82,7 @@ function updateBadges(validated){
 }
 function showCases(validated,orientation){
   examples.replaceChildren();
-  const options=validated.decisions.filter(d=>d.selectedV2Ids.length>0)
+  const options=validated.decisions.filter(d=>d.selectedV2Ids.length>0||d.suggestedV2Ids?.length>0)
     .sort((a,b)=>b.selectedV2Ids.length-a.selectedV2Ids.length||a.year-b.year||
       a.area.localeCompare(b.area,'es'));
   const unmatched=validated.unresolved;
@@ -103,7 +103,7 @@ function showCases(validated,orientation){
     const storedOver=getOverrides(window.PCIApp,orientation)[item.key];
     const pre=storedOver?storedOver.referenceIds:item.selectedV2Ids;
     const refCatalog=window.PCIAutoFgMigration?.getReferenceCatalog?.()||[];
-    for(const id of new Set([...(item.selectedV2Ids||[]),...(pre||[])])){
+    for(const id of new Set([...(item.selectedV2Ids||[]),...(item.suggestedV2Ids||[]),...(pre||[])])){
       const original=refCatalog.find(r=>String(r.id)===id);
       const li=el('li');
       const label=el('label');
