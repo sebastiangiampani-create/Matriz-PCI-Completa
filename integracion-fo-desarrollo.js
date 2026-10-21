@@ -896,7 +896,23 @@ if(overlay){
    );
    return {orientation:selected,groups:groupList};
  }
- window.PCIFoDesarrollo={open,close,coverageDataFor};
+ function exportSnapshot(name){
+   if(typeof name!=='string'||!name.trim())return null;
+   const selected=name.trim();
+   let offer=null,prior=null;
+   try{offer=JSON.parse(localStorage.getItem(V2_KEY)||'null')?.maps?.[selected]||null;}catch(_){}
+   try{prior=JSON.parse(localStorage.getItem(KEY)||'null')?.orientations?.[selected]||null;}catch(_){}
+   const state=makeFoDraft(selected,prior);
+   return {
+     orientation:selected,
+     referenceVersion:'fo-sec-aprende-v2/96',
+     basis:'trayectoria', // FO v96 no identifica año por contenido
+     offerMap:offer?JSON.parse(JSON.stringify(offer)):null,
+     completeDraft:JSON.parse(JSON.stringify(state)),
+     note:'Resguardo completo de espacios, contenidos, planes y secuencias FO de la orientación.'
+   };
+ }
+ window.PCIFoDesarrollo={open,close,coverageDataFor,exportSnapshot};
  // Los contenidos oficiales no tienen año FO explícito: el docente determina
  // los contenidos de cada espacio y plan, sin porcentajes inventados.
  fetch('preview-v2-real/data/materias-v2.json')
