@@ -219,6 +219,13 @@ window.PCIAutoFgMigration={
       JSON.stringify(api.getState()?.areas)===sourceText?clone(latest):null;
   },
   getReferenceCatalog:()=>referenceRows,
+  diagnostics:()=>{
+    const live=JSON.stringify(window.PCIApp?.getState?.()?.areas);
+    return {loaded:!!latest,active:window.PCIApp?.getActiveOrientation?.(),
+      stored:activeOrientation,matches:live===sourceText,
+      snapshotSize:sourceText.length,liveSize:live?.length||0,
+      oldHash:hash(sourceText),liveHash:hash(live||'')};
+  },
   scan
 };
 if(button&&status&&details&&examples&&download){
