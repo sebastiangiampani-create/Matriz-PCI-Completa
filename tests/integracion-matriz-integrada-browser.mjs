@@ -96,6 +96,8 @@ async function testDesktop(page) {
     /contenidos V2 distintos cubiertos sobre/);
   assert.match(await page.locator('#pciFgAutoStatus').textContent(),
     /Conviene revisar/);
+  await page.waitForFunction(()=>Boolean(window.PCIAutoFgMigration?.getCurrent?.()),null,
+    {timeout:45000});
   const migrated=await page.evaluate(()=>window.PCIAutoFgMigration.getCurrent());
   assert.ok(migrated,'La validación aún no está vigente: '+JSON.stringify(await page.evaluate(()=>window.PCIAutoFgMigration.diagnostics())));
   assert.equal(migrated.validationVersion,'fg-auto-import-v2/1');
