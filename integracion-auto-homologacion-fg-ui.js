@@ -18,6 +18,7 @@ const prefix='pci-matriz-fg-v2-validacion-automatica-20261021:';
 const clone=x=>JSON.parse(JSON.stringify(x));
 let latest=null,sourceText='',activeOrientation='',pending=0;
 let referencePromise=null,referenceRows=[];
+let staleRefreshScheduled=false;
 const hash=s=>{
   let h=2166136261;
   for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);
@@ -215,8 +216,19 @@ window.PCIAutoFgMigration={
   getCurrent:()=>{
     const api=window.PCIApp;
     const o=api?.getActiveOrientation?.();
-    return latest&&o===activeOrientation&&
-      JSON.stringify(api.getState()?.areas)===sourceText?clone(latest):null;
+    if(!latest||o!==activeOrientation)return null;
+    if(JSON.stringify(api.getState()?.areas)===sourceText)return clone(latest);
+    // Los módulos históricos pueden completar campos del agrupamiento
+    // después de importar (p.ej. crear el esqueleto de planes). Recalcular
+    // la homologación sin pedir OK ni exponer una cobertura obsoleta.
+    if(!staleRefreshScheduled){
+      staleRefreshScheduled=true;
+      setTimeout(()=>{
+        staleRefreshScheduled=false;
+        void scan();
+      },150);
+    }
+    return null;
   },
   getReferenceCatalog:()=>referenceRows,
   diagnostics:()=>{
