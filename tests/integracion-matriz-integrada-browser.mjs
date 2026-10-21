@@ -97,6 +97,7 @@ async function testDesktop(page) {
   assert.match(await page.locator('#pciFgAutoStatus').textContent(),
     /Conviene revisar/);
   const migrated=await page.evaluate(()=>window.PCIAutoFgMigration.getCurrent());
+  assert.ok(migrated,'La validación aún no está vigente: '+JSON.stringify(await page.evaluate(()=>window.PCIAutoFgMigration.diagnostics())));
   assert.equal(migrated.validationVersion,'fg-auto-import-v2/1');
   assert.equal(migrated.currentFg.curriculumCatalog,'fg-sec-aprende-v2/1');
   assert.equal(migrated.summary.autoValidationRequiresUserApproval,false);
