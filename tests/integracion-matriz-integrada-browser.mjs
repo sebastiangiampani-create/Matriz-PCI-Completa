@@ -83,6 +83,34 @@ async function testDesktop(page) {
     'El OK debe habilitar una copia independiente por orientación');
   assert.ok(await page.evaluate(key=>localStorage.getItem(key+':original-sin-transformar'),editKey),
     'La copia original debe estar respaldada antes de habilitar la edición');
+  // Cruce automático de FG REAL dentro de la vista, no una página de demostración.
+  // Se ejecuta solo sobre la orientación importada y nunca escribe al analizar.
+  await page.evaluate(()=>window.PCIApp.openArea('Ciencias Sociales'));
+  await page.locator('#board.screen.active').waitFor();
+  const beforeAutoScan=await page.evaluate(()=>({
+    original:localStorage.getItem('pciAppV2'),
+    copied:JSON.stringify(window.PCIApp.getState().areas)
+  }));
+  await page.locator('#pciFgAutoRun').click();
+  await page.waitForFunction(()=>document.querySelector('#pciFgAutoStatus')?.textContent
+    .includes('Cruce completado'),{timeout:60000});
+  assert.match(await page.locator('#pciFgAutoStatus').textContent(),
+    /coincidencias confirmadas o exactas/);
+  assert.match(await page.locator('#pciFgAutoStatus').textContent(),
+    /Ninguna sugerencia modifica planes ni acredita cobertura/);
+  const afterAutoScan=await page.evaluate(()=>({
+    original:localStorage.getItem('pciAppV2'),
+    copied:JSON.stringify(window.PCIApp.getState().areas)
+  }));
+  assert.deepEqual(afterAutoScan,beforeAutoScan,
+    'El cruce automático FG nunca debe reescribir el documento escolar.');
+  const [autoFgDownload]=await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#pciFgAutoDownload').click()
+  ]);
+  assert.match(autoFgDownload.suggestedFilename(),/PENDIENTE_REVISION.json/);
+  await page.evaluate(()=>window.PCIApp.openOverview());
+
   await page.locator('#pciNativeV2CoverageOverview').click();
   const coverHome=page.frameLocator('#pciNativeV2CoverageFrame');
   await coverHome.locator('#v98dResults .v98d-area').first().waitFor({timeout:60000});
