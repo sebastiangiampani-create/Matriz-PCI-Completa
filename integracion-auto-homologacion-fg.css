@@ -1,0 +1,113 @@
+/* Cruce automático FG discreto y consistente con los controles de Matriz.
+   No altera módulos curriculares existentes ni la cobertura oficial. */
+#pciFgAutoPanel {
+  width: min(1120px,calc(100% - 32px));
+  margin: 10px auto 14px;
+  border: 1px solid #d8e4e8;
+  border-radius: 14px;
+  background: #fff;
+  padding: 13px 16px;
+  box-shadow: 0 5px 22px rgba(18,55,72,.045);
+}
+#pciFgAutoPanel .pci-fg-auto-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+}
+#pciFgAutoPanel .pci-fg-auto-heading > div {
+  min-width: 0;
+}
+#pciFgAutoPanel .pci-fg-auto-heading strong {
+  display: block;
+  font-size: .88rem;
+  font-weight: 850;
+  color: #15374a;
+}
+#pciFgAutoPanel .pci-fg-auto-heading small {
+  display: block;
+  font-size: .75rem;
+  margin-top: 4px;
+  color: #637d8c;
+  line-height: 1.45;
+}
+#pciFgAutoPanel .pci-fg-auto-heading button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 8px 13px;
+  font-size: .78rem;
+}
+#pciFgAutoPanel .pci-fg-auto-status {
+  font-size: .75rem;
+  line-height: 1.55;
+  margin: 10px 0 0;
+  color: #547482;
+}
+#pciFgAutoPanel .pci-fg-auto-status[data-tone="warning"] {
+  color: #926536;
+}
+#pciFgAutoPanel details {
+  border-top: 1px solid #e1e9ec;
+  margin-top: 10px;
+  padding-top: 11px;
+}
+#pciFgAutoPanel summary {
+  color: #126f68;
+  font-size: .78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+#pciFgAutoPanel .pci-fg-auto-examples {
+  display: grid;
+  gap: 9px;
+  margin: 10px 0 12px;
+}
+#pciFgAutoPanel .pci-fg-auto-example {
+  border: 1px solid #e0e9ec;
+  background: #f7fafb;
+  border-radius: 11px;
+  padding: 10px 13px;
+  font-size: .76rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+#pciFgAutoPanel .pci-fg-auto-example strong {
+  display: block;
+  color: #183c4e;
+}
+#pciFgAutoPanel .pci-fg-auto-example small {
+  color: #5c7583;
+}
+#pciFgAutoPanel .pci-fg-auto-example p {
+  margin: 5px 0;
+}
+#pciFgAutoPanel .pci-fg-auto-example ul {
+  padding-left: 20px;
+  margin: 6px 0 0;
+}
+#pciFgAutoPanel .pci-fg-auto-example li {
+  margin: 4px 0;
+}
+#pciFgAutoPanel #pciFgAutoDownload {
+  font-size: .75rem;
+  min-height: 37px;
+}
+@media (max-width:700px) {
+  #pciFgAutoPanel {
+    width: calc(100% - 24px);
+    padding: 12px;
+  }
+  #pciFgAutoPanel .pci-fg-auto-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 9px;
+  }
+  #pciFgAutoPanel .pci-fg-auto-heading button {
+    width: 100%;
+  }
+}
+@media print {
+  #pciFgAutoPanel {
+    display: none !important;
+  }
+}
