@@ -49,6 +49,7 @@ function validTarget(source,row,year){
 }
 function statusRow(original,source,rawRefs,existing,manual){
   return {
+    key:localKey(original.area,original.year,original.matrixId),
     legacyId:String(original.matrixId),year:Number(original.year),
     area:original.area,subject:source?.subject||'',
     inheritedStatus:original.status,
