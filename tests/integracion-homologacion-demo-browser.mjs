@@ -23,9 +23,31 @@ async function check(page,mode){
    network.push(request.url());
  });
  page.on('response',response=>{if(response.status()>=400)missing.push(response.status()+' '+response.url())});
+ // Incluso si el visor CDN bloquea todos los recursos secundarios,
+ // el único HTML debe contener los estilos, el motor y ambos catálogos.
+ await page.route('**/*',route=>{
+   if(route.request().url()===url)return route.continue();
+   return route.abort('blockedbyclient');
+ });
  await page.goto(url,{waitUntil:'domcontentloaded'});
  await page.locator('#workspace').waitFor({state:'visible',timeout:60000});
  assert.equal(await page.locator('#loading').isVisible(),false);
+ const selfContained=await page.evaluate(()=>{
+   const logo=document.querySelector('.top img')?.getBoundingClientRect();
+   const card=document.querySelector('.card');
+   return {
+     noResources:document.querySelectorAll('script[src],link[rel="stylesheet"]').length===0,
+     logoWidth:logo?.width||0,
+     logoHeight:logo?.height||0,
+     background:getComputedStyle(card).backgroundColor,
+     font:getComputedStyle(document.body).fontFamily
+   };
+ });
+ assert.equal(selfContained.noResources,true,'El HTML no debe depender de scripts u hojas externas');
+ assert.ok(selfContained.logoWidth>80&&selfContained.logoWidth<260,
+   'El logo debe conservar su tamaño institucional: '+JSON.stringify(selfContained));
+ assert.ok(selfContained.logoHeight<=42,'El logo no debe llenar la pantalla');
+ assert.match(selfContained.font,/Inter|system-ui/,'Los estilos deben estar aplicados');
  assert.equal(await page.locator('#areaSelect').inputValue(),'Ciencias Sociales');
  assert.equal(await page.locator('#yearSelect option').count(),5);
  assert.equal(await page.locator('#yearSelect').inputValue(),'3');
