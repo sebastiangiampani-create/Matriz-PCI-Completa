@@ -28,6 +28,13 @@ const clone=x=>JSON.parse(JSON.stringify(x));
 const clean=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const uniq=x=>[...new Set(list(x).map(String))];
+const aliasSubject=x=>({
+  'lengua adicional':'lenguas adicionales',
+  'lenguas adicional':'lenguas adicionales',
+  'formacion etica ciudadana':'formacion etica y ciudadana',
+  'tecnologia de la informacion':'tecnologias de la informacion',
+  'educacion artistica artes visuales':'artes visuales'
+}[clean(x)]||clean(x));
 const perYear=n=>Number.isInteger(Number(n))&&Number(n)>=1&&Number(n)<=5;
 const localKey=(area,year,id)=>mappingKey(area,year,id);
 function ensureValidInput({legacyState,orientationId,matrixRows,v2FgRows}){
@@ -45,7 +52,7 @@ function ensureValidInput({legacyState,orientationId,matrixRows,v2FgRows}){
 }
 function validTarget(source,row,year){
   return !!source&&!!row&&Number(row.year)===Number(year)&&
-    clean(source.area)===clean(row.area)&&clean(source.subject)===clean(row.subject);
+    clean(source.area)===clean(row.area)&&aliasSubject(source.subject)===aliasSubject(row.subject);
 }
 function statusRow(original,source,rawRefs,existing,manual){
   return {
