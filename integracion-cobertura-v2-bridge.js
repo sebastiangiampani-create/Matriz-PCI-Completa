@@ -10,8 +10,16 @@ const copy=value=>JSON.parse(JSON.stringify(value));
 function historicFG(){
   const app=window.PCIApp,source=app?.getState?.(),orientation=orientationName();
   if(!source||!app?.isOrientationReady?.(orientation))return {groups:[],rows:[]};
+  // Tras importar, el motor original V2 recibe únicamente IDs y filas
+  // oficiales V2. Los contenidos y planes antiguos siguen intactos en
+  // la copia de la escuela y en el archivo histórico exportable.
+  const validated=window.PCIAutoFgMigration?.getCurrent?.();
+  const v2Rows=window.PCIAutoFgMigration?.getReferenceCatalog?.()||[];
+  const inV2=validated?.currentFg?.curriculumCatalog==='fg-sec-aprende-v2/1' &&
+    Array.isArray(v2Rows)&&v2Rows.length===1126;
+  const active=inV2?validated.currentFg:source;
   const groups=[];
-  for(const [area,entry] of Object.entries(source.areas||{})){
+  for(const [area,entry] of Object.entries(active.areas||{})){
     for(const group of entry?.groups||[]){
       const term=Number(group.startTerm)||0;
       const year=Number(group.level)||(term?Math.ceil(term/2):0);
@@ -25,7 +33,7 @@ function historicFG(){
       });
     }
   }
-  return {groups,rows:app.getData?.()||[]};
+  return {groups,rows:inV2?v2Rows:(app.getData?.()||[]),curriculumVersion:inV2?'fg-sec-aprende-v2/1':'fg-matriz-historica/1',autoValidated:inV2};
 }
 function payload(){
   const orientation=orientationName(),fo=window.PCIFoDesarrollo?.coverageDataFor?.(orientation);
