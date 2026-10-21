@@ -99,6 +99,24 @@ try{
  const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,deviceScaleFactor:2,hasTouch:true});
  await check(await mobile.newPage(),'mobile');
  await mobile.close();
+
+ // Modo de entrega: el usuario descarga un solo HTML y lo abre con Chrome
+ // o Edge, sin GitHub, CDN, servidor HTTP ni archivos auxiliares.
+ const offline=await browser.newContext({viewport:{width:1366,height:900}});
+ const filePage=await offline.newPage();
+ const fileErrors=[];
+ filePage.on('pageerror',e=>fileErrors.push(e.message));
+ await filePage.route('http://**/*',r=>r.abort());
+ await filePage.route('https://**/*',r=>r.abort());
+ await filePage.goto('file://' + process.cwd() + '/demo-homologacion-fg.html',{waitUntil:'domcontentloaded'});
+ await filePage.locator('#workspace').waitFor({state:'visible',timeout:45000});
+ assert.ok(await filePage.locator('#candidateList .candidate').count()>0);
+ assert.ok((await filePage.locator('#originalText').innerText()).length>12);
+ assert.equal(await filePage.locator('.top img').evaluate(el=>el.complete&&el.naturalWidth>0),true);
+ assert.deepEqual(fileErrors,[],'La versión descargada no debe fallar bajo file://');
+ await filePage.screenshot({path:artifacts+'/archivo-local-sin-internet.png',fullPage:true});
+ await offline.close();
+
  console.log('Muestra simple FG/V2: año, correspondencias 1 a N, revisión, datos reales y móvil OK.');
 }finally{
  await browser?.close();
