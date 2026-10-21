@@ -60,6 +60,7 @@ function statusRow(original,source,rawRefs,existing,manual){
     legacyId:String(original.matrixId),year:Number(original.year),
     area:original.area,subject:source?.subject||'',
     inheritedStatus:original.status,
+    suggestedV2Ids:list(original.references).map(ref=>String(ref.id)),
     selectedV2Ids:rawRefs,
     decision:manual?'corrected-manually':existing?'existing-approved':'auto-validated',
     reviewRecommended:!existing,
