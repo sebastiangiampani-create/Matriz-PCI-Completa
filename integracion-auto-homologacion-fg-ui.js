@@ -203,6 +203,16 @@ function exportAll(){
     return;
   }
   const data=exportValidatedFgV2(latest);
+  // La exportación INTEGRAL combina FG homologada y FO con sus planes.
+  // FO conserva el criterio de cobertura por trayectoria: no se inventan
+  // años curriculares donde la referencia v96 no los define.
+  const fo=window.PCIFoDesarrollo?.exportSnapshot?.(activeOrientation);
+  if(!fo){
+    statusMessage('No se pudo incluir la Formación Orientada. No se exportó un PCI incompleto.','warning');
+    return;
+  }
+  data.currentCurriculumV2.formacionOrientada=fo;
+  data.exportComponents=['Formación General V2','Formación Orientada V2','Resguardo íntegro de Matriz anterior'];
   data.exportOrigin='Rama aislada PR 28; no se publicó ni actualizó Supabase';
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});
   const link=document.createElement('a');
