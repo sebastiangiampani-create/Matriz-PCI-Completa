@@ -83,34 +83,48 @@ async function testDesktop(page) {
     'El OK debe habilitar una copia independiente por orientación');
   assert.ok(await page.evaluate(key=>localStorage.getItem(key+':original-sin-transformar'),editKey),
     'La copia original debe estar respaldada antes de habilitar la edición');
-  // Cruce automático de FG REAL dentro de la vista, no una página de demostración.
-  // Se ejecuta solo sobre la orientación importada y nunca escribe al analizar.
+  // La validación de toda FG se ejecuta AL IMPORTAR, sin pedir otra confirmación.
   await page.evaluate(()=>window.PCIApp.openArea('Ciencias Sociales'));
   await page.locator('#board.screen.active').waitFor();
   const beforeAutoScan=await page.evaluate(()=>({
     original:localStorage.getItem('pciAppV2'),
     copied:JSON.stringify(window.PCIApp.getState().areas)
   }));
-  await page.locator('#pciFgAutoRun').click();
   await page.waitForFunction(()=>document.querySelector('#pciFgAutoStatus')?.textContent
-    .includes('Cruce completado'),{timeout:60000});
+    .includes('Importado y validado automáticamente'),null,{timeout:60000});
   assert.match(await page.locator('#pciFgAutoStatus').textContent(),
-    /coincidencias confirmadas o exactas/);
+    /contenidos V2 distintos cubiertos sobre/);
   assert.match(await page.locator('#pciFgAutoStatus').textContent(),
-    /Ninguna sugerencia modifica planes ni acredita cobertura/);
+    /Conviene revisar/);
+  const migrated=await page.evaluate(()=>window.PCIAutoFgMigration.getCurrent());
+  assert.equal(migrated.validationVersion,'fg-auto-import-v2/1');
+  assert.equal(migrated.currentFg.curriculumCatalog,'fg-sec-aprende-v2/1');
+  assert.equal(migrated.summary.autoValidationRequiresUserApproval,false);
   const afterAutoScan=await page.evaluate(()=>({
     original:localStorage.getItem('pciAppV2'),
     copied:JSON.stringify(window.PCIApp.getState().areas)
   }));
   assert.deepEqual(afterAutoScan,beforeAutoScan,
-    'El cruce automático FG nunca debe reescribir el documento escolar.');
+    'Auto-homologar nunca debe reescribir ni la Matriz previa ni su copia.');
   await page.locator('#pciFgAutoResults summary').click();
   const [autoFgDownload]=await Promise.all([
     page.waitForEvent('download'),
     page.locator('#pciFgAutoDownload').click()
   ]);
-  assert.match(autoFgDownload.suggestedFilename(),/PENDIENTE_REVISION.json/);
+  assert.equal(autoFgDownload.suggestedFilename(),
+    'PCI_FG_V2_VALIDADO_CON_RESGUARDO_ANTERIOR.json');
+  const json=JSON.parse(await (await import('node:fs/promises')).readFile(
+    await autoFgDownload.path(),'utf8'));
+  assert.equal(json.exportFormat,'pci-matriz-v2-con-resguardo-original/1');
+  assert.equal(json.coverageCatalog,'fg-sec-aprende-v2/1');
+  assert.ok(json.historicalArchiveFull.preImportState.areas,
+    'Debe estar completo el PCI anterior y NO solo su cobertura nueva');
+  assert.ok(json.historicalArchiveFull.originalCatalog.length>=1000,
+    'El historial incluye todos los contenidos de Matriz, aun sin equivalencia.');
+  assert.ok(Object.keys(json.historicalArchiveFull.originalState.areas).length>=6,
+    'La copia FG anterior no puede desaparecer de la exportación');
   await page.evaluate(()=>window.PCIApp.openOverview());
+
 
   await page.locator('#pciNativeV2CoverageOverview').click();
   const coverHome=page.frameLocator('#pciNativeV2CoverageFrame');
