@@ -55,7 +55,10 @@
   <div class="pci-fg-auto-heading">
     <div><strong>Contenidos de Matriz anterior · validados en FG nueva</strong>
       <small>La importación se homologa automáticamente. La revisión es opcional; el trabajo original se conserva.</small></div>
-    <button id="pciFgAutoRun" type="button" class="button secondary">Actualizar equivalencias</button>
+    <div class="pci-fg-auto-actions">
+      <button id="pciFgAutoRun" type="button" class="button secondary">Actualizar equivalencias</button>
+      <button id="pciFgAutoDownload" class="button secondary" type="button" disabled>Exportar PCI actualizado + respaldo</button>
+    </div>
   </div>
   <p id="pciFgAutoStatus" class="pci-fg-auto-status" role="status" aria-live="polite">
     Los contenidos importados se validan automáticamente. La cobertura toma como base los contenidos oficiales V2.
@@ -63,7 +66,7 @@
   <details id="pciFgAutoResults" hidden>
     <summary>Ver y corregir equivalencias (opcional)</summary>
     <div id="pciFgAutoExamples" class="pci-fg-auto-examples"></div>
-    <button id="pciFgAutoDownload" class="button secondary" type="button">Exportar PCI V2 completo + resguardo de Matriz anterior</button>
+
   </details>
 </section>
 <div id="pciImportedAreaWarning" class="notice warning" hidden></div><div id="boardAlert" class="notice warning" hidden></div><div id="mobileGroupNav" class="mobile-group-nav mobile-only"></div><div class="workspace"><aside id="contentBag" class="content-bag card" aria-label="Bolsa de contenidos"><div class="bag-heading"><div><p class="eyebrow">Bolsa curricular</p><h2>Contenidos</h2><p id="bagMeta" class="muted"></p></div><button id="closeBagMobile" class="icon-button mobile-only" type="button" aria-label="Cerrar contenidos">×</button></div><div class="filters"><div class="filter-pair pci-fg-year-controls"><label><span>Base de FG</span><select id="fgBagSource"><option value="historica">Matriz original · histórica</option><option value="vigente">FG vigente · por año</option></select></label><label><span>Año de origen</span><select id="fgBagYear" disabled><option value="0">Todos los años</option><option value="1">1.º año</option><option value="2">2.º año</option><option value="3">3.º año</option><option value="4">4.º año</option><option value="5">5.º año</option></select></label></div><p id="fgBagSourceNote" class="muted pci-fg-source-note" role="status">La Matriz original no identifica años por contenido. Para ver contenidos priorizados por año, elegí FG vigente.</p><label><span class="sr-only">Buscar contenidos</span><input id="contentSearch" type="search" placeholder="Buscar contenido, materia o eje"></label><div class="filter-pair"><label><span>Materia</span><select id="subjectFilter"><option value="">Todas</option></select></label><label><span>Eje / bloque</span><select id="axisFilter"><option value="">Todos</option></select></label></div><label class="check-row"><input id="pendingFilter" type="checkbox"> Mostrar solo pendientes</label></div><div id="contentList" class="content-list"></div><div class="selection-bar"><div><strong id="selectionCount">0 seleccionados</strong><small id="selectionTarget">Elegí un espacio de destino</small></div><button id="moveSelected" class="button primary" type="button" disabled>Asignar seleccionados</button></div></aside><div id="groups" class="group-list"></div></div><div id="bagBackdrop" class="drawer-backdrop mobile-only"></div></section>
