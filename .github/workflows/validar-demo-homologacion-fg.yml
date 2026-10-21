@@ -36,6 +36,11 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verificar muestra real en escritorio y celular
         run: node tests/integracion-homologacion-demo-browser.mjs
+      - name: Adjuntar archivo HTML autocontenido para abrir sin Internet
+        if: always()
+        run: |
+          mkdir -p test-artifacts/homologacion-fg/
+          cp demo-homologacion-fg.html test-artifacts/homologacion-fg/MUESTRA-FG-V2-ABRIR.html
       - name: Capturas de muestra homologación FG
         if: always()
         uses: actions/upload-artifact@v4
