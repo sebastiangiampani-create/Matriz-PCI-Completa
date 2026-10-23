@@ -95,48 +95,84 @@ function buildRecord(row,ids,source,reference,originalStatus){
     }
   };
 }
+/** La procedencia explícita prevalece cuando dos catálogos comparten un ID. */
+function isDirectReference(id,catalog,source,reference){
+  if(catalog===AUTO_FG_TARGET)return true;
+  if(catalog===AUTO_FG_SOURCE)return false;
+  return reference.has(id)&&!source.has(id);
+}
+/**
+ * El análisis incluye también los contenidos históricos de los planes.
+ * Se crea una vista de lectura: no se agrega nada a la Matriz original.
+ * Los IDs ya V2 no vuelven a tratarse como contenido histórico desconocido.
+ */
+function areasForLegacyAnalysis(areas,source,reference){
+  const result=clone(areas);
+  for(const block of Object.values(result)){
+    for(const group of list(block?.groups)){
+      const legacy=uniq(group.items).filter(id=>
+        !isDirectReference(id,group.curriculumCatalog,source,reference));
+      for(const plan of list(group.plansBimestrales)){
+        const catalog=plan.curriculumCatalog??group.curriculumCatalog;
+        legacy.push(...uniq(plan.contentIds).filter(id=>
+          !isDirectReference(id,catalog,source,reference)));
+      }
+      group.items=uniq(legacy);
+    }
+  }
+  return result;
+}
 function buildConvertedAreas({areas,approvedMappings,matrixRows,v2FgRows}){
   const source=new Map(matrixRows.map(r=>[String(r.id),r]));
   const reference=new Map(v2FgRows.map(r=>[String(r.id),r]));
   const result={},plansRetained=[];
   for(const [containerArea,block] of Object.entries(areas)){
     const groups=list(block?.groups).map(g=>{
-      const year=Number(g.level),validated=new Set(),orphans=[];
-      for(const id of uniq(g.items)){
-        const old=source.get(id);
-        const mapping=approvedMappings[localKey(old?.area||containerArea,year,id)];
-        const ids=approvedReferenceIds(mapping);
-        if(ids.length){
-          for(const v of ids){
-            const target=reference.get(v);
-            if(validTarget(old,target,year))validated.add(v);
+      const year=Number(g.level),validated=new Set(),orphans=new Set(),directOrphans=new Set();
+      function resolve(ids,catalog){
+        const refs=new Set(),legacyMissing=new Set(),directMissing=new Set();
+        for(const id of uniq(ids)){
+          if(isDirectReference(id,catalog,source,reference)){
+            // Se pueden usar contenidos de distintos años. Conservarlos
+            // NO implica acreditarlos: coverageOfficial filtra por nivel.
+            if(reference.has(id))refs.add(id);else directMissing.add(id);
+            continue;
           }
-        }else orphans.push(id);
-      }
-      for(const id of uniq(g.fgV2ContentIds)){
-        const row=reference.get(id);
-        if(row&&Number(row.year)===year)validated.add(id);
-      }
-      const plans=list(g.plansBimestrales).map(plan=>{
-        const contentIds=new Set(),unconverted=[];
-        for(const id of uniq(plan.contentIds)){
           const old=source.get(id);
           const mapping=approvedMappings[localKey(old?.area||containerArea,year,id)];
-          const targets=approvedReferenceIds(mapping);
-          if(!targets.length){unconverted.push(id);continue;}
-          for(const v of targets){
-            if(validTarget(old,reference.get(v),year))contentIds.add(v);
-          }
+          const targets=approvedReferenceIds(mapping).filter(v=>
+            validTarget(old,reference.get(v),year));
+          if(targets.length)targets.forEach(v=>refs.add(v));
+          else legacyMissing.add(id);
         }
-        // Preservar cada propiedad del plan: nombre, objetivos, etapas,
-        // actividades, recursos, etc. Solo cambiar el campo curricular
-        // activo a IDs V2; no tocar el plan histórico del respaldo.
+        return {refs,legacyMissing,directMissing};
+      }
+      function include(target,converted){
+        converted.refs.forEach(id=>target.add(id));
+        converted.legacyMissing.forEach(id=>orphans.add(id));
+        converted.directMissing.forEach(id=>directOrphans.add(id));
+      }
+      include(validated,resolve(g.items,g.curriculumCatalog));
+      include(validated,resolve(g.fgV2ContentIds,AUTO_FG_TARGET));
+      const plans=list(g.plansBimestrales).map(plan=>{
+        const contentIds=new Set();
+        const regular=resolve(plan.contentIds,plan.curriculumCatalog??g.curriculumCatalog);
+        const explicit=resolve(plan.fgV2ContentIds,AUTO_FG_TARGET);
+        include(contentIds,regular);include(contentIds,explicit);
+        // El agrupamiento contiene la unión de lo ubicado directamente
+        // y lo trabajado en sus planes, siempre sin duplicar IDs.
+        contentIds.forEach(id=>validated.add(id));
+        const unconverted=uniq([...regular.legacyMissing,...explicit.legacyMissing]);
+        const missingDirect=uniq([...regular.directMissing,...explicit.directMissing]);
         const out={...clone(plan),contentIds:[...contentIds],
+          ...(Array.isArray(plan.fgV2ContentIds)?{fgV2ContentIds:[...contentIds]}:{}),
           curriculumCatalog:AUTO_FG_TARGET,
           legacyConversion:{sourceVersion:AUTO_FG_SOURCE,
             automaticallyValidated:true,reviewRecommended:true,
             convertedReferenceCount:contentIds.size,
             unresolvedLegacyCount:unconverted.length,
+            unresolvedDirectCount:missingDirect.length,
+            unresolvedDirectIds:missingDirect,
             label:AUTO_VALIDATION_LABEL}};
         plansRetained.push({area:containerArea,groupId:String(g.id),planNumber:plan.number,
           originalPlan:clone(plan),convertedPlan:clone(out)});
@@ -149,7 +185,10 @@ function buildConvertedAreas({areas,approvedMappings,matrixRows,v2FgRows}){
         legacyConversion:{sourceVersion:AUTO_FG_SOURCE,
           originGroupId:String(g.id),originArea:containerArea,
           automaticallyValidated:true,reviewRecommended:true,
-          matchedV2Count:validated.size,unresolvedLegacyCount:orphans.length,
+          matchedV2Count:validated.size,unresolvedLegacyCount:orphans.size,
+          unresolvedDirectCount:directOrphans.size,
+          unresolvedDirectIds:[...directOrphans],
+          referencesFromOtherYears:[...validated].filter(id=>Number(reference.get(id).year)!==year).length,
           label:AUTO_VALIDATION_LABEL}};
       return group;
     });
@@ -197,7 +236,8 @@ export function automaticallyValidateImportedFg({
   const source=new Map(matrixRows.map(r=>[String(r.id),r]));
   const reference=new Map(v2FgRows.map(r=>[String(r.id),r]));
   const review=analyzeAutomaticFgMatches({
-    areas:initial.areas,matrixRows,v2FgRows,orientationId,
+    areas:areasForLegacyAnalysis(initial.areas,source,reference),
+    matrixRows,v2FgRows,orientationId,
     approvedMappings:existingApprovals,maxReferences:4
   });
   const mappings={},decisions=[],unresolved=[];
