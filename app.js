@@ -18,6 +18,11 @@ import {
   sourceAreaFor,
   validateStructure,
 } from './pci-model.js';
+import {loadV2Fg} from './src/integracion-curricular/catalogos.js';
+import {
+  officialFgRowsFor, officialIdsInGroup, stageOfficialFgInGroup,
+  removeOfficialFgFromGroup, officialFgCoverageAtYear
+} from './src/integracion-curricular/fg-year-bag.mjs';
 
 const DATA_FILES = [
   'data/db1.txt',
@@ -61,7 +66,19 @@ const escapeHtml = (value) =>
   })[character]);
 
 let DATA = [];
+let officialFgCatalog = [];
+let officialFgById = new Map();
+let officialFgReady = false;
+let officialFgLoadError = '';
+const isOfficialFgBag = () => $('fgBagSource')?.value === 'vigente';
+const fgBagYear = () => Number($('fgBagYear')?.value || 0);
 let app = migrateState(readStoredState());
+// Esta rama sólo escribe borradores por orientación. Jamás la clave histórica.
+const WORK_PREFIX = 'pci-matriz-orientacion-borrador-20261014:';
+let originalSnapshot = null;
+let activeDraftKey = null;
+let activeOrientation = null;
+const safeCopy = value => JSON.parse(JSON.stringify(value));
 let currentArea = app.current && AREA_CONFIG[app.current] ? app.current : null;
 let selectedGroupId = null;
 let selectedContentIds = new Set();
@@ -103,9 +120,11 @@ async function loadCurriculum() {
 
 function persist({ announce = false } = {}) {
   app.schemaVersion = 10;
-  localStorage.setItem('pciAppV2', JSON.stringify(app));
+  if (activeDraftKey) localStorage.setItem(activeDraftKey, JSON.stringify(app));
   window.app = app;
-  window.dispatchEvent(new CustomEvent('pci-state-change', { detail: { schemaVersion: 10 } }));
+  window.dispatchEvent(new CustomEvent('pci-state-change', {
+    detail: { schemaVersion: 10, orientation: activeOrientation, draft: !!activeDraftKey }
+  }));
   if (announce) toast('Cambios guardados');
 }
 
@@ -208,6 +227,10 @@ function renderOverview() {
 
 function openArea(area, groupId = null) {
   if (!AREA_CONFIG[area]) return;
+  if (!activeDraftKey) {
+    document.getElementById('pciImportOpen')?.click();
+    return;
+  }
   currentArea = area;
   app.current = area;
   const groups = app.areas[area].groups;
@@ -225,7 +248,27 @@ function resetBagFilters() {
   $('contentSearch').value = '';
   $('subjectFilter').value = '';
   $('axisFilter').value = '';
+  $('fgBagYear').value = '0';
   $('pendingFilter').checked = false;
+}
+
+function bagSourceRows() {
+  return isOfficialFgBag()
+    ? officialFgRowsFor({rows:officialFgCatalog,
+        area:sourceAreaFor(currentArea),year:fgBagYear()})
+    : sourceContents(currentArea);
+}
+
+function officialFgAssignments() {
+  const result = new Map();
+  for (const {area,group} of allGroups(app)) {
+    for (const id of officialIdsInGroup(group)) {
+      const locations = result.get(id) || [];
+      locations.push({area,groupId:group.id,groupName:group.name,level:group.level});
+      result.set(id,locations);
+    }
+  }
+  return result;
 }
 
 function temporalLabel(group) {
@@ -259,7 +302,17 @@ function renderBoardWarning() {
 }
 
 function populateBagFilters() {
-  const rows = sourceContents(currentArea);
+  const official = isOfficialFgBag();
+  $('fgBagYear').disabled = !official || !officialFgReady;
+  const note = $('fgBagSourceNote');
+  note.textContent = official
+    ? (officialFgLoadError
+      ? 'No se pudo cargar la FG vigente por año: '+officialFgLoadError
+      : officialFgReady
+        ? 'FG priorizada oficial por año (V2). Los contenidos se asignan a un borrador separado; la Matriz histórica y sus planes se conservan.'
+        : 'Cargando contenidos oficiales FG de 1.º a 5.º…')
+    : 'Base histórica de Matriz PCI: sus filas no tienen año oficial. Elegí FG vigente para consultar y ubicar los contenidos priorizados por año.';
+  const rows = bagSourceRows();
   const currentSubject = $('subjectFilter').value;
   const currentAxis = $('axisFilter').value;
   const subjects = [...new Set(rows.map((row) => row.subject))].sort((a, b) => a.localeCompare(b, 'es'));
@@ -348,6 +401,25 @@ function assignedItems(group) {
   }).join('');
 }
 
+function officialFgAssignedItems(group) {
+  const ids=officialIdsInGroup(group);
+  if(!ids.length)return '';
+  const locationYear=Number(group.level)||0;
+  return '<section class="pci-fg-official-assigned" aria-label="Contenidos FG vigente homologables">' +
+    '<div class="assigned-heading"><h3>FG vigente · por año</h3><span class="pill">'+ids.length+'</span></div>' +
+    '<p class="pci-fg-source-note">Borrador nuevo: la base original, sus agrupamientos y planes no se modifican.</p>' +
+    '<div class="assigned-list">' +
+    ids.map(id=>{
+      const row=officialFgById.get(id);
+      return '<article class="assigned-item" draggable="true" data-content-id="'+escapeHtml(id)+'" data-fg-source="vigente">' +
+        '<div><small>'+escapeHtml(row?.subject||'Contenido oficial')+' · '+(row?.year||'?')+'.º año de origen' +
+        (row&&Number(row.year)!==locationYear?' · otro año':'')+
+        '</small><p>'+escapeHtml(row?.text||id)+'</p></div>' +
+        '<button class="remove-content" type="button" data-remove-fg-v2="'+escapeHtml(id)+'" aria-label="Quitar contenido FG vigente">×</button>' +
+        '</article>';
+    }).join('')+'</div></section>';
+}
+
 function renderGroups() {
   const groups = app.areas[currentArea].groups;
   if (!groups.length) {
@@ -377,6 +449,7 @@ function renderGroups() {
       <div class="form-grid">${groupFields(group)}</div>
       <div class="assigned-heading"><h3>Contenidos asignados</h3><span class="pill">${group.items.length}</span></div>
       <div class="assigned-list">${assignedItems(group)}</div>
+      ${officialFgAssignedItems(group)}
       ${group.kind === 'other' ? '<div class="group-footer"><button class="button danger" type="button" data-delete-other>Eliminar formato</button></div>' : ''}
     </article>`).join('');
 
@@ -399,15 +472,16 @@ function bindGroupEvents() {
     card.addEventListener('pointerdown', () => selectGroup(groupId));
     card.addEventListener('dragover', (event) => {
       event.preventDefault();
-      event.dataTransfer.dropEffect = 'move';
+      event.dataTransfer.dropEffect =
+        event.dataTransfer.types.includes('application/x-pci-official-fg') ? 'copy' : 'move';
       card.classList.add('drop-target');
     });
     card.addEventListener('dragleave', () => card.classList.remove('drop-target'));
     card.addEventListener('drop', (event) => {
       event.preventDefault();
       card.classList.remove('drop-target');
-      const id = readDraggedContent(event);
-      if (id) assignContents(groupId, [id]);
+      const dragged = readDraggedContent(event);
+      if (dragged) assignContents(groupId, [dragged.id], dragged.source);
     });
 
     card.querySelectorAll('[data-field]').forEach((field) => {
@@ -423,6 +497,17 @@ function bindGroupEvents() {
         toast('Contenido devuelto a la bolsa');
       });
     });
+    card.querySelectorAll('[data-remove-fg-v2]').forEach(button=>{
+      button.addEventListener('click',event=>{
+        event.stopPropagation();
+        const found=findGroup(app,groupId);
+        if(!found)return;
+        removeOfficialFgFromGroup(found.group,button.dataset.removeFgV2);
+        persist();
+        renderBoard();
+        toast('Contenido FG vigente retirado de este espacio; el original sigue intacto');
+      });
+    });
     card.querySelector('[data-delete-other]')?.addEventListener('click', (event) => {
       event.stopPropagation();
       removeOtherFormat(groupId);
@@ -430,7 +515,7 @@ function bindGroupEvents() {
   });
 
   document.querySelectorAll('.assigned-item').forEach((item) => {
-    item.addEventListener('dragstart', (event) => writeDraggedContent(event, item.dataset.contentId));
+    item.addEventListener('dragstart', (event) => writeDraggedContent(event, item.dataset.contentId, item.dataset.fgSource||'historica'));
   });
 }
 
@@ -509,37 +594,52 @@ function renderContents() {
   const subject = $('subjectFilter').value;
   const axis = $('axisFilter').value;
   const pendingOnly = $('pendingFilter').checked;
-  const source = sourceContents(currentArea);
-  const assignments = assignmentMap();
+  const official = isOfficialFgBag();
+  const source = bagSourceRows();
+  const assignments = official ? officialFgAssignments() : assignmentMap();
   const visible = source.filter((content) => {
-    const location = assignments.get(content.id) ?? [];
-    const haystack = `${content.subject} ${content.axis} ${content.text}`.toLocaleLowerCase('es');
+    const locations = assignments.get(String(content.id)) ?? [];
+    const haystack = [content.subject, content.axis, content.subaxis, content.text]
+      .join(' ').toLocaleLowerCase('es');
     return (!query || haystack.includes(query))
       && (!subject || content.subject === subject)
       && (!axis || content.axis === axis)
-      && (!pendingOnly || !location.length);
+      && (!pendingOnly || !locations.length);
   });
-  const pending = source.filter((content) => !(assignments.get(content.id)?.length)).length;
-  $('bagMeta').textContent = `${visible.length} visibles · ${pending} pendientes`;
+  const pending = source.filter((content) => !(assignments.get(String(content.id))?.length)).length;
+  $('bagMeta').textContent = official
+    ? officialFgReady
+      ? visible.length + ' visibles · ' + pending + ' pendientes · FG por año'
+      : 'Cargando FG oficial de 1.º a 5.º…'
+    : visible.length + ' visibles · ' + pending + ' pendientes · Matriz original';
   $('contentList').innerHTML = visible.length
     ? visible.map((content) => {
-        const locations = assignments.get(content.id) ?? [];
-        const selected = selectedContentIds.has(content.id);
-        return `
-          <article class="content-item ${selected ? 'selected' : ''} ${locations.length ? 'assigned' : ''}" draggable="true" data-content-id="${escapeHtml(content.id)}">
-            <input type="checkbox" tabindex="-1" ${selected ? 'checked' : ''} aria-hidden="true">
-            <div>
-              <small>${escapeHtml(content.subject)} · ${escapeHtml(content.axis || 'Sin eje / bloque')}</small>
-              <p>${escapeHtml(content.text)}</p>
-              ${locations.length ? `<span class="content-location">En ${escapeHtml(locations.map((location) => location.groupName).join(' · '))}</span>` : '<span class="content-location pending-text">Pendiente</span>'}
-            </div>
-          </article>`;
+        const locations = assignments.get(String(content.id)) ?? [];
+        const selected = selectedContentIds.has(String(content.id));
+        return '<article class="content-item ' +
+          (selected ? 'selected ' : '') + (locations.length ? 'assigned' : '') +
+          '" draggable="true" data-content-id="' + escapeHtml(content.id) +
+          '" data-fg-source="' + (official ? 'vigente' : 'historica') + '"' +
+          (official ? ' data-fg-year="' + Number(content.year) + '"' : '') + '>' +
+          '<input type="checkbox" tabindex="-1" ' + (selected ? 'checked' : '') + ' aria-hidden="true">' +
+          '<div><small>' + escapeHtml(content.subject) + ' · ' +
+          escapeHtml(content.axis || 'Sin eje / bloque') +
+          (official ? ' · <strong>' + Number(content.year) + '.º año</strong>' : '') +
+          '</small><p>' + escapeHtml(content.text) + '</p>' +
+          (locations.length ? '<span class="content-location">En ' +
+           escapeHtml(locations.map((x) => x.groupName).join(' · ')) + '</span>'
+           : '<span class="content-location pending-text">Pendiente</span>') +
+          '</div></article>';
       }).join('')
-    : '<div class="empty-state">No hay contenidos que coincidan con estos filtros.</div>';
-
-  document.querySelectorAll('.content-item').forEach((item) => {
+    : '<div class="empty-state">' +
+      (official && !officialFgReady
+        ? escapeHtml(officialFgLoadError || 'Cargando contenidos de FG por año…')
+        : 'No hay contenidos que coincidan con estos filtros.') + '</div>';
+  document.querySelectorAll('#contentList .content-item').forEach((item) => {
+    if(item.classList.contains('pci-tutoria-item')) return;
     item.addEventListener('click', () => toggleContentSelection(item.dataset.contentId));
-    item.addEventListener('dragstart', (event) => writeDraggedContent(event, item.dataset.contentId));
+    item.addEventListener('dragstart', (event) =>
+      writeDraggedContent(event, item.dataset.contentId, item.dataset.fgSource || 'historica'));
   });
   updateSelectionBar();
 }
@@ -553,31 +653,50 @@ function toggleContentSelection(contentId) {
 function updateSelectionBar() {
   const found = selectedGroupId ? findGroup(app, selectedGroupId) : null;
   const count = selectedContentIds.size;
-  $('selectionCount').textContent = `${count} seleccionado${count === 1 ? '' : 's'}`;
-  $('selectionTarget').textContent = found ? `Destino: ${found.group.name}` : 'Creá o elegí un espacio de destino';
-  $('moveSelected').disabled = !count || !found;
-  $('moveSelected').textContent = count ? `Mover ${count}` : 'Mover seleccionados';
+  const official = isOfficialFgBag();
+  $('selectionCount').textContent = count + ' seleccionado' + (count===1 ? '' : 's');
+  $('selectionTarget').textContent = found ? 'Destino: ' + found.group.name : 'Creá o elegí un espacio de destino';
+  $('moveSelected').disabled = !count || !found || (official && !officialFgReady);
+  $('moveSelected').textContent = count
+    ? (official ? 'Ubicar ' + count + ' en FG vigente' : 'Mover ' + count)
+    : (official ? 'Ubicar seleccionados · FG vigente' : 'Mover seleccionados');
 }
 
-function writeDraggedContent(event, contentId) {
-  event.dataTransfer.effectAllowed = 'move';
+function writeDraggedContent(event, contentId, catalog='historica') {
+  event.dataTransfer.effectAllowed = catalog === 'vigente' ? 'copy' : 'move';
   event.dataTransfer.setData('text/plain', String(contentId));
   event.dataTransfer.setData('application/x-pci-content', String(contentId));
+  event.dataTransfer.setData('application/x-pci-catalog', catalog);
+  if(catalog==='vigente')event.dataTransfer.setData('application/x-pci-official-fg', '1');
 }
 
 function readDraggedContent(event) {
-  return event.dataTransfer.getData('application/x-pci-content') || event.dataTransfer.getData('text/plain');
+  const id = event.dataTransfer.getData('application/x-pci-content') ||
+    event.dataTransfer.getData('text/plain');
+  if(!id) return null;
+  return {id, source: event.dataTransfer.getData('application/x-pci-catalog') || 'historica'};
 }
 
-function assignContents(groupId, contentIds) {
+function assignContents(groupId, contentIds, sourceOverride=null) {
   try {
-    moveContents(app, groupId, contentIds);
+    const source = sourceOverride || (isOfficialFgBag() ? 'vigente' : 'historica');
+    if (source === 'vigente') {
+      if (!officialFgReady) throw new Error('Esperá que se cargue la FG priorizada por año.');
+      const target = findGroup(app, groupId);
+      if (!target) throw new Error('No existe el espacio curricular de destino.');
+      stageOfficialFgInGroup(target.group, contentIds, officialFgCatalog,
+        sourceAreaFor(target.area));
+    } else if (source === 'historica') {
+      moveContents(app, groupId, contentIds);
+    } else throw new Error('Base curricular de origen inválida.');
     selectedGroupId = groupId;
     selectedContentIds.clear();
     persist();
     renderBoard();
     closeContentBag();
-    toast(contentIds.length === 1 ? 'Contenido ubicado' : `${contentIds.length} contenidos ubicados`);
+    toast(source==='vigente'
+      ? 'FG vigente: ubicación guardada en el borrador independiente; la Matriz original no se modifica.'
+      : (contentIds.length===1 ? 'Contenido ubicado' : contentIds.length+' contenidos ubicados'));
   } catch (error) {
     toast(error.message);
   }
@@ -853,6 +972,24 @@ function bindEvents() {
   });
   $('schoolName').addEventListener('change', () => toast('Nombre guardado'));
   $('addOther').addEventListener('click', createOtherFormat);
+  $('fgBagSource').addEventListener('change', () => {
+    selectedContentIds.clear();
+    $('subjectFilter').value='';
+    $('axisFilter').value='';
+    $('fgBagYear').value='0';
+    if(currentArea){
+      populateBagFilters();
+      renderContents();
+      renderGroups();
+    }
+  });
+  $('fgBagYear').addEventListener('change', () => {
+    selectedContentIds.clear();
+    if(currentArea){
+      populateBagFilters();
+      renderContents();
+    }
+  });
   $('contentSearch').addEventListener('input', renderContents);
   $('subjectFilter').addEventListener('change', renderContents);
   $('axisFilter').addEventListener('change', renderContents);
@@ -882,12 +1019,36 @@ async function start() {
   bindEvents();
   try {
     DATA = await loadCurriculum();
-    app = migrateState(readStoredState());
+    // Cargar por separado el catálogo oficial con año 1.º..5.º.
+    // No se modifican los contenidos antiguos, ni sus IDs ni sus planes.
+    void loadV2Fg().then(rows=>{
+      officialFgCatalog=rows;
+      officialFgById=new Map(rows.map(row=>[String(row.id),row]));
+      officialFgReady=true;
+      officialFgLoadError='';
+      if(currentArea){
+        populateBagFilters();
+        renderContents();
+        renderGroups();
+      }
+    }).catch(error=>{
+      officialFgReady=false;
+      officialFgLoadError=String(error?.message||error);
+      if(currentArea){
+        populateBagFilters();
+        renderContents();
+      }
+    });
+    const raw = readStoredState();
+    originalSnapshot = safeCopy(raw?.areas ? raw : migrateState(raw));
+    app = migrateState(originalSnapshot);
     currentArea = app.current && AREA_CONFIG[app.current] ? app.current : null;
     window.DATA = DATA;
     window.app = app;
     persist();
     renderOverview();
+    window.PCIApp.ready = true;
+    window.dispatchEvent(new Event('pci-app-ready'));
     $('loading').remove();
   } catch (error) {
     console.error(error);
@@ -895,9 +1056,68 @@ async function start() {
   }
 }
 
+// Único punto permitido de escritura para los módulos históricos auxiliares.
+function saveScopedState(candidate) {
+  if (!activeDraftKey || candidate !== app) return false;
+  localStorage.setItem(activeDraftKey, JSON.stringify(app));
+  return true;
+}
+function draftKeyFor(orientation) {
+  if (typeof orientation !== 'string' || !orientation.trim()) throw Error('Falta la orientación.');
+  return WORK_PREFIX + encodeURIComponent(orientation.trim());
+}
+function switchOrientationDraft(orientation) {
+  const key = draftKeyFor(orientation);
+  let stored = null;
+  try { stored = JSON.parse(localStorage.getItem(key) || 'null'); } catch { stored = null; }
+  if (!stored || typeof stored.areas !== 'object') {
+    activeDraftKey = null;
+    activeOrientation = null;
+    app = migrateState(originalSnapshot || {});
+  } else {
+    activeDraftKey = key;
+    activeOrientation = orientation;
+    app = migrateState(stored);
+  }
+  currentArea = app.current && AREA_CONFIG[app.current] ? app.current : null;
+  selectedGroupId = null;
+  selectedContentIds.clear();
+  window.app = app;
+  renderOverview();
+  window.dispatchEvent(new Event('pci-orientation-changed'));
+  return Boolean(activeDraftKey);
+}
+function activateOrientationDraft(orientation, source) {
+  const key = draftKeyFor(orientation);
+  const backupKey = key + ':original-sin-transformar';
+  if (!source || typeof source.areas !== 'object' || Array.isArray(source.areas))
+    throw Error('La copia revisada no contiene Formación General.');
+  if (!localStorage.getItem(key)) {
+    const raw = JSON.stringify(source);
+    // Siempre se guarda la copia literal antes de habilitar edición.
+    if (!localStorage.getItem(backupKey)) {
+      localStorage.setItem(backupKey, raw);
+      if (localStorage.getItem(backupKey) !== raw)
+        throw Error('No se pudo verificar el respaldo de revisión.');
+    }
+    const editable = JSON.stringify(migrateState(safeCopy(source)));
+    localStorage.setItem(key, editable);
+    if (localStorage.getItem(key) !== editable)
+      throw Error('No se pudo guardar una copia editable independiente.');
+  }
+  if (!switchOrientationDraft(orientation)) throw Error('No se pudo abrir la copia de la orientación.');
+  return { orientation, key, originalPreserved: true, localOnly: true };
+}
 window.PCIApp = {
+  ready: false,
   getData: () => DATA,
   getState: () => app,
+  getOriginalState: () => safeCopy(originalSnapshot || {}),
+  getActiveOrientation: () => activeOrientation,
+  isOrientationReady: (name) => activeDraftKey === draftKeyFor(name),
+  switchOrientationDraft,
+  activateOrientationDraft,
+  saveScopedState,
   openOverview: () => showScreen('overview'),
   openControl: () => showScreen('control'),
   openMatrix: () => showScreen('matrix'),

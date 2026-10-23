@@ -1,0 +1,70 @@
+name: Validar concurrencia PCI aislada
+
+on:
+  pull_request:
+    paths:
+      - 'src/concurrencia-pci/**'
+      - 'migration/concurrencia/**'
+      - 'supabase/functions/pci-collab/**'
+      - 'tests/concurrencia/**'
+      - '.github/workflows/validar-concurrencia-pci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contrato-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxis
+        run: |
+          node --check src/concurrencia-pci/scoped-store.mjs
+          node --check src/concurrencia-pci/scoped-store.test.mjs
+          node --check src/concurrencia-pci/sync-session.mjs
+          node --check src/concurrencia-pci/sync-session.test.mjs
+          node --check src/concurrencia-pci/iframe-bridge.mjs
+          node --check src/concurrencia-pci/iframe-bridge.test.mjs
+      - name: Pruebas aisladas sin datos reales
+        run: node --test src/concurrencia-pci/*.test.mjs
+
+  concurrencia-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-only-test
+          POSTGRES_DB: pci_collaboration_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d pci_collaboration_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: ci-only-test
+      PGDATABASE: pci_collaboration_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cliente PostgreSQL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+      - name: Preparar exclusivamente datos sintéticos
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/concurrencia/pg-fixture.sql
+      - name: Ejecutar esquema propuesto en PostgreSQL efímero
+        run: psql -X -v ON_ERROR_STOP=1 -f migration/concurrencia/003_supabase_scoped_units.sql
+      - name: Verificar FG, FO, RLS, revisión e integridad histórica
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/concurrencia/pg-contract.sql
+      - name: Colisión de dos editores simultáneos
+        run: sh tests/concurrencia/pg-race.sh

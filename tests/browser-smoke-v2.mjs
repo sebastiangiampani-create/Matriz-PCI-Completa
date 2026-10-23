@@ -85,18 +85,32 @@ try {
     'Deben cargarse los 35 contenidos de Tutoría.',
   );
 
+  // La rama de integración exige revisar y aprobar la copia FG antes de editar.
+  // Respetar ese flujo evita que el test saltee la protección histórica.
+  const unchangedOriginal = await page.evaluate(() => localStorage.getItem('pciAppV2'));
+  await page.locator('#pciImportOpen').click();
+  await page.locator('#pciImportPrepare').click();
+  await page.locator('#pciImportReviewContent').waitFor({state:'visible'});
+  await page.locator('#pciImportReviewed').check();
+  await page.locator('#pciImportApprove').click();
+  assert.equal(await page.evaluate(() => localStorage.getItem('pciAppV2')), unchangedOriginal,
+    'Aprobar la copia FG no puede reemplazar la matriz original');
+  assert.ok(await page.evaluate(() => window.PCIApp.getActiveOrientation()),
+    'El proceso aprobado debe tener orientación identificada');
   await page.evaluate(() => window.PCIApp.openArea('Artes'));
   await page.waitForSelector('#board.active');
   await page.waitForFunction(() => document.querySelector('#boardAlert')?.textContent.includes('Regla curricular de Artes'));
-  assert.equal(await page.locator('[data-pci-art-language]').count(), 3, 'Artes debe ofrecer tres lenguajes para elegir dos.');
-  await page.locator('[data-pci-art-language="Artes Visuales"]').check();
-  await page.locator('[data-pci-art-language="Música"]').check();
-  await page.waitForFunction(() => document.querySelector('[data-pci-art-language="Teatro"]')?.disabled === true);
-  assert.deepEqual(
-    await page.evaluate(() => window.PCIApp.getState().curriculumRules.artLanguages),
-    ['Artes Visuales', 'Música'],
-  );
-  assert.match(await page.locator('#coverageHint').textContent(), /tres ejes/);
+  // Regla vigente: cada taller aborda los tres ejes, sin restringir
+  // Artes Visuales, Música ni Teatro. Nunca forzar selección de dos lenguajes.
+  assert.equal(await page.locator('[data-pci-art-language]').count(), 0,
+    'Artes no debe exigir elegir dos lenguajes ni deshabilitar el tercero.');
+  const artsRule = await page.locator('#boardAlert').textContent();
+  for (const axis of ['Producción', 'Apreciación', 'Contextualización']) {
+    assert.match(artsRule, new RegExp(axis),
+      'El aviso de Artes debe mostrar el eje ' + axis);
+  }
+  assert.match(await page.locator('#coverageHint').textContent(),
+    /tres lenguajes están disponibles/i);
   await page.screenshot({ path: `${ARTIFACTS}/03-artes-regla-curricular.png`, fullPage: true });
 
   await page.evaluate(() => window.PCIApp.openArea('Educación Física'));
@@ -130,6 +144,10 @@ try {
 
   await page.evaluate(() => window.PCIApp.openOverview());
   await page.click('#overviewMatrix');
+  await page.waitForSelector('#pci-integrated-matrix:not([hidden])');
+  assert.equal(await page.locator('#matrix.active').count(), 0,
+    'Matriz completa abre la oferta integrada, no sustituye la Matriz original');
+  await page.locator('#pciIntegratedClassic').click();
   await page.waitForSelector('#matrix.active');
   const desktopHeaderBox = await page.locator('.matrix-header').boundingBox();
   const desktopFirstRowBox = await page.locator('.matrix-area-row').first().boundingBox();
@@ -159,7 +177,19 @@ try {
   const mobileErrors = collectBrowserErrors(mobile);
   await waitForApp(mobile, mobileErrors, '07-error-carga-mobile.png');
 
+  // También en móvil se debe confirmar la copia del proceso antes de editar.
+  // Un contexto Playwright nuevo no conserva el borrador revisado de escritorio.
+  await mobile.locator('#pciImportOpen').click();
+  await mobile.locator('#pciImportPrepare').click();
+  await mobile.locator('#pciImportReviewContent').waitFor({state:'visible'});
+  await mobile.locator('#pciImportReviewed').check();
+  await mobile.locator('#pciImportApprove').click();
+  assert.ok(await mobile.evaluate(() => window.PCIApp.getActiveOrientation()),
+    'En móvil, la edición requiere orientación aprobada');
+
   await mobile.click('#overviewMatrix');
+  await mobile.waitForSelector('#pci-integrated-matrix:not([hidden])');
+  await mobile.locator('#pciIntegratedClassic').click();
   await mobile.waitForSelector('#matrix.active');
   const headerBox = await mobile.locator('.matrix-header').boundingBox();
   const firstRowBox = await mobile.locator('.matrix-area-row').first().boundingBox();

@@ -1,0 +1,51 @@
+name: Validar muestra de homologación FG
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'demo-homologacion-fg.html'
+      - 'demo-homologacion-fg.css'
+      - 'src/integracion-curricular/demo-homologacion-fg-ui.js'
+      - 'src/integracion-curricular/homologaciones.js'
+      - 'tests/integracion-homologacion-demo-browser.mjs'
+      - '.github/workflows/validar-demo-homologacion-fg.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  muestra-navegable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxis
+        run: |
+          node --check src/integracion-curricular/demo-homologacion-fg-ui.js
+          node --check tests/integracion-homologacion-demo-browser.mjs
+      - name: Comprobar homologación 1 a varios
+        run: node --test tests/integracion-homologaciones.test.js tests/integracion-homologaciones-lotes.test.js
+      - name: Instalar Chromium aislado
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verificar muestra real en escritorio y celular
+        run: node tests/integracion-homologacion-demo-browser.mjs
+      - name: Adjuntar archivo HTML autocontenido para abrir sin Internet
+        if: always()
+        run: |
+          mkdir -p test-artifacts/homologacion-fg/
+          cp demo-homologacion-fg.html test-artifacts/homologacion-fg/MUESTRA-FG-V2-ABRIR.html
+      - name: Capturas de muestra homologación FG
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: muestra-homologacion-fg
+          path: test-artifacts/homologacion-fg/
+          if-no-files-found: ignore
+          retention-days: 7

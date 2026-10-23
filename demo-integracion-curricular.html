@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Prueba aislada - Integracion Curricular</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#183b50;background:#f4f7f9}
+*{box-sizing:border-box}body{margin:0}main{max-width:1130px;margin:auto;padding:24px 18px 60px}
+h1{font-size:clamp(1.65rem,4vw,2.6rem);margin:8px 0 12px}h2{margin:0 0 12px;font-size:1.15rem}
+p{line-height:1.5}small{color:#506675}.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#236e71}
+.banner,.card{padding:20px;background:#fff;border:1px solid #d7e2e8;border-radius:16px}
+.banner{border-left:5px solid #ca8727;margin-bottom:18px}.banner strong{display:block;margin-bottom:6px}
+.selection{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:12px}
+.option{display:flex;gap:9px;align-items:flex-start;padding:10px;background:#f5f8fa;border:1px solid #dfe8ed;border-radius:10px;cursor:pointer}
+.option input{accent-color:#187e79;margin-top:4px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{font:inherit;border:1px solid #b5c8d1;background:#fff;color:#193b4c;font-weight:700;border-radius:10px;padding:10px 14px;cursor:pointer;min-height:44px}
+button.primary{background:#187e79;color:#fff;border-color:#187e79}
+button.active{border-color:#187e79;background:#e5f5f2}
+button:hover{filter:brightness(.96)}
+#workspaces{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:18px}
+.topline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.pill{font-size:.7rem;padding:4px 8px;border-radius:999px;background:#e7f4f2;color:#126e65;font-weight:800}
+.warning{margin-top:12px;border:1px solid #e2c18c;background:#fff9ed;border-radius:10px;padding:12px}
+.warning strong{display:block;margin-bottom:5px}.warning p{margin:6px 0}
+.subdued{color:#556d7c;font-size:.88rem}.example{margin-top:18px}.example p{margin:4px 0}
+ol{padding-left:20px}li{margin:5px 0}.spacer{height:14px}
+#globalStatus{font-weight:650;color:#236e71;margin-top:12px}
+@media(max-width:650px){.selection{grid-template-columns:1fr}main{padding:14px}.card,.banner{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">Matriz PCI Completa · Rama de integracion</div>
+<h1>Conservar o revisar la Formacion General por orientacion</h1>
+<div class="banner">
+<strong>Simulador aislado: datos inventados, sin guardado remoto</strong>
+Esta pagina no consulta Supabase, no utiliza claves institucionales y no modifica el PCI de ninguna escuela. Demuestra como mantener las secuencias originales y revisar una articulacion antes de aplicarla.
+</div>
+<section class="card">
+<h2>1. Seleccionar orientaciones de la escuela</h2>
+<p>El mapa de Formacion General que ya existe se copia completo una sola vez a cada orientacion. La eleccion inicial sera <strong>Conservar</strong>.</p>
+<div id="choices" class="selection"></div>
+<div class="spacer"></div>
+<button class="primary" type="button" id="create">Preparar orientaciones</button>
+<div id="globalStatus" role="status" aria-live="polite"></div>
+</section>
+<section class="example card" style="margin-top:18px">
+<h2>Ejemplo de trabajo existente</h2>
+<p><strong>Laboratorio de Ciencias Sociales · 3.º:</strong> Historia y Economia, dos contenidos seleccionados y un plan bimestral con las cuatro etapas de secuencia.</p>
+<p class="subdued">La articulacion con FO de Economia se propone solamente como ejemplo; nunca se confirma ni mueve materias.</p>
+</section>
+<div id="workspaces"></div>
+</main>
+<script type="module">
+import {
+  ORIENTATIONS,FG_MODES,createOrientationPackage,chooseFgMode,
+  getFgDecision,registerFoSpace,previewArticulation,queueReview,
+  inspectIntegration
+} from './src/integracion-curricular/bridge.js';
+
+const original={
+  schemaVersion:10,schoolName:'Escuela de demostracion',
+  areas:{
+    'Ciencias Sociales':{groups:[{
+      id:'social-3-c5',kind:'laboratory',name:'Laboratorio Sociales 3.º',level:3,startTerm:5,endTerm:5,
+      items:['historia-3','economia-3'],
+      plansBimestrales:[{number:1,name:'Procesos economicos y sociales',
+        objectives:'Relacionar procesos economicos y sociales',
+        contentIds:['historia-3','economia-3'],synopsis:'Investigacion del entorno',
+        stages:{
+          punto_partida:{description:'Preguntas iniciales',duration:'1 clase',activities:'Dialogar'},
+          indagacion:{description:'Analizar fuentes',duration:'2 clases',activities:'Investigar'},
+          produccion:{description:'Crear una presentacion',duration:'2 clases',activities:'Producir'},
+          evaluacion:{description:'Revisar criterios',duration:'1 clase',activities:'Autoevaluar'}
+        }
+      }]
+    }]},
+    'Matemática':{groups:[{
+      id:'mat-3',kind:'trunk',name:'Matemática 3.º',level:3,startTerm:5,endTerm:6,
+      items:['algebra-3'],plansBimestrales:[]
+    }]}
+  }
+};
+const $=id=>document.getElementById(id);
+const selected=new Set(['economia_administracion','ciencias_sociales_humanidades','ciencias_naturales']);
+let pack=null;
+function el(tag,text,className){
+  const x=document.createElement(tag);
+  if(text!==undefined)x.textContent=text;
+  if(className)x.className=className;
+  return x;
+}
+function button(label,onClick,style){
+  const b=el('button',label,style||'');
+  b.type='button';b.addEventListener('click',onClick);return b;
+}
+for(const orientation of ORIENTATIONS){
+  const label=el('label',undefined,'option'),check=document.createElement('input');
+  check.type='checkbox';check.value=orientation.id;check.checked=selected.has(orientation.id);
+  check.addEventListener('change',()=>{
+    if(check.checked)selected.add(orientation.id);else selected.delete(orientation.id);
+  });
+  label.append(check,el('span',orientation.name));$('choices').append(label);
+}
+function errorMessage(e){$('globalStatus').textContent='No se pudo completar la operacion: '+String(e?.message||e);}
+function render(){
+  $('workspaces').replaceChildren();
+  if(!pack)return;
+  const report=inspectIntegration(original,pack);
+  $('globalStatus').textContent='FG original intacta: '+(report.legacyUntouched?'si':'requiere revision')+'. Orientaciones activas: '+selected.size+'. Datos de ejemplo sin persistencia.';
+  for(const id of selected){
+    const w=pack.orientations[id];if(!w)continue;
+    const card=el('article',undefined,'card');
+    const head=el('div',undefined,'topline');
+    head.append(el('h2',w.name),el('span','FG independiente','pill'));
+    const decision=getFgDecision(pack,id);
+    const p=el('p',decision.description,'subdued');
+    const chooser=el('div',undefined,'row');
+    for(const choice of decision.options){
+      const current=w.fg.mode===choice.value;
+      chooser.append(button(choice.label,()=>{
+        try{pack=chooseFgMode(pack,id,choice.value);render();}catch(e){errorMessage(e);}
+      },current?'active':''));
+    }
+    const a=report.orientations[id].inventory;
+    const inventory=el('p',a.groups+' agrupamientos · '+a.plans+' plan(es) · '+a.stagesWithWork+' etapas elaboradas','subdued');
+    card.append(head,p,chooser,inventory);
+    if(w.fg.mode===FG_MODES.REVISAR){
+      const info=el('p','Revisar no elimina ni modifica secuencias. Toda articulacion debe pasar por homologacion y validacion curricular.','subdued');
+      card.append(info);
+      if(id==='economia_administracion'){
+        card.append(button('Simular articulacion Economia FG–FO',()=>{
+          try{
+            if(!pack.orientations[id].fo.spaces.some(s=>s.id==='fo-economia-n3')){
+              pack=registerFoSpace(pack,id,{id:'fo-economia-n3',
+                name:'Laboratorio FO de Economia',kind:'laboratorio',year:3});
+            }
+            const view=previewArticulation(pack,{
+              orientationId:id,area:'Ciencias Sociales',groupId:'social-3-c5',
+              foSpaceId:'fo-economia-n3',subject:'Economia',year:3
+            });
+            pack=queueReview(pack,view);
+            render();
+          }catch(e){errorMessage(e);}
+        },'primary'));
+      }
+    }
+    if(w.pendingReviews.length){
+      const warning=el('div',undefined,'warning');
+      warning.append(el('strong','Revisar laboratorio — pendiente'));
+      for(const review of w.pendingReviews){
+        warning.append(el('p',review.groupName+' · Materia: '+review.subject));
+        warning.append(el('p','Se conservan los planes y secuencias originales. La articulacion no fue confirmada.','subdued'));
+        for(const notice of review.notices){
+          const item=el('p',notice.title+': '+notice.detail,'subdued');warning.append(item);
+        }
+      }
+      card.append(warning);
+    }
+    $('workspaces').append(card);
+  }
+}
+$('create').addEventListener('click',()=>{
+  try{
+    pack=createOrientationPackage({
+      legacyState:original,schoolId:1001,orientationIds:[...selected],existing:pack
+    });
+    render();
+  }catch(e){errorMessage(e);}
+});
+$('create').click();
+</script>
+</body>
+</html>

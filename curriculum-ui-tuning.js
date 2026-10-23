@@ -78,7 +78,7 @@ function ensureStyles() {
 }
 
 function persistCurrent(current) {
-  localStorage.setItem('pciAppV2', JSON.stringify(current));
+  window.PCIApp?.saveScopedState?.(current);
   window.app = current;
   window.dispatchEvent(new CustomEvent('pci-state-change', { detail: { schemaVersion: current.schemaVersion ?? 10 } }));
 }
@@ -338,8 +338,13 @@ function refresh() {
 }
 
 function scheduleRefresh() {
-  clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(refresh, 45);
+  // Coalescer con plazo fijo: actualizaciones reiteradas del Mapa de la Oferta
+  // no deben posponer para siempre las reglas por cuatrimestre de Artes.
+  if (refreshTimer !== null) return;
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null;
+    refresh();
+  }, 45);
 }
 
 async function start() {

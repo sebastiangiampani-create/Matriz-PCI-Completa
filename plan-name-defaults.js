@@ -30,7 +30,7 @@ function isLegacyAutomaticName(name, group, number, previousSource = '') {
 function savePlanNameState() {
   const current = pciState();
   if (!current) return;
-  localStorage.setItem('pciAppV2', JSON.stringify(current));
+  window.PCIApp?.saveScopedState?.(current);
   window.app = current;
   window.dispatchEvent(new CustomEvent('pci-state-change', { detail: { source: 'plan-name-defaults' } }));
 }
