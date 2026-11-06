@@ -1,0 +1,66 @@
+name: Validar alta de escuelas y múltiples PCI - aislado
+
+on:
+  pull_request:
+    branches:
+      - feature/integracion-orientaciones-fg-secuencias-20261009
+    paths:
+      - preview-multipci.html
+      - migration/multipci/**
+      - tests/multipci/**
+      - .github/workflows/validar-multipci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validacion-aislada:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: demo-only-ci
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: demo-only-ci
+      PGDATABASE: postgres
+    steps:
+      - name: Descargar rama de prueba
+        uses: actions/checkout@v4
+      - name: Configurar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar sintaxis y aislamiento de la interfaz
+        run: node --test tests/multipci/*.test.mjs
+      - name: Preparar estructura mínima ficticia
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE ROLE service_role NOLOGIN BYPASSRLS;
+          CREATE TABLE public.pci_proposals (
+            school_id integer PRIMARY KEY,
+            data jsonb NOT NULL,
+            edit_code text,
+            primary_code text,
+            updated_at timestamptz NOT NULL DEFAULT clock_timestamp()
+          );
+          SQL
+      - name: Validar SQL aditivo en PostgreSQL 17 aislado
+        run: |
+          psql -v ON_ERROR_STOP=1 -f migration/multipci/001_additive_school_pcis.sql
+          psql -v ON_ERROR_STOP=1 -f tests/multipci/contrato-postgres.sql
