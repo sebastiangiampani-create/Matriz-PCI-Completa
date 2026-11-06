@@ -3,7 +3,7 @@
   const params = new URLSearchParams(window.location.search);
   const school = params.get('pci_school');
   const tab = params.get('pci_tab');
-  if (!/^\\d+$/.test(school || '') || !/^[a-f0-9]{32}$/.test(tab || '')) return;
+  if (!/^\d+$/.test(school || '') || !/^[a-f0-9]{32}$/.test(tab || '')) return;
   if (window.parent === window) return;
 
   const scopedKeys = new Set(['pciAppV2', 'pciTecnicaV2', 'pciTecnicaV1']);
