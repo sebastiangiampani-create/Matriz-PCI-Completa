@@ -56,12 +56,8 @@ test('vista aislada sin llamadas HTTP ni escrituras a Supabase',()=>{
 
 test('cada orientación y turno tiene un PCI separado con FG copiada',()=>{
   const ui=openPreview();
-  const legacy=ui.state()?.schools?.[0]?.legacy || {
-    schoolName:'Escuela Modelo A (ficticia)',schemaVersion:10,areas:{
-      'Ciencias Sociales':{groups:[{id:'social-demo',items:['simulado-1']}]}}
-  };
   ui.submit('pciCreate',{orientation:'economia_administracion',title:'Economía · Segundo PCI'});
-  const one=ui.state(),two=one.pcis.filter(p=>p.schoolId==='demo-01');
+  const one=ui.state(),legacy=one.schools[0].legacy,two=one.pcis.filter(p=>p.schoolId==='demo-01');
   assert.equal(two.length,2);
   assert.notEqual(two[0].id,two[1].id);
   assert.equal(two[0].orientationId,two[1].orientationId);
