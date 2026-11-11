@@ -105,6 +105,25 @@ export function foSubjectBank({orientationId,refs,alternative='A'}){
   return {orientationId,name,alternative,subjects,
     warning:programs.sourceWarning||null};
 }
+/**
+ * Vincular el Proyecto de Vinculación a la norma vigente solo si su espacio
+ * está VACÍO. Una decisión guardada anteriormente siempre exige revisión.
+ */
+export function assignPvfReference(pack,orientationId){
+  const w=ws(pack,orientationId);
+  const project=w.fo.spaces.find(s=>s.kind==='proyecto');
+  if(!project)throw new Error('No existe el Proyecto de Vinculación anual en esta orientación.');
+  const expected=pvfReference(orientationId,w.fo.subjectAlternative||'A');
+  if(array(project.members).length){
+    if(validatePvfProject(project,{orientationId,alternative:w.fo.subjectAlternative||'A'}).valid)
+      return clone(pack);
+    throw new Error('El proyecto ya tiene una asignación previa. No se reemplaza automáticamente: revisá y conservá el trabajo de la escuela.');
+  }
+  const result=clone(pack);
+  result.orientations[orientationId].fo.spaces
+    .find(s=>s.id===project.id).members=[expected];
+  return result;
+}
 export function setFoAlternative(pack,orientationId,alternative){
   if(!['A','B'].includes(alternative))throw new Error('Alternativa FO inválida.');
   const w=ws(pack,orientationId);
