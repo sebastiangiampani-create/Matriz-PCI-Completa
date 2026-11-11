@@ -62,9 +62,9 @@ def download(entry,links):
     name = norm(entry["archivo"])
     url = links.get(name,entry["url"])
     last_error = None
-    for attempt in range(3):
+    for attempt in range(2):
         try:
-            res = requests.get(url,timeout=(25,150),headers={
+            res = requests.get(url,timeout=(15,50),headers={
                 "User-Agent":"Mozilla/5.0","Accept":"application/pdf"})
             res.raise_for_status()
             data = res.content
@@ -231,7 +231,7 @@ def main():
     links=official_links()
     found={}
     errors=[]
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         for future in concurrent.futures.as_completed([pool.submit(download,e,links) for e in entries]):
             item,url,data,error=future.result()
             if error:
