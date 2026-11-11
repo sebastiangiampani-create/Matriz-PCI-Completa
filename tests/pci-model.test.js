@@ -38,7 +38,7 @@ test('todos los talleres aparecen ubicados en la matriz desde el inicio', () => 
   );
   assert.deepEqual(
     state.areas.Tecnologías.groups.map((group) => group.startTerm),
-    [1, 2, 3, 4, 5, 6],
+    [1, 2, 3, 4, 5, 6, 7, 8],
   );
 });
 
