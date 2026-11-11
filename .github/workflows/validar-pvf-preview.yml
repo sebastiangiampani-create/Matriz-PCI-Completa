@@ -1,0 +1,32 @@
+name: Verificar PVF Bachillerato A-B en vista online
+on:
+  push:
+    branches:
+      - 'preview/orientaciones-online-demo-20261111'
+    paths:
+      - 'preview-v2-real/pvf-bachillerato.html'
+      - 'preview-v2-real/institucion.html'
+      - 'preview-v2-real/src/institucion-pci-demo.js'
+      - 'src/integracion-curricular/proyecto-vinculacion-2026.mjs'
+      - 'src/integracion-curricular/mapa-oferta.js'
+      - 'tests/pvf-bachillerato-2026.test.mjs'
+      - 'tests/pvf-vista-preview.test.mjs'
+      - '.github/workflows/validar-pvf-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar-pvf:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxis e integridad de las referencias
+        run: |
+          node --check src/integracion-curricular/proyecto-vinculacion-2026.mjs
+          node --check src/integracion-curricular/mapa-oferta.js
+      - name: Probar tabla oficial, 16 orientaciones y vista online
+        run: node --test tests/pvf-bachillerato-2026.test.mjs tests/pvf-vista-preview.test.mjs
