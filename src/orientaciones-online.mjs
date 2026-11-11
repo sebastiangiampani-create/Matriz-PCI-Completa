@@ -4,6 +4,7 @@
  * No hace escritura al cargar, ni usa localStorage, ni toca pci_proposals.data.
  */
 import {ORIENTATIONS,createOrientationPackage} from './integracion-curricular/bridge.js';
+import {migrateState} from '../pci-model.js';
 import {loadMatrixContents,loadV2Fg,loadV2Fo,loadV2Rules,selectFoByOrientation} from './integracion-curricular/catalogos.js';
 import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integracion-curricular/auto-validacion-importacion.js';
 import {seedOfferStructure,foSubjectBank,assignFoSubject,offerMapRows,validateOfferStructure,stageFoContent,setFoAlternative,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
@@ -25,7 +26,7 @@ const field=(title,value,handler,{multiline=true,readonly=false}={})=>{
 const stages=['punto_partida','indagacion','produccion','evaluacion'];
 const stageLabel={punto_partida:'Punto de partida',indagacion:'Indagación',produccion:'Producción',evaluacion:'Evaluación'};
 const refs={};
-let session=null,schools=[],schoolId=null,pcis=[],pci=null,workspace=null,auto=null;
+let session=null,schools=[],schoolId=null,pcis=[],pci=null,workspace=null,auto=null,fgSourceState=null;
 let selectedFgArea=null,fgDoc=null,fgRevision=0,fgDirty=false;
 let offerRevision=0,offerDirty=false,selectedFoSpace=null,foDoc=null,foRevision=0,foDirty=false;
 let tab='fg',busy=false;
@@ -176,9 +177,11 @@ async function openPci(id){
     const p=requireSchoolPci(result.pci,schoolId);
     if(!ORIENTATIONS.some(o=>o.id===p.orientation_id))
       throw Error('La orientación no existe en el catálogo institucional.');
-    const generated=createOrientationPackage({legacyState:p.legacy_state,schoolId,orientationIds:[p.orientation_id]});
+    const hasHistoric=Object.keys(p.legacy_state.areas).length>0;
+    const source=hasHistoric?p.legacy_state:{...migrateState({}),schoolName:p.legacy_state.schoolName||'Escuela '+schoolId};
+    const generated=createOrientationPackage({legacyState:source,schoolId,orientationIds:[p.orientation_id]});
     const imported=automaticallyValidateImportedFg({
-      legacyState:p.legacy_state,orientationId:p.orientation_id,
+      legacyState:source,orientationId:p.orientation_id,
       matrixRows:refs.matrix,v2FgRows:refs.fg
     });
     let working=seedOfferStructure(generated,p.orientation_id,refs);
@@ -186,13 +189,13 @@ async function openPci(id){
     if(saved.exists){
       working=restoreOfferUnit({pci:p,workspace:working,document:saved.document});
     }
-    pci=p;workspace=working;auto=imported;offerRevision=Number(saved.revision)||0;
+    pci=p;workspace=working;auto=imported;fgSourceState=source;offerRevision=Number(saved.revision)||0;
     fgDirty=false;offerDirty=false;foDirty=false;selectedFgArea=null;selectedFoSpace=null;
     $('pciName').textContent=pcis.find(i=>i.pci_id===id)?.title||p.orientation_id;
     $('pciTag').textContent=ORIENTATIONS.find(o=>o.id===p.orientation_id)?.name||'Orientación';
-    $('pciInfo').textContent='Origen histórico protegido · '+p.status+' · '+AUTO_VALIDATION_LABEL;
+    $('pciInfo').textContent=(hasHistoric?'Origen histórico protegido':'Plantilla nueva (documento original vacío)')+' · '+p.status+' · '+AUTO_VALIDATION_LABEL;
     $('saveOffer').disabled=!canEdit()||!['borrador','en_revision'].includes(p.status);
-    const inv=inventory(p.legacy_state);
+    const inv=inventory(source);
     const host=$('metrics');host.replaceChildren();
     for(const [num,label] of [[inv.areas,'Áreas FG'],[inv.groups,'Agrupamientos preservados'],[inv.plans,'Planes anteriores']]){
       const item=elem('div',undefined,'metric');note('strong',num,item);note('small',label,item);host.appendChild(item);
@@ -223,10 +226,10 @@ function setTab(next,force=false){
 }
 function renderAreas(){
   const host=$('areaList');host.replaceChildren();
-  const areas=Object.keys(pci?.legacy_state?.areas||{});
+  const areas=Object.keys(fgSourceState?.areas||{});
   if(!areas.length)note('p','Esta escuela aún no tiene agrupamientos FG; se podrán construir dentro del proceso.',host,'muted');
   areas.forEach(area=>{
-    const groups=pci.legacy_state.areas[area]?.groups||[];
+    const groups=fgSourceState.areas[area]?.groups||[];
     const button=elem('button',undefined,'areaItem'+(area===selectedFgArea?' active':''));button.type='button';
     note('strong',area,button);note('small',groups.length+' agrupamientos de origen',button);
     button.onclick=()=>openFgArea(area);host.appendChild(button);
