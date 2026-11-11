@@ -285,6 +285,7 @@ async function openPci(id){
       pci=tech;workspace=null;auto=null;fgDirty=false;offerDirty=false;foDirty=false;
       show('empty',false);show('editor',false);show('technicalPending');
       $('technicalName').textContent=tech.title;
+      $('technicalRulesFrame').src='pci-tecnica-pautas.html?especialidad='+encodeURIComponent(tech.specialty_name||'');
       $('technicalInfo').textContent=(tech.specialty_name||'Especialidad pendiente')+
         ' · Turno '+({manana:'mañana',tarde:'tarde',vespertino:'vespertino',noche:'noche'}[tech.shift_id]||'sin definir')+
         ' · Documento original conservado sin modificaciones';
