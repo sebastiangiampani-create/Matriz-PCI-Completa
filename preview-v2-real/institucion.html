@@ -34,6 +34,12 @@ table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid
 .comboCell{display:flex;align-items:center;gap:8px}.comboCell input[type=checkbox]{width:18px;height:18px;min-height:auto;flex:none}.comboCell input[type=number]{width:59px;min-height:34px;text-align:center;padding:5px;flex:none}
 #summary{font-size:.84rem;font-weight:850;color:#116a65}#feedback{min-height:22px;color:#107059;font-size:.84rem;font-weight:700}
 .pci-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:15px}
+.pci-conservados{grid-column:1/-1;margin-top:5px;padding:14px 0 0;border-top:1px solid var(--line)}
+.pci-conservados summary{cursor:pointer;display:list-item;font-size:.82rem;font-weight:850;color:#6d5b35;padding:8px 4px}
+.pci-conservados summary:focus-visible{outline:3px solid #3fada1;outline-offset:3px}
+.pci-conservados .pci-grid{margin:12px 0 0}
+.pci-conservados .pci-card{background:#faf9f5}
+
 .pci-card{border:1px solid var(--line);border-radius:14px;background:#fff;padding:16px;min-height:160px;display:flex;flex-direction:column;gap:7px}
 .pci-card h3{font-size:.95rem;margin:0}.pci-card p{font-size:.75rem;color:var(--muted);margin:0}.pci-card .btn{align-self:start;margin-top:auto}
 .inactive{background:#fbfaf5;border-style:dashed}.badge{display:inline-flex;font-size:.68rem;font-weight:850;background:#e7f8f5;color:#126e65;padding:4px 9px;border-radius:999px;align-self:start}.badge.off{background:var(--gold);color:#90591e}
