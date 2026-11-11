@@ -9,8 +9,8 @@ test('vista de Bachillerato contiene A/B y se muestra debajo del mapa original C
     read('preview-v2-real/src/institucion-pci-demo.js')
   ]);
   assert.match(view,/Proyecto de Vinculación con el Futuro/);
-  assert.match(view,/Alternativa A/);
-  assert.match(view,/Alternativa B/);
+  assert.match(view,/for\(const option of \['A','B'\]\)/);
+  assert.match(view,/Alternativa '\+option/);
   assert.match(view,/C9 y C10/);
   assert.match(view,/proyecto-vinculacion-2026.mjs/);
   assert.match(home,/id="pvfPanel"/);
