@@ -97,3 +97,55 @@ test('el simulador no dispone de red, claves ni operaciones reales en Supabase',
   assert.doesNotMatch(source,/service_role|api_key|secret_key/i);
   assert.match(source,/localStorage\.setItem\(ADMIN_KEY/);
 });
+
+test('una escuela puede tener orientaciones Media y especialidades Técnicas independientes',()=>{
+  const p=page('https://example.test/preview-v2-real/institucion.html');
+  const before=p.storage.get(PREFIX);
+  const mediaId=p.state().pcis[0].id;
+  p.get('technicalSpecialty').value='Programación';
+  p.get('technicalShift').value='Tarde';
+  p.get('technicalQuantity').value='2';
+  p.get('technicalForm').onsubmit({preventDefault(){}});
+  const data=p.state();
+  assert.equal(data.technicalTracks.length,1);
+  assert.equal(data.pcis.length,3);
+  assert.equal(data.pcis[0].id,mediaId);
+  assert.equal(data.pcis[0].model,undefined,'El PCI de Media histórico debe conservar su formato');
+  const technical=data.pcis.filter(x=>x.model==='tecnica');
+  assert.equal(technical.length,2);
+  assert.ok(technical.every(x=>x.specialtyName==='Programación'&&x.shift==='Tarde'));
+  assert.ok(technical.every(x=>x.curriculumStatus==='pending_rules'));
+  assert.notEqual(technical[0].id,technical[1].id);
+  assert.notEqual(p.storage.get(PREFIX),before,'La ampliación debe guardar la ficha técnica propia');
+  assert.equal(p.get('pciList').children.filter(x=>x.tagName==='article').length,3);
+});
+test('reducir cantidad de PCI Técnicos conserva proyectos anteriores',()=>{
+  const p=page('https://example.test/preview-v2-real/institucion.html');
+  p.get('technicalSpecialty').value='Construcciones';
+  p.get('technicalShift').value='Noche';
+  p.get('technicalQuantity').value='3';
+  p.get('technicalForm').onsubmit({preventDefault(){}});
+  const old=p.state().pcis.filter(x=>x.model==='tecnica').map(x=>x.id);
+  p.get('technicalSpecialty').value='Construcciones';
+  p.get('technicalShift').value='Noche';
+  p.get('technicalQuantity').value='1';
+  p.get('technicalForm').onsubmit({preventDefault(){}});
+  assert.equal(p.state().pcis.length,4);
+  assert.deepEqual(p.state().pcis.filter(x=>x.model==='tecnica').map(x=>x.id),old);
+  assert.match(p.get('totalPcis').textContent,/2 conservados/);
+});
+test('un PCI Técnico muestra ficha pendiente y nunca abre el editor C1-C10 de Media',()=>{
+  const p=page('https://example.test/preview-v2-real/institucion.html');
+  p.get('technicalSpecialty').value='Electromecánica';
+  p.get('technicalShift').value='Vespertino';
+  p.get('technicalQuantity').value='1';
+  p.get('technicalForm').onsubmit({preventDefault(){}});
+  const card=p.get('pciList').children.find(x=>x.children?.some(c=>c.textContent?.includes('Electromecánica')));
+  assert.ok(card,'La ficha Técnica debe aparecer junto a los PCI de Media');
+  card.children.at(-1).onclick();
+  assert.equal(p.get('workspaceScreen').hidden,false);
+  assert.equal(p.get('technicalPendingDemo').hidden,false);
+  assert.equal(p.get('frame').hidden,true);
+  assert.equal(p.get('frame').src,'about:blank');
+  assert.match(p.get('technicalPendingName').textContent,/Electromecánica/);
+});
