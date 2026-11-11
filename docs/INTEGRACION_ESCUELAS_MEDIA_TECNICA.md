@@ -24,6 +24,37 @@ No reemplaza el editor técnico histórico ni aplica reglas de Media.
 - Turnos: mañana, tarde, vespertino y noche.
 - La misma escuela puede tener más de un PCI de la misma rama y turno.
 
+## Escuela con ambos modelos a la vez
+No crear una segunda escuela por tener Educación Técnica y Bachillerato.
+La entidad institucional es única (`school_id`, CUE/código y credenciales
+actuales) y los modelos son **características de cada PCI**.
+
+Ejemplo: una misma institución puede tener, simultáneamente,
+- Media / Economía y Administración / turno mañana / mapa C1-C10;
+- Media / Ciencias Naturales / turno tarde / mapa C1-C10;
+- Técnica / Computación / turno tarde / mapa C1-C12;
+- Técnica / Electromecánica / turno noche / mapa C1-C12.
+
+Cada PCI tiene `pci_id`, `model`, `orientation_id` o `specialty_name`,
+`shift_id` y `process_id` independientes.
+
+**Cuidado especial con la migración:** `public.pci_proposals.data.profile`
+es una propiedad del documento histórico, **NO** una definición excluyente
+de las modalidades actuales de la escuela. Si una institución tiene
+documentos históricos separados para Media y Técnica, primero se
+identifican y respaldan ambas fuentes. Nunca se fusionan ni se sustituye
+el registro de una modalidad por el de otra automáticamente. El origen
+protegido de cada nuevo PCI debe identificarse y homologarse con su
+propio modelo antes de declarar completo un traslado. En el esquema
+aditivo actual el PCI original se captura sin reemplazarlo; esto por sí
+solo **no demuestra** que ya se recuperaron todas las fuentes históricas
+de una institución con modelos mixtos.
+
+En la interfaz del PR #34, los PCI se muestran agrupados por modelo
+y comparten la misma selección y sesión escolar. La demo independiente
+permite marcar Media, Técnica o ambas, y conserva los PCI al cambiar
+la selección.
+
 ## Acceso y estética
 - Se conservan los usuarios, contraseñas, tokens, permisos y claves
   institucionales actuales. No cambiar las rutas actuales de pci-access.
