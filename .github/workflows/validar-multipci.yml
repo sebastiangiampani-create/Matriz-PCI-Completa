@@ -3,9 +3,15 @@ name: Validar alta de escuelas y múltiples PCI - aislado
 on:
   pull_request:
     branches:
-      - feature/integracion-orientaciones-fg-secuencias-20261009
+      - main
     paths:
       - preview-multipci.html
+      - pci-orientaciones.html
+      - pci-orientaciones.css
+      - src/orientaciones-online.mjs
+      - src/orientaciones-release-core.mjs
+      - tests/orientaciones-release.test.mjs
+      - src/multipci/**
       - migration/multipci/**
       - tests/multipci/**
       - .github/workflows/validar-multipci.yml
@@ -45,7 +51,10 @@ jobs:
         with:
           node-version: '22'
       - name: Validar sintaxis y aislamiento de la interfaz
-        run: node --test tests/multipci/*.test.mjs
+        run: |
+          node --check src/orientaciones-online.mjs
+          node --check src/orientaciones-release-core.mjs
+          node --test tests/multipci/*.test.mjs tests/orientaciones-release.test.mjs
       - name: Preparar estructura mínima ficticia
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
