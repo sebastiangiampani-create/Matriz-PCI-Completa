@@ -16,17 +16,21 @@ export function requireSchoolPci(pci,schoolId){
     !nonempty(pci.legacy_sha256)||!object(pci.legacy_state)||
     !object(pci.legacy_state.areas))
     throw Error('Datos institucionales o procedencia de la FG inválidos.');
-  if(pci.legacy_state.profile==='tecnica')
-    throw Error('La Matriz Técnica requiere un adaptador curricular específico.');
+  if(pci.model==='tecnica')
+    throw Error('Especialidad Técnica en espera de las nuevas reglas de composición. No utilizar el editor de Media.');
   return pci;
 }
 
 export function newFgUnit({pci,area,convertedAreas}){
   requireSchoolPci(pci,pci.school_id);
-  const historical=Object.hasOwn(pci.legacy_state.areas,area);
-  if(!nonempty(area)||(!historical&&Object.keys(pci.legacy_state.areas).length!==0))
+  // El original de una escuela técnica nunca se importa a Media como FG:
+  // se conserva completo como snapshot y el PCI Media comienza con su
+  // propia plantilla independiente.
+  const historicalAreas=pci.legacy_state.profile==='tecnica' ? {} : pci.legacy_state.areas;
+  const historical=Object.hasOwn(historicalAreas,area);
+  if(!nonempty(area)||(!historical&&Object.keys(historicalAreas).length!==0))
     throw Error('El área no pertenece a esta escuela o su plantilla inicial.');
-  const old=historical?copy(pci.legacy_state.areas[area]):{groups:[]};
+  const old=historical?copy(historicalAreas[area]):{groups:[]};
   const converted=object(convertedAreas?.[area])?copy(convertedAreas[area]):copy(old);
   if(!Array.isArray(old.groups)||!Array.isArray(converted.groups))
     throw Error('Agrupamientos inválidos: no se puede importar.');
@@ -52,7 +56,8 @@ export function newFgUnit({pci,area,convertedAreas}){
     schema:FG_UNIT_SCHEMA,
     school_id:pci.school_id,pci_id:pci.pci_id,orientation_id:pci.orientation_id,
     original_sha256:pci.legacy_sha256,area,
-    originType:historical?'historical':'empty-institution-template',
+    originType:historical?'historical':
+      pci.legacy_state.profile==='tecnica'?'new-media-from-technical-school':'empty-institution-template',
     curriculumCatalog:'fg-sec-aprende-v2/1'
   };
 }
