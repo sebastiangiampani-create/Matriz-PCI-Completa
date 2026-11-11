@@ -1,0 +1,33 @@
+name: Comprobar vista previa web de orientaciones
+
+on:
+  push:
+    branches:
+      - 'preview/orientaciones-online-demo-20261111'
+    paths:
+      - 'pci-orientaciones-demo.html'
+      - 'src/orientaciones-preview-shim.js'
+      - 'tests/orientaciones-preview-browser.mjs'
+      - '.github/workflows/validar-preview-orientaciones.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  navegador-sin-supabase:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Comprobar código de simulación
+        run: node --check src/orientaciones-preview-shim.js
+      - name: Instalar Chromium para validación de la página
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Probar interfaz verdadera con datos ficticios
+        run: node tests/orientaciones-preview-browser.mjs
