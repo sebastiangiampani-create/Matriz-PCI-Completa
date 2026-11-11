@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Proyecto de Vinculación con el Futuro · Bachillerato · Alternativas A/B</title>
+<style>
+:root{font:14px Archivo,"Segoe UI",system-ui,sans-serif;color:#12395c;background:#f6f9fb}
+*{box-sizing:border-box}body{margin:0;padding:15px}h2{font-size:1.2rem;margin:4px 0 5px}h3{font-size:.96rem;margin:0 0 4px}
+p{margin:5px 0 12px;line-height:1.42}.eyebrow{text-transform:uppercase;letter-spacing:.08em;font-weight:900;color:#158073;font-size:.68rem}
+.muted{color:#647e8c;font-size:.81rem}.card{background:#fff;border:1px solid #d8e4ea;border-radius:14px;padding:17px;max-width:1280px;margin:0 auto 12px}
+.twin{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.option{background:#fff;border:1px solid #dbe3e7;padding:12px;border-radius:11px}
+.option.active{border-color:#149686;background:#e9f8f4}
+.option strong{display:block;margin-bottom:8px}
+.pill{display:inline-block;background:#def3ec;color:#146c63;font-size:.69rem;font-weight:900;padding:5px 9px;border-radius:30px}
+.annual{border-radius:10px;background:#f2f7fb;padding:10px 14px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:12px 0}
+.annual span{font-weight:850}.tableWrap{overflow:auto;border:1px solid #d6e2e7;border-radius:11px}
+table{width:100%;border-collapse:collapse;min-width:720px;font-size:.74rem}
+th,td{padding:10px;vertical-align:top;text-align:left;border-bottom:1px solid #e1e8ec}
+thead th{background:#e9f3f6;font-weight:900}tbody tr.focus{background:#eaf9f5}tbody tr:hover{background:#f5fafd}
+tbody th{font-weight:750;width:26%}table td{width:37%}
+small{font-size:.73rem}.footer{color:#657c88;font-size:.74rem;line-height:1.4;margin:10px 0}
+@media(max-width:700px){.twin{grid-template-columns:1fr}.card{padding:12px}}
+</style>
+</head>
+<body>
+<section class="card" aria-label="Proyecto de Vinculación normativo">
+  <div class="eyebrow">Formación Orientada · Bachillerato · 5.º año</div>
+  <h2>Proyecto de Vinculación con el Futuro</h2>
+  <p class="muted">Un espacio anual que ocupa C9 y C10, según la orientación y la alternativa curricular A o B. No son dos proyectos: se representa el mismo espacio durante todo quinto año.</p>
+  <div class="annual"><span>5.º · Año completo</span><span>C9 + C10</span><span id="currentAlt" class="pill">Alternativa A</span></div>
+  <h3 id="orientationName"></h3>
+  <div class="twin" id="options"></div>
+  <p id="note" class="footer"></p>
+</section>
+<section class="card">
+  <div class="eyebrow">Tabla normativa completa · Página 11</div>
+  <h2>Espacios por orientación y alternativa</h2>
+  <p class="muted">Cada columna muestra la materia y su carga horaria. Esta consulta no altera el Mapa de la Oferta ni sus contenidos.</p>
+  <div class="tableWrap">
+    <table>
+      <thead><tr><th>Orientación</th><th>Alternativa A</th><th>Alternativa B</th></tr></thead>
+      <tbody id="pvfRows"></tbody>
+    </table>
+  </div>
+  <p class="footer">Fuente: «Pautas para la construcción del PCI», 05/10/2026, página impresa 11 (página 12 del PDF). La alternativa activa se lee de la configuración del mapa de prueba del PCI; esta pantalla no escribe datos.</p>
+</section>
+<script type="module">
+import {PVF_TABLE,pvfReference} from '../src/integracion-curricular/proyecto-vinculacion-2026.mjs';
+import {ORIENTATIONS} from '../src/integracion-curricular/bridge.js';
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search);
+const given=params.get('orientacion')||'';
+const pciId=params.get('pci')||'';
+const matched=ORIENTATIONS.find(o=>o.id===given||o.name===given);
+const selected=matched?.id||'economia_administracion';
+const selectedName=matched?.name||'Economía y Administración';
+const storageKey=/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(pciId)?
+  'pci-matriz-fg-v2-original-preview-20261009:pci:'+pciId:null;
+function getAlternative(){
+  if(!storageKey)return 'A';
+  try{
+    const raw=JSON.parse(localStorage.getItem(storageKey)||'{}');
+    const value=raw?.maps?.[selectedName]?.alt;
+    return value==='B'?'B':'A';
+  }catch{return 'A'}
+}
+function add(tag,text,parent){
+  const e=document.createElement(tag);
+  if(text!==undefined)e.textContent=String(text);
+  parent.appendChild(e);return e;
+}
+function render(){
+  const alt=getAlternative();
+  $('currentAlt').textContent='Alternativa '+alt;
+  $('orientationName').textContent=selectedName;
+  const opts=$('options');opts.replaceChildren();
+  for(const option of ['A','B']){
+    const r=pvfReference(selected,option);
+    const card=add('div',undefined,opts);card.className='option'+(alt===option?' active':'');
+    add('strong','Alternativa '+option+(alt===option?' · Seleccionada en el mapa':''),card);
+    add('p',r.name,card);
+    add('small',r.hours+' horas cátedra · Anual · C9–C10',card);
+  }
+  $('note').textContent='La selección A/B se realiza en el mapa curricular original de esta orientación. Esta vista únicamente verifica el nombre y las horas del proyecto. No guarda ni reemplaza proyectos históricos.';
+  const tbody=$('pvfRows');tbody.replaceChildren();
+  for(const r of PVF_TABLE){
+    const tr=add('tr',undefined,tbody);
+    if(r.orientationId===selected)tr.className='focus';
+    add('th',r.label,tr);
+    add('td',r.A.name+' ('+r.A.hours+' h)',tr);
+    add('td',r.B.name+' ('+r.B.hours+' h)',tr);
+  }
+}
+window.addEventListener('storage',event=>{
+  if(event.key===storageKey)render();
+});
+window.addEventListener('focus',render);
+render();
+window.__PVF_PREVIEW__={selected,readAlternative:getAlternative,readonly:true};
+</script>
+</body>
+</html>
