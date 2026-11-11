@@ -288,6 +288,9 @@
   function openPci(p){
     const f=$('frame');
     if(p.model==='tecnica'){
+      $('pvfPanel').hidden=true;
+      $('pvfJump').hidden=true;
+      $('pvfFrame').src='about:blank';
       f.src='about:blank';
       f.hidden=true;
       $('technicalPendingDemo').hidden=false;
@@ -307,7 +310,13 @@
       return;
     }
     $('technicalPendingDemo').hidden=true;
+    $('pvfPanel').hidden=false;
+    $('pvfJump').hidden=false;
     f.hidden=false;
+    const source=new URL('pvf-bachillerato.html',location.href);
+    source.searchParams.set('orientacion',p.orientation);
+    source.searchParams.set('pci',p.id);
+    $('pvfFrame').src=source.toString();
     const url=new URL('app.html',location.href);
     url.searchParams.set('pci',p.id);
     url.searchParams.set('orientation',p.orientation);
@@ -324,6 +333,9 @@
     $('workspaceScreen').hidden=true;
     $('configScreen').hidden=false;
     $('technicalPendingDemo').hidden=true;
+    $('pvfPanel').hidden=true;
+    $('pvfJump').hidden=true;
+    $('pvfFrame').src='about:blank';
     $('frame').hidden=false;
     // Al volver se destruye la vista anterior; el estado del mapa ya fue
     // guardado por la aplicación curricular original bajo su clave propia.
