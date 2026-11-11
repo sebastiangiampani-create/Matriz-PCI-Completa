@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mapa de composición · Educación Técnica · PCI V2</title>
+<style>
+:root{font:14px "Archivo","Segoe UI",system-ui,sans-serif;color:#12395c;background:#f6f9fa}
+*{box-sizing:border-box}body{margin:0}button,select,input,textarea{font:inherit;color:inherit}button{cursor:pointer}
+header{background:#fff;border-bottom:1px solid #d9e5e9;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px clamp(12px,2.5vw,26px)}
+.logo{height:42px;width:auto;max-width:210px}.label{font-size:.72rem;letter-spacing:.055em;font-weight:850;text-transform:uppercase;color:#087581}.tag{display:inline-block;border-radius:20px;padding:6px 10px;font-size:.72rem;font-weight:800;background:#e4f6f2;color:#086b67}
+.container{max-width:1390px;margin:auto;padding:18px clamp(12px,2vw,24px) 35px}h1{font-size:clamp(1.4rem,2.5vw,2rem);margin:.25rem 0 .55rem}h2{font-size:1.17rem;margin:0 0 .5rem}h3{font-size:.97rem;margin:1rem 0 .5rem}p{line-height:1.5;margin:.4rem 0 .8rem}.muted{color:#617b87;font-size:.85rem}
+.panel{background:#fff;border:1px solid #dae4e9;border-radius:14px;padding:18px;margin:13px 0;box-shadow:0 3px 11px #12395c0b}
+.row{display:flex;align-items:center;gap:13px;justify-content:space-between;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:12px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:#f1f7f8;border:1px solid #d3e7e6;border-radius:11px;padding:12px}.stat strong{display:block;font-size:1.22rem}.stat small{display:block;color:#5d7783;margin-top:4px}
+.warning{background:#fff7e8;border:1px solid #eddbad;border-radius:11px;padding:12px;color:#79521a;font-size:.82rem}
+.info{background:#eaf7f5;border:1px solid #bfe3df;padding:12px;border-radius:11px;color:#145d59;font-size:.82rem}
+label{display:block;font-weight:800;font-size:.81rem;margin:5px 0 11px}label span{display:block;margin-bottom:5px}select,input,textarea{width:100%;border:1px solid #bfd2da;border-radius:8px;background:#fff;padding:9px 10px;margin-top:2px;min-height:39px}
+.btn{background:#113c5a;color:#fff;border:1px solid #113c5a;border-radius:9px;padding:9px 13px;font-size:.81rem;font-weight:800}
+.btn.ghost{color:#12395c;background:#fff;border-color:#bacdd5}button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #66b5b1;outline-offset:2px}
+.mapScroll{width:100%;overflow:auto;border:1px solid #cfdee4;border-radius:12px;margin-top:12px}
+table{border-collapse:collapse;width:100%;min-width:1010px;font-size:.73rem}
+th,td{border:1px solid #d3e0e7;padding:7px;text-align:left;vertical-align:top}
+thead th{background:#dceef0;color:#153f57;text-align:center;white-space:nowrap}
+tbody th{min-width:175px;background:#f2f7f9;font-weight:850;position:sticky;left:0;z-index:1}
+td{min-width:67px;max-width:150px}
+span.slot{display:block;background:#e9f6f5;border-radius:6px;padding:6px 4px;font-size:.7rem;margin:2px 0;line-height:1.36}
+span.pending{background:#fff4df;color:#745117}
+#mapTable tbody tr:hover td{background:#fafcfc}
+.msgList{margin:9px 0 0;padding:0;list-style:none}.msgList li{border-left:3px solid #cfa54a;background:#fffaf0;border-radius:4px;padding:8px 10px;margin:6px 0;font-size:.78rem}
+.msgList li.error{border-color:#ba4053;background:#fff3f4}
+.msgList li.ok{border-color:#178873;background:#eaf7f4}
+footer{color:#6e8390;padding:12px 0;font-size:.76rem}
+[hidden]{display:none!important}
+@media(max-width:750px){.panel{padding:13px}.stats{grid-template-columns:1fr 1fr}.row{align-items:flex-start}thead th{font-size:.72rem}}
+</style>
+</head>
+<body>
+<header>
+  <img class="logo" src="assets/em-logo-header.svg" alt="Escuela de Maestros">
+  <span class="tag">MATRIZ PCI V2 · TÉCNICA · VISTA DE VALIDACIÓN</span>
+</header>
+<main class="container">
+  <section class="panel">
+    <span class="label">Composición curricular institucional</span>
+    <h1>Mapa de la oferta · Educación Técnica</h1>
+    <p class="muted">Seis niveles (C1–C12). Esta pantalla muestra las reglas del documento del 05/10/2026 y comprueba ejemplos. No modifica el PCI histórico ni escribe en Supabase.</p>
+    <div class="warning"><strong>Validación parcial:</strong> las pautas generales no incluyen el inventario completo de materias y cargas horarias de todas las especialidades. No se habilita el guardado curricular técnico hasta comprobar el plan de estudios propio de la especialidad.</div>
+    <div class="grid" style="margin-top:13px">
+      <label><span>Especialidad técnica</span><select id="specialty"></select></label>
+      <div><div class="label">Espacio anual de la especialidad</div><p id="specialtyStatus" class="muted"></p></div>
+    </div>
+    <div class="stats" id="stats"></div>
+  </section>
+  <section class="panel">
+    <div class="row">
+      <div><span class="label">Ciclo Básico / Ciclo Superior</span><h2>Mapa por niveles y cuatrimestres</h2></div>
+      <span class="tag">C1–C4 · Ciclo Básico | C5–C12 · Segundo ciclo</span>
+    </div>
+    <p class="muted">Los espacios anuales se muestran en ambos cuatrimestres del año. Los rótulos «según especialidad» indican reglas que dependen de su diseño curricular.</p>
+    <div class="mapScroll">
+      <table id="mapTable">
+        <thead id="mapHead"></thead><tbody id="mapBody"></tbody>
+      </table>
+    </div>
+    <p class="muted" id="mapFootnote"></p>
+  </section>
+  <section class="panel">
+    <h2>Espacios anuales de la especialidad</h2>
+    <p class="muted">Materias de 4.º, 5.º y 6.º de la tabla del documento. No son una lista exhaustiva de la formación técnica específica.</p>
+    <div id="annualSubjects" class="grid"></div>
+    <div id="exceptions" class="info" style="margin-top:13px"></div>
+  </section>
+  <section class="panel">
+    <span class="label">Control pedagógico</span>
+    <h2>Verificar una propuesta de integración o espacio técnico</h2>
+    <p class="muted">Prueba reglas de duración, año, cuatrimestre, materias y límite horario. Los resultados son informativos, no una aprobación institucional.</p>
+    <form id="validateSpace">
+      <div class="grid">
+        <label><span>Formato</span><select id="format">
+          <option value="integracion_social">Integración de Ciencias Sociales</option>
+          <option value="integracion_natural">Integración de Ciencias Naturales</option>
+          <option value="integracion_especialidad">Integración de la Especialidad</option>
+          <option value="espacio_formativo">Espacio formativo</option>
+          <option value="tecnologia_representacion">Tecnología de la Representación</option>
+          <option value="taller_primer_ciclo">Taller del Primer Ciclo</option>
+          <option value="taller_especialidad">Taller de la Especialidad</option>
+          <option value="espacio_anual_especialidad">Espacio Anual de la Especialidad</option>
+          <option value="troncal">Espacio troncal</option>
+          <option value="metrologia_mecanica">Metrología y Producción Industrial (Mecánica)</option>
+        </select></label>
+        <label><span>Año</span><select id="year"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></label>
+        <label><span>Duración</span><select id="duration"><option value="cuatrimestral">Cuatrimestral</option><option value="anual">Anual</option></select></label>
+        <label><span>Cuatrimestre</span><select id="term"></select></label>
+        <label><span>Horas cátedra semanales</span><input id="weeklyHours" type="number" min="1" max="30" value="6"></label>
+        <label><span>Materias que se integran (separadas por coma)</span><input id="subjects" type="text" placeholder="Historia, Geografía"></label>
+      </div>
+      <div class="row"><button type="submit" class="btn">Comprobar composición</button>
+        <button id="exampleInvalid" type="button" class="btn ghost">Ejemplo que incumple una regla</button></div>
+    </form>
+    <ul class="msgList" id="results" aria-live="polite"></ul>
+  </section>
+  <section class="panel">
+    <h2>Qué implica vincular espacios</h2>
+    <div class="grid">
+      <div><span class="tag">Articulación</span><p>Propuesta conjunta entre espacios del mismo año, que mantienen sus planes, evaluación y calificación independientes.</p></div>
+      <div><span class="tag">Integración</span><p>Un espacio curricular nuevo, con planificación común, evaluación colegiada y calificación compartida.</p></div>
+    </div>
+    <p class="muted">Referencia: página 7 del documento entregado.</p>
+  </section>
+  <footer>Escuela de Maestros · Reglas del documento del 05/10/2026. El encabezado del documento contiene una referencia normativa incompleta («Res N°XXX»), por lo que su aprobación formal debe verificarse por el equipo responsable.</footer>
+</main>
+<script type="module" src="src/tecnica/pautas-visor.mjs"></script>
+</body>
+</html>

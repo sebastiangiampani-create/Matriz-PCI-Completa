@@ -1,0 +1,68 @@
+{
+  "version": "20260928-103",
+  "source": "Contenidos_priorizados_por_materia_y_ano_REVISADO_FINAL(1).docx",
+  "extractionRule": "Cada párrafo con estilo Contenido priorizado que comienza con • es un contenido. Una viñeta multilínea cuenta una sola vez.",
+  "fgCount": 1126,
+  "byYear": {
+    "1": 253,
+    "2": 241,
+    "3": 257,
+    "4": 217,
+    "5": 158
+  },
+  "bySubject": {
+    "Artes Visuales": 65,
+    "Música": 43,
+    "Teatro": 70,
+    "Biología": 71,
+    "Física": 23,
+    "Físico-Química": 51,
+    "Química": 69,
+    "Economía": 22,
+    "Formación Ética y Ciudadana": 59,
+    "Geografía": 64,
+    "Historia": 63,
+    "Filosofía": 12,
+    "Educación Física": 198,
+    "Educación Tecnológica": 37,
+    "Tecnologías de la Información": 12,
+    "Lengua y Literatura": 75,
+    "Lenguas Adicionales": 100,
+    "Matemática": 68,
+    "Tutoría": 24
+  },
+  "bySubjectYear": {
+    "Artes Visuales": {"1": 24, "2": 23, "4": 18},
+    "Música": {"1": 12, "2": 15, "4": 16},
+    "Teatro": {"1": 27, "2": 19, "4": 24},
+    "Biología": {"1": 22, "2": 22, "3": 27},
+    "Física": {"4": 23},
+    "Físico-Química": {"3": 51},
+    "Química": {"5": 69},
+    "Economía": {"3": 22},
+    "Formación Ética y Ciudadana": {"1": 15, "2": 12, "3": 20, "4": 12},
+    "Geografía": {"1": 14, "2": 11, "3": 20, "4": 19},
+    "Historia": {"1": 16, "2": 13, "3": 19, "4": 15},
+    "Filosofía": {"5": 12},
+    "Educación Física": {"1": 45, "2": 45, "3": 40, "4": 33, "5": 35},
+    "Educación Tecnológica": {"1": 16, "2": 21},
+    "Tecnologías de la Información": {"3": 5, "4": 7},
+    "Lengua y Literatura": {"1": 18, "2": 13, "3": 16, "4": 16, "5": 12},
+    "Lenguas Adicionales": {"1": 19, "2": 19, "3": 21, "4": 21, "5": 20},
+    "Matemática": {"1": 13, "2": 16, "3": 16, "4": 13, "5": 10},
+    "Tutoría": {"1": 12, "2": 12}
+  },
+  "subjectCount": 19,
+  "yearSectionCount": 55,
+  "tutoria": {"includedYears": [1, 2], "count": 24},
+  "fullRowDuplicates": 0,
+  "sourceStyledEmptyParagraphs": [
+    {"kind": "empty_styled_paragraph", "paragraph": 1660}
+  ],
+  "notes": [
+    "Eje y Núcleo se almacenan en el campo axis; Subeje se almacena en subaxis.",
+    "No se atomiza el texto interno de una viñeta.",
+    "No se deduplican viñetas distintas aunque tengan el mismo texto en núcleos diferentes.",
+    "Formación Orientada continúa usando la base V96 hasta su reemplazo."
+  ]
+}

@@ -1,0 +1,32 @@
+:root{font-family:Archivo,"Segoe UI",system-ui,sans-serif;color:#163956;background:#f3f7fa;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;min-height:100vh}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.5}a{color:inherit}h1,h2,h3,h4{line-height:1.18;letter-spacing:-.015em}p{line-height:1.55}h1{margin:.18rem 0 .4rem;font-size:clamp(1.45rem,3vw,2.1rem)}h2{margin:0;font-size:1.25rem}h3{margin:.15rem 0 .55rem;font-size:1.12rem}h4{margin:1.2rem 0 .7rem}
+.banner{background:#fff;color:#12395c;border-bottom:1px solid #d8e1e8;padding:12px max(17px,calc((100vw - 1400px)/2));display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:13px}.brand strong,.brand small{display:block}.brand strong{font-size:1.02rem}.brand small{font-size:.76rem;color:#647887;margin-top:2px}.school-logo{height:46px;width:auto;max-width:min(240px,60vw);object-fit:contain}
+.banner nav{display:flex;gap:14px;flex-wrap:wrap;font-size:.82rem}.banner nav a{text-decoration:none;color:#12395c;font-weight:700}.banner nav a:hover{text-decoration:underline}
+main{max-width:1420px;margin:auto;padding:24px 20px 55px}.intro{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}.intro p{color:#667e8d;margin:.3rem 0 0;max-width:900px;font-size:.9rem}
+.eyebrow{font-size:.67rem;text-transform:uppercase;letter-spacing:.11em;color:#047784;font-weight:850}.status{display:inline-flex;padding:8px 12px;border-radius:30px;background:#e5f2f4;color:#0d6771;font-size:.79rem;font-weight:800;border:1px solid #a8d3d6}.status.error{background:#fbe9e9;color:#a12e44;border-color:#efb4ba}
+.layout{display:grid;grid-template-columns:minmax(245px,310px) minmax(0,1fr);gap:18px;align-items:start}.panel{background:#fff;border:1px solid #d5e2e8;box-shadow:0 4px 18px #1639560b;border-radius:15px;padding:20px}.panel+.panel{margin-top:16px}
+.sidebar{position:sticky;top:12px}.sectionTitle,.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.sectionTitle{margin-bottom:11px}.muted{font-size:.84rem;color:#657a87;margin:.5rem 0}hr{border:0;border-top:1px solid #dde7ed;margin:19px 0}
+.btn{font-size:.83rem;font-weight:750;color:#17435e;border:1px solid #c7dbe1;background:#f2f7fa;padding:9px 12px;border-radius:9px;white-space:normal}.btn.primary{color:white;background:#116b7f;border-color:#116b7f}.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #69bfca;outline-offset:2px}
+input,select,textarea{display:block;width:100%;border:1px solid #c3d6df;border-radius:9px;background:white;color:#143e56;padding:10px;margin-top:5px;min-width:0}textarea{min-height:70px;resize:vertical}
+label{font-size:.78rem;font-weight:800;display:block;margin-bottom:10px}label small{font-weight:500;color:#5e7986}
+.pciList,.areaList{display:grid;gap:8px}
+.pciModelHeading{margin:12px 0 3px;padding:9px 2px 5px;font-size:.83rem;font-weight:850;color:#156174;border-bottom:1px solid #c9dce4}.pciItem,.areaItem{background:#fff;text-align:left;width:100%;border:1px solid #d5e2e8;border-radius:10px;padding:12px;color:#163956}
+.pciItem.active,.areaItem.active{background:#eaf5f7;border:2px solid #168b99;padding:11px}
+.pciItem strong,.pciItem small,.areaItem strong,.areaItem small{display:block}.pciItem small,.areaItem small{color:#65808d;font-size:.73rem;margin-top:3px}
+.formCard{padding:13px;background:#f5fafb;border:1px solid #c9e1e5;border-radius:12px;margin-top:12px}.formCard h3{font-size:1rem}.actions{display:flex;flex-wrap:wrap;gap:8px}
+.note{font-size:.77rem;color:#58737f;background:#f2f7f8;border-radius:10px;padding:11px;line-height:1.5}
+.workspace{min-width:0}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:15px 0}.metric{background:#f1f7f9;border:1px solid #d3e5e9;border-radius:11px;padding:12px}.metric strong{display:block;font-size:1.23rem}.metric small{font-size:.73rem;color:#5e7680}
+.navtabs{display:flex;gap:5px;flex-wrap:wrap;border-top:1px solid #e4ebef;padding-top:14px}.tab{border:0;background:#f2f6f7;padding:9px 15px;border-radius:9px;color:#3e6170;font-weight:800;font-size:.85rem}.tab.active{background:#116b7f;color:white}
+.message{margin-top:9px;font-size:.8rem;color:#137162;min-height:15px;line-height:1.5}.message.error{color:#a32837}.message.warn{color:#9a5919}
+.split{display:grid;grid-template-columns:minmax(170px,240px) minmax(0,1fr);gap:18px;margin-top:12px}
+.cards{display:grid;gap:12px}.workCard{border:1px solid #dae6eb;background:#fff;border-radius:11px;padding:15px}.workCard p{font-size:.84rem;color:#607782}.workCard details{border:1px solid #e0e9ec;border-radius:10px;padding:10px;margin:10px 0}.workCard summary{cursor:pointer;font-size:.85rem;font-weight:800}.workCard details details{background:#f9fbfb}
+.workCard label{font-size:.76rem}.workCard label textarea{min-height:60px}
+.tag{display:inline-flex;border-radius:12px;font-size:.67rem;background:#e8f4f5;color:#096977;padding:4px 8px;font-weight:850;vertical-align:middle}.tag.warn{background:#fff0df;color:#934713}
+.warning{border:1px solid #f0c3b8;background:#fff1ed;color:#8b3b2f;border-radius:12px;padding:15px;margin:13px 0}
+.mapScroll{overflow:auto;margin:13px 0}.mapTable{border-collapse:collapse;min-width:790px;width:100%;font-size:.7rem}.mapTable th,.mapTable td{border:1px solid #cbdde4;min-width:65px;vertical-align:top;padding:8px}.mapTable thead th{background:#d9edf0}.mapTable tbody th{background:#f1f6f7;min-width:110px}.slot{display:block;background:#e7f4f5;border-radius:6px;padding:5px;margin-bottom:4px}
+.offerGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}.offerCard{padding:12px;border:1px solid #d9e4e9;border-radius:12px}.offerCard h4{font-size:.88rem;margin:0 0 5px}.offerCard .muted{font-size:.74rem}.offerCard ul{font-size:.78rem;padding-left:18px}
+footer{text-align:center;color:#68818e;font-size:.78rem;padding:15px}
+[hidden]{display:none!important}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:static}.split{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){main{padding:18px 12px 40px}.panel{padding:15px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.intro p{font-size:.84rem}.banner nav{font-size:.74rem}}

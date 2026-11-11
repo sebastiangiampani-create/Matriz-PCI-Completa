@@ -1,0 +1,268 @@
+/* Paridad visual: ambas formaciones heredan los componentes .group-* y .card
+   de app.css. Solo se preserva el despliegue simultáneo de tarjetas FO.
+   Cobertura: estructura/texto/clases v98d/v99d del panel curricular de V2.
+   No afecta el Mapa de la Oferta ni la Matriz histórica. */
+#pci-fo-development .pci-fo-group-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));
+  gap:14px;min-width:0;align-items:start;margin-bottom:14px
+}
+#pci-fo-development .pci-fo-group-grid>.group-card{
+  display:block;min-width:0;padding:18px;margin:0;
+  border:2px solid transparent;border-radius:20px;
+  background:var(--paper);box-shadow:var(--shadow);
+}
+#pci-fo-development .pci-fo-group-grid>.group-card.selected{
+  border-color:var(--mint-dark);
+  box-shadow:0 16px 38px rgba(18,110,101,.15)
+}
+#pci-fo-development .pci-fo-group-grid>.group-card.drop-target{
+  outline:4px dashed var(--mint);outline-offset:2px
+}
+#pci-fo-development .pci-fo-group-card .group-title-row{
+  display:flex;align-items:center;gap:8px;margin-bottom:10px
+}
+#pci-fo-development .pci-fo-group-card .group-title-row input{
+  min-width:0;width:100%;font-size:1.05rem;font-weight:900
+}
+#pci-fo-development .pci-fo-group-card .group-meta{
+  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px
+}
+#pci-fo-development .pci-fo-group-card .pill,
+#pci-fo-development .pci-fo-group-card .pci-fo-year-pill{
+  display:inline-flex;align-items:center;width:max-content;
+  padding:5px 9px;border-radius:999px;
+  color:var(--mint-dark)!important;background:var(--mint-soft)!important;
+  font-size:.72rem;font-weight:900
+}
+#pci-fo-development .pci-fo-group-card .form-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0
+}
+#pci-fo-development .pci-fo-group-card .form-grid .full{grid-column:1/-1}
+#pci-fo-development .pci-fo-group-card .field-label>span{
+  display:block;margin:0 0 5px;color:var(--ink-soft);font-size:.79rem;font-weight:850
+}
+#pci-fo-development .pci-fo-group-card .assigned-heading{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;margin:16px 0 8px
+}
+#pci-fo-development .pci-fo-group-card .assigned-heading h3{font-size:.98rem}
+#pci-fo-development .pci-fo-group-card .assigned-list{
+  display:grid;gap:7px;min-height:54px;align-content:start
+}
+#pci-fo-development .pci-fo-group-assigned .assigned-item{
+  display:grid;grid-template-columns:minmax(0,1fr) 34px;gap:8px;
+  padding:9px;border:0;border-radius:11px;background:var(--mint-soft);
+  min-height:0;font-size:inherit;line-height:inherit;cursor:grab
+}
+#pci-fo-development .pci-fo-group-assigned .remove-content{
+  align-self:start;width:32px;height:32px;border:0;
+  border-radius:9px;color:var(--danger);background:white;
+  font-size:1.15rem;font-weight:900;cursor:pointer
+}
+#pci-fo-development .pci-fo-group-card .pci-fo-card-edit{
+  margin:14px 0 0;width:100%;padding:10px 12px;
+  border-radius:999px;font-size:.78rem
+}
+#pci-fo-development .pci-fo-group-card .pci-fo-card-coverage{
+  margin:12px 0 6px;padding:0;background:transparent;border:0;
+  font-size:.78rem;font-weight:850;color:var(--ink-soft)
+}
+#pci-fo-development .pci-fo-group-card .pci-fo-card-subjects{
+  margin:0 0 6px;font-size:.74rem;color:var(--muted);line-height:1.5
+}
+#pci-fo-development .pci-fo-card-fields input[readonly]{
+  background:var(--paper);color:var(--ink-soft)
+}
+#pci-fo-development .pci-fo-card-fields textarea{width:100%;resize:vertical}
+#pci-fo-development .pci-fo-group-members{
+  font-size:.76rem;color:var(--muted);line-height:1.5
+}
+/* La bolsa FO conserva el encabezado, filtros y tarjetas visuales de FG. */
+#pci-fo-development .pci-fo-dev-bag{
+  border-radius:20px;border:1px solid var(--line);
+  background:var(--paper);box-shadow:var(--shadow)
+}
+#pci-fo-development .pci-fo-dev-bag h3{font-size:1.35rem}
+#pci-fo-development .pci-fo-content-choice{
+  border-radius:11px;background:white;cursor:grab
+}
+/* Panel de V2: se mantiene su jerarquía de lectura anual → materia →
+   agrupamiento → planes, con la advertencia cuando FO solo tiene trayectoria. */
+#pci-fo-development .pci-fo-coverage-dashboard{
+  background:var(--paper);border:1px solid #d8e1e8;
+  border-radius:16px;overflow:hidden;box-shadow:0 5px 15px rgba(18,57,92,.035)
+}
+#pci-fo-development .pci-fo-coverage-dashboard>summary{
+  background:#edf3f8;color:#12395c;padding:15px 17px;
+  font-size:.88rem;font-weight:900;cursor:pointer
+}
+#pci-fo-development .pci-fo-cover-tools{
+  padding:12px 17px;background:rgba(255,255,255,.97);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  font-size:.77rem;color:#5f7382
+}
+#pci-fo-development #pciFoCoverageLevels{
+  display:grid;gap:10px;padding:13px 16px 18px
+}
+#pci-fo-development .v98d-level{
+  padding:13px 14px;border:1px solid #dfe7ea;border-radius:13px;
+  background:#fbfcfd;break-inside:avoid
+}
+#pci-fo-development .v98d-level-head{
+  display:flex;justify-content:space-between;gap:10px;align-items:start;
+  margin-bottom:9px
+}
+#pci-fo-development .v98d-level-head>div>span{
+  color:#126e65;font-size:.61rem;font-weight:900;
+  text-transform:uppercase;letter-spacing:.06em
+}
+#pci-fo-development .v98d-level-head h4{
+  font-size:1rem;color:#12395c;margin:4px 0
+}
+#pci-fo-development .v98d-level-head p{
+  font-size:.73rem;color:#5f7382;line-height:1.45;margin:0
+}
+#pci-fo-development .v98d-level-meta{
+  display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end
+}
+#pci-fo-development .v98d-level-meta span,
+#pci-fo-development .v98d-grouping>summary>span,
+#pci-fo-development .v99d-plans>summary>span{
+  display:inline-flex;padding:5px 8px;border-radius:999px;
+  background:#e7f8f5;color:#126e65;font-size:.65rem;font-weight:900
+}
+#pci-fo-development .v98d-level-count{
+  font-size:.75rem;color:#12395c;font-weight:800;margin:8px 0
+}
+#pci-fo-development .v98d-pending,
+#pci-fo-development .v99d-plan-empty{
+  padding:10px 12px;border:1px dashed #cbd8dc;
+  border-radius:9px;background:#fff;color:#6b7f89;
+  font-size:.74rem;line-height:1.5
+}
+#pci-fo-development .v98d-grouping{
+  margin-top:12px;padding-top:10px;border-top:1px solid #e1e7ea
+}
+#pci-fo-development .v98d-grouping>summary,
+#pci-fo-development .v99d-plans>summary{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;padding:7px 2px;cursor:pointer;background:transparent
+}
+#pci-fo-development .v98d-grouping summary strong,
+#pci-fo-development .v99d-plans summary strong{
+  display:block;font-size:.77rem;color:#12395c
+}
+#pci-fo-development .v98d-grouping summary small,
+#pci-fo-development .v99d-plans summary small{
+  display:block;font-size:.68rem;color:#5f7382;margin-top:3px
+}
+#pci-fo-development .v98d-groups{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));
+  gap:10px;margin-top:10px
+}
+#pci-fo-development .v98d-group{
+  padding:12px;border:1px solid #dce4e8;border-radius:11px;
+  background:#fff;break-inside:avoid
+}
+#pci-fo-development .v98d-group>header{
+  display:flex;align-items:start;justify-content:space-between;
+  gap:10px;margin-bottom:8px
+}
+#pci-fo-development .v98d-group h5{margin:3px 0;font-size:.83rem}
+#pci-fo-development .v98d-group header span,
+#pci-fo-development .v98d-group em{
+  font-size:.69rem;color:#126e65;font-style:normal
+}
+#pci-fo-development .v98d-basis{
+  font-size:.73rem;line-height:1.45;color:#5f7382;margin:6px 0
+}
+#pci-fo-development .v98d-subject{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  gap:5px 8px;padding:8px 10px;border:1px solid #dce5e8;
+  border-radius:9px;background:#fff;margin:6px 0
+}
+#pci-fo-development .v98d-subject-name small,
+#pci-fo-development .v98d-subject-name strong{display:block}
+#pci-fo-development .v98d-subject-name small{
+  color:#126e65;font-size:.6rem;font-weight:850;text-transform:uppercase
+}
+#pci-fo-development .v98d-subject-name strong{font-size:.78rem}
+#pci-fo-development .v98d-value{display:flex;gap:5px;align-items:baseline;white-space:nowrap}
+#pci-fo-development .v98d-value b{font-size:.78rem}
+#pci-fo-development .v98d-value span{color:#126e65;font-size:.72rem;font-weight:900}
+#pci-fo-development .v98d-bar{
+  grid-column:1/-1;height:4px;border-radius:99px;background:#dce7e8;overflow:hidden
+}
+#pci-fo-development .v98d-bar i{
+  display:block;height:100%;background:#126e65;border-radius:inherit
+}
+#pci-fo-development .v99d-plans{
+  margin-top:9px;padding-top:8px;border-top:1px solid #e1e7ea;
+  border-left:0;border-right:0;border-bottom:0;border-radius:0
+}
+#pci-fo-development .v99d-plan-list{display:grid;gap:7px;margin-top:8px}
+#pci-fo-development .v99d-plan{
+  padding:9px;border:1px solid #e0e7ea;border-radius:9px;background:#fbfcfd
+}
+#pci-fo-development .v99d-plan header small,
+#pci-fo-development .v99d-plan header strong{display:block}
+#pci-fo-development .v99d-plan header small{
+  color:#126e65;font-size:.62rem;font-weight:850;text-transform:uppercase
+}
+#pci-fo-development .v99d-plan header strong{font-size:.76rem}
+#pci-fo-development .v99d-plan-head,
+#pci-fo-development .v99d-plan-row{
+  display:grid;grid-template-columns:minmax(100px,1.3fr) minmax(90px,.8fr) minmax(110px,.9fr);
+  align-items:center;gap:7px
+}
+#pci-fo-development .v99d-plan-head{
+  font-size:.64rem;color:#6a7d87;text-transform:uppercase;font-weight:850;
+  margin-top:8px
+}
+#pci-fo-development .v99d-plan-row{
+  padding:7px 0;border-top:1px solid #edf1f3;font-size:.7rem
+}
+#pci-fo-development .v99d-plan-row strong{font-size:.75rem}
+#pci-fo-development .v98d-format-summary{
+  padding:9px 11px;font-size:.75rem;
+  border:1px solid #dce5e8;border-radius:9px;margin-top:7px;background:#f8fbfd
+}
+#pci-fo-development #pciFoCoverageSubjects{
+  display:block;padding:12px 16px
+}
+#pci-fo-development #pciFoCoverageSpaces{
+  padding:12px 16px
+}
+#pci-fo-development #pciFoCoverageSubjects>h3,
+#pci-fo-development #pciFoCoverageSpaces>h3,
+#pci-fo-development #pciFoCoverageLevels>h3{
+  font-size:.93rem;color:#12395c;margin:3px 0 10px
+}
+@media(max-width:700px){
+  #pci-fo-development .pci-fo-group-grid{
+    grid-template-columns:minmax(0,1fr)
+  }
+  #pci-fo-development .pci-fo-group-grid>.group-card{
+    display:block;padding:14px
+  }
+  #pci-fo-development .pci-fo-group-card .form-grid{
+    grid-template-columns:1fr
+  }
+  #pci-fo-development .pci-fo-group-card .form-grid .full{
+    grid-column:auto
+  }
+  #pci-fo-development .v98d-level-head{
+    flex-direction:column
+  }
+  #pci-fo-development .v98d-level-meta{justify-content:flex-start}
+  #pci-fo-development .v99d-plan-head,
+  #pci-fo-development .v99d-plan-row{
+    grid-template-columns:minmax(0,1fr) 85px 95px;gap:5px
+  }
+}
+@media print{
+  #pci-fo-development .v98d-groups{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #pci-fo-development .v98d-group{break-inside:avoid}
+  #pci-fo-development .v98d-level{break-inside:avoid}
+}

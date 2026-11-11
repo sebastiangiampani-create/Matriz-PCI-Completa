@@ -1,0 +1,31 @@
+/* Solo disposición de los hosts. El estilo interno v97/v100/v94/v95 se
+   recibe sin reescribir de los renderizadores originales de V2. */
+.pci-inline-root{min-width:0;box-sizing:border-box}
+.pci-inline-area{padding:13px 15px;border:1px solid var(--line,#d8e1e8);border-radius:18px;background:#fff;margin:12px 0 15px}
+.pci-inline-total{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;align-items:center}
+.pci-inline-total strong{display:block;color:#12395c;font-size:.86rem;font-weight:850}
+.pci-inline-total small{display:block;color:#5f7382;font-size:.72rem;line-height:1.4;margin-top:4px}
+.pci-inline-total-bar{height:7px;border-radius:99px;background:#dce7e8;overflow:hidden}
+.pci-inline-total-bar span{display:block;height:100%;background:var(--mint,#83ded3)}
+#board.pci-inline-ready>.coverage-card{display:none}
+#pci-fo-development>[data-pci-inline="area"]{margin:10px 20px 0;flex:0 0 auto;max-height:30dvh;overflow:auto}
+#pci-fo-development .pci-inline-ready>.pci-fo-card-coverage,
+#pci-fo-development .pci-inline-ready>.pci-fo-card-subjects{display:none}
+.pci-inline-plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:14px}
+.pci-inline-plan-grid .v38-card{min-width:0}
+.pci-inline-plan-grid .v38-card h3{font-size:1.03rem;margin:0 0 4px}
+.pci-inline-plan-grid .v38-card>button{margin-top:12px;width:100%}
+.pci-inline-root .v95-coverage-table{overflow-x:auto}
+.pci-inline-root .v95-coverage-line.axis>div span{overflow-wrap:anywhere}
+[data-pci-inline="plan-current"]{margin:12px 0}
+[data-pci-inline="error"]{padding:12px;color:#795000;background:#fff4d8}
+@media(max-width:760px){
+  .pci-inline-plan-grid{grid-template-columns:1fr;padding:10px}
+  .pci-inline-total{grid-template-columns:1fr;gap:8px}
+  #pci-fo-development>[data-pci-inline="area"]{margin:8px 9px 0;max-height:25dvh;padding:10px}
+  .pci-inline-area .v100-level-grid{grid-template-columns:1fr}
+}
+@media print{
+  .pci-inline-root details{display:block}
+  .pci-inline-root .v97-group-coverage,.pci-inline-plan-grid>article{break-inside:avoid}
+}

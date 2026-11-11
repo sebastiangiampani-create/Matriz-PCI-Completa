@@ -1,0 +1,50 @@
+name: Validar catalogo de contenidos priorizados Tecnica
+on:
+  push:
+    branches: [release/pci-orientaciones-aditivo-20261111]
+    paths:
+      - ".github/workflows/validar-priorizados-tecnica.yml"
+      - "tests/tecnica-priorizados-2026.test.mjs"
+      - "data/tecnica/**"
+      - "pci-tecnica-priorizados.html"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar-documentos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verificar fuentes, identidad de especialidades y aislamiento
+        run: node --test tests/tecnica-priorizados-2026.test.mjs
+      - name: Contar archivos y verificar trazabilidad de paginas
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('data/tecnica')
+          index=json.loads((root/'catalogo-priorizados-2026.json').read_text(encoding='utf-8'))
+          assert index['totales']=={'especialidades_documentadas':26,'documentos_documentados':27,
+            'asignaturas_indexadas':1112,'paginas_pdf':2822}
+          files=sorted((root/'priorizados').glob('*.json'))
+          assert len(files)==27
+          total=0
+          for path in files:
+            doc=json.loads(path.read_text(encoding='utf-8'))
+            assert doc['estado']=='extraccion_automatica_pendiente_revision'
+            assert doc['fuente_url'].startswith('https://static.buenosaires.gob.ar/')
+            assert len(doc['sha256_pdf'])==64
+            for s in doc['asignaturas']:
+              total+=1
+              assert s['estado']=='extraccion_automatica_pendiente_revision'
+              assert s['paginas']
+              assert s['campo_verificado'] is False
+              assert s['anio_verificado'] is False
+              for page in s['paginas']:
+                assert 1<=page['pagina_pdf']<=doc['paginas_pdf']
+          assert total==1112
+          print('Validacion de referencia OK:',len(files),'documentos;',total,'entradas')
+          PY
