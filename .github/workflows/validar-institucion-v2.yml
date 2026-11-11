@@ -1,0 +1,47 @@
+name: Validar orientaciones, turnos y mapa V2 original
+
+on:
+  push:
+    branches:
+      - 'preview/orientaciones-online-demo-20261111'
+    paths:
+      - 'preview-v2-real/institucion.html'
+      - 'preview-v2-real/app.html'
+      - 'preview-v2-real/src/institucion-pci-demo.js'
+      - 'pci-orientaciones-demo.html'
+      - 'tests/institucion-v2-browser.mjs'
+      - '.github/workflows/validar-institucion-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validar-institucion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Comprobar archivos y JavaScript institucional
+        run: |
+          test -s preview-v2-real/institucion.html
+          test -s preview-v2-real/app.html
+          node --check preview-v2-real/src/institucion-pci-demo.js
+          node --check tests/institucion-v2-browser.mjs
+      - name: Instalar navegador Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Probar tres PCI, dos turnos y aislamiento del mapa original
+        run: node tests/institucion-v2-browser.mjs
+      - name: Conservar capturas para revisión visual
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vista-institucional-orientaciones-turnos-v2
+          path: test-artifacts/v2-config-institucional/
+          if-no-files-found: ignore
+          retention-days: 7
