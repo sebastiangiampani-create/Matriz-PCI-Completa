@@ -146,62 +146,7 @@ BEGIN
     OR p_title IS NULL OR length(btrim(p_title)) NOT BETWEEN 3 AND 150
     OR p_actor IS NULL OR length(btrim(p_actor)) NOT BETWEEN 1 AND 180
     OR (p_model='comun' AND (
-      p_orientation_id IS NULL OR p_orientation_id !~ '^[a-z][a-z0-9_]{2,79}
-
-CREATE OR REPLACE FUNCTION public.pci_workspace_list_pcis_v1(
-  p_school_id integer
-) RETURNS jsonb LANGUAGE sql SECURITY INVOKER SET search_path = ''
-AS $fn$
-SELECT coalesce(jsonb_agg(jsonb_build_object(
-  'pci_id',p.pci_id,'school_id',p.school_id,'orientation_id',p.orientation_id,
-  'process_id',p.process_id,'title',p.title,'status',p.status,
-  'model',p.model,'shift_id',p.shift_id,'specialty_name',p.specialty_name,
-  'curriculum_status',p.curriculum_status,'legacy_source_model',p.legacy_source_model,
-  'created_at',p.created_at,'updated_at',p.updated_at,
-  'fg_catalog_version',p.fg_catalog_version,'fo_catalog_version',p.fo_catalog_version
-) ORDER BY p.created_at,p.pci_id),'[]'::jsonb)
-FROM pci_workspace.pcis p WHERE p.school_id=p_school_id;
-$fn$;
-
--- Solo lectura para un PCI autorizado; exige que el Edge valide la escuela.
-CREATE OR REPLACE FUNCTION public.pci_workspace_get_pci_v1(
-  p_school_id integer,p_pci_id uuid
-) RETURNS jsonb LANGUAGE sql SECURITY INVOKER SET search_path = ''
-AS $fn$
-SELECT jsonb_build_object(
-  'pci_id',p.pci_id,'school_id',p.school_id,'orientation_id',p.orientation_id,
-  'process_id',p.process_id,'title',p.title,'status',p.status,
-  'model',p.model,'shift_id',p.shift_id,'specialty_name',p.specialty_name,
-  'curriculum_status',p.curriculum_status,'legacy_source_model',p.legacy_source_model,
-  'fg_catalog_version',p.fg_catalog_version,'fo_catalog_version',p.fo_catalog_version,
-  'legacy_state',s.source_data,'legacy_sha256',s.source_sha256,
-  'legacy_source_updated_at',s.source_updated_at)
-FROM pci_workspace.pcis p JOIN pci_workspace.legacy_snapshots s
-  ON s.snapshot_id=p.legacy_snapshot_id AND s.school_id=p.school_id
-WHERE p.school_id=p_school_id AND p.pci_id=p_pci_id;
-$fn$;
-
-REVOKE ALL ON FUNCTION public.pci_workspace_create_school_v1(
- text,text,text,integer,text,text,text) FROM PUBLIC,anon,authenticated;
-REVOKE ALL ON FUNCTION public.pci_workspace_create_pci_v1(
- integer,text,text,text) FROM PUBLIC,anon,authenticated;
-REVOKE ALL ON FUNCTION public.pci_workspace_create_pci_v2(
- integer,text,text,text,text,text,text) FROM PUBLIC,anon,authenticated;
-REVOKE ALL ON FUNCTION public.pci_workspace_list_pcis_v1(integer)
- FROM PUBLIC,anon,authenticated;
-REVOKE ALL ON FUNCTION public.pci_workspace_get_pci_v1(integer,uuid)
- FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.pci_workspace_create_school_v1(
- text,text,text,integer,text,text,text) TO service_role;
-GRANT EXECUTE ON FUNCTION public.pci_workspace_create_pci_v1(
- integer,text,text,text) TO service_role;
-GRANT EXECUTE ON FUNCTION public.pci_workspace_create_pci_v2(
- integer,text,text,text,text,text,text) TO service_role;
-GRANT EXECUTE ON FUNCTION public.pci_workspace_list_pcis_v1(integer) TO service_role;
-GRANT EXECUTE ON FUNCTION public.pci_workspace_get_pci_v1(integer,uuid) TO service_role;
-COMMENT ON SCHEMA pci_workspace IS 'Datos separados por PCI; los datos historicos de pci_proposals no se sobreescriben.';
-COMMIT;
-
+      p_orientation_id IS NULL OR p_orientation_id !~ '^[a-z][a-z0-9_]{2,79}$'
       OR p_specialty_name IS NOT NULL))
     OR (p_model='tecnica' AND (
       p_specialty_name IS NULL OR length(btrim(p_specialty_name)) NOT BETWEEN 3 AND 150))
@@ -276,7 +221,9 @@ AS $fn$
 SELECT coalesce(jsonb_agg(jsonb_build_object(
   'pci_id',p.pci_id,'school_id',p.school_id,'orientation_id',p.orientation_id,
   'process_id',p.process_id,'title',p.title,'status',p.status,
-  'model',p.model,'created_at',p.created_at,'updated_at',p.updated_at,
+  'model',p.model,'shift_id',p.shift_id,'specialty_name',p.specialty_name,
+  'curriculum_status',p.curriculum_status,'legacy_source_model',p.legacy_source_model,
+  'created_at',p.created_at,'updated_at',p.updated_at,
   'fg_catalog_version',p.fg_catalog_version,'fo_catalog_version',p.fo_catalog_version
 ) ORDER BY p.created_at,p.pci_id),'[]'::jsonb)
 FROM pci_workspace.pcis p WHERE p.school_id=p_school_id;
@@ -290,6 +237,8 @@ AS $fn$
 SELECT jsonb_build_object(
   'pci_id',p.pci_id,'school_id',p.school_id,'orientation_id',p.orientation_id,
   'process_id',p.process_id,'title',p.title,'status',p.status,
+  'model',p.model,'shift_id',p.shift_id,'specialty_name',p.specialty_name,
+  'curriculum_status',p.curriculum_status,'legacy_source_model',p.legacy_source_model,
   'fg_catalog_version',p.fg_catalog_version,'fo_catalog_version',p.fo_catalog_version,
   'legacy_state',s.source_data,'legacy_sha256',s.source_sha256,
   'legacy_source_updated_at',s.source_updated_at)
@@ -302,6 +251,8 @@ REVOKE ALL ON FUNCTION public.pci_workspace_create_school_v1(
  text,text,text,integer,text,text,text) FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.pci_workspace_create_pci_v1(
  integer,text,text,text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.pci_workspace_create_pci_v2(
+ integer,text,text,text,text,text,text) FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.pci_workspace_list_pcis_v1(integer)
  FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.pci_workspace_get_pci_v1(integer,uuid)
@@ -310,6 +261,8 @@ GRANT EXECUTE ON FUNCTION public.pci_workspace_create_school_v1(
  text,text,text,integer,text,text,text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.pci_workspace_create_pci_v1(
  integer,text,text,text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.pci_workspace_create_pci_v2(
+ integer,text,text,text,text,text,text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.pci_workspace_list_pcis_v1(integer) TO service_role;
 GRANT EXECUTE ON FUNCTION public.pci_workspace_get_pci_v1(integer,uuid) TO service_role;
 COMMENT ON SCHEMA pci_workspace IS 'Datos separados por PCI; los datos historicos de pci_proposals no se sobreescriben.';
