@@ -34,8 +34,13 @@
     version:1,school:selectedSchool.name,
     orientations:['Economía y Administración'],shifts:['Mañana'],
     combos:[{orientation:'Economía y Administración',shift:'Mañana',quantity:1}],
-    pcis:[{id:createId(),orientation:'Economía y Administración',shift:'Mañana',
-      number:1,createdAt:new Date().toISOString()}]
+    // No inventar una orientación de Media al agregar un nuevo colegio.
+    // Solamente la ESCUELA DE MUESTRA conserva su PCI ficticio inicial.
+    pcis:selectedSchool.id===DEFAULT_ID?
+      [{id:createId(),orientation:'Economía y Administración',shift:'Mañana',
+        number:1,createdAt:new Date().toISOString()}]:[],
+    models:selectedSchool.id===DEFAULT_ID?['comun']:[],
+    modelsConfigured:false
   });
   let state;
   try {state=JSON.parse(localStorage.getItem(KEY)||'null')}catch{}
@@ -43,11 +48,19 @@
      !Array.isArray(state.combos)||!Array.isArray(state.pcis))state=defaultState();
   // Compatibilidad: las estructuras ya guardadas de Media no se modifican.
   if(!Array.isArray(state.technicalTracks))state.technicalTracks=[];
-  // Compatibilidad con todas las configuraciones de prueba anteriores.
-  // El modelo pertenece al PCI, NO al registro único de la escuela.
-  // Si la escuela aún no seleccionó modalidades, ninguna se elimina:
-  // aparecen las dos disponibles para que se elijan explícitamente.
-  if(!Array.isArray(state.models))state.models=['comun','tecnica'];
+  // Un cambio anterior marcaba AMBOS modelos por defecto. Era incorrecto:
+  // los modelos pertenecen a las ofertas reales, no se infieren del colegio.
+  // Al abrir una demo antigua no configurada, inferir solo de los PCI que YA
+  // existen, sin borrarlos ni modificar su contenido.
+  if(state.modelsConfigured!==true){
+    const previousModels=[];
+    if(state.pcis.some(p=>p.model!=='tecnica'))previousModels.push('comun');
+    if(state.pcis.some(p=>p.model==='tecnica')||state.technicalTracks.length)
+      previousModels.push('tecnica');
+    state.models=previousModels;
+  }else if(!Array.isArray(state.models)){
+    state.models=[];
+  }
   function persist(){
     try{localStorage.setItem(KEY,JSON.stringify(state));}
     catch(error){feedback('No se guardó la configuración local. Revisá el espacio del navegador.',true);throw error;}
@@ -324,6 +337,7 @@
     const next=copy(state);
     next.school=school;
     next.models=copy(draft.models);
+    next.modelsConfigured=true;
     next.orientations=copy(draft.orientations);
     next.shifts=copy(draft.shifts);
     // Desactivar Media solo la oculta; sus combinaciones y PCI se conservan
