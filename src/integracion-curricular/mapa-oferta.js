@@ -11,6 +11,7 @@ import {FG_MODES} from './bridge.js';
 import {validateFgComposition} from './reglas-composicion-fg.js';
 import {matchMatrixToV2Fg,selectFoByOrientation} from './catalogos.js';
 import {ORIENTATIONS} from './bridge.js';
+import {pvfReference,validatePvfProject} from './proyecto-vinculacion-2026.mjs';
 const clone=x=>JSON.parse(JSON.stringify(x));
 const normalize=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const array=x=>Array.isArray(x)?x:[];
@@ -57,7 +58,11 @@ export function seedOfferStructure(pack,orientationId,refs){
       terms.forEach((term,i)=>spaces.push(makeSpace(kind,year,i+1,term)));
     }
   }
-  spaces.push(makeSpace('proyecto',5,1,9));
+  const project=makeSpace('proyecto',5,1,9);
+  // Un único espacio ANUAL: se representa en C9 y C10 pero no se duplica.
+  // La referencia del proyecto es de la tabla de Bachilleratos A/B del 05.10.2026.
+  project.members=[pvfReference(orientationId,'A')];
+  spaces.push(project);
   upd.orientations[orientationId].fo.spaces=spaces;
   upd.orientations[orientationId].fo.subjectAlternative='A';
   upd.orientations[orientationId].fo.subjectAssignments=[];
@@ -87,7 +92,10 @@ export function foSubjectBank({orientationId,refs,alternative='A'}){
   for(const year of [3,4,5]){
     const names=year===3?programs['3']:programs[alternative]?.[String(year)];
     const hoursMap=year===3?hours?.['3']:hours?.[alternative]?.[String(year)];
+    const project=pvfReference(orientationId,alternative);
     for(const subj of array(names)){
+      // El proyecto anual no se asigna otra vez como laboratorio/taller de 5.º.
+      if(year===5&&normalize(subj)===normalize(project.name))continue;
       const value=lookup(hoursMap,subj);
       subjects.push({id:'fo-materia:'+orientationId+':'+year+':'+normalize(subj).replaceAll(' ','-'),
         component:'FO',name:String(subj),year,orientationId,
@@ -100,10 +108,18 @@ export function foSubjectBank({orientationId,refs,alternative='A'}){
 export function setFoAlternative(pack,orientationId,alternative){
   if(!['A','B'].includes(alternative))throw new Error('Alternativa FO inválida.');
   const w=ws(pack,orientationId);
-  if(w.fo.spaces.some(s=>array(s.members).length))
+  if(w.fo.spaces.some(s=>s.kind!=='proyecto'&&array(s.members).length))
     throw new Error('Hay materias FO ubicadas; revisar sus asignaciones antes de cambiar de alternativa.');
+  const project=w.fo.spaces.find(s=>s.kind==='proyecto');
+  const oldAlternative=w.fo.subjectAlternative||'A';
+  // Un proyecto histórico no reconocido no se pisa al cambiar de alternativa.
+  if(project&&array(project.members).length&&
+     !validatePvfProject(project,{orientationId,alternative:oldAlternative}).valid)
+    throw new Error('El Proyecto de Vinculación existente no coincide con la tabla oficial. Descargá y revisá el proyecto antes de cambiar de alternativa.');
   const upd=clone(pack);
   upd.orientations[orientationId].fo.subjectAlternative=alternative;
+  const next=upd.orientations[orientationId].fo.spaces.find(s=>s.kind==='proyecto');
+  if(next)next.members=[pvfReference(orientationId,alternative)];
   return upd;
 }
 function totalHours(space,additional=null){
@@ -180,6 +196,19 @@ export function validateOfferStructure(pack,orientationId,refs){
   const projects=spaces.filter(s=>s.kind==='proyecto');
   if(projects.length!==1||projects[0]?.year!==5||projects[0]?.startTerm!==9||projects[0]?.endTerm!==10)
     errors.push('Debe existir un Proyecto de Vinculación anual en C9-C10.');
+  else {
+    const pvfAudit=validatePvfProject(projects[0],{
+      orientationId,alternative:w.fo.subjectAlternative||'A'
+    });
+    errors.push(...pvfAudit.errors);
+    // Evitar que la misma materia del proyecto anual cuente doble como
+    // laboratorio o taller de 5.º del mismo PCI.
+    for(const s of spaces.filter(x=>x.kind!=='proyecto'&&x.year===5)){
+      if(array(s.members).some(m=>m.id===pvfAudit.expected.id ||
+        normalize(m.name)===normalize(pvfAudit.expected.name)))
+        errors.push(s.name+': la materia anual del Proyecto de Vinculación no puede asignarse también a un laboratorio o taller.');
+    }
+  }
   for(const s of spaces){
     if(!PERIOD[s.year]){errors.push('Espacio FO con nivel inválido: '+s.id);continue;}
     if(s.kind!=='proyecto'&&!PERIOD[s.year].includes(s.term))
