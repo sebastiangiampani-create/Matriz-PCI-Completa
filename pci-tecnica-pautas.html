@@ -3,20 +3,28 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mapa de composición · Educación Técnica · PCI V2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{font:14px "Archivo","Segoe UI",system-ui,sans-serif;color:#12395c;background:#f6f9fa}
+:root{font:14px "Archivo","Segoe UI",system-ui,sans-serif;color:#12395c;background:#f8fafb}
+body.embed-preview>header{display:none}
+body.embed-preview .container{max-width:1420px;padding:12px clamp(13px,3vw,28px) 40px}
+body.embed-preview .panel:first-child{margin-top:0}
+body.embed-preview h1{font-size:1.4rem}
+
 *{box-sizing:border-box}body{margin:0}button,select,input,textarea{font:inherit;color:inherit}button{cursor:pointer}
 header{background:#fff;border-bottom:1px solid #d9e5e9;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px clamp(12px,2.5vw,26px)}
-.logo{height:42px;width:auto;max-width:210px}.label{font-size:.72rem;letter-spacing:.055em;font-weight:850;text-transform:uppercase;color:#087581}.tag{display:inline-block;border-radius:20px;padding:6px 10px;font-size:.72rem;font-weight:800;background:#e4f6f2;color:#086b67}
+.logo{height:42px;width:auto;max-width:210px}.label{font-size:.72rem;letter-spacing:.055em;font-weight:850;text-transform:uppercase;color:#087581}.tag{display:inline-block;border-radius:40px;padding:7px 11px;font-size:.7rem;font-weight:900;background:#e7f8f5;color:#126e65}
 .container{max-width:1390px;margin:auto;padding:18px clamp(12px,2vw,24px) 35px}h1{font-size:clamp(1.4rem,2.5vw,2rem);margin:.25rem 0 .55rem}h2{font-size:1.17rem;margin:0 0 .5rem}h3{font-size:.97rem;margin:1rem 0 .5rem}p{line-height:1.5;margin:.4rem 0 .8rem}.muted{color:#617b87;font-size:.85rem}
-.panel{background:#fff;border:1px solid #dae4e9;border-radius:14px;padding:18px;margin:13px 0;box-shadow:0 3px 11px #12395c0b}
+.panel{background:#fff;border:1px solid #d8e1e8;border-radius:17px;padding:19px;margin:14px 0;box-shadow:0 10px 28px #12395c0b}
 .row{display:flex;align-items:center;gap:13px;justify-content:space-between;flex-wrap:wrap}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:12px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .stat{background:#f1f7f8;border:1px solid #d3e7e6;border-radius:11px;padding:12px}.stat strong{display:block;font-size:1.22rem}.stat small{display:block;color:#5d7783;margin-top:4px}
 .warning{background:#fff7e8;border:1px solid #eddbad;border-radius:11px;padding:12px;color:#79521a;font-size:.82rem}
 .info{background:#eaf7f5;border:1px solid #bfe3df;padding:12px;border-radius:11px;color:#145d59;font-size:.82rem}
 label{display:block;font-weight:800;font-size:.81rem;margin:5px 0 11px}label span{display:block;margin-bottom:5px}select,input,textarea{width:100%;border:1px solid #bfd2da;border-radius:8px;background:#fff;padding:9px 10px;margin-top:2px;min-height:39px}
-.btn{background:#113c5a;color:#fff;border:1px solid #113c5a;border-radius:9px;padding:9px 13px;font-size:.81rem;font-weight:800}
+.btn{background:#12395c;color:#fff;border:1px solid #12395c;border-radius:999px;padding:9px 15px;font-size:.81rem;font-weight:850}
 .btn.ghost{color:#12395c;background:#fff;border-color:#bacdd5}button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #66b5b1;outline-offset:2px}
 .mapScroll{width:100%;overflow:auto;border:1px solid #cfdee4;border-radius:12px;margin-top:12px}
 table{border-collapse:collapse;width:100%;min-width:1010px;font-size:.73rem}
@@ -110,6 +118,7 @@ footer{color:#6e8390;padding:12px 0;font-size:.76rem}
   </section>
   <footer>Escuela de Maestros · Reglas del documento del 05/10/2026. El encabezado del documento contiene una referencia normativa incompleta («Res N°XXX»), por lo que su aprobación formal debe verificarse por el equipo responsable.</footer>
 </main>
+<script>if(new URLSearchParams(location.search).get('embed')==='1')document.body.classList.add('embed-preview');</script>
 <script type="module" src="src/tecnica/pautas-visor.mjs"></script>
 </body>
 </html>
