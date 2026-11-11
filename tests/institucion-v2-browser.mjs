@@ -104,6 +104,19 @@ try {
     const raw=localStorage.getItem(window.__PCIDEMO__.getMapKey(id));
     return raw?JSON.parse(raw)?.maps?.['Economía y Administración']?.placements?.['matematica-n3']||[]:[];
   },eco[1].id);
+  if(secondPlaced!==0||secondActual.length!==0){
+    const diagnostic=await page.evaluate(ids=>{
+      const src=document.querySelector('#frame')?.src;
+      const frame=document.querySelector('#frame')?.contentWindow;
+      const state=frame?.eval('typeof state!=="undefined" ? {active:state.active,maps:state.maps,STORAGE} : null');
+      const keys=ids.map(id=>window.__PCIDEMO__.getMapKey(id));
+      return {src,keys,stored:keys.map(key=>localStorage.getItem(key)),
+        iframeState:state,
+        node:frame?.document?.querySelector('#matrix .drop[data-slot="matematica-n3"]')?.textContent?.slice(0,320)};
+    },eco.map(x=>x.id));
+    console.log('ISOLATION_DIAGNOSTIC',JSON.stringify({placed:secondPlaced,secondStored:secondActual,
+      diagnostic}).slice(0,12000));
+  }
   assert.equal(secondPlaced,0,'El mapa del segundo PCI no debe mostrar materias arrastradas desde el primero');
   assert.equal(secondActual.length,0,'El segundo PCI no debe guardar materias que fueron ubicadas en otro PCI');
   await page.locator('#back').click();
