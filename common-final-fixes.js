@@ -26,7 +26,7 @@ function customItems(group) {
 function persistAndRefresh(groupId = null) {
   const state = getState();
   if (!state) return;
-  window.PCIApp?.saveScopedState?.(state);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   window.app = state;
   window.dispatchEvent(new CustomEvent('pci-state-change', { detail: { schemaVersion: 10 } }));
   const current = state.current;

@@ -93,7 +93,7 @@
     try {
       const changed = AREAS.some((area) => normalizeArea(current, area));
       if (!changed) return;
-      window.PCIApp?.saveScopedState?.(current);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
       window.app = current;
       const active = current.current;
       if (active && AREAS.includes(active)) {

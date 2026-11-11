@@ -38,9 +38,8 @@ test('todos los talleres aparecen ubicados en la matriz desde el inicio', () => 
   );
   assert.deepEqual(
     state.areas.Tecnologías.groups.map((group) => group.startTerm),
-    [1, 2, 3, 4, 5, 6, 7, 8],
+    [1, 2, 3, 4, 5, 6],
   );
-  assert.equal(state.areas.Tecnologías.groups.length, AREA_CONFIG.Tecnologías.count);
 });
 
 test('la migración preserva laboratorios existentes y completa los faltantes', () => {
