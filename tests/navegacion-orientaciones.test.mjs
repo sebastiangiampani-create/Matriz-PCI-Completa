@@ -38,3 +38,15 @@ test('una sola sesión institucional permite mostrar Media y Técnica en grupos 
   assert.match(view,/const model=\$\('pciModel'\)\.value;/);
   assert.match(view,/const result=await call\('get-school-pci',\{school_id:schoolId,pci_id:id\}\)/);
 });
+
+
+test('una escuela existente incorpora modelos sin darse de alta otra vez',async()=>{
+  const html=await readFile(new URL('../pci-orientaciones.html',import.meta.url),'utf8');
+  const js=await readFile(new URL('../src/orientaciones-online.mjs',import.meta.url),'utf8');
+  assert.match(html,/Escuela existente/);
+  assert.match(html,/Agregar modelo \/ PCI/);
+  assert.match(html,/Para las escuelas que ya están registradas/);
+  assert.match(html,/Dar de alta una escuela nueva/);
+  assert.match(js,/school_id:schoolId,model,shift_id:shiftId,orientation_id:orientationId/);
+  assert.match(js,/for\(const model of \['comun','tecnica'\]\)/);
+});
