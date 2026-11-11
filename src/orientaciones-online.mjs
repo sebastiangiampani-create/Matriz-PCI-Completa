@@ -7,8 +7,9 @@ import {ORIENTATIONS,createOrientationPackage} from './integracion-curricular/br
 import {migrateState} from '../pci-model.js';
 import {loadMatrixContents,loadV2Fg,loadV2Fo,loadV2Rules,selectFoByOrientation} from './integracion-curricular/catalogos.js';
 import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integracion-curricular/auto-validacion-importacion.js';
-import {seedOfferStructure,foSubjectBank,assignFoSubject,offerMapRows,validateOfferStructure,stageFoContent,setFoAlternative,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
+import {seedOfferStructure,foSubjectBank,assignFoSubject,offerMapRows,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
 import {newFoDevelopment,FO_STAGES} from './integracion-curricular/desarrollo-fo-modelo.js';
+import {pvfReference,validatePvfProject} from './integracion-curricular/proyecto-vinculacion-2026.mjs';
 import {requireSchoolPci,newFgUnit,guardFgUnit,newOfferUnit,restoreOfferUnit,newFoUnit,guardFoUnit,inventory,editStageDescription} from './orientaciones-release-core.mjs';
 
 const API='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-access';
@@ -445,7 +446,7 @@ function renderOffer(){
   const grid=$('offerGrid');grid.replaceChildren();
   const current=getCurrentOffer(),alternative=current.subjectAlternative||'A';
   $('foAlternative').value=alternative;
-  $('foAlternative').disabled=!canEdit()||current.spaces.some(s=>(s.members||[]).length>0);
+  $('foAlternative').disabled=!canEdit()||current.spaces.some(s=>s.kind!=='proyecto'&&(s.members||[]).length>0);
   $('confirmFoContents').disabled=!canEdit();
   let bank;
   try{bank=foSubjectBank({orientationId:pci.orientation_id,refs,alternative});}
@@ -457,6 +458,31 @@ function renderOffer(){
     const ul=elem('ul');(space.members||[]).forEach(m=>note('li',m.name||m.subject||m.id,ul));
     if(!space.members?.length)note('li','Sin materias asignadas',ul);
     card.appendChild(ul);
+    if(space.kind==='proyecto'){
+      // El PVF pertenece a la FO de quinto año y es anual (C9-C10);
+      // no hay dos proyectos ni se duplica su carga horaria.
+      const expected=pvfReference(pci.orientation_id,alternative);
+      const audit=validatePvfProject(space,{orientationId:pci.orientation_id,alternative});
+      note('p','5.º año · ANUAL C9–C10 · Alternativa '+alternative+
+        ' · '+expected.hours+' h · Tabla normativa 05/10/2026 (p. 11)',card,'muted');
+      note('p','Espacio previsto: '+expected.name,card,'muted');
+      if(!audit.valid){
+        note('p','Revisión necesaria: '+audit.errors.join(' · '),card,'muted');
+        // Solo se autocompleta si el proyecto nunca tuvo materias.
+        if(!(space.members||[]).length){
+          const apply=elem('button','Asignar espacio según tabla A/B','btn');apply.type='button';
+          apply.disabled=!canEdit();
+          apply.onclick=()=>{
+            try{
+              workspace=assignPvfReference(workspace,pci.orientation_id);
+              markDirty('oferta');renderOffer();
+              message('Proyecto de Vinculación asignado según la tabla. Falta guardar el mapa.','warn');
+            }catch(error){message(error.message,'error')}
+          };
+          card.appendChild(apply);
+        }
+      }
+    }
     if(space.kind!=='proyecto'){
       const select=elem('select');select.setAttribute('aria-label','Materia para '+space.name);
       (bank.subjects||[]).filter(s=>Number(s.year)===Number(space.year)).forEach(subject=>{
