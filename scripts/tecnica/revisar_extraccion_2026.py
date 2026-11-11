@@ -49,7 +49,8 @@ def verify():
                 page=int(p["pagina_pdf"])
                 assert 1<=page<=data["paginas_pdf"],(e["id"],page)
                 text=p["texto_pagina"]
-                assert isinstance(text,str) and text.strip()
+                assert isinstance(text,str), (e['id'],page)
+                missing_text=not bool(text.strip())
                 header=norm(text[:1150])
                 if "campo de la formacion cientifico tecnologica" in header or "campo de la formacion cientifico-tecnologica" in header:
                     field="formacion_cientifico_tecnologica"
@@ -65,7 +66,8 @@ def verify():
                         field=="formacion_cientifico_tecnologica"):
                     field="formacion_tecnica_especifica"
                 pages.append({"pagina_pdf":page,"texto_pagina":text,
-                             "anio_contextual_inferido":p.get("anio_contextual_no_validado")})
+                             "anio_contextual_inferido":p.get("anio_contextual_no_validado"),
+                             "pagina_sin_texto":missing_text})
                 labels.append(field)
             candidate=Counter(labels).most_common(1)[0][0]
             if "practicas profesionalizantes" in norm(s["asignatura"]):
