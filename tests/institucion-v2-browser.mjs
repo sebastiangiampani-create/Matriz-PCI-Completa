@@ -93,7 +93,13 @@ try {
   await page.locator('#orientationCount').selectOption('1');
   await page.locator('#saveConfig').click();
   assert.equal(await page.locator('#pciList .pci-card').count(),3);
+  assert.equal(await page.locator('#pciList > .pci-card').count(),2,'Solo los PCI vigentes deben estar visibles en la grilla principal.');
+  assert.equal(await page.locator('#pciList .pci-conservados').count(),1);
+  assert.equal(await page.locator('#pciList .pci-conservados').evaluate(e=>e.open),false,'Los anteriores deben aparecer plegados.');
+  assert.match(await page.locator('#totalPcis').textContent(),/2 PCI habilitados/);
   assert.ok((await page.locator('#pciList').textContent()).includes('PCI conservado'));
+  await page.locator('#pciList .pci-conservados > summary').click();
+  assert.equal(await page.locator('#pciList .pci-conservados .pci-card').count(),1,'Debe haber un PCI histórico accesible.');
   await page.reload({waitUntil:'domcontentloaded'});
   assert.equal(await page.locator('#pciList .pci-card').count(),3);
   const restored=await page.evaluate(id=>localStorage.getItem(window.__PCIDEMO__.getMapKey(id)),eco[0].id);
