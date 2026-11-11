@@ -39,6 +39,8 @@
   try {state=JSON.parse(localStorage.getItem(KEY)||'null')}catch{}
   if(!state||!Array.isArray(state.orientations)||!Array.isArray(state.shifts)||
      !Array.isArray(state.combos)||!Array.isArray(state.pcis))state=defaultState();
+  // Compatibilidad: las estructuras ya guardadas de Media no se modifican.
+  if(!Array.isArray(state.technicalTracks))state.technicalTracks=[];
   function persist(){
     try{localStorage.setItem(KEY,JSON.stringify(state));}
     catch(error){feedback('No se guardó la configuración local. Revisá el espacio del navegador.',true);throw error;}
@@ -197,6 +199,8 @@
     renderCombinations();
   }
   function isActive(p){
+    if(p.model==='tecnica')return state.technicalTracks.some(t=>
+      t.specialtyName===p.specialtyName&&t.shift===p.shift&&p.number<=t.quantity);
     return state.combos.some(c=>c.orientation===p.orientation&&c.shift===p.shift&&p.number<=c.quantity);
   }
   function renderPcis(){
@@ -207,14 +211,18 @@
       ||a.shift.localeCompare(b.shift,'es')||a.number-b.number;
     function cardFor(p,enabled){
       const card=node('article');card.className='pci-card'+(enabled?'':' inactive');
-      const badge=node('span',enabled?'PCI habilitado':'PCI conservado · Inactivo');
+      const badge=node('span',p.model==='tecnica'?
+        (enabled?'Técnica · Reglas pendientes':'Técnica conservada · Inactiva'):
+        (enabled?'Media · PCI habilitado':'Media · PCI conservado'));
       badge.className='badge'+(enabled?'':' off');
-      const heading=node('h3',p.orientation);
+      const heading=node('h3',p.model==='tecnica'?('Especialidad Técnica · '+p.specialtyName):p.orientation);
       const title=node('p','Turno '+p.shift+' · PCI '+p.number);
-      const desc=node('p',enabled
-        ?'Mapa de la Oferta, secuencias y planes independientes'
+      const desc=node('p',p.model==='tecnica'?
+        'Proyecto técnico independiente. No aplica composición de Media hasta recibir las nuevas reglas.':
+        enabled?'Mapa de la Oferta, secuencias y planes independientes'
         :'Conservado sin borrar sus contenidos, mapa o planes');
-      const button=node('button','Abrir PCI y mapa C1–C10 →');
+      const button=node('button',p.model==='tecnica'?
+        'Ver ficha técnica · Reglas pendientes →':'Abrir PCI y mapa C1–C10 →');
       button.type='button';button.className='btn primary small';
       button.onclick=()=>openPci(p);
       card.append(badge,heading,title,desc,button);
@@ -279,6 +287,23 @@
   }
   function openPci(p){
     const f=$('frame');
+    if(p.model==='tecnica'){
+      f.src='about:blank';
+      f.hidden=true;
+      $('technicalPendingDemo').hidden=false;
+      $('technicalPendingName').textContent='Especialidad Técnica · '+p.specialtyName;
+      $('technicalPendingMeta').textContent=state.school+
+        ' · Turno '+p.shift+' · PCI '+p.number+
+        ' · Los contenidos históricos y las claves de la escuela permanecen independientes.';
+      $('workingTitle').textContent='Técnica · '+p.specialtyName;
+      $('workingMeta').textContent=state.school+' · Sin aplicar reglas de Media';
+      $('configScreen').hidden=true;
+      $('workspaceScreen').hidden=false;
+      window.scrollTo(0,0);
+      return;
+    }
+    $('technicalPendingDemo').hidden=true;
+    f.hidden=false;
     const url=new URL('app.html',location.href);
     url.searchParams.set('pci',p.id);
     url.searchParams.set('orientation',p.orientation);
@@ -294,6 +319,8 @@
   function back(){
     $('workspaceScreen').hidden=true;
     $('configScreen').hidden=false;
+    $('technicalPendingDemo').hidden=true;
+    $('frame').hidden=false;
     // Al volver se destruye la vista anterior; el estado del mapa ya fue
     // guardado por la aplicación curricular original bajo su clave propia.
     $('frame').src='about:blank';
@@ -301,10 +328,63 @@
   }
   function reset(){
     if(!confirm('¿Restablecer esta DEMO? Se perderán únicamente los datos ficticios de este navegador, no los PCI reales.'))return;
-    state.pcis.forEach(p=>localStorage.removeItem(MAP_PREFIX+p.id));
+    state.pcis.filter(p=>p.model!=='tecnica').forEach(p=>localStorage.removeItem(MAP_PREFIX+p.id));
     localStorage.removeItem(KEY);
     location.reload();
   }
+  function renderTechnicalTracks(){
+    const host=$('technicalTracks');host.replaceChildren();
+    if(!state.technicalTracks.length){
+      const empty=node('p','Todavía no hay especialidades técnicas registradas en esta escuela de prueba.');
+      empty.className='muted';host.append(empty);return;
+    }
+    for(const t of state.technicalTracks){
+      const row=node('div');row.className='adminRow';
+      const info=node('div');
+      info.append(node('strong','Técnica · '+t.specialtyName),
+        node('small','Turno '+t.shift+' · '+t.quantity+' PCI activo(s) · reglas de composición pendientes'));
+      const change=node('button','Editar cantidad');change.className='btn small';change.type='button';
+      change.onclick=()=>{
+        $('technicalSpecialty').value=t.specialtyName;
+        $('technicalShift').value=t.shift;
+        $('technicalQuantity').value=String(t.quantity);
+        $('technicalSpecialty').focus();
+      };
+      row.append(info,change);host.append(row);
+    }
+  }
+  function addTechnicalTrack(e){
+    e.preventDefault();
+    const specialtyName=$('technicalSpecialty').value.trim();
+    const shift=$('technicalShift').value;
+    const quantity=Number($('technicalQuantity').value);
+    const note=$('technicalFeedback');
+    if(specialtyName.length<3||!SHIFTS.includes(shift)||
+       !Number.isSafeInteger(quantity)||quantity<1||quantity>5){
+      note.textContent='Revisá el nombre de especialidad, turno y cantidad entre 1 y 5.';
+      note.style.color='#a93048';return;
+    }
+    const stateNext=copy(state);
+    let track=stateNext.technicalTracks.find(x=>x.specialtyName.toLowerCase()===specialtyName.toLowerCase()&&x.shift===shift);
+    if(track)track.quantity=quantity;
+    else {
+      track={specialtyName,shift,quantity,id:createId(),model:'tecnica',rules:'pending'};
+      stateNext.technicalTracks.push(track);
+    }
+    const former=stateNext.pcis.filter(p=>p.model==='tecnica'&&
+      p.specialtyName.toLowerCase()===specialtyName.toLowerCase()&&p.shift===shift);
+    for(let n=former.length+1;n<=quantity;n++){
+      stateNext.pcis.push({id:createId(),model:'tecnica',orientation:'Técnica',specialtyName,
+        shift,number:n,createdAt:new Date().toISOString(),curriculumStatus:'pending_rules'});
+    }
+    state=stateNext;persist();
+    renderTechnicalTracks();renderPcis();
+    note.textContent='Especialidad técnica registrada sin aplicar reglas de Media. Los PCI anteriores no se borraron.';
+    note.style.color='#116a65';
+    $('technicalForm').reset();
+  }
+  $('technicalForm').onsubmit=addTechnicalTrack;
+  renderTechnicalTracks();
   countOptions($('orientationCount'),ORIENTATIONS.length,draft.orientations.length);
   countOptions($('shiftCount'),SHIFTS.length,draft.shifts.length);
   $('school').value=state.school;
