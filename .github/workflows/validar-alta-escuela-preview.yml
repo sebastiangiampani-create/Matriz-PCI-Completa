@@ -1,0 +1,26 @@
+name: Validar panel de alta de escuelas en vista previa
+on:
+  push:
+    branches:
+      - 'preview/orientaciones-online-demo-20261111'
+    paths:
+      - 'preview-v2-real/institucion.html'
+      - 'preview-v2-real/src/institucion-pci-demo.js'
+      - 'tests/alta-escuela-preview.test.mjs'
+      - '.github/workflows/validar-alta-escuela-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar-alta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Comprobar sintaxis del formulario
+        run: node --check preview-v2-real/src/institucion-pci-demo.js
+      - name: Probar alta ficticia, enlaces y aislamiento de escuela
+        run: node --test tests/alta-escuela-preview.test.mjs
