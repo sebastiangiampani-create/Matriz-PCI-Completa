@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#12395c">
+<title>Configuración institucional · Matriz PCI V2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#12395c;--muted:#5f7382;--line:#d8e1e8;--mint:#83ded3;--mint-dark:#126e65;--band:#edf3f8;--ok:#156746;--gold:#fff4d8}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font-family:Archivo,system-ui,Arial,sans-serif;background:#f8fafb}button,input,select{font:inherit}
+button{cursor:pointer}.top{position:sticky;top:0;z-index:10;min-height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;padding:9px clamp(15px,3vw,30px)}
+.top img{height:43px;max-width:min(240px,65vw);object-fit:contain}.tag{font-size:.7rem;font-weight:900;background:#e7f8f5;border-radius:40px;padding:9px 13px;color:var(--mint-dark)}
+.wrap{max-width:1420px;margin:0 auto;padding:20px clamp(13px,3vw,28px) 50px}
+.hero{background:var(--band);padding:25px 26px;border-radius:0 0 25px 25px;margin:-20px -28px 18px}
+.eyebrow{font-size:.7rem;letter-spacing:.095em;text-transform:uppercase;font-weight:900;color:var(--mint-dark)}
+h1{font-size:clamp(1.5rem,3vw,2.55rem);margin:5px 0 10px;line-height:1.14}
+h2{font-size:1.15rem;margin:0 0 6px}h3{font-size:.93rem;margin:0 0 8px}p{line-height:1.5;margin:6px 0 13px}.muted{color:var(--muted);font-size:.84rem}
+.notice{padding:13px 16px;border:1px solid #abe1d6;background:#e8f8f3;border-radius:13px;font-size:.82rem;line-height:1.5;margin:15px 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:17px;box-shadow:0 10px 28px #12395c0b;padding:19px;min-width:0}.card + .card{margin-top:16px}
+.topline{display:flex;justify-content:space-between;align-items:flex-start;gap:13px;flex-wrap:wrap}
+.btn{display:inline-block;text-decoration:none;border:1px solid var(--ink);background:#fff;color:var(--ink);border-radius:999px;padding:10px 16px;font-size:.84rem;font-weight:850}
+.btn.primary{background:var(--ink);color:#fff}.btn.mint{background:var(--mint);border-color:var(--mint)}.btn.small{font-size:.74rem;padding:8px 13px}
+.btn:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #3fada1;outline-offset:2px}
+.setup{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:15px 0}
+label{display:block;font-size:.8rem;font-weight:850;margin-bottom:10px}label span{display:block;margin-bottom:5px}input,select{width:100%;padding:10px 12px;border:1px solid #bdcfd8;border-radius:10px;color:var(--ink);background:#fff;min-height:43px}
+.fields{display:grid;gap:9px}.field-row{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:10px}.field-row span{font-weight:900;font-size:.78rem;color:var(--muted)}
+.grid-body{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.qty{width:115px} .actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.matrixScroll{overflow-x:auto;border:1px solid var(--line);border-radius:13px;margin-top:15px}
+table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:middle;font-size:.78rem}th{background:var(--band)}
+.comboCell{display:flex;align-items:center;gap:8px}.comboCell input[type=checkbox]{width:18px;height:18px;min-height:auto;flex:none}.comboCell input[type=number]{width:59px;min-height:34px;text-align:center;padding:5px;flex:none}
+#summary{font-size:.84rem;font-weight:850;color:#116a65}#feedback{min-height:22px;color:#107059;font-size:.84rem;font-weight:700}
+.pci-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:15px}
+.pci-card{border:1px solid var(--line);border-radius:14px;background:#fff;padding:16px;min-height:160px;display:flex;flex-direction:column;gap:7px}
+.pci-card h3{font-size:.95rem;margin:0}.pci-card p{font-size:.75rem;color:var(--muted);margin:0}.pci-card .btn{align-self:start;margin-top:auto}
+.inactive{background:#fbfaf5;border-style:dashed}.badge{display:inline-flex;font-size:.68rem;font-weight:850;background:#e7f8f5;color:#126e65;padding:4px 9px;border-radius:999px;align-self:start}.badge.off{background:var(--gold);color:#90591e}
+.workbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;background:#fff;border-bottom:1px solid var(--line);padding:10px clamp(12px,3vw,26px)}
+.workbar strong{font-size:.91rem}.workbar .muted{margin:0}
+#frame{width:100%;height:calc(100vh - 141px);min-height:720px;border:0;display:block;background:#fff}
+.small-note{font-size:.76rem;color:var(--muted)}.footer{margin:30px auto 0;max-width:1100px;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;color:var(--muted);font-size:.74rem}
+.footer img{width:190px;max-width:48%;height:45px;object-fit:contain;object-position:left}
+[hidden]{display:none!important}
+@media(max-width:780px){.grid-body,.setup{grid-template-columns:1fr}.hero{margin:-20px -13px 18px;padding:20px 14px}.card{padding:15px}#frame{height:calc(100vh - 180px);min-height:580px}.footer img{width:140px}}
+</style>
+</head>
+<body>
+<header class="top"><img src="../assets/em-logo-header.svg" alt="Escuela de Maestros">
+  <span class="tag">MATRIZ PCI V2 · PRUEBA INDEPENDIENTE</span>
+</header>
+<div id="configScreen">
+<main class="wrap">
+  <div class="hero"><div class="eyebrow">Matriz PCI Completa · Configuración inicial</div>
+    <h1>Configuración institucional y proyectos curriculares</h1>
+    <p>Definí cuántas orientaciones y turnos tiene la escuela. Cada combinación puede contar con uno o varios PCI independientes.</p>
+  </div>
+  <div class="notice"><strong>Versión de prueba en GitHub.</strong> Todos los datos son ficticios y permanecen en este navegador. No se consultan ni modifican escuelas reales, Supabase ni producción. Los PCI ya creados no se eliminan al cambiar la configuración.</div>
+  <section class="card" aria-labelledby="configTitle">
+    <div class="topline"><div><div class="eyebrow">1 · Estructura de la escuela</div><h2 id="configTitle">Orientaciones y turnos</h2><p class="muted">Indicá la cantidad y elegí cuáles funcionan en el establecimiento.</p></div>
+      <button class="btn small" id="reset" type="button">Restablecer datos ficticios</button></div>
+    <div class="setup">
+      <label><span>Nombre del establecimiento de prueba</span><input id="school" maxlength="140" value="Escuela Muestra (ficticia)"></label>
+      <div class="grid-body">
+        <label><span>Cantidad de orientaciones</span><select id="orientationCount"></select></label>
+        <label><span>Cantidad de turnos</span><select id="shiftCount"></select></label>
+      </div>
+    </div>
+    <div class="grid-body">
+      <div><h3>Elegí las orientaciones</h3><div id="orientationFields" class="fields"></div></div>
+      <div><h3>Elegí los turnos</h3><div id="shiftFields" class="fields"></div></div>
+    </div>
+  </section>
+  <section class="card" aria-labelledby="combosTitle">
+    <div class="eyebrow">2 · Distribución de PCI</div><h2 id="combosTitle">¿Qué orientaciones se ofrecen en cada turno?</h2>
+    <p class="muted">Marcá cada combinación que corresponde a la escuela. En las combinaciones activas elegí cuántos PCI tendrá. Una reducción de cantidad nunca borra los PCI ya creados.</p>
+    <div id="combos" class="matrixScroll"></div>
+    <div class="actions"><button class="btn primary" id="saveConfig" type="button">Guardar estructura de prueba</button><span id="summary"></span></div>
+    <div id="feedback" role="status" aria-live="polite"></div>
+  </section>
+  <section class="card" aria-labelledby="pciTitle">
+    <div class="topline"><div><div class="eyebrow">3 · Ingreso a los proyectos</div><h2 id="pciTitle">PCI independientes de la escuela</h2>
+      <p class="muted">Abrí cada PCI para construir el mapa original de Formación General y Formación Orientada C1–C10.</p></div>
+      <span class="tag" id="totalPcis"></span></div>
+    <div id="pciList" class="pci-grid"></div>
+  </section>
+  <div class="footer"><img src="../assets/em-logo-footer.svg" alt="Escuela de Maestros"><span>Prueba de configuración institucional · sin conexión real</span></div>
+</main>
+</div>
+<section id="workspaceScreen" hidden aria-label="PCI de prueba">
+  <div class="workbar"><button class="btn small" id="back" type="button">← Volver a la configuración institucional</button>
+    <div><strong id="workingTitle"></strong><p class="muted" id="workingMeta"></p></div>
+    <span class="tag">PRUEBA · Sin Supabase</span></div>
+  <iframe id="frame" title="Mapa curricular V2 original" referrerpolicy="no-referrer"></iframe>
+</section>
+<script src="src/institucion-pci-demo.js"></script>
+</body>
+</html>
