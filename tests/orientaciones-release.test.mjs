@@ -107,3 +107,20 @@ test('una escuela nueva sin contenido histórico puede iniciar FG V2 propia',()=
   assert.deepEqual(blank.legacy_state,before);
   assert.throws(()=>newFgUnit({pci:p,area:'Matemática',convertedAreas:template}),/no pertenece/);
 });
+
+test('una escuela de origen Técnico conserva su contenido mientras abre Media nueva',()=>{
+  const original={schemaVersion:2,profile:'tecnica',schoolName:'Técnica previa',
+    areas:{Talleres:{groups:[{id:'tech-taller-1',items:['técnico-01'],
+      plansBimestrales:[{stages:{punto_partida:'Base técnica'}}]}]}}};
+  const media={...p,model:'comun',legacy_state:clone(original)};
+  const template={'Ciencias Sociales':{groups:[{id:'media-1',
+    name:'Laboratorio Media',items:['media-01'],plansBimestrales:[]}]}};
+  const preserved=clone(original);
+  const result=newFgUnit({pci:media,area:'Ciencias Sociales',convertedAreas:template});
+  assert.equal(result.originType,'new-media-from-technical-school');
+  assert.deepEqual(media.legacy_state,preserved,'Se modificó la matriz Técnica original');
+  assert.deepEqual(result.groups[0].items,['media-01']);
+  const forbidden={...media,model:'tecnica'};
+  assert.throws(()=>newFgUnit({pci:forbidden,area:'Ciencias Sociales',
+    convertedAreas:template}),/Técnica en espera/);
+});

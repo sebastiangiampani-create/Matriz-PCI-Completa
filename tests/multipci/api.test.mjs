@@ -8,11 +8,12 @@ const PCI_ID='a3a3a3a3-1111-4111-8111-aaaaaaaaaaaa';
 function fixture(session={role:'editor',school_id:1001}){
   const calls=[];
   let records=[{pci_id:PCI_ID,orientation_id:'economia_administracion',
-    process_id:'process-test-1',status:'borrador',title:'Economía'}];
+    process_id:'process-test-1',model:'comun',curriculum_status:'ready',
+    shift_id:'manana',status:'borrador',title:'Economía'}];
   const db={rpc:async(fn,args)=>{
     calls.push({fn,args});
     if(fn==='pci_workspace_list_pcis_v1')return {data:records,error:null};
-    if(fn==='pci_workspace_create_pci_v1')return {data:{ok:true,pci_id:PCI_ID},error:null};
+    if(fn==='pci_workspace_create_pci_v2')return {data:{ok:true,pci_id:PCI_ID},error:null};
     if(fn==='pci_workspace_create_school_v1')return {data:{ok:true,school_id:1002},error:null};
     if(fn==='pci_workspace_get_pci_v1')return {data:{pci_id:PCI_ID,source_protected:true,legacy_sha256:'a'.repeat(64),legacy_state:{areas:{}}},error:null};
     if(fn==='pci_collab_get_unit_v1')return {data:{exists:false,revision:0},error:null};
@@ -49,7 +50,10 @@ test('es posible crear varios PCI sin alterar la matriz original',async()=>{
   const {ctx,calls}=fixture();
   const r=await status(await ctx('create-school-pci',{school_id:1001,orientation_id:'economia_administracion',title:'Economía · Turno Tarde'}));
   assert.equal(r.status,201);
-  assert.deepEqual(calls.map(x=>x.fn),['pci_workspace_create_pci_v1']);
+  assert.deepEqual(calls.map(x=>x.fn),['pci_workspace_create_pci_v2']);
+  assert.equal(calls[0].args.p_model,'comun');
+  assert.equal(calls[0].args.p_shift_id,'manana');
+  assert.equal(calls[0].args.p_specialty_name,null);
 });
 test('el servidor impone la orientación y el proceso registrados en ese PCI',async()=>{
   const {ctx,calls}=fixture();
@@ -107,4 +111,57 @@ test('rechaza datos etiquetados con un origen histórico o área ajenos',async()
   }));
   assert.equal(r.status,409);
   assert.ok(!calls.some(x=>x.fn==='pci_collab_save_unit_v1'));
+});
+
+test('un colegio puede registrar un PCI Media y otro de Técnica en distintos turnos',async()=>{
+  const {ctx,calls}=fixture();
+  const media=await status(await ctx('create-school-pci',{
+    school_id:1001,model:'comun',shift_id:'manana',
+    orientation_id:'ciencias_naturales',title:'Media - Naturales'
+  }));
+  const tecnica=await status(await ctx('create-school-pci',{
+    school_id:1001,model:'tecnica',shift_id:'tarde',
+    orientation_id:'',specialty_name:'Programación',title:'Técnica - Programación'
+  }));
+  assert.equal(media.status,201);
+  assert.equal(tecnica.status,201);
+  const writes=calls.filter(x=>x.fn==='pci_workspace_create_pci_v2');
+  assert.equal(writes.length,2);
+  assert.equal(writes[0].args.p_model,'comun');
+  assert.equal(writes[1].args.p_model,'tecnica');
+  assert.equal(writes[1].args.p_shift_id,'tarde');
+  assert.equal(writes[1].args.p_specialty_name,'Programación');
+  assert.equal(writes[1].args.p_orientation_id,null);
+  assert.ok(calls.every(x=>x.fn!=='pci_proposals'));
+});
+test('la composición técnica pendiente no puede leer ni guardar unidades de Media',async()=>{
+  const f=fixture();
+  f.setRecords([{pci_id:PCI_ID,orientation_id:'tecnica_aabbccdd',model:'tecnica',
+    curriculum_status:'pending_rules',shift_id:'tarde',specialty_name:'Programación',
+    process_id:'technical-1',status:'borrador',title:'Técnica'}]);
+  for(const action of ['get-school-pci-unit','save-school-pci-unit']){
+    const r=await status(await f.ctx(action,{
+      school_id:1001,pci_id:PCI_ID,component:'fg',unit_kind:'area',
+      unit_id:'Ciencias Naturales',base_version:'fg-sec-aprende-v2/1',
+      expected_revision:0,document:{schema:'pci-fg-area-v2/1'}
+    }));
+    assert.equal(r.status,423);
+    assert.match(r.body.error,/pendiente de reglas/i);
+  }
+  assert.ok(!f.calls.some(x=>x.fn==='pci_collab_get_unit_v1'));
+  assert.ok(!f.calls.some(x=>x.fn==='pci_collab_save_unit_v1'));
+});
+test('validar nombre de especialidad y turno antes de insertar PCI',async()=>{
+  const f=fixture();
+  const bad=await status(await f.ctx('create-school-pci',{
+    school_id:1001,model:'tecnica',shift_id:'tarde',
+    specialty_name:'',orientation_id:'',title:'Técnica sin especialidad'
+  }));
+  const badShift=await status(await f.ctx('create-school-pci',{
+    school_id:1001,model:'comun',shift_id:'inventado',
+    orientation_id:'economia_administracion',title:'Media'
+  }));
+  assert.equal(bad.status,400);
+  assert.equal(badShift.status,400);
+  assert.equal(f.calls.length,0);
 });

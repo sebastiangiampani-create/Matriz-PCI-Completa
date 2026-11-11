@@ -18,6 +18,9 @@ test('la entrega incluye TODA la Edge de producción con guardado anterior inalt
   assert.ok(guard.length>2000,'Falta la protección de guardado del sistema anterior');
   assert.match(handler,/pci_collab_save_unit_v1/);
   assert.match(handler,/pci_workspace_get_pci_v1/);
+  assert.match(handler,/pci_workspace_create_pci_v2/);
+  assert.match(handler,/pending_rules/);
+  assert.match(handler,/423/);
   assert.doesNotMatch(handler, /\.from\(['"]pci_proposals['"]\)\.update/);
 });
 test('la función respeta la configuración de JWT institucional original',async()=>{
