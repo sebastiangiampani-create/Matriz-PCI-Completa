@@ -168,3 +168,77 @@ test('una denominación no incluida no registra nuevos PCI ficticios',()=>{
   p.get('technicalForm').onsubmit({preventDefault(){}});
   assert.equal(p.state().technicalTracks.length,0);
 });
+
+test('escuela mixta usa una sola escuela y dos modelos: sin duplicar CUE ni PCI',()=>{
+  const p=page('https://example.test/preview-v2-real/institucion.html');
+  assert.equal(p.get('modelMediaCheck').checked,true);
+  assert.equal(p.get('modelTechCheck').checked,true);
+  const mediaId=p.state().pcis[0].id;
+  p.get('technicalSpecialty').value='Computación';
+  p.get('technicalShift').value='Tarde';
+  p.get('technicalQuantity').value='1';
+  p.get('technicalForm').onsubmit({preventDefault(){}});
+  const before=p.state();
+  assert.equal(before.models.length,2);
+  assert.equal(before.pcis.length,2);
+  assert.equal(before.pcis[0].id,mediaId);
+  const techId=before.pcis.find(x=>x.model==='tecnica').id;
+  assert.notEqual(techId,mediaId);
+  const active=p.get('pciList').children.filter(x=>x.tagName==='article');
+  assert.equal(active.length,2);
+  assert.match(p.get('totalPcis').textContent,/1 Media · 1 Técnica/);
+  // La especialidad y turno no reemplazan la orientación del PCI Media.
+  assert.equal(before.pcis[0].orientation,'Economía y Administración');
+  assert.equal(before.pcis.find(x=>x.model==='tecnica').specialtyName,'Computación');
+});
+
+test('escuela exclusivamente técnica conserva los PCI de Media y sus claves si cambia de modelo',()=>{
+  const p=page('https://example.test/preview-v2-real/institucion.html');
+  const old=p.state().pcis[0].id;
+  p.get('modelMediaCheck').checked=false;
+  p.get('modelMediaCheck').onchange();
+  assert.equal(p.get('mediaBlock').hidden,true);
+  assert.equal(p.get('techBlock').hidden,false);
+  p.get('saveConfig').onclick();
+  assert.equal(p.state().models.includes('comun'),false);
+  assert.equal(p.state().pcis[0].id,old);
+  assert.match(p.get('totalPcis').textContent,/0 PCI habilitados/);
+  assert.equal(p.get('pciList').children.filter(x=>x.tagName==='article').length,0);
+  assert.equal(p.get('pciList').children.some(x=>x.tagName==='details'),true);
+  p.get('modelMediaCheck').checked=true;
+  p.get('modelMediaCheck').onchange();
+  p.get('saveConfig').onclick();
+  assert.equal(p.state().pcis.length,1);
+  assert.equal(p.state().pcis[0].id,old);
+  assert.equal(p.get('pciList').children.filter(x=>x.tagName==='article').length,1);
+});
+
+test('escuela solo Media conserva la especialidad técnica histórica al deshabilitar Técnica',()=>{
+  const p=page('https://example.test/preview-v2-real/institucion.html');
+  p.get('technicalSpecialty').value='Electrónica';
+  p.get('technicalShift').value='Noche';
+  p.get('technicalQuantity').value='1';
+  p.get('technicalForm').onsubmit({preventDefault(){}});
+  const technicalId=p.state().pcis.find(x=>x.model==='tecnica').id;
+  p.get('modelTechCheck').checked=false;
+  p.get('modelTechCheck').onchange();
+  assert.equal(p.get('techBlock').hidden,true);
+  p.get('saveConfig').onclick();
+  assert.equal(p.state().pcis.find(x=>x.model==='tecnica').id,technicalId);
+  assert.match(p.get('totalPcis').textContent,/1 Media · 0 Técnica/);
+  p.get('modelTechCheck').checked=true;
+  p.get('modelTechCheck').onchange();
+  p.get('saveConfig').onclick();
+  assert.equal(p.state().pcis.find(x=>x.model==='tecnica').id,technicalId);
+  assert.match(p.get('totalPcis').textContent,/1 Media · 1 Técnica/);
+});
+
+test('no permite desactivar las dos modalidades simultáneamente',()=>{
+  const p=page('https://example.test/preview-v2-real/institucion.html');
+  const before=p.storage.get(PREFIX);
+  p.get('modelTechCheck').checked=false;p.get('modelTechCheck').onchange();
+  p.get('modelMediaCheck').checked=false;p.get('modelMediaCheck').onchange();
+  p.get('saveConfig').onclick();
+  assert.equal(p.storage.get(PREFIX),before);
+  assert.match(p.get('feedback').textContent,/por lo menos una modalidad/i);
+});
