@@ -215,19 +215,32 @@ async function reloadSchool(){
 }
 function renderPcis(){
   const host=$('pciList');host.replaceChildren();
-  if(!pcis.length)note('p','Todavía no hay PCI por orientación. El PCI histórico no fue modificado.',host,'muted');
-  pcis.forEach(p=>{
-    const button=elem('button',undefined,'pciItem'+(p.pci_id===pci?.pci_id?' active':''));button.type='button';
-    const track=p.model==='tecnica'?
-      ('Técnica · '+(p.specialty_name||'Especialidad pendiente')):
-      ('Media · '+(ORIENTATIONS.find(o=>o.id===p.orientation_id)?.name||p.orientation_id));
-    const shift={manana:'Mañana',tarde:'Tarde',vespertino:'Vespertino',noche:'Noche'}[p.shift_id]||'Mañana';
-    note('strong',p.title,button);
-    note('small',track+' · '+shift+' · '+
-      (p.model==='tecnica'?'Reglas de composición pendientes':p.status),button);
-    button.onclick=()=>openPci(p.pci_id);
-    host.appendChild(button);
-  });
+  if(!pcis.length){
+    note('p','Esta escuela todavía no tiene PCI nuevos. El PCI histórico se conserva.',host,'muted');
+    return;
+  }
+  // Una sola escuela y un solo acceso pueden tener a la vez dos modelos.
+  // La rama curricular corresponde al PCI, no a pci_proposals.profile.
+  for(const model of ['comun','tecnica']){
+    const records=pcis.filter(p=>(p.model==='tecnica'?'tecnica':'comun')===model);
+    if(!records.length)continue;
+    const label=model==='comun'?
+      'Bachillerato / Media · 5 niveles (C1–C10)':
+      'Educación Técnica · 6 niveles (C1–C12)';
+    note('h3',label+' · '+records.length+' PCI',host,'pciModelHeading');
+    records.forEach(p=>{
+      const button=elem('button',undefined,'pciItem'+(p.pci_id===pci?.pci_id?' active':''));button.type='button';
+      const track=model==='tecnica'?
+        ('Especialidad: '+(p.specialty_name||'Pendiente de identificar')):
+        ('Orientación: '+(ORIENTATIONS.find(o=>o.id===p.orientation_id)?.name||p.orientation_id));
+      const shift={manana:'Mañana',tarde:'Tarde',vespertino:'Vespertino',noche:'Noche'}[p.shift_id]||'Mañana';
+      note('strong',p.title,button);
+      note('small',track+' · Turno '+shift+' · '+
+        (model==='tecnica'?'Validación curricular técnica pendiente':p.status),button);
+      button.onclick=()=>openPci(p.pci_id);
+      host.appendChild(button);
+    });
+  }
 }
 function populateSpecialties(){
   const select=$('specialtyName');select.replaceChildren();

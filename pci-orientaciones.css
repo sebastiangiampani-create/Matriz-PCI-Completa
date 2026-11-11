@@ -10,7 +10,8 @@ main{max-width:1420px;margin:auto;padding:24px 20px 55px}.intro{display:flex;ali
 .btn{font-size:.83rem;font-weight:750;color:#17435e;border:1px solid #c7dbe1;background:#f2f7fa;padding:9px 12px;border-radius:9px;white-space:normal}.btn.primary{color:white;background:#116b7f;border-color:#116b7f}.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #69bfca;outline-offset:2px}
 input,select,textarea{display:block;width:100%;border:1px solid #c3d6df;border-radius:9px;background:white;color:#143e56;padding:10px;margin-top:5px;min-width:0}textarea{min-height:70px;resize:vertical}
 label{font-size:.78rem;font-weight:800;display:block;margin-bottom:10px}label small{font-weight:500;color:#5e7986}
-.pciList,.areaList{display:grid;gap:8px}.pciItem,.areaItem{background:#fff;text-align:left;width:100%;border:1px solid #d5e2e8;border-radius:10px;padding:12px;color:#163956}
+.pciList,.areaList{display:grid;gap:8px}
+.pciModelHeading{margin:12px 0 3px;padding:9px 2px 5px;font-size:.83rem;font-weight:850;color:#156174;border-bottom:1px solid #c9dce4}.pciItem,.areaItem{background:#fff;text-align:left;width:100%;border:1px solid #d5e2e8;border-radius:10px;padding:12px;color:#163956}
 .pciItem.active,.areaItem.active{background:#eaf5f7;border:2px solid #168b99;padding:11px}
 .pciItem strong,.pciItem small,.areaItem strong,.areaItem small{display:block}.pciItem small,.areaItem small{color:#65808d;font-size:.73rem;margin-top:3px}
 .formCard{padding:13px;background:#f5fafb;border:1px solid #c9e1e5;border-radius:12px;margin-top:12px}.formCard h3{font-size:1rem}.actions{display:flex;flex-wrap:wrap;gap:8px}
