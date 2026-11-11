@@ -25,13 +25,25 @@ h2{font-size:1.15rem;margin:0 0 6px}h3{font-size:.93rem;margin:0 0 8px}p{line-he
 .btn.primary{background:var(--ink);color:#fff}.btn.mint{background:var(--mint);border-color:var(--mint)}.btn.small{font-size:.74rem;padding:8px 13px}
 .btn:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #3fada1;outline-offset:2px}
 .setup{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:15px 0}
-.modalities{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
-.modality{display:flex;align-items:flex-start;gap:13px;border:1px solid #c7dbe1;background:#f6fafb;border-radius:13px;padding:14px;cursor:pointer}
-.modality input[type=checkbox]{flex:none;width:20px;height:20px;min-height:20px;margin:1px 0 0;accent-color:#158779}
-.modality strong{display:block;font-size:.89rem}.modality small{display:block;font-size:.76rem;color:#587381;margin-top:5px;line-height:1.45}
-.pci-group-title{grid-column:1/-1;font-size:.88rem;font-weight:900;border-bottom:1px solid var(--line);padding:10px 0 8px;margin:2px 0}
-@media(max-width:650px){.modalities{grid-template-columns:1fr}}
-
+/* Mantener el diseño original; la elección de modalidad es una barra compacta. */
+.model-strip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#edf3f8;
+ border:1px solid var(--line);border-radius:12px;padding:9px 12px;margin:0 0 14px}
+.model-strip>strong{font-size:.78rem;font-weight:900;margin-right:5px}
+.model-strip .model-pill{display:inline-flex;align-items:center;gap:7px;width:auto;
+ min-height:34px;padding:7px 11px;margin:0;border:1px solid var(--line);border-radius:999px;
+ background:#fff;font-weight:800;font-size:.74rem;cursor:pointer}
+.model-strip .model-pill:has(input:checked){background:#e7f8f5;border-color:#83ded3;color:#126e65}
+.model-strip .model-pill input{width:16px;height:16px;min-height:16px;margin:0;accent-color:#126e65}
+.model-hint{color:var(--muted);font-size:.73rem;line-height:1.35;flex:1 1 220px}
+.pci-group-title{grid-column:1/-1;font-size:.79rem;font-weight:850;border-bottom:1px solid var(--line);padding:7px 0 5px;margin:2px 0}
+#techBlock .techHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#technicalPendingDemo{max-width:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+#technicalPendingDemo .tech-context{padding:12px clamp(12px,3vw,26px);background:#edf3f8;border-bottom:1px solid var(--line)}
+#technicalPendingDemo .tech-context p{margin:4px 0;font-size:.78rem}
+#technicalRulesPreview{width:100%!important;min-height:720px!important;height:calc(100vh - 141px);border:0!important;border-radius:0!important}
+.pvf-details{max-width:1390px;margin:12px auto!important}
+.pvf-details summary{cursor:pointer;font-weight:850;font-size:.85rem;padding:4px 0}
+@media(max-width:780px){.model-strip{padding:8px;gap:7px}.model-hint{flex-basis:100%}#technicalRulesPreview{min-height:600px!important;height:calc(100vh - 180px)}}
 label{display:block;font-size:.8rem;font-weight:850;margin-bottom:10px}label span{display:block;margin-bottom:5px}input,select{width:100%;padding:10px 12px;border:1px solid #bdcfd8;border-radius:10px;color:var(--ink);background:#fff;min-height:43px}
 .fields{display:grid;gap:9px}.field-row{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:10px}.field-row span{font-weight:900;font-size:.78rem;color:var(--muted)}
 .grid-body{display:grid;grid-template-columns:1fr 1fr;gap:15px}
@@ -103,21 +115,15 @@ table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid
   <div id="institutionSetup">
   <div class="hero"><div class="eyebrow">Matriz PCI Completa · Configuración inicial</div>
     <h1>Configuración institucional y proyectos curriculares</h1>
-    <p>Una institución puede ofrecer <strong>Media, Técnica o las dos</strong>. Conserva un mismo acceso institucional y administra proyectos curriculares independientes por modelo, orientación o especialidad y turno.</p>
+    <p>Definí las orientaciones, especialidades y turnos de la escuela. Cada proyecto curricular conserva su propio mapa, sin modificar los PCI anteriores.</p>
   </div>
   <div class="notice"><strong>Versión de prueba en GitHub.</strong> Todos los datos son ficticios y permanecen en este navegador. No se consultan ni modifican escuelas reales, Supabase ni producción. Los PCI ya creados no se eliminan al cambiar la configuración.</div>
-  <section class="card" aria-labelledby="modelsTitle">
-    <div class="eyebrow">0 · Modalidades de la misma institución</div>
-    <h2 id="modelsTitle">¿Qué modelos educativos ofrece esta escuela?</h2>
-    <p class="muted">Podés seleccionar uno o ambos. Desactivar un modelo no elimina sus PCI anteriores: quedan conservados y pueden recuperarse.</p>
-    <div class="modalities">
-      <label class="modality"><input type="checkbox" id="modelMediaCheck" checked>
-        <span><strong>Bachillerato / Media</strong><small>5 niveles · Mapa C1–C10 · Orientaciones, laboratorios y talleres</small></span></label>
-      <label class="modality"><input type="checkbox" id="modelTechCheck" checked>
-        <span><strong>Educación Técnica</strong><small>6 niveles · Mapa C1–C12 · Especialidades y espacios técnicos</small></span></label>
-    </div>
-    <p class="muted" id="modelStatus" role="status" aria-live="polite"></p>
-  </section>
+  <div class="model-strip" aria-labelledby="modelsTitle">
+    <strong id="modelsTitle">Modalidad de la escuela</strong>
+    <label class="model-pill"><input type="checkbox" id="modelMediaCheck"><span>Media / Bachillerato</span></label>
+    <label class="model-pill"><input type="checkbox" id="modelTechCheck"><span>Educación Técnica</span></label>
+    <span class="model-hint" id="modelStatus" role="status" aria-live="polite"></span>
+  </div>
   <div id="mediaBlock">
   <section class="card" aria-labelledby="configTitle">
     <div class="topline"><div><div class="eyebrow">1 · Estructura de la escuela</div><h2 id="configTitle">Orientaciones y turnos</h2><p class="muted">Indicá la cantidad y elegí cuáles funcionan en el establecimiento.</p></div>
@@ -144,8 +150,9 @@ table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid
   </div>
   <div id="techBlock">
   <section class="card" aria-labelledby="techTitle">
-    <div class="eyebrow">3 · Rama técnica</div>
-    <h2 id="techTitle">Especialidades técnicas de la misma escuela</h2>
+    <div class="techHeader"><div><div class="eyebrow">Educación Técnica · especialidades</div>
+    <h2 id="techTitle">Especialidades de la escuela</h2></div>
+    <button class="btn small" id="saveTechnicalConfig" type="button">Guardar modalidades</button></div>
     <p class="muted">Una escuela puede tener al mismo tiempo orientaciones de Media y especialidades Técnicas, incluso en turnos diferentes. Las especialidades quedan registradas sin aplicar reglas de Media.</p>
     <div class="notice"><strong>Reglas de composición Técnica pendientes.</strong>
       Acá se registra la especialidad, el turno y la cantidad de PCI. Las pautas generales están incorporadas en la vista de validación. El guardado curricular técnico permanece bloqueado hasta verificar los diseños curriculares de la especialidad.</div>
@@ -197,11 +204,12 @@ table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid
       <button class="btn primary" type="submit">+ Registrar especialidad y PCI</button>
     </form>
     <div id="technicalFeedback" role="status" aria-live="polite"></div>
+    <div id="technicalConfigFeedback" class="small-note" role="status" aria-live="polite"></div>
     <div id="technicalTracks" aria-label="Especialidades técnicas ficticias registradas"></div>
   </section>
   </div>
   <section class="card" aria-labelledby="pciTitle">
-    <div class="topline"><div><div class="eyebrow">4 · Ingreso a los proyectos</div><h2 id="pciTitle">PCI independientes de la escuela</h2>
+    <div class="topline"><div><div class="eyebrow">3 · Ingreso a los proyectos</div><h2 id="pciTitle">PCI independientes de la escuela</h2>
       <p class="muted">Todos pertenecen a <strong>esta misma escuela</strong>. Los PCI de Media abren el mapa FG/FO C1–C10 y los de Técnica, el mapa C1–C12 de validación. Los trabajos se guardan por proyecto y nunca se convierten automáticamente entre modalidades.</p></div>
       <span class="tag" id="totalPcis"></span></div>
     <div id="pciList" class="pci-grid"></div>
@@ -216,20 +224,18 @@ table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid
     <div class="actions"><a id="pvfJump" href="#pvfPanel" class="btn small" hidden>Ver Proyecto de Vinculación A/B · 5.º</a>
     <span class="tag">PRUEBA · Sin Supabase</span></div></div>
   <iframe id="frame" title="Mapa curricular V2 original" referrerpolicy="no-referrer"></iframe>
-  <section id="pvfPanel" class="card" style="margin:14px auto;max-width:1390px" hidden>
-    <div class="eyebrow">Formación Orientada · Proyecto anual</div>
-    <h2>Proyecto de Vinculación con el Futuro · Alternativas A/B</h2>
-    <p class="muted">Consulta de la tabla oficial de los Bachilleratos: materia y carga horaria por orientación, en C9 y C10. El mapa original permanece intacto.</p>
-    <iframe id="pvfFrame" title="Tabla del Proyecto de Vinculación de Bachillerato" style="width:100%;min-height:930px;border:0;border-radius:12px" loading="lazy" src="about:blank"></iframe>
-  </section>
-  <section id="technicalPendingDemo" class="card" style="margin:16px auto;max-width:1050px" hidden>
-    <div class="eyebrow">Rama Técnica · PCI independiente</div>
-    <h2 id="technicalPendingName">Especialidad técnica</h2>
-    <p class="muted" id="technicalPendingMeta"></p>
-    <div class="notice"><strong>Pautas de composición del 05/10/2026 disponibles para revisión.</strong>
-      El PCI técnico tiene un mapa propio de 6 niveles y 12 cuatrimestres. Las reglas generales y las materias anuales definidas pueden comprobarse aquí. La composición definitiva requiere el plan de estudios de la especialidad. Ningún dato se envía a Supabase.</div>
-    <p><a id="techRulesDirect" class="btn small" href="../pci-tecnica-pautas.html" target="_blank" rel="noopener noreferrer">Abrir mapa técnico completo C1–C12 en otra pestaña</a></p>
-    <iframe id="technicalRulesPreview" title="Mapa técnico C1–C12 con reglas del PCI" loading="lazy" style="border:1px solid #dbe6e8;border-radius:12px;width:100%;min-height:1020px" src="about:blank"></iframe>
+  <details id="pvfPanel" class="card pvf-details" hidden>
+    <summary>Proyecto de Vinculación con el Futuro · 5.º año · Alternativas A/B</summary>
+    <p class="muted">Tabla normativa por orientación y carga horaria. Consulta separada del mapa curricular original.</p>
+    <iframe id="pvfFrame" title="Tabla del Proyecto de Vinculación de Bachillerato" style="width:100%;min-height:830px;border:0;border-radius:12px" loading="lazy" src="about:blank"></iframe>
+  </details>
+  <section id="technicalPendingDemo" hidden aria-labelledby="technicalPendingName">
+    <div class="tech-context"><strong id="technicalPendingName">Especialidad técnica</strong>
+      <p class="muted" id="technicalPendingMeta"></p>
+      <p><span class="badge off">Reglas técnicas en validación</span>
+      <a id="techRulesDirect" class="btn small" href="../pci-tecnica-pautas.html" target="_blank" rel="noopener noreferrer">Abrir C1–C12 en otra pestaña</a></p>
+    </div>
+    <iframe id="technicalRulesPreview" title="Mapa técnico C1–C12 con reglas del PCI" loading="lazy" src="about:blank"></iframe>
   </section>
 </section>
 <script src="src/institucion-pci-demo.js"></script>
