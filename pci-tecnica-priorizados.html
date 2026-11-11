@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contenidos priorizados 2026 | PCI Técnica</title>
+<style>
+:root{color-scheme:light;font-family:Archivo,"Segoe UI",system-ui,sans-serif;color:#153b58;background:#f4f8fa}
+*{box-sizing:border-box}body{margin:0}header{padding:15px clamp(15px,3vw,38px);background:white;border-bottom:1px solid #d8e5ec;display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+header img{max-width:190px;height:44px;object-fit:contain}a{color:#08678a}a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #54a6cc;outline-offset:3px}
+header h1{font-size:1.15rem;margin:0}header small{color:#637a8e}main{max-width:1420px;margin:auto;padding:18px clamp(12px,2.5vw,30px) 36px}
+.note{border-left:4px solid #c28e40;background:#fff8eb;padding:11px 15px;margin:4px 0 20px;line-height:1.5}
+.layout{display:grid;grid-template-columns:minmax(270px,340px) minmax(0,1fr);gap:16px}
+.panel{background:white;border:1px solid #d9e6ec;border-radius:13px;padding:16px;min-width:0}
+h2{font-size:1.15rem;margin:0 0 12px}h3{font-size:1rem;margin:16px 0 7px}
+small,.muted{color:#5c7283}.controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+input,select{font:inherit;border:1px solid #b9ced8;background:white;border-radius:8px;padding:9px;min-height:41px}
+input{width:100%}select{max-width:100%}button{font:inherit;background:#fff;color:#17455f;border:1px solid #b4ceda;border-radius:8px;padding:9px 11px;text-align:left;cursor:pointer}
+button[aria-pressed=true]{color:white;background:#164967;border-color:#164967}.catalog{display:grid;gap:5px;max-height:68vh;overflow:auto}
+.catalog button{width:100%;font-size:.89rem}.tag{display:inline-block;background:#e5f3f3;color:#096d72;font-weight:700;border-radius:20px;padding:4px 8px;font-size:.73rem}
+.stat{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.stat span{background:#eef5f8;border-radius:8px;padding:9px;font-size:.85rem}
+.subjects{display:grid;gap:9px}details{border:1px solid #d7e5ec;border-radius:9px;padding:10px;background:#fcfefe}
+summary{cursor:pointer;font-weight:700;line-height:1.5}summary .muted{font-size:.78rem;font-weight:400}
+.pages{display:grid;gap:9px;margin-top:9px}.page{border-top:1px solid #e2e9ef;padding:9px 2px}
+.page pre{white-space:pre-wrap;font:inherit;font-size:.82rem;line-height:1.5;max-height:310px;overflow:auto}
+ul{line-height:1.6}footer{padding:15px;color:#607a8d;font-size:.77rem;text-align:center}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.catalog{max-height:230px}}
+</style>
+</head>
+<body>
+<header><img src="assets/em-logo-header.svg" alt="Escuela de Maestros">
+<div><h1>PCI V2 · Educación Técnica · Contenidos priorizados</h1>
+<small>Catálogo oficial de referencia · 6 años · 12 cuatrimestres</small></div>
+<a href="pci-tecnica-pautas.html">Ver reglas de composición</a></header>
+<main>
+<div class="note"><strong>Consulta independiente, sin guardado escolar.</strong> Este visor nunca modifica Supabase, matrices institucionales ni planes docentes. Los campos y años de la extracción automática requieren revisión pedagógica antes de aprobar equivalencias o cobertura curricular.</div>
+<div class="layout">
+<section class="panel"><h2>Especialidades y documentos</h2>
+<label for="search">Buscar especialidad</label><input id="search" type="search" placeholder="Computación, Química, Electrónica…">
+<p id="sourceStatus" role="status" aria-live="polite" class="muted"></p>
+<div class="catalog" id="specialties"></div></section>
+<section class="panel" id="detail"><h2>Seleccioná una especialidad</h2>
+<p class="muted">Podés abrir su PDF oficial. Cuando se incorpore la extracción revisable, también se mostrarán las materias y referencias de páginas.</p>
+</section>
+</div></main>
+<footer>Gobierno de la Ciudad Autónoma de Buenos Aires · Ministerio de Educación · Fuente oficial enlazada en cada documento · Uso educativo no comercial con atribución</footer>
+<script type="module">
+const manifestURL='data/tecnica/fuentes-priorizadas-caba-2026.json';
+const indexURL='data/tecnica/catalogo-priorizados-2026.json';
+const $=id=>document.getElementById(id);
+const src=await fetch(manifestURL,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Fuentes no disponibles ('+r.status+')');return r.json()}).catch(e=>({especialidades:[],transversal:[],error:e.message}));
+const indexed=await fetch(indexURL,{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
+const all=[...(src.especialidades||[]),...(src.transversal||[])];
+const indexedMap=new Map((indexed?.documentos||[]).map(d=>[d.id,d]));
+let active='';
+const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function el(tag,txt,cls,parent){const x=document.createElement(tag);if(txt!==undefined)x.textContent=txt;if(cls)x.className=cls;if(parent)parent.appendChild(x);return x;}
+function link(parent,label,url){const a=el('a',label,null,parent);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
+function empty(parent,title,message){parent.replaceChildren();el('h2',title,null,parent);el('p',message,'muted',parent);}
+function renderCatalog(){
+ const q=norm($('search').value);const host=$('specialties');host.replaceChildren();
+ for(const item of all.filter(e=>norm(e.nombre).includes(q)||norm(e.id).includes(q))){
+  const btn=el('button',item.nombre,null,host);btn.type='button';btn.setAttribute('aria-pressed',String(item.id===active));
+  btn.onclick=()=>select(item.id);
+  if(indexedMap.has(item.id))el('small',' · extracción disponible',null,btn);
+ }
+ if(!host.children.length)el('p','No se encontraron especialidades.','muted',host);
+}
+async function select(id){
+ active=id;renderCatalog();const item=all.find(e=>e.id===id);if(!item)return;
+ const box=$('detail');empty(box,item.nombre,'Fuente: Contenidos priorizados oficiales de CABA.');
+ link(box,'Abrir PDF oficial',item.url);
+ const meta=indexedMap.get(id);
+ if(!meta){el('p','La fuente está identificada, pero aún no existe una extracción disponible para esta especialidad. No se presentan asignaturas inventadas.','note',box);return;}
+ const stat=el('div',undefined,'stat',box);
+ for(const s of ['PDF: '+meta.paginas_pdf+' páginas','Materias indexadas: '+meta.asignaturas_indexadas,'Estado: requiere revisión'])el('span',s,null,stat);
+ const filter=el('input',undefined,null,box);filter.type='search';filter.placeholder='Buscar materia o campo…';
+ const content=el('div',undefined,'subjects',box);
+ const url='data/tecnica/priorizados/'+item.id+'.json';
+ let documentData=null;
+ try{const r=await fetch(url);if(!r.ok)throw Error('No se publicó el detalle');documentData=await r.json()}catch(e){el('p','El catálogo está indexado, pero el detalle aún no se publicó: '+e.message,'muted',box);return;}
+ function renderSubjects(){
+  content.replaceChildren();const q=norm(filter.value);
+  const subjects=(documentData.asignaturas||[]).filter(s=>norm(s.asignatura+' '+s.campo_estimado).includes(q));
+  for(const subject of subjects){
+   const d=el('details',undefined,null,content);el('summary',subject.asignatura+' · páginas '+subject.pagina_inicio+'–'+subject.pagina_fin,null,d);
+   const info=el('p','Campo estimado: '+subject.campo_estimado+' · Años detectados: '+(subject.anios_detectados.join(', ')||'sin validar'),'muted',d);
+   el('p','La extracción textual y la clasificación no son una validación curricular. Consultar siempre el documento original.','muted',d);
+   const pages=el('div',undefined,'pages',d);
+   for(const page of subject.paginas){
+    const p=el('div',undefined,'page',pages);el('strong','Página PDF '+page.pagina_pdf,null,p);
+    const detail=el('details',undefined,null,p);el('summary','Mostrar texto extraído (sin validar)',null,detail);
+    el('pre',page.texto_pagina||'',null,detail);
+   }
+  }
+  if(!subjects.length)el('p','No hay coincidencias.','muted',content);
+ }
+ filter.addEventListener('input',renderSubjects);renderSubjects();
+}
+$('search').addEventListener('input',renderCatalog);
+$('sourceStatus').textContent=src.error?src.error:
+ all.length+' documentos oficiales identificados · '+indexedMap.size+' procesados'+(indexed?.errores?.length?' · '+indexed.errores.length+' con errores':'');
+renderCatalog();
+if(all.length)select(all[0].id);
+</script>
+</body></html>
