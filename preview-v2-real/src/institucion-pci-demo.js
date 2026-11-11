@@ -168,8 +168,9 @@
   };
   renderModelChoice();
   function feedback(text,bad=false){
-    $('feedback').textContent=text;
-    $('feedback').style.color=bad?'#a93048':'#116a65';
+    for(const el of [$('feedback'),$('technicalConfigFeedback')]){
+      el.textContent=text;el.style.color=bad?'#a93048':'#116a65';
+    }
   }
   function countOptions(select,max,current){
     select.replaceChildren();
@@ -261,29 +262,34 @@
     function cardFor(p,enabled){
       const card=node('article');card.className='pci-card'+(enabled?'':' inactive');
       const badge=node('span',p.model==='tecnica'?
-        (enabled?'Técnica · Reglas pendientes':'Técnica conservada · Inactiva'):
-        (enabled?'Media · PCI habilitado':'Media · PCI conservado'));
+        (enabled?'Técnica · En validación':'Técnica conservada'):
+        (enabled?'PCI habilitado':'PCI conservado'));
       badge.className='badge'+(enabled?'':' off');
-      const heading=node('h3',p.model==='tecnica'?('Especialidad Técnica · '+p.specialtyName):p.orientation);
+      const heading=node('h3',p.model==='tecnica'?(p.specialtyName||'Especialidad técnica'):p.orientation);
       const title=node('p','Turno '+p.shift+' · PCI '+p.number);
       const desc=node('p',p.model==='tecnica'?
         'Proyecto técnico independiente. No aplica composición de Media hasta recibir las nuevas reglas.':
         enabled?'Mapa de la Oferta, secuencias y planes independientes'
         :'Conservado sin borrar sus contenidos, mapa o planes');
       const button=node('button',p.model==='tecnica'?
-        'Ver ficha técnica · Reglas pendientes →':'Abrir PCI y mapa C1–C10 →');
+        'Abrir PCI y mapa C1–C12 →':'Abrir PCI y mapa C1–C10 →');
       button.type='button';button.className='btn primary small';
       button.onclick=()=>openPci(p);
       card.append(badge,heading,title,desc,button);
       return card;
     }
+    const modelsPresent=new Set(current.map(p=>p.model==='tecnica'?'tecnica':'comun'));
     for(const model of ['comun','tecnica']){
       const group=current.filter(p=>(p.model==='tecnica'?'tecnica':'comun')===model);
       if(!group.length)continue;
-      const heading=node('h3',model==='comun'?
-        'Bachillerato / Media · Mapa C1–C10':'Educación Técnica · Mapa C1–C12');
-      heading.className='pci-group-title';
-      host.append(heading);
+      // En un único modelo se mantiene la grilla de tarjetas original.
+      // Se agregan rótulos de grupo SOLO en escuelas mixtas.
+      if(modelsPresent.size>1){
+        const heading=node('h3',model==='comun'?
+          'Media · Mapa C1–C10':'Técnica · Mapa C1–C12');
+        heading.className='pci-group-title';
+        host.append(heading);
+      }
       group.sort(byName).forEach(p=>host.append(cardFor(p,true)));
     }
     if(!current.length){
@@ -306,8 +312,8 @@
     }
     const media=current.filter(p=>p.model!=='tecnica').length;
     const tech=current.length-media;
-    $('totalPcis').textContent=current.length+' PCI habilitados ('+
-      media+' Media · '+tech+' Técnica)'+
+    $('totalPcis').textContent=current.length+' PCI'+(current.length===1?'':' creados')+
+      (modelsPresent.size>1?' · '+media+' Media · '+tech+' Técnica':'')+
       (conserved.length?' · '+conserved.length+' conservado'+(conserved.length===1?'':'s'):'');
   }
   function apply(){
@@ -368,8 +374,9 @@
       $('technicalPendingDemo').hidden=false;
       const technicalUrl=new URL('../pci-tecnica-pautas.html',location.href);
       technicalUrl.searchParams.set('especialidad',p.specialtyName);
-      $('technicalRulesPreview').src=technicalUrl.toString();
       $('techRulesDirect').href=technicalUrl.toString();
+      technicalUrl.searchParams.set('embed','1');
+      $('technicalRulesPreview').src=technicalUrl.toString();
       $('technicalPendingName').textContent='Especialidad Técnica · '+p.specialtyName;
       $('technicalPendingMeta').textContent=state.school+
         ' · Turno '+p.shift+' · PCI '+p.number+
@@ -383,6 +390,7 @@
     }
     $('technicalPendingDemo').hidden=true;
     $('pvfPanel').hidden=false;
+    $('pvfPanel').open=false;
     $('pvfJump').hidden=false;
     f.hidden=false;
     const source=new URL('pvf-bachillerato.html',location.href);
@@ -406,8 +414,10 @@
     $('configScreen').hidden=false;
     $('technicalPendingDemo').hidden=true;
     $('pvfPanel').hidden=true;
+    $('pvfPanel').open=false;
     $('pvfJump').hidden=true;
     $('pvfFrame').src='about:blank';
+    $('technicalRulesPreview').src='about:blank';
     $('frame').hidden=false;
     // Al volver se destruye la vista anterior; el estado del mapa ya fue
     // guardado por la aplicación curricular original bajo su clave propia.
@@ -493,6 +503,8 @@
     renderFields();
   };
   $('saveConfig').onclick=apply;
+  $('saveTechnicalConfig').onclick=apply;
+  $('pvfJump').onclick=()=>{$('pvfPanel').open=true;};
   $('back').onclick=back;
   $('reset').onclick=reset;
   renderFields();
