@@ -45,11 +45,11 @@ export function newFgUnit({pci,area,convertedAreas}){
     }
   }
   return {
+    ...converted,
     schema:FG_UNIT_SCHEMA,
     school_id:pci.school_id,pci_id:pci.pci_id,orientation_id:pci.orientation_id,
     original_sha256:pci.legacy_sha256,area,
-    curriculumCatalog:'fg-sec-aprende-v2/1',
-    ...converted
+    curriculumCatalog:'fg-sec-aprende-v2/1'
   };
 }
 
@@ -97,9 +97,9 @@ export function newFoUnit({pci,space,development}){
   const plans=development.plansBimestrales;
   if(!Array.isArray(plans)||plans.length!==4)
     throw Error('El desarrollo FO debe conservar sus cuatro planes de aprendizaje.');
-  return {schema:FO_UNIT_SCHEMA,school_id:pci.school_id,pci_id:pci.pci_id,
+  return {...copy(development),schema:FO_UNIT_SCHEMA,school_id:pci.school_id,pci_id:pci.pci_id,
     orientation_id:pci.orientation_id,original_sha256:pci.legacy_sha256,
-    space_id:String(space.id),...copy(development)};
+    space_id:String(space.id)};
 }
 
 export function guardFoUnit(unit,pci,spaceId){
