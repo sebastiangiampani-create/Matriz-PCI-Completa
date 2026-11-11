@@ -59,6 +59,29 @@
     }
 
     let html=htmlRaw;
+    // En la demo institucional cada PCI tiene su propio almacenamiento.
+    // Sin pci en la URL, la aplicación V2 original permanece sin modificar.
+    const query=new URLSearchParams(location.search);
+    if(query.has('pci')){
+      const pciId=String(query.get('pci')||'');
+      const orientation=String(query.get('orientation')||'');
+      const school=String(query.get('school')||'').slice(0,140);
+      const validOrientations=['Ciencias Naturales','Matemática y Física','Energía y Sustentabilidad',
+        'Economía y Administración','Educación Física','Comunicación','Literatura','Turismo','Lenguas',
+        'Informática','Educación','Ciencias Sociales y Humanidades','Arte - Artes Visuales',
+        'Arte - Música','Arte - Teatro','Agro y Ambiente'];
+      if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pciId)
+        ||!validOrientations.includes(orientation)||school.length<3)
+        throw new Error('Los datos de la institución o del PCI de prueba no son válidos.');
+      const originalStorage="const STORAGE='pci-matriz-fg-v2-original-preview-20261009';";
+      const originalState="let DATA,state={school:'Escuela Muestra',selected:['Economía y Administración'],active:'Economía y Administración',maps:{}};let picked=null,mapOnly=false;";
+      if(!html.includes(originalStorage)||!html.includes(originalState))
+        throw new Error('La versión original del PCI V2 cambió; no se permite iniciar sin aislar el guardado.');
+      const scopedStorage='pci-matriz-fg-v2-original-preview-20261009:pci:'+pciId;
+      html=html.replace(originalStorage,'const STORAGE='+JSON.stringify(scopedStorage)+';');
+      html=html.replace(originalState,
+        'let DATA,state='+JSON.stringify({school,selected:[orientation],active:orientation,maps:{}})+';let picked=null,mapOnly=false;');
+    }
     const closeScript='</scr'+'ipt>';
     html=html.replace('\ninit();\n'+closeScript,'\nwindow.__pciBaseInit=init;\n'+closeScript);
 
