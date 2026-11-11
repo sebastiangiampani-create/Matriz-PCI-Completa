@@ -23,16 +23,19 @@ export function requireSchoolPci(pci,schoolId){
 
 export function newFgUnit({pci,area,convertedAreas}){
   requireSchoolPci(pci,pci.school_id);
-  if(!nonempty(area)||!Object.hasOwn(pci.legacy_state.areas,area))
-    throw Error('El área no pertenece a la matriz histórica de esta institución.');
-  const old=copy(pci.legacy_state.areas[area]);
+  const historical=Object.hasOwn(pci.legacy_state.areas,area);
+  if(!nonempty(area)||(!historical&&Object.keys(pci.legacy_state.areas).length!==0))
+    throw Error('El área no pertenece a esta escuela o su plantilla inicial.');
+  const old=historical?copy(pci.legacy_state.areas[area]):{groups:[]};
   const converted=object(convertedAreas?.[area])?copy(convertedAreas[area]):copy(old);
   if(!Array.isArray(old.groups)||!Array.isArray(converted.groups))
     throw Error('Agrupamientos inválidos: no se puede importar.');
-  const oldIds=old.groups.map(g=>String(g.id));
-  const currentIds=converted.groups.map(g=>String(g.id));
-  if(oldIds.length!==currentIds.length || oldIds.some((id,i)=>id!==currentIds[i]))
-    throw Error('La importación alteró agrupamientos. Se suspende el guardado.');
+  if(historical){
+    const oldIds=old.groups.map(g=>String(g.id));
+    const currentIds=converted.groups.map(g=>String(g.id));
+    if(oldIds.length!==currentIds.length || oldIds.some((id,i)=>id!==currentIds[i]))
+      throw Error('La importación alteró agrupamientos. Se suspende el guardado.');
+  }
   for(let i=0;i<old.groups.length;i++){
     const before=old.groups[i],after=converted.groups[i];
     const bp=Array.isArray(before.plansBimestrales)?before.plansBimestrales:[];
@@ -49,6 +52,7 @@ export function newFgUnit({pci,area,convertedAreas}){
     schema:FG_UNIT_SCHEMA,
     school_id:pci.school_id,pci_id:pci.pci_id,orientation_id:pci.orientation_id,
     original_sha256:pci.legacy_sha256,area,
+    originType:historical?'historical':'empty-institution-template',
     curriculumCatalog:'fg-sec-aprende-v2/1'
   };
 }
