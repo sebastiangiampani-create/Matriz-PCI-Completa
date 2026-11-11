@@ -20,6 +20,9 @@ const ALLOWED_KINDS={
 const FG_BASES=new Set(['fg-matriz-historica/1','fg-sec-aprende-v2/1']);
 const MODELS=new Set(['comun','tecnica']);
 const SHIFTS=new Set(['manana','tarde','vespertino','noche']);
+// Catálogo de nombres propios explicitados en Pautas PCI 05/10/2026, pp.16-17.
+// Solo controla el ALTA; no reescribe documentos previos ni borra otros PCI.
+const SPECIALTY_NAMES=new Set(["Automotores","Computación","Construcciones","Diseño y Comunicación Publicitaria","Diseño y Producción Gráfica","Electricidad","Electromecánica","Electrónica","Administración de Empresas","Industria de los Alimentos","Industria de la Indumentaria","Industrialización de la Madera y el Mueble","Industria de la Orfebrería","Jardinería, Paisajismo y Producción Vegetal","Mecánica","Óptica","Procesos Productivos Inteligentes","Producción Multimedial","Química","Tecnologías de la Información y la Comunicación (TIC)","Refrigeración, Ventilación, Calefacción y Aire Acondicionado","Metalurgia","Órtesis y Prótesis","Diseño de Interiores","Diseño de Artesanías Aplicadas a la Industria","Geógrafo Matemático"]);
 const ALLOWED_ORIENTATIONS=new Set(["ciencias_naturales","matematica_fisica","energia_sustentabilidad","economia_administracion","educacion_fisica","comunicacion","literatura","turismo","lenguas","informatica","educacion","ciencias_sociales_humanidades","arte_artes_visuales","arte_musica","arte_teatro","agro_ambiente"]);
 function text(value,max=180){return String(value??'').replace(/\s+/g,' ').trim().slice(0,max);}
 function createCode(){
@@ -112,7 +115,7 @@ export async function handleMultiPci({action,body,session,db,cors,inScope,hasPer
       const title=text(body.title,150);
       if(!MODELS.has(model)||!SHIFTS.has(shift)||title.length<3 ||
         (model==='comun' && (!ALLOWED_ORIENTATIONS.has(orientation)||specialty.length>0)) ||
-        (model==='tecnica' && (specialty.length<3 || orientation.length>0)))
+        (model==='tecnica' && (!SPECIALTY_NAMES.has(specialty) || orientation.length>0)))
         return reply({error:'Rama, orientación, especialidad o turno inválidos'},400);
       // Técnica: se registra ficha e historia, SIN habilitar editor de Media.
       // No inventamos la composición de especialidades pendiente de normativa.

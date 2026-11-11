@@ -121,7 +121,7 @@ test('un colegio puede registrar un PCI Media y otro de Técnica en distintos tu
   }));
   const tecnica=await status(await ctx('create-school-pci',{
     school_id:1001,model:'tecnica',shift_id:'tarde',
-    orientation_id:'',specialty_name:'Programación',title:'Técnica - Programación'
+    orientation_id:'',specialty_name:'Computación',title:'Técnica - Computación'
   }));
   assert.equal(media.status,201);
   assert.equal(tecnica.status,201);
@@ -130,14 +130,14 @@ test('un colegio puede registrar un PCI Media y otro de Técnica en distintos tu
   assert.equal(writes[0].args.p_model,'comun');
   assert.equal(writes[1].args.p_model,'tecnica');
   assert.equal(writes[1].args.p_shift_id,'tarde');
-  assert.equal(writes[1].args.p_specialty_name,'Programación');
+  assert.equal(writes[1].args.p_specialty_name,'Computación');
   assert.equal(writes[1].args.p_orientation_id,null);
   assert.ok(calls.every(x=>x.fn!=='pci_proposals'));
 });
 test('la composición técnica pendiente no puede leer ni guardar unidades de Media',async()=>{
   const f=fixture();
   f.setRecords([{pci_id:PCI_ID,orientation_id:'tecnica_aabbccdd',model:'tecnica',
-    curriculum_status:'pending_rules',shift_id:'tarde',specialty_name:'Programación',
+    curriculum_status:'pending_rules',shift_id:'tarde',specialty_name:'Computación',
     process_id:'technical-1',status:'borrador',title:'Técnica'}]);
   for(const action of ['get-school-pci-unit','save-school-pci-unit']){
     const r=await status(await f.ctx(action,{
@@ -164,4 +164,23 @@ test('validar nombre de especialidad y turno antes de insertar PCI',async()=>{
   assert.equal(bad.status,400);
   assert.equal(badShift.status,400);
   assert.equal(f.calls.length,0);
+});
+
+test('rechaza nombre de especialidad inventado: el alta requiere denominación específica',async()=>{
+  const f=fixture();
+  const result=await status(await f.ctx('create-school-pci',{
+    school_id:1001,model:'tecnica',shift_id:'tarde',orientation_id:'',
+    specialty_name:'Programación',title:'Especialidad sin nombre oficial'
+  }));
+  assert.equal(result.status,400);
+  assert.equal(f.calls.length,0,'Un nombre fuera del catálogo no debe llegar al RPC');
+});
+test('admite especialidades identificadas aunque su espacio anual esté pendiente',async()=>{
+  const f=fixture();
+  const result=await status(await f.ctx('create-school-pci',{
+    school_id:1001,model:'tecnica',shift_id:'noche',orientation_id:'',
+    specialty_name:'Metalurgia',title:'PCI Metalurgia - noche'
+  }));
+  assert.equal(result.status,201);
+  assert.equal(f.calls.at(-1).args.p_specialty_name,'Metalurgia');
 });
