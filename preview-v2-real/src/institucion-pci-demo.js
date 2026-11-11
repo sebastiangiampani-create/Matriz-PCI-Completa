@@ -291,6 +291,10 @@
       f.src='about:blank';
       f.hidden=true;
       $('technicalPendingDemo').hidden=false;
+      const technicalUrl=new URL('../pci-tecnica-pautas.html',location.href);
+      technicalUrl.searchParams.set('especialidad',p.specialtyName);
+      $('technicalRulesPreview').src=technicalUrl.toString();
+      $('techRulesDirect').href=technicalUrl.toString();
       $('technicalPendingName').textContent='Especialidad Técnica · '+p.specialtyName;
       $('technicalPendingMeta').textContent=state.school+
         ' · Turno '+p.shift+' · PCI '+p.number+
