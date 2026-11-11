@@ -4,7 +4,17 @@
  */
 (() => {
   'use strict';
-  const KEY='pci-v2-institucional-demo-20261111-v1';
+  const BASE_KEY='pci-v2-institucional-demo-20261111-v1';
+  const ADMIN_KEY='pci-v2-escuelas-alta-demo-20261111-v1';
+  const DEFAULT_ID='demo-school-original';
+  const demoInitial={id:DEFAULT_ID,name:'Escuela Muestra (ficticia)',cue:'DEMO-001',year:2026,email:''};
+  let adminSchools;
+  try {adminSchools=JSON.parse(localStorage.getItem(ADMIN_KEY)||'null')}catch{}
+  if(!Array.isArray(adminSchools)||!adminSchools.some(s=>s.id===DEFAULT_ID))
+    adminSchools=[demoInitial];
+  const requestedId=new URLSearchParams(location.search).get('escuelaDemo');
+  const selectedSchool=adminSchools.find(s=>s.id===requestedId)||adminSchools[0];
+  const KEY=selectedSchool.id===DEFAULT_ID?BASE_KEY:BASE_KEY+':school:'+selectedSchool.id;
   const MAP_PREFIX='pci-matriz-fg-v2-original-preview-20261009:pci:';
   const ORIENTATIONS=[
     'Ciencias Naturales','Matemática y Física','Energía y Sustentabilidad',
@@ -19,7 +29,7 @@
   const pair=(o,t)=>o+'|'+t;
   const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=String(text);return e;};
   const defaultState=()=>({
-    version:1,school:'Escuela Muestra (ficticia)',
+    version:1,school:selectedSchool.name,
     orientations:['Economía y Administración'],shifts:['Mañana'],
     combos:[{orientation:'Economía y Administración',shift:'Mañana',quantity:1}],
     pcis:[{id:createId(),orientation:'Economía y Administración',shift:'Mañana',
@@ -34,6 +44,77 @@
     catch(error){feedback('No se guardó la configuración local. Revisá el espacio del navegador.',true);throw error;}
   }
   persist();
+  function saveAdminSchools(){
+    try{localStorage.setItem(ADMIN_KEY,JSON.stringify(adminSchools))}
+    catch{alert('No se pudo guardar la lista de escuelas de esta prueba en el navegador.')}
+  }
+  saveAdminSchools();
+  function adminMessage(text,bad=false){
+    const el=$('adminFeedback');
+    el.textContent=text;
+    el.style.color=bad?'#a93048':'#116a65';
+  }
+  function renderAdminSchools(){
+    const host=$('demoSchools');host.replaceChildren();
+    adminSchools.forEach(school=>{
+      const row=node('div');row.className='adminRow';
+      const details=node('div');
+      const name=node('strong',school.name);
+      const meta=node('small',(school.cue||'Sin código')+' · '+school.year+' · '+(school.email||'Sin correo'));
+      details.append(name,meta);
+      const open=node('button','Configurar sus orientaciones y PCI →');
+      open.className='btn small';open.type='button';
+      open.onclick=()=>{
+        const link=new URL(location.href);
+        link.searchParams.delete('panel');
+        link.searchParams.set('escuelaDemo',school.id);
+        location.assign(link.toString());
+      };
+      row.append(details,open);host.append(row);
+    });
+  }
+  function showSchoolAdmin(open=true){
+    $('schoolAdmin').hidden=!open;
+    $('institutionSetup').hidden=open;
+    if(open){
+      renderAdminSchools();
+      window.scrollTo(0,0);
+    }
+  }
+  $('openAdmin').onclick=()=>showSchoolAdmin(true);
+  $('closeSchoolAdmin').onclick=()=>showSchoolAdmin(false);
+  $('newSchoolBtn').onclick=()=>{
+    $('newSchoolForm').hidden=false;
+    $('adminSchoolName').focus();
+  };
+  $('cancelNewSchool').onclick=()=>{$('newSchoolForm').hidden=true;};
+  $('newSchoolForm').onsubmit=e=>{
+    e.preventDefault();
+    const name=$('adminSchoolName').value.trim();
+    const cue=$('adminSchoolCue').value.trim().toUpperCase();
+    const email=$('adminSchoolEmail').value.trim();
+    const year=Number($('adminSchoolYear').value);
+    if(name.length<3||cue.length<3||year<2020||year>2100||!Number.isInteger(year)){
+      adminMessage('Completá nombre, código institucional y año.',true);
+      return;
+    }
+    if(adminSchools.some(s=>s.cue.toUpperCase()===cue)){
+      adminMessage('Ese código ya figura en la lista de esta prueba.',true);
+      return;
+    }
+    const entry={id:'demo-'+crypto.randomUUID(),name,cue,email,year};
+    adminSchools.push(entry);
+    saveAdminSchools();
+    renderAdminSchools();
+    $('newSchoolForm').reset();
+    $('adminSchoolYear').value='2026';
+    $('newSchoolForm').hidden=true;
+    adminMessage('Escuela de prueba agregada. Elegí «Configurar sus orientaciones y PCI» para ingresar. Ningún registro real fue modificado.');
+  };
+  if(new URLSearchParams(location.search).get('panel')==='alta'){
+    showSchoolAdmin(true);
+    $('newSchoolForm').hidden=false;
+  }
   let draft={
     orientations:copy(state.orientations),
     shifts:copy(state.shifts),
