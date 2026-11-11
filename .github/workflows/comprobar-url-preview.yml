@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Verificar pagina original publica y sus recursos
         run: |
-          ROOT="https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/preview/orientaciones-online-demo-20261111"
+          ROOT="https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/${GITHUB_SHA}"
           curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/app.html" -o app.html
           curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/app-core.html" -o app-core.html
           curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/src/v47-phase2-matrix.js" -o v47.js
@@ -34,4 +34,8 @@ jobs:
           grep -q 'Cantidad de turnos' institucion.html
           grep -q 'PCI independientes de la escuela' institucion.html
           grep -q 'Abrir PCI y mapa C1' institucion.js
+          grep -q 'Especialidades técnicas de la misma escuela' institucion.html
+          grep -q 'technicalPendingDemo' institucion.html
+          grep -q 'technicalForm' institucion.html
+          grep -q 'pending_rules' institucion.js
           echo "OK: la rama publica entrega seleccion de orientaciones, turnos y mapa autentico V2."
