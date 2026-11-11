@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   contrato-js:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -33,7 +33,7 @@ jobs:
         run: node --test src/concurrencia-pci/*.test.mjs
 
   concurrencia-postgres:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:17
@@ -56,10 +56,10 @@ jobs:
       PGDATABASE: pci_collaboration_test
     steps:
       - uses: actions/checkout@v4
-      - name: Cliente PostgreSQL
+      - name: Cliente PostgreSQL preinstalado
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y postgresql-client
+          command -v psql
+          psql --version
       - name: Preparar exclusivamente datos sintéticos
         run: psql -X -v ON_ERROR_STOP=1 -f tests/concurrencia/pg-fixture.sql
       - name: Ejecutar esquema propuesto en PostgreSQL efímero
