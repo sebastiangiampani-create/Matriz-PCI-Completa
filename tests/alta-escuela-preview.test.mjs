@@ -102,7 +102,7 @@ test('una escuela puede tener orientaciones Media y especialidades Técnicas ind
   const p=page('https://example.test/preview-v2-real/institucion.html');
   const before=p.storage.get(PREFIX);
   const mediaId=p.state().pcis[0].id;
-  p.get('technicalSpecialty').value='Programación';
+  p.get('technicalSpecialty').value='Computación';
   p.get('technicalShift').value='Tarde';
   p.get('technicalQuantity').value='2';
   p.get('technicalForm').onsubmit({preventDefault(){}});
@@ -113,7 +113,7 @@ test('una escuela puede tener orientaciones Media y especialidades Técnicas ind
   assert.equal(data.pcis[0].model,undefined,'El PCI de Media histórico debe conservar su formato');
   const technical=data.pcis.filter(x=>x.model==='tecnica');
   assert.equal(technical.length,2);
-  assert.ok(technical.every(x=>x.specialtyName==='Programación'&&x.shift==='Tarde'));
+  assert.ok(technical.every(x=>x.specialtyName==='Computación'&&x.shift==='Tarde'));
   assert.ok(technical.every(x=>x.curriculumStatus==='pending_rules'));
   assert.notEqual(technical[0].id,technical[1].id);
   assert.notEqual(p.storage.get(PREFIX),before,'La ampliación debe guardar la ficha técnica propia');
@@ -148,4 +148,23 @@ test('un PCI Técnico muestra ficha pendiente y nunca abre el editor C1-C10 de M
   assert.equal(p.get('frame').hidden,true);
   assert.equal(p.get('frame').src,'about:blank');
   assert.match(p.get('technicalPendingName').textContent,/Electromecánica/);
+});
+
+test('la vista técnica ofrece 26 nombres propios de especialidades del documento, sin nombres libres',()=>{
+  const source=html;
+  const names=[...source.matchAll(/<option value="([^"]+)"/g)].map(x=>x[1]);
+  const special=names.filter(n=>["Automotores","Computación","Construcciones","Diseño y Comunicación Publicitaria","Diseño y Producción Gráfica","Electricidad","Electromecánica","Electrónica","Administración de Empresas","Industria de los Alimentos","Industria de la Indumentaria","Industrialización de la Madera y el Mueble","Industria de la Orfebrería","Jardinería, Paisajismo y Producción Vegetal","Mecánica","Óptica","Procesos Productivos Inteligentes","Producción Multimedial","Química","Tecnologías de la Información y la Comunicación (TIC)","Refrigeración, Ventilación, Calefacción y Aire Acondicionado","Metalurgia","Órtesis y Prótesis","Diseño de Interiores","Diseño de Artesanías Aplicadas a la Industria","Geógrafo Matemático"].includes(n));
+  assert.equal(special.length,26);
+  assert.ok(special.includes('Electromecánica'));
+  assert.ok(special.includes('Computación'));
+  assert.ok(special.includes('Geógrafo Matemático'));
+  assert.ok(!special.includes('Programación'));
+});
+test('una denominación no incluida no registra nuevos PCI ficticios',()=>{
+  const p=page('https://example.test/preview-v2-real/institucion.html');
+  p.get('technicalSpecialty').value='Programación';
+  p.get('technicalShift').value='Tarde';
+  p.get('technicalQuantity').value='1';
+  p.get('technicalForm').onsubmit({preventDefault(){}});
+  assert.equal(p.state().technicalTracks.length,0);
 });

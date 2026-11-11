@@ -126,11 +126,45 @@ table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid
     <h2 id="techTitle">Especialidades técnicas de la misma escuela</h2>
     <p class="muted">Una escuela puede tener al mismo tiempo orientaciones de Media y especialidades Técnicas, incluso en turnos diferentes. Las especialidades quedan registradas sin aplicar reglas de Media.</p>
     <div class="notice"><strong>Reglas de composición Técnica pendientes.</strong>
-      Acá se registra la especialidad, el turno y la cantidad de PCI. La construcción técnica no se habilita hasta que incorporemos las nuevas reglas que correspondan.</div>
+      Acá se registra la especialidad, el turno y la cantidad de PCI. Las pautas generales están incorporadas en la vista de validación. El guardado curricular técnico permanece bloqueado hasta verificar los diseños curriculares de la especialidad.</div>
     <form id="technicalForm" class="adminForm">
       <div class="grid-body">
         <label><span>Nombre de la especialidad técnica</span>
-          <input id="technicalSpecialty" required maxlength="150" placeholder="Ejemplo: Programación (ficticia)"></label>
+          <select id="technicalSpecialty" required>
+          <option value="" selected disabled>Elegí una especialidad del catálogo</option>
+          <optgroup label="Espacio anual definido en las pautas (20)">
+            <option value="Automotores">Automotores</option>
+            <option value="Computación">Computación</option>
+            <option value="Construcciones">Construcciones</option>
+            <option value="Diseño y Comunicación Publicitaria">Diseño y Comunicación Publicitaria</option>
+            <option value="Diseño y Producción Gráfica">Diseño y Producción Gráfica</option>
+            <option value="Electricidad">Electricidad</option>
+            <option value="Electromecánica">Electromecánica</option>
+            <option value="Electrónica">Electrónica</option>
+            <option value="Administración de Empresas">Administración de Empresas</option>
+            <option value="Industria de los Alimentos">Industria de los Alimentos</option>
+            <option value="Industria de la Indumentaria">Industria de la Indumentaria</option>
+            <option value="Industrialización de la Madera y el Mueble">Industrialización de la Madera y el Mueble</option>
+            <option value="Industria de la Orfebrería">Industria de la Orfebrería</option>
+            <option value="Jardinería, Paisajismo y Producción Vegetal">Jardinería, Paisajismo y Producción Vegetal</option>
+            <option value="Mecánica">Mecánica</option>
+            <option value="Óptica">Óptica</option>
+            <option value="Procesos Productivos Inteligentes">Procesos Productivos Inteligentes</option>
+            <option value="Producción Multimedial">Producción Multimedial</option>
+            <option value="Química">Química</option>
+            <option value="Tecnologías de la Información y la Comunicación (TIC)">Tecnologías de la Información y la Comunicación (TIC)</option>
+          </optgroup>
+          <optgroup label="Espacio anual pendiente de definición (5)">
+            <option value="Refrigeración, Ventilación, Calefacción y Aire Acondicionado">Refrigeración, Ventilación, Calefacción y Aire Acondicionado</option>
+            <option value="Metalurgia">Metalurgia</option>
+            <option value="Órtesis y Prótesis">Órtesis y Prótesis</option>
+            <option value="Diseño de Interiores">Diseño de Interiores</option>
+            <option value="Diseño de Artesanías Aplicadas a la Industria">Diseño de Artesanías Aplicadas a la Industria</option>
+          </optgroup>
+          <optgroup label="Sin espacio anual por excepción (1)">
+            <option value="Geógrafo Matemático">Geógrafo Matemático</option>
+          </optgroup>
+          </select></label>
         <label><span>Turno</span><select id="technicalShift">
           <option value="Mañana">Mañana</option><option value="Tarde">Tarde</option>
           <option value="Vespertino">Vespertino</option><option value="Noche">Noche</option>

@@ -23,6 +23,8 @@
     'Arte - Artes Visuales','Arte - Música','Arte - Teatro','Agro y Ambiente'
   ];
   const SHIFTS=['Mañana','Tarde','Vespertino','Noche'];
+  // Denominaciones de las 26 especialidades citadas en el documento PCI 05/10/2026.
+  const TECH_SPECIALTIES=new Set(["Automotores","Computación","Construcciones","Diseño y Comunicación Publicitaria","Diseño y Producción Gráfica","Electricidad","Electromecánica","Electrónica","Administración de Empresas","Industria de los Alimentos","Industria de la Indumentaria","Industrialización de la Madera y el Mueble","Industria de la Orfebrería","Jardinería, Paisajismo y Producción Vegetal","Mecánica","Óptica","Procesos Productivos Inteligentes","Producción Multimedial","Química","Tecnologías de la Información y la Comunicación (TIC)","Refrigeración, Ventilación, Calefacción y Aire Acondicionado","Metalurgia","Órtesis y Prótesis","Diseño de Interiores","Diseño de Artesanías Aplicadas a la Industria","Geógrafo Matemático"]);
   const $=id=>document.getElementById(id);
   const copy=x=>JSON.parse(JSON.stringify(x));
   const createId=()=>crypto.randomUUID();
@@ -361,6 +363,10 @@
         node('small','Turno '+t.shift+' · '+t.quantity+' PCI activo(s) · reglas de composición pendientes'));
       const change=node('button','Editar cantidad');change.className='btn small';change.type='button';
       change.onclick=()=>{
+        if(!TECH_SPECIALTIES.has(t.specialtyName)){
+          $('technicalFeedback').textContent='La especialidad de esta prueba es anterior al catálogo; se conserva, pero requiere revisión de su denominación.';
+          return;
+        }
         $('technicalSpecialty').value=t.specialtyName;
         $('technicalShift').value=t.shift;
         $('technicalQuantity').value=String(t.quantity);
@@ -375,9 +381,9 @@
     const shift=$('technicalShift').value;
     const quantity=Number($('technicalQuantity').value);
     const note=$('technicalFeedback');
-    if(specialtyName.length<3||!SHIFTS.includes(shift)||
+    if(!TECH_SPECIALTIES.has(specialtyName)||!SHIFTS.includes(shift)||
        !Number.isSafeInteger(quantity)||quantity<1||quantity>5){
-      note.textContent='Revisá el nombre de especialidad, turno y cantidad entre 1 y 5.';
+      note.textContent='Elegí una especialidad por su nombre del catálogo, un turno y una cantidad de PCI entre 1 y 5.';
       note.style.color='#a93048';return;
     }
     const stateNext=copy(state);

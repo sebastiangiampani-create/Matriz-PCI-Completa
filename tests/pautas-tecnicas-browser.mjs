@@ -46,7 +46,7 @@ try{
 
   await page.goto(base+'/preview-v2-real/institucion.html',{waitUntil:'domcontentloaded'});
   await page.locator('#technicalForm').waitFor({state:'visible',timeout:30000});
-  await page.locator('#technicalSpecialty').fill('Mecánica');
+  await page.locator('#technicalSpecialty').selectOption({label:'Mecánica'});
   await page.locator('#technicalShift').selectOption('Noche');
   await page.locator('#technicalQuantity').fill('1');
   await page.locator('#technicalForm button[type="submit"]').click();
