@@ -43,6 +43,11 @@
      !Array.isArray(state.combos)||!Array.isArray(state.pcis))state=defaultState();
   // Compatibilidad: las estructuras ya guardadas de Media no se modifican.
   if(!Array.isArray(state.technicalTracks))state.technicalTracks=[];
+  // Compatibilidad con todas las configuraciones de prueba anteriores.
+  // El modelo pertenece al PCI, NO al registro único de la escuela.
+  // Si la escuela aún no seleccionó modalidades, ninguna se elimina:
+  // aparecen las dos disponibles para que se elijan explícitamente.
+  if(!Array.isArray(state.models))state.models=['comun','tecnica'];
   function persist(){
     try{localStorage.setItem(KEY,JSON.stringify(state));}
     catch(error){feedback('No se guardó la configuración local. Revisá el espacio del navegador.',true);throw error;}
@@ -120,10 +125,35 @@
     $('newSchoolForm').hidden=false;
   }
   let draft={
+    models:copy(state.models),
     orientations:copy(state.orientations),
     shifts:copy(state.shifts),
     combos:Object.fromEntries(state.combos.map(c=>[pair(c.orientation,c.shift),{enabled:true,quantity:c.quantity}]))
   };
+  function renderModelChoice(){
+    const media=draft.models.includes('comun'),technical=draft.models.includes('tecnica');
+    $('modelMediaCheck').checked=media;
+    $('modelTechCheck').checked=technical;
+    $('mediaBlock').hidden=!media;
+    $('techBlock').hidden=!technical;
+    $('modelStatus').textContent=media&&technical?
+      'Escuela con ambos modelos: los PCI de Media y Técnica comparten institución, NO contenidos ni reglas.':
+      media?'Escuela con Bachillerato / Media. Los PCI técnicos anteriores se conservan.':
+      technical?'Escuela Técnica. Los PCI de Media anteriores se conservan.':
+      'Elegí al menos una modalidad antes de guardar.';
+  }
+  function changeModel(model,selected){
+    const modes=new Set(draft.models);
+    if(selected)modes.add(model);else modes.delete(model);
+    draft.models=[...modes];renderModelChoice();renderSummary();
+  }
+  $('modelMediaCheck').onchange=()=>{
+    changeModel('comun',$('modelMediaCheck').checked);
+  };
+  $('modelTechCheck').onchange=()=>{
+    changeModel('tecnica',$('modelTechCheck').checked);
+  };
+  renderModelChoice();
   function feedback(text,bad=false){
     $('feedback').textContent=text;
     $('feedback').style.color=bad?'#a93048':'#116a65';
@@ -187,7 +217,9 @@
   function renderSummary(){
     const rows=draft.orientations.flatMap(o=>draft.shifts.map(t=>draft.combos[pair(o,t)]||{enabled:true,quantity:1}));
     const count=rows.filter(x=>x.enabled).reduce((n,x)=>n+Math.max(1,Number(x.quantity)||1),0);
-    $('summary').textContent=count+' PCI previstos en '+rows.filter(x=>x.enabled).length+' combinaciones activas.';
+    $('summary').textContent=draft.models.includes('comun')?
+      count+' PCI de Media previstos en '+rows.filter(x=>x.enabled).length+' combinaciones.':
+      'Media no seleccionada. Los PCI de Media ya creados se conservarán.';
   }
   function renderFields(){
     $('orientationCount').value=String(draft.orientations.length);
@@ -201,6 +233,8 @@
     renderCombinations();
   }
   function isActive(p){
+    const model=p.model==='tecnica'?'tecnica':'comun';
+    if(!state.models.includes(model))return false;
     if(p.model==='tecnica')return state.technicalTracks.some(t=>
       t.specialtyName===p.specialtyName&&t.shift===p.shift&&p.number<=t.quantity);
     return state.combos.some(c=>c.orientation===p.orientation&&c.shift===p.shift&&p.number<=c.quantity);
@@ -230,7 +264,15 @@
       card.append(badge,heading,title,desc,button);
       return card;
     }
-    current.sort(byName).forEach(p=>host.append(cardFor(p,true)));
+    for(const model of ['comun','tecnica']){
+      const group=current.filter(p=>(p.model==='tecnica'?'tecnica':'comun')===model);
+      if(!group.length)continue;
+      const heading=node('h3',model==='comun'?
+        'Bachillerato / Media · Mapa C1–C10':'Educación Técnica · Mapa C1–C12');
+      heading.className='pci-group-title';
+      host.append(heading);
+      group.sort(byName).forEach(p=>host.append(cardFor(p,true)));
+    }
     if(!current.length){
       const empty=node('p','No hay PCI habilitados con esta estructura. Guardá una combinación arriba.');
       empty.className='muted';host.append(empty);
@@ -249,11 +291,17 @@
       archive.append(summary,help,grid);
       host.append(archive);
     }
-    $('totalPcis').textContent=current.length+' PCI habilitados'
-      +(conserved.length?' · '+conserved.length+' conservado'+(conserved.length===1?'':'s'):'');
+    const media=current.filter(p=>p.model!=='tecnica').length;
+    const tech=current.length-media;
+    $('totalPcis').textContent=current.length+' PCI habilitados ('+
+      media+' Media · '+tech+' Técnica)'+
+      (conserved.length?' · '+conserved.length+' conservado'+(conserved.length===1?'':'s'):'');
   }
   function apply(){
     const school=$('school').value.trim();
+    if(!draft.models.length){
+      feedback('Elegí por lo menos una modalidad: Media, Técnica o ambas.',true);return;
+    }
     if(school.length<3){feedback('Escribí el nombre de la escuela.',true);return;}
     if(new Set(draft.orientations).size!==draft.orientations.length){
       feedback('Una orientación está seleccionada más de una vez.',true);return;
@@ -268,16 +316,23 @@
         if(c.enabled)enabled.push({orientation:o,shift:t,quantity:Math.max(1,Math.min(5,Number(c.quantity)||1))});
       }
     }
-    if(!enabled.length){feedback('Habilitá por lo menos una combinación de orientación y turno.',true);return;}
+    if(draft.models.includes('comun')&&!enabled.length){
+      feedback('Para Media habilitá al menos una combinación de orientación y turno.',true);
+      return;
+    }
     // Eliminar una combinación de la configuración NO elimina nunca sus PCI.
     const next=copy(state);
     next.school=school;
+    next.models=copy(draft.models);
     next.orientations=copy(draft.orientations);
     next.shifts=copy(draft.shifts);
-    next.combos=enabled;
+    // Desactivar Media solo la oculta; sus combinaciones y PCI se conservan
+    // hasta que la institución vuelva a habilitar ese modelo.
+    next.combos=draft.models.includes('comun')?enabled:copy(state.combos);
     let created=0;
-    for(const c of enabled){
-      const previous=next.pcis.filter(p=>p.orientation===c.orientation&&p.shift===c.shift);
+    for(const c of draft.models.includes('comun')?enabled:[]){
+      const previous=next.pcis.filter(p=>p.model!=='tecnica'&&
+        p.orientation===c.orientation&&p.shift===c.shift);
       for(let n=previous.length+1;n<=c.quantity;n++){
         next.pcis.push({id:createId(),orientation:c.orientation,shift:c.shift,
           number:n,createdAt:new Date().toISOString()});
@@ -285,7 +340,8 @@
       }
     }
     state=next;persist();renderPcis();
-    feedback('Configuración guardada. '+created+' PCI nuevo(s). Los PCI anteriores permanecen intactos.');
+    feedback('Modelos guardados para una misma escuela. '+created+
+      ' PCI nuevo(s). Ningún PCI anterior se elimina ni convierte de modalidad.');
   }
   function openPci(p){
     const f=$('frame');
@@ -377,6 +433,10 @@
   }
   function addTechnicalTrack(e){
     e.preventDefault();
+    if(!state.models.includes('tecnica')){
+      $('technicalFeedback').textContent='Primero activá Técnica y guardá la configuración de modelos.';
+      return;
+    }
     const specialtyName=$('technicalSpecialty').value.trim();
     const shift=$('technicalShift').value;
     const quantity=Number($('technicalQuantity').value);
