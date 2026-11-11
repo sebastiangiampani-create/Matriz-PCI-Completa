@@ -170,6 +170,24 @@ export function validateTechnicalSpace(space,{specialty=null,plan=null}={}){
   }
   if(format==='integracion_especialidad'&&![4,5,6].includes(year))
     errors.push(issue('SPECIALTY_INTEGRATION_YEAR','Los espacios de integración de especialidad pertenecen al 2.º ciclo (4.º a 6.º).',17));
+  if(format==='taller_primer_ciclo' && ![1,2].includes(year))
+    errors.push(issue('FIRST_CYCLE_WORKSHOP_YEAR','El Taller del Primer Ciclo corresponde a 1.º y 2.º.',15));
+  if(format==='taller_especialidad' && ![3,4,5,6].includes(year))
+    errors.push(issue('SPECIALTY_WORKSHOP_YEAR','El Taller de la Especialidad corresponde al segundo ciclo desde 3.º.',5));
+  if(format==='tecnologia_representacion'){
+    if(![1,2,3].includes(year))
+      errors.push(issue('REPRESENTATION_YEAR','Tecnología de la Representación solo corresponde a 1.º, 2.º y, según especialidad, 3.º.',13));
+    else if(year===3 && plan?.representationThirdYear!==true)
+      warnings.push(issue('REPRESENTATION_THIRD_PENDING','La presencia de Representación en 3.º depende del plan de la especialidad.',13,'warning'));
+  }
+  if(format==='troncal'&&year===6){
+    const name=normalize(space?.title || space?.name || area);
+    const extra=(name.includes('matematica')||name.includes('lengua adicional'));
+    if(name.includes('lengua y literatura')||!extra)
+      errors.push(issue('SIXTH_YEAR_CORE','En 6.º no se establece este espacio troncal.',13));
+    else if(!['computacion','administracion_empresas'].includes(findSpecialty(specialty)?.id))
+      errors.push(issue('SIXTH_YEAR_CORE_EXCEPTION','Matemática y Lengua Adicional en 6.º se indican solo para Computación y ADE.',13));
+  }
   if(format==='espacio_anual_especialidad'){
     const item=findSpecialty(specialty);
     if(![4,5,6].includes(year))
