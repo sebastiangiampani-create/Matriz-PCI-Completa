@@ -22,11 +22,12 @@ jobs:
           curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/app-core.html" -o app-core.html
           curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/src/v47-phase2-matrix.js" -o v47.js
           curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/data/materias-v2.json" -o materias.json
-          grep -q 'Mapa de la Oferta' app.html
-          grep -q 'matrizOrientationSelect' app-core.html
-          grep -q 'id="matrix"' app-core.html
-          grep -q 'v47-phase2-matrix.js' app.html
-          grep -q 'matriz' app-core.html
-          curl --retry 3 --max-time 30 -fsSL "$ROOT/pci-orientaciones-demo.html" -o redirect.html
-          grep -q 'preview-v2-real/app.html' redirect.html
+          for f in app.html app-core.html v47.js materias.json; do echo "Descarga OK: $f $(wc -c < "$f") bytes"; done
+          grep -q 'Mapa de la Oferta' app.html || (echo 'Error: título app' && exit 1)
+          grep -q 'matrizOrientationSelect' app-core.html || (echo 'Error: selector orientación' && exit 1)
+          grep -q 'id="matrix"' app-core.html || (echo 'Error: matriz original' && exit 1)
+          grep -q 'v47-phase2-matrix.js' app.html || (echo 'Error: módulo V2' && exit 1)
+          grep -q 'matriz' app-core.html || (echo 'Error: contenido V2' && exit 1)
+          curl --retry 3 --max-time 30 -fsSL "$ROOT/pci-orientaciones-demo.html?v=20261111-correcta" -o redirect.html
+          grep -q 'preview-v2-real/app.html' redirect.html || (echo 'Error: CDN sirvió redirect anterior'; head -c 500 redirect.html; exit 1)
           echo "OK: la rama publica entrega la aplicacion autentica V2 y sus recursos esenciales."
