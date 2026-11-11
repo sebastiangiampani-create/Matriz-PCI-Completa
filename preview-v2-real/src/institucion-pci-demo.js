@@ -120,24 +120,46 @@
   }
   function renderPcis(){
     const host=$('pciList');host.replaceChildren();
-    const ordered=state.pcis.slice().sort((a,b)=>{
-      const active=Number(isActive(b))-Number(isActive(a));
-      return active||a.orientation.localeCompare(b.orientation,'es')||a.shift.localeCompare(b.shift,'es')||a.number-b.number;
-    });
-    ordered.forEach(p=>{
-      const card=node('article');card.className='pci-card'+(isActive(p)?'':' inactive');
-      const badge=node('span',isActive(p)?'PCI habilitado':'PCI conservado · Fuera de configuración actual');
-      badge.className='badge'+(isActive(p)?'':' off');
+    const current=state.pcis.filter(isActive);
+    const conserved=state.pcis.filter(p=>!isActive(p));
+    const byName=(a,b)=>a.orientation.localeCompare(b.orientation,'es')
+      ||a.shift.localeCompare(b.shift,'es')||a.number-b.number;
+    function cardFor(p,enabled){
+      const card=node('article');card.className='pci-card'+(enabled?'':' inactive');
+      const badge=node('span',enabled?'PCI habilitado':'PCI conservado · Inactivo');
+      badge.className='badge'+(enabled?'':' off');
       const heading=node('h3',p.orientation);
       const title=node('p','Turno '+p.shift+' · PCI '+p.number);
-      const desc=node('p','Mapa de la Oferta, secuencias y planes independientes');
+      const desc=node('p',enabled
+        ?'Mapa de la Oferta, secuencias y planes independientes'
+        :'Conservado sin borrar sus contenidos, mapa o planes');
       const button=node('button','Abrir PCI y mapa C1–C10 →');
       button.type='button';button.className='btn primary small';
       button.onclick=()=>openPci(p);
       card.append(badge,heading,title,desc,button);
-      host.append(card);
-    });
-    $('totalPcis').textContent=state.pcis.length+' PCI creados';
+      return card;
+    }
+    current.sort(byName).forEach(p=>host.append(cardFor(p,true)));
+    if(!current.length){
+      const empty=node('p','No hay PCI habilitados con esta estructura. Guardá una combinación arriba.');
+      empty.className='muted';host.append(empty);
+    }
+    if(conserved.length){
+      // Los PCI anteriores no se eliminan. Se ocultan en una sección que se
+      // puede desplegar, para no confundir los activos con los conservados.
+      const archive=node('details');archive.className='pci-conservados';
+      const summary=node('summary',
+        'Ver PCI conservados fuera de la configuración actual ('+conserved.length+')');
+      const help=node('p',
+        'Estos proyectos son anteriores. No se borraron, aunque cambies orientaciones o turnos.');
+      help.className='muted';
+      const grid=node('div');grid.className='pci-grid';
+      conserved.sort(byName).forEach(p=>grid.append(cardFor(p,false)));
+      archive.append(summary,help,grid);
+      host.append(archive);
+    }
+    $('totalPcis').textContent=current.length+' PCI habilitados'
+      +(conserved.length?' · '+conserved.length+' conservado'+(conserved.length===1?'':'s'):'');
   }
   function apply(){
     const school=$('school').value.trim();
