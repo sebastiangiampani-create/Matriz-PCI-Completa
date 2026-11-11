@@ -81,14 +81,31 @@ try {
   assert.ok(current?.maps?.['Economía y Administración']?.placements?.['matematica-n3']?.length,
     'La ubicación de Matemática 3.º no se guardó en el PCI solicitado.');
   await page.locator('#back').click();
+  await page.waitForFunction(()=>document.querySelector('#frame')?.contentWindow?.location?.href==='about:blank',
+    null,{timeout:20000});
 
   // El segundo PCI de LA MISMA orientación/turno debe comenzar vacío.
+  assert.notEqual(eco[0].id,eco[1].id,'Los dos proyectos deben tener identificador diferente');
+  const secondBefore=await page.evaluate(id=>localStorage.getItem(window.__PCIDEMO__.getMapKey(id)),eco[1].id);
+  assert.ok(!secondBefore || !JSON.parse(secondBefore)?.maps?.['Economía y Administración']?.placements?.['matematica-n3']?.length,
+    'ATENCION: el segundo PCI ya tiene Matemática asignada ANTES de abrir su editor. Hay fuga de datos.');
   await page.locator('#pciList .pci-card').filter({hasText:'Economía y Administración'}).nth(1).getByRole('button',{name:/Abrir PCI/}).click();
+  // No leer el iframe anterior mientras el navegador todavía lo reemplaza.
+  await page.waitForFunction(id=>{
+    const frame=document.querySelector('#frame');
+    return frame?.contentWindow?.location?.search.includes('pci='+id);
+  },eco[1].id,{timeout:70000});
   await frame.locator('#pciList [data-open]').waitFor({timeout:70000});
   await frame.locator('#pciList [data-open]').first().click();
   await frame.locator('#openOffer').click();
   await frame.locator('#matrix .drop[data-slot="matematica-n3"]').waitFor({timeout:60000});
-  assert.equal(await frame.locator('#matrix .drop[data-slot="matematica-n3"] .placed').count(),0);
+  const secondPlaced=await frame.locator('#matrix .drop[data-slot="matematica-n3"] .placed').count();
+  const secondActual=await page.evaluate(id=>{
+    const raw=localStorage.getItem(window.__PCIDEMO__.getMapKey(id));
+    return raw?JSON.parse(raw)?.maps?.['Economía y Administración']?.placements?.['matematica-n3']||[]:[];
+  },eco[1].id);
+  assert.equal(secondPlaced,0,'El mapa del segundo PCI no debe mostrar materias arrastradas desde el primero');
+  assert.equal(secondActual.length,0,'El segundo PCI no debe guardar materias que fueron ubicadas en otro PCI');
   await page.locator('#back').click();
 
   // Si cambia la configuración, los PCI anteriores quedan conservados.
