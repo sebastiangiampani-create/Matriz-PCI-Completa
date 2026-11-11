@@ -18,6 +18,7 @@ const ALLOWED_KINDS={
   oferta:new Set(['map'])
 };
 const FG_BASES=new Set(['fg-matriz-historica/1','fg-sec-aprende-v2/1']);
+const ALLOWED_ORIENTATIONS=new Set(["ciencias_naturales","matematica_fisica","energia_sustentabilidad","economia_administracion","educacion_fisica","comunicacion","literatura","turismo","lenguas","informatica","educacion","ciencias_sociales_humanidades","arte_artes_visuales","arte_musica","arte_teatro","agro_ambiente"]);
 function text(value,max=180){return String(value??'').replace(/\s+/g,' ').trim().slice(0,max);}
 function createCode(){
   const n=crypto.getRandomValues(new Uint16Array(1))[0]%10000;
@@ -48,7 +49,7 @@ function contentUnit(body){
   if(component==='fg'&&!FG_BASES.has(version))return null;
   if(component==='fo'&&version!=='fo-sec-aprende-v2/1')return null;
   if(component==='articulacion'&&version!=='pci-articulacion-fg-fo/1')return null;
-  if(component==='oferta'&&!version.startsWith('oferta-'))return null;
+  if(component==='oferta'&&version!=='oferta-pci-orientacion-v1')return null;
   return {component,kind,unitId,version};
 }
 export async function handleMultiPci({action,body,session,db,cors,inScope,hasPerm,actorFromSession}){
@@ -103,7 +104,7 @@ export async function handleMultiPci({action,body,session,db,cors,inScope,hasPer
     if(action==='create-school-pci'){
       if(!write)return reply({error:'Sin permiso para crear PCI'},403);
       const orientation=text(body.orientation_id,80),title=text(body.title,150);
-      if(!/^[a-z][a-z0-9_]{2,79}$/.test(orientation)||title.length<3)
+      if(!ALLOWED_ORIENTATIONS.has(orientation)||title.length<3)
         return reply({error:'Orientación o nombre de PCI inválido'},400);
       const result=await rpc('pci_workspace_create_pci_v1',{
         p_school_id:sid,p_orientation_id:orientation,p_title:title,p_actor:actorName
@@ -138,6 +139,28 @@ export async function handleMultiPci({action,body,session,db,cors,inScope,hasPer
     if(!Number.isSafeInteger(revision)||revision<0||
        !body.document||typeof body.document!=='object'||Array.isArray(body.document))
       return reply({error:'Documento o revisión inválida'},400);
+    const original=await rpc('pci_workspace_get_pci_v1',{p_school_id:sid,p_pci_id:pciId});
+    if(!original?.legacy_sha256 || !original?.legacy_state)
+      return reply({error:'No se encontró el resguardo de origen'},409);
+    const doc=body.document;
+    // Documento y alcance validados contra el PCI real, no contra parámetros del cliente.
+    if(Number(doc.school_id)!==sid ||
+       doc.pci_id!==pciId ||
+       doc.orientation_id!==registered.orientation_id ||
+       doc.original_sha256!==original.legacy_sha256)
+      return reply({error:'Documento asociado a otra institución, PCI o versión de origen'},409);
+    if((unit.component==='fg' && (
+         unit.kind!=='area' || doc.schema!=='pci-fg-area-v2/1' ||
+         doc.area!==unit.unitId || !Array.isArray(doc.groups))) ||
+       (unit.component==='fo' && (
+         unit.kind!=='space' || doc.schema!=='pci-fo-desarrollo-v2/1' ||
+         doc.space_id!==unit.unitId || doc.orientation!==registered.orientation_id ||
+         !Array.isArray(doc.plansBimestrales) || doc.plansBimestrales.length!==4)) ||
+       (unit.component==='oferta' && (
+         unit.kind!=='map' || doc.schema!=='pci-oferta-fo-v2/1' ||
+         !doc.fo || !Array.isArray(doc.fo.spaces))) ||
+       unit.component==='articulacion')
+      return reply({error:'Estructura curricular o componente no habilitado'},400);
     const serialized=JSON.stringify(body.document);
     if(serialized.length>1000000)return reply({error:'Unidad curricular demasiado extensa'},413);
     const saved=await rpc('pci_collab_save_unit_v1',{

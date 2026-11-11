@@ -12,7 +12,10 @@ on:
       - src/orientaciones-release-core.mjs
       - tests/orientaciones-release.test.mjs
       - tests/orientaciones-release-browser.mjs
+      - tests/edge-package.test.mjs
       - src/multipci/**
+      - supabase/functions/pci-access/**
+      - supabase/config.toml
       - migration/multipci/**
       - tests/multipci/**
       - .github/workflows/validar-multipci.yml
@@ -55,7 +58,7 @@ jobs:
         run: |
           node --check src/orientaciones-online.mjs
           node --check src/orientaciones-release-core.mjs
-          node --test tests/multipci/*.test.mjs tests/orientaciones-release.test.mjs
+          node --test tests/multipci/*.test.mjs tests/orientaciones-release.test.mjs tests/edge-package.test.mjs
       - name: Probar el módulo online en Chromium con Supabase simulado
         run: |
           npm install --no-save playwright@1.55.0

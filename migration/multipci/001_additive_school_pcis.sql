@@ -133,6 +133,10 @@ BEGIN
      OR jsonb_typeof(v_original->'areas') <> 'object'
   THEN RAISE EXCEPTION 'Escuela o documento FG original inválido' USING ERRCODE='22023';
   END IF;
+  IF v_original->>'profile'='tecnica' THEN
+    RAISE EXCEPTION 'El modelo técnico requiere su propio adaptador antes de crear PCI orientado'
+      USING ERRCODE='22023';
+  END IF;
   v_hash=encode(pg_catalog.sha256(pg_catalog.convert_to(v_original::text,'UTF8')),'hex');
   INSERT INTO pci_workspace.legacy_snapshots(
     school_id,source_updated_at,source_sha256,source_data)

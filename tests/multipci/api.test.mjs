@@ -14,7 +14,7 @@ function fixture(session={role:'editor',school_id:1001}){
     if(fn==='pci_workspace_list_pcis_v1')return {data:records,error:null};
     if(fn==='pci_workspace_create_pci_v1')return {data:{ok:true,pci_id:PCI_ID},error:null};
     if(fn==='pci_workspace_create_school_v1')return {data:{ok:true,school_id:1002},error:null};
-    if(fn==='pci_workspace_get_pci_v1')return {data:{pci_id:PCI_ID,source_protected:true},error:null};
+    if(fn==='pci_workspace_get_pci_v1')return {data:{pci_id:PCI_ID,source_protected:true,legacy_sha256:'a'.repeat(64),legacy_state:{areas:{}}},error:null};
     if(fn==='pci_collab_get_unit_v1')return {data:{exists:false,revision:0},error:null};
     if(fn==='pci_collab_save_unit_v1')return {data:{ok:true,revision:1},error:null};
     throw new Error('RPC inesperado: '+fn);
@@ -57,7 +57,7 @@ test('el servidor impone la orientación y el proceso registrados en ese PCI',as
     school_id:1001,pci_id:PCI_ID,orientation_id:'ciencias_naturales',process_id:'proceso-falso',
     component:'fg',unit_kind:'area',unit_id:'Ciencias Sociales',
     base_version:'fg-sec-aprende-v2/1',expected_revision:0,
-    document:{groups:[{id:'grupo-demo',items:['contenido-ficticio']}]}
+    document:{schema:'pci-fg-area-v2/1',school_id:1001,pci_id:PCI_ID,orientation_id:'economia_administracion',original_sha256:'a'.repeat(64),area:'Ciencias Sociales',groups:[{id:'grupo-demo',items:['contenido-ficticio']}]}
   }));
   assert.equal(r.status,200);
   const query=calls.find(x=>x.fn==='pci_collab_save_unit_v1');
@@ -65,6 +65,7 @@ test('el servidor impone la orientación y el proceso registrados en ese PCI',as
   assert.equal(query.args.p_process_id,'process-test-1');
   assert.equal(query.args.p_expected_revision,0);
   assert.ok(calls.every(x=>x.fn!=='pci_proposals'));
+  assert.ok(calls.some(x=>x.fn==='pci_workspace_get_pci_v1'));
 });
 test('no permite editar un PCI publicado ni sin revisión esperada',async()=>{
   const f=fixture();f.setRecords([{pci_id:PCI_ID,orientation_id:'economia_administracion',
@@ -76,4 +77,34 @@ test('no permite editar un PCI publicado ni sin revisión esperada',async()=>{
   }));
   assert.equal(r.status,403);
   assert.ok(!f.calls.some(x=>x.fn==='pci_collab_save_unit_v1'));
+});
+
+test('rechaza orientaciones ajenas al catálogo sin crear registros',async()=>{
+  const {ctx,calls}=fixture();
+  const r=await status(await ctx('create-school-pci',{school_id:1001,orientation_id:'orientacion_inventada',title:'Ficticio'}));
+  assert.equal(r.status,400);assert.equal(calls.length,0);
+});
+test('rechaza un documento de otra escuela aunque el URL contenga la escuela correcta',async()=>{
+  const {ctx,calls}=fixture();
+  const r=await status(await ctx('save-school-pci-unit',{
+    school_id:1001,pci_id:PCI_ID,component:'fg',unit_kind:'area',unit_id:'Ciencias Sociales',
+    base_version:'fg-sec-aprende-v2/1',expected_revision:0,
+    document:{schema:'pci-fg-area-v2/1',school_id:1002,pci_id:PCI_ID,
+      orientation_id:'economia_administracion',original_sha256:'a'.repeat(64),
+      area:'Ciencias Sociales',groups:[]}
+  }));
+  assert.equal(r.status,409);
+  assert.ok(!calls.some(x=>x.fn==='pci_collab_save_unit_v1'));
+});
+test('rechaza datos etiquetados con un origen histórico o área ajenos',async()=>{
+  const {ctx,calls}=fixture();
+  const r=await status(await ctx('save-school-pci-unit',{
+    school_id:1001,pci_id:PCI_ID,component:'fg',unit_kind:'area',unit_id:'Ciencias Sociales',
+    base_version:'fg-sec-aprende-v2/1',expected_revision:0,
+    document:{schema:'pci-fg-area-v2/1',school_id:1001,pci_id:PCI_ID,
+      orientation_id:'economia_administracion',original_sha256:'b'.repeat(64),
+      area:'Matemática',groups:[]}
+  }));
+  assert.equal(r.status,409);
+  assert.ok(!calls.some(x=>x.fn==='pci_collab_save_unit_v1'));
 });
