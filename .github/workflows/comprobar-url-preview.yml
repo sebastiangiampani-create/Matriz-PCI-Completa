@@ -1,22 +1,32 @@
-name: Verificar enlace público de vista previa PCI
+name: Comprobar vista auténtica PCI V2 online
 on:
   push:
     branches:
       - 'preview/orientaciones-online-demo-20261111'
     paths:
       - '.github/workflows/comprobar-url-preview.yml'
+      - 'pci-orientaciones-demo.html'
+      - 'preview-v2-real/**'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  comprobar-url:
+  verificar:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
     steps:
-      - name: Comprobar respuesta HTTP de la página online
+      - name: Verificar pagina original publica y sus recursos
         run: |
-          URL="https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/preview/orientaciones-online-demo-20261111/pci-orientaciones-demo.html"
-          curl --retry 3 --retry-delay 2 --max-time 30 --fail --location --silent --show-error "$URL" -o preview.html
-          grep -qi 'VISTA PREVIA ONLINE' preview.html
-          grep -q 'orientaciones-preview-shim' preview.html
-          echo "Enlace público válido y HTML correcto"
+          ROOT="https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/preview/orientaciones-online-demo-20261111"
+          curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/app.html" -o app.html
+          curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/app-core.html" -o app-core.html
+          curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/src/v47-phase2-matrix.js" -o v47.js
+          curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/data/materias-v2.json" -o materias.json
+          grep -q 'Mapa de la Oferta' app.html
+          grep -q 'matrizOrientationSelect' app-core.html
+          grep -q 'id="matrix"' app-core.html
+          grep -q 'v47-phase2-matrix.js' app.html
+          grep -q 'matriz' app-core.html
+          curl --retry 3 --max-time 30 -fsSL "$ROOT/pci-orientaciones-demo.html" -o redirect.html
+          grep -q 'preview-v2-real/app.html' redirect.html
+          echo "OK: la rama publica entrega la aplicacion autentica V2 y sus recursos esenciales."
