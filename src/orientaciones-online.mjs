@@ -172,6 +172,8 @@ async function init(){
     $('cancelPci').onclick=()=>show('formCreatePci',false);
     const o=$('orientation');
     ORIENTATIONS.forEach(x=>{const opt=elem('option',x.name);opt.value=x.id;o.appendChild(opt);});
+    $('pciModel').addEventListener('change',updatePciModelFields);
+    updatePciModelFields();
     $('formCreatePci').addEventListener('submit',createPci);
     $('formNewSchool').addEventListener('submit',createSchool);
     $('downloadOriginal').onclick=()=>{
@@ -206,28 +208,56 @@ async function reloadSchool(){
   pcis=Array.isArray(data.pcis)?data.pcis:[];
   pci=null;workspace=null;auto=null;selectedFgArea=null;selectedFoSpace=null;
   fgDirty=false;foDirty=false;offerDirty=false;
-  show('editor',false);show('empty');renderPcis();
+  show('editor',false);show('technicalPending',false);show('empty');renderPcis();
 }
 function renderPcis(){
   const host=$('pciList');host.replaceChildren();
   if(!pcis.length)note('p','Todavía no hay PCI por orientación. El PCI histórico no fue modificado.',host,'muted');
   pcis.forEach(p=>{
     const button=elem('button',undefined,'pciItem'+(p.pci_id===pci?.pci_id?' active':''));button.type='button';
-    note('strong',p.title,button);note('small',(ORIENTATIONS.find(o=>o.id===p.orientation_id)?.name||p.orientation_id)+' · '+p.status,button);
+    const track=p.model==='tecnica'?
+      ('Técnica · '+(p.specialty_name||'Especialidad pendiente')):
+      ('Media · '+(ORIENTATIONS.find(o=>o.id===p.orientation_id)?.name||p.orientation_id));
+    const shift={manana:'Mañana',tarde:'Tarde',vespertino:'Vespertino',noche:'Noche'}[p.shift_id]||'Mañana';
+    note('strong',p.title,button);
+    note('small',track+' · '+shift+' · '+
+      (p.model==='tecnica'?'Reglas de composición pendientes':p.status),button);
     button.onclick=()=>openPci(p.pci_id);
     host.appendChild(button);
   });
 }
+function updatePciModelFields(){
+  const technical=$('pciModel').value==='tecnica';
+  show('technicalSpecialtyGroup',technical);
+  show('mediaOrientationGroup',!technical);
+  $('orientation').disabled=technical;
+  $('orientation').required=!technical;
+  $('specialtyName').disabled=!technical;
+  $('specialtyName').required=technical;
+}
 async function createPci(e){
   e.preventDefault();if(!canEdit())return;
-  const orientationId=$('orientation').value,title=$('pciTitleInput').value.trim();
+  const model=$('pciModel').value;
+  const orientationId=model==='comun' ? $('orientation').value : '';
+  const specialtyName=model==='tecnica' ? $('specialtyName').value.trim() : '';
+  const shiftId=$('pciShift').value;
+  const title=$('pciTitleInput').value.trim();
   try{
     status('Creando PCI…');
-    const result=await call('create-school-pci',{school_id:schoolId,orientation_id:orientationId,title});
-    show('formCreatePci',false);$('pciTitleInput').value='';
+    const result=await call('create-school-pci',{
+      school_id:schoolId,model,shift_id:shiftId,orientation_id:orientationId,
+      specialty_name:specialtyName,title
+    });
+    show('formCreatePci',false);
+    $('pciTitleInput').value='';
+    $('specialtyName').value='';
+    $('pciModel').value='comun';
+    updatePciModelFields();
     await reloadSchool();
     if(result?.pci_id)await openPci(result.pci_id);
-    status('PCI creado y separado de la matriz original');
+    status(model==='tecnica'?
+      'Especialidad técnica registrada, pendiente de reglas de composición.':
+      'PCI de Media creado sin modificar la matriz histórica.');
   }catch(error){status('No se creó','error');message(error.message,'error');}
 }
 async function createSchool(e){
@@ -247,10 +277,28 @@ async function openPci(id){
   try{
     status('Cargando PCI y resguardo histórico…');
     const result=await call('get-school-pci',{school_id:schoolId,pci_id:id});
+    if(result.pci?.model==='tecnica'){
+      // Ficha de especialidad registrada sin habilitar editor Media/FO.
+      const tech=result.pci;
+      if(Number(tech.school_id)!==schoolId)
+        throw Error('PCI técnico de otra escuela: lectura rechazada.');
+      pci=tech;workspace=null;auto=null;fgDirty=false;offerDirty=false;foDirty=false;
+      show('empty',false);show('editor',false);show('technicalPending');
+      $('technicalName').textContent=tech.title;
+      $('technicalInfo').textContent=(tech.specialty_name||'Especialidad pendiente')+
+        ' · Turno '+({manana:'mañana',tarde:'tarde',vespertino:'vespertino',noche:'noche'}[tech.shift_id]||'sin definir')+
+        ' · Documento original conservado sin modificaciones';
+      renderPcis();
+      message('La especialidad técnica no usa las reglas de Formación Orientada de Media.','warn');
+      status('Técnica registrada · pendiente de reglas');
+      return;
+    }
+    show('technicalPending',false);
     const p=requireSchoolPci(result.pci,schoolId);
     if(!ORIENTATIONS.some(o=>o.id===p.orientation_id))
       throw Error('La orientación no existe en el catálogo institucional.');
-    const hasHistoric=Object.keys(p.legacy_state.areas).length>0;
+    const hasHistoric=p.legacy_state.profile!=='tecnica'&&
+      Object.keys(p.legacy_state.areas).length>0;
     const source=hasHistoric?p.legacy_state:{...migrateState({}),schoolName:p.legacy_state.schoolName||'Escuela '+schoolId};
     const generated=createOrientationPackage({legacyState:source,schoolId,orientationIds:[p.orientation_id]});
     const imported=automaticallyValidateImportedFg({
@@ -272,7 +320,9 @@ async function openPci(id){
     }
     $('pciName').textContent=pcis.find(i=>i.pci_id===id)?.title||p.orientation_id;
     $('pciTag').textContent=ORIENTATIONS.find(o=>o.id===p.orientation_id)?.name||'Orientación';
-    $('pciInfo').textContent=(hasHistoric?'Origen histórico protegido':'Plantilla nueva (documento original vacío)')+' · '+p.status+' · '+AUTO_VALIDATION_LABEL;
+    $('pciInfo').textContent=(hasHistoric?'Origen histórico de Media protegido':
+      p.legacy_state.profile==='tecnica'?'PCI Media independiente; origen técnico preservado sin importar':'Plantilla nueva (documento original vacío)')+
+      ' · '+p.status+' · '+AUTO_VALIDATION_LABEL;
     $('saveOffer').disabled=!canEdit()||!['borrador','en_revision'].includes(p.status);
     const inv=inventory(source);
     const host=$('metrics');host.replaceChildren();
