@@ -40,8 +40,12 @@ jobs:
           grep -q "state.models.includes(model)" institucion.js
           grep -q 'PCI independientes de la escuela' institucion.html
           grep -q 'Abrir PCI y mapa C1' institucion.js
-          grep -q 'Especialidades técnicas de la misma escuela' institucion.html
+          grep -q 'Especialidades de la escuela' institucion.html
+          grep -q 'class="model-strip"' institucion.html
+          grep -q 'id="saveTechnicalConfig"' institucion.html
+          grep -q 'class="card pvf-details"' institucion.html
+          grep -q 'id="pciList" class="pci-grid"' institucion.html
           grep -q 'technicalPendingDemo' institucion.html
           grep -q 'technicalForm' institucion.html
           grep -q 'pending_rules' institucion.js
-          echo "OK: la rama publica entrega seleccion de orientaciones, turnos y mapa autentico V2."
+          echo "OK: estética original y módulos aditivos de Media/Técnica sin reemplazar el mapa V2."

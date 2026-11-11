@@ -242,7 +242,8 @@ test('escuela solo Media conserva la especialidad técnica histórica al deshabi
   assert.equal(p.get('techBlock').hidden,true);
   p.get('saveConfig').onclick();
   assert.equal(p.state().pcis.find(x=>x.model==='tecnica').id,technicalId);
-  assert.match(p.get('totalPcis').textContent,/1 Media · 0 Técnica/);
+  assert.match(p.get('totalPcis').textContent,/1 PCI · 1 conservado/);
+  assert.equal(p.state().models.includes('tecnica'),false);
   p.get('modelTechCheck').checked=true;
   p.get('modelTechCheck').onchange();
   p.get('saveConfig').onclick();
@@ -293,7 +294,7 @@ test('el guardado de modalidades queda disponible aunque el colegio tenga solo T
   assert.equal(p.get('mediaBlock').hidden,true);
   assert.equal(p.get('techBlock').hidden,false);
   p.get('saveTechnicalConfig').onclick();
-  assert.deepEqual(p.state().models,['tecnica']);
+  assert.deepEqual(Array.from(p.state().models),['tecnica']);
   assert.match(p.get('technicalConfigFeedback').textContent,/Modelos guardados/);
   assert.equal(p.state().pcis.length,1,'El PCI histórico de Media debe conservarse');
 });
