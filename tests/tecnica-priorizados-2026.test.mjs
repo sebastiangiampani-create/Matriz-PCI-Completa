@@ -17,7 +17,8 @@ test('26 especialidades oficiales, un documento transversal y IDs univocos',()=>
   assert.equal(catalog.transversal[0].id,'tecnologia_representacion');
 });
 test('los IDs son los del catalogo de reglas vigentes, no nuevos PCI duplicados',()=>{
-  const names=[...annualSource.matchAll(/\['([a-z0-9_]+)','[^']+',/g)].map(x=>x[1]);
+  const annualRows=annualSource.match(/const ANNUAL_ROWS=\[([\s\S]*?)\];/)[1];
+  const names=[...annualRows.matchAll(/\['([a-z0-9_]+)','[^']+',/g)].map(x=>x[1]);
   for(const id of names)assert.ok(catalog.especialidades.some(x=>x.id===id),id);
   const pending=['refrigeracion_ventilacion_calefaccion_aire','metalurgia',
     'ortesis_protesis','diseno_interiores','diseno_artesanias','geografo_matematico'];
