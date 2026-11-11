@@ -93,3 +93,17 @@ test('la función de edición no elimina campos de etapas existentes',()=>{
 test('el inventario distingue áreas, agrupamientos, planes y contenidos',()=>{
   assert.deepEqual(inventory(p.legacy_state),{areas:1,groups:1,plans:1,contents:1});
 });
+
+test('una escuela nueva sin contenido histórico puede iniciar FG V2 propia',()=>{
+  const blank={...p,legacy_state:{schoolName:'Escuela nueva',areas:{},current:null}};
+  const template={ 'Ciencias Sociales': {groups:[{
+    id:'nuevo-G1',name:'Nuevo laboratorio',level:1,startTerm:1,items:[],plansBimestrales:[]
+  }]}};
+  const before=clone(blank.legacy_state);
+  const unit=newFgUnit({pci:blank,area:'Ciencias Sociales',convertedAreas:template});
+  assert.equal(unit.originType,'empty-institution-template');
+  assert.equal(unit.groups.length,1);
+  assert.equal(unit.original_sha256,blank.legacy_sha256);
+  assert.deepEqual(blank.legacy_state,before);
+  assert.throws(()=>newFgUnit({pci:p,area:'Matemática',convertedAreas:template}),/no pertenece/);
+});
