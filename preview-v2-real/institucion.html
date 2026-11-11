@@ -121,9 +121,31 @@ table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid
     <div class="actions"><button class="btn primary" id="saveConfig" type="button">Guardar estructura de prueba</button><span id="summary"></span></div>
     <div id="feedback" role="status" aria-live="polite"></div>
   </section>
+  <section class="card" aria-labelledby="techTitle">
+    <div class="eyebrow">3 · Rama técnica</div>
+    <h2 id="techTitle">Especialidades técnicas de la misma escuela</h2>
+    <p class="muted">Una escuela puede tener al mismo tiempo orientaciones de Media y especialidades Técnicas, incluso en turnos diferentes. Las especialidades quedan registradas sin aplicar reglas de Media.</p>
+    <div class="notice"><strong>Reglas de composición Técnica pendientes.</strong>
+      Acá se registra la especialidad, el turno y la cantidad de PCI. La construcción técnica no se habilita hasta que incorporemos las nuevas reglas que correspondan.</div>
+    <form id="technicalForm" class="adminForm">
+      <div class="grid-body">
+        <label><span>Nombre de la especialidad técnica</span>
+          <input id="technicalSpecialty" required maxlength="150" placeholder="Ejemplo: Programación (ficticia)"></label>
+        <label><span>Turno</span><select id="technicalShift">
+          <option value="Mañana">Mañana</option><option value="Tarde">Tarde</option>
+          <option value="Vespertino">Vespertino</option><option value="Noche">Noche</option>
+        </select></label>
+        <label><span>Cantidad de PCI de esta especialidad y turno</span>
+          <input id="technicalQuantity" type="number" min="1" max="5" value="1" required></label>
+      </div>
+      <button class="btn primary" type="submit">+ Registrar especialidad y PCI</button>
+    </form>
+    <div id="technicalFeedback" role="status" aria-live="polite"></div>
+    <div id="technicalTracks" aria-label="Especialidades técnicas ficticias registradas"></div>
+  </section>
   <section class="card" aria-labelledby="pciTitle">
-    <div class="topline"><div><div class="eyebrow">3 · Ingreso a los proyectos</div><h2 id="pciTitle">PCI independientes de la escuela</h2>
-      <p class="muted">Abrí cada PCI para construir el mapa original de Formación General y Formación Orientada C1–C10.</p></div>
+    <div class="topline"><div><div class="eyebrow">4 · Ingreso a los proyectos</div><h2 id="pciTitle">PCI independientes de la escuela</h2>
+      <p class="muted">Abrí los PCI de Media en el mapa original FG/FO C1–C10. Los PCI técnicos quedan identificados y separados, a la espera de las reglas de especialidades.</p></div>
       <span class="tag" id="totalPcis"></span></div>
     <div id="pciList" class="pci-grid"></div>
   </section>
@@ -136,6 +158,13 @@ table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid
     <div><strong id="workingTitle"></strong><p class="muted" id="workingMeta"></p></div>
     <span class="tag">PRUEBA · Sin Supabase</span></div>
   <iframe id="frame" title="Mapa curricular V2 original" referrerpolicy="no-referrer"></iframe>
+  <section id="technicalPendingDemo" class="card" style="margin:16px auto;max-width:1050px" hidden>
+    <div class="eyebrow">Rama Técnica · PCI independiente</div>
+    <h2 id="technicalPendingName">Especialidad técnica</h2>
+    <p class="muted" id="technicalPendingMeta"></p>
+    <div class="notice"><strong>Esperando las nuevas reglas de composición de las especialidades.</strong>
+      La Matriz Técnica tiene una organización propia de 6 niveles y 12 períodos (C1–C12). Este PCI queda identificado y conservado, pero el mapa técnico no se generará a partir de las reglas de Media.</div>
+  </section>
 </section>
 <script src="src/institucion-pci-demo.js"></script>
 </body>
