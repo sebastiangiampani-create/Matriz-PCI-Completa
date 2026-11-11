@@ -35,8 +35,9 @@
               <option value="tecnica">Educación Técnica · Especialidad</option>
             </select></label>
           <label id="mediaOrientationGroup">Orientación de Media<select id="orientation" required></select></label>
-          <label id="technicalSpecialtyGroup" hidden>Nombre de la especialidad técnica
-            <input id="specialtyName" maxlength="150" placeholder="Se registrará sin reglas de composición" disabled></label>
+          <label id="technicalSpecialtyGroup" hidden>Especialidad técnica (denominación de las pautas)
+            <select id="specialtyName" required disabled><option value="" selected>Seleccionar especialidad técnica</option></select>
+            <small>La especialidad tiene nombre propio. No confundirla con los espacios anuales de 4.º, 5.º y 6.º.</small></label>
           <label>Turno<select id="pciShift" required>
               <option value="manana">Mañana</option>
               <option value="tarde">Tarde</option>

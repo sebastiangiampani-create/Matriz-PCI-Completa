@@ -10,6 +10,7 @@ import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integraci
 import {seedOfferStructure,foSubjectBank,assignFoSubject,offerMapRows,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
 import {newFoDevelopment,FO_STAGES} from './integracion-curricular/desarrollo-fo-modelo.js';
 import {pvfReference,validatePvfProject} from './integracion-curricular/proyecto-vinculacion-2026.mjs';
+import {SPECIALTIES,findSpecialty} from './tecnica/pautas-pci-20261005.mjs';
 import {requireSchoolPci,newFgUnit,guardFgUnit,newOfferUnit,restoreOfferUnit,newFoUnit,guardFoUnit,inventory,editStageDescription} from './orientaciones-release-core.mjs';
 
 const API='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-access';
@@ -173,6 +174,7 @@ async function init(){
     $('cancelPci').onclick=()=>show('formCreatePci',false);
     const o=$('orientation');
     ORIENTATIONS.forEach(x=>{const opt=elem('option',x.name);opt.value=x.id;o.appendChild(opt);});
+    populateSpecialties();
     $('pciModel').addEventListener('change',updatePciModelFields);
     updatePciModelFields();
     $('formCreatePci').addEventListener('submit',createPci);
@@ -227,6 +229,24 @@ function renderPcis(){
     host.appendChild(button);
   });
 }
+function populateSpecialties(){
+  const select=$('specialtyName');select.replaceChildren();
+  const placeholder=elem('option','Seleccionar especialidad técnica');placeholder.value='';
+  placeholder.disabled=true;placeholder.selected=true;select.appendChild(placeholder);
+  const groups=[
+    ['defined_in_document','Especialidades con espacios anuales definidos'],
+    ['not_defined_in_document','Especialidades pendientes de definición anual'],
+    ['no_annual_space','Especialidad sin espacio anual (excepción)']
+  ];
+  for(const [status,label] of groups){
+    const group=elem('optgroup');group.label=label;
+    for(const specialty of SPECIALTIES.filter(x=>x.status===status)){
+      const option=elem('option',specialty.name);option.value=specialty.name;
+      group.appendChild(option);
+    }
+    select.appendChild(group);
+  }
+}
 function updatePciModelFields(){
   const technical=$('pciModel').value==='tecnica';
   show('technicalSpecialtyGroup',technical);
@@ -240,9 +260,19 @@ async function createPci(e){
   e.preventDefault();if(!canEdit())return;
   const model=$('pciModel').value;
   const orientationId=model==='comun' ? $('orientation').value : '';
-  const specialtyName=model==='tecnica' ? $('specialtyName').value.trim() : '';
+  const rawSpecialty=model==='tecnica' ? $('specialtyName').value.trim() : '';
+  const specialtyName=model==='tecnica'?findSpecialty(rawSpecialty)?.name||'':'';
+  if(model==='tecnica'&&!specialtyName){
+    message('Elegí una especialidad identificada por su nombre en las pautas curriculares.','error');
+    return;
+  }
   const shiftId=$('pciShift').value;
-  const title=$('pciTitleInput').value.trim();
+  // El título visible identifica la especialidad y el turno; el nombre
+  // de la especialidad se conserva por separado en specialty_name.
+  const title=$('pciTitleInput').value.trim()||
+    (model==='tecnica'?'PCI '+specialtyName+' · '+({
+      manana:'Mañana',tarde:'Tarde',vespertino:'Vespertino',noche:'Noche'
+    }[shiftId]||shiftId):'');
   try{
     status('Creando PCI…');
     const result=await call('create-school-pci',{
