@@ -1,0 +1,22 @@
+name: Verificar enlace público de vista previa PCI
+on:
+  push:
+    branches:
+      - 'preview/orientaciones-online-demo-20261111'
+    paths:
+      - '.github/workflows/comprobar-url-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  comprobar-url:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Comprobar respuesta HTTP de la página online
+        run: |
+          URL="https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/preview/orientaciones-online-demo-20261111/pci-orientaciones-demo.html"
+          curl --retry 3 --retry-delay 2 --max-time 30 --fail --location --silent --show-error "$URL" -o preview.html
+          grep -qi 'VISTA PREVIA ONLINE' preview.html
+          grep -q 'orientaciones-preview-shim' preview.html
+          echo "Enlace público válido y HTML correcto"
