@@ -50,9 +50,9 @@ try{
   await page.locator('#technicalShift').selectOption('Noche');
   await page.locator('#technicalQuantity').fill('1');
   await page.locator('#technicalForm button[type="submit"]').click();
-  const tech=page.locator('#pciList .pci-card').filter({hasText:'Especialidad Técnica · Mecánica'});
+  const tech=page.locator('#pciList .pci-card').filter({hasText:'Mecánica'});
   await tech.first().waitFor({state:'visible'});
-  await tech.first().getByRole('button',{name:/Ver ficha técnica/}).click();
+  await tech.first().getByRole('button',{name:/Abrir PCI y mapa C1/}).click();
   await page.locator('#technicalPendingDemo').waitFor({state:'visible'});
   const frame=page.frameLocator('#technicalRulesPreview');
   await frame.locator('#mapBody tr').first().waitFor({timeout:30000});

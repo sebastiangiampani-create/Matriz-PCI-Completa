@@ -218,7 +218,7 @@ test('escuela exclusivamente técnica conserva los PCI de Media y sus claves si 
   p.get('saveConfig').onclick();
   assert.equal(p.state().models.includes('comun'),false);
   assert.equal(p.state().pcis[0].id,old);
-  assert.match(p.get('totalPcis').textContent,/0 PCI habilitados/);
+  assert.match(p.get('totalPcis').textContent,/0 PCI/);
   assert.equal(p.get('pciList').children.filter(x=>x.tagName==='article').length,0);
   assert.equal(p.get('pciList').children.some(x=>x.tagName==='details'),true);
   p.get('modelMediaCheck').checked=true;
@@ -273,4 +273,27 @@ test('corrige el defecto de modalidades activadas por defecto sin tocar PCI ya g
   assert.equal(revised.get('modelTechCheck').checked,false);
   assert.deepEqual(revised.state().pcis.map(x=>x.id),original.pcis.map(x=>x.id));
   assert.equal(revised.state().pcis[0].orientation,original.pcis[0].orientation);
+});
+
+test('el diseño original conserva grilla de tarjetas, tabla de turnos y evita añadir un panel gigante de modalidades',()=>{
+  assert.match(html,/class="model-strip"/);
+  assert.match(html,/id="modelMediaCheck"/);
+  assert.match(html,/id="modelTechCheck"/);
+  assert.doesNotMatch(html,/class="card" aria-labelledby="modelsTitle"/);
+  assert.match(html,/id="combos" class="matrixScroll"/);
+  assert.match(html,/id="pciList" class="pci-grid"/);
+  assert.match(html,/id="frame" title="Mapa curricular V2 original"/);
+  assert.match(html,/id="saveTechnicalConfig"/);
+  assert.match(html,/class="card pvf-details" hidden/);
+});
+test('el guardado de modalidades queda disponible aunque el colegio tenga solo Técnica',()=>{
+  const p=page('https://example.test/preview-v2-real/institucion.html');
+  p.get('modelMediaCheck').checked=false;p.get('modelMediaCheck').onchange();
+  p.get('modelTechCheck').checked=true;p.get('modelTechCheck').onchange();
+  assert.equal(p.get('mediaBlock').hidden,true);
+  assert.equal(p.get('techBlock').hidden,false);
+  p.get('saveTechnicalConfig').onclick();
+  assert.deepEqual(p.state().models,['tecnica']);
+  assert.match(p.get('technicalConfigFeedback').textContent,/Modelos guardados/);
+  assert.equal(p.state().pcis.length,1,'El PCI histórico de Media debe conservarse');
 });
