@@ -48,16 +48,52 @@ table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid
 #frame{width:100%;height:calc(100vh - 141px);min-height:720px;border:0;display:block;background:#fff}
 .small-note{font-size:.76rem;color:var(--muted)}.footer{margin:30px auto 0;max-width:1100px;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;background:var(--ink);color:#fff;border-radius:14px;padding:16px 20px;font-size:.74rem}
 .footer img{width:190px;max-width:48%;height:45px;object-fit:contain;object-position:left}
+.adminRow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-top:9px}
+.adminRow strong{display:block;font-size:.88rem}.adminRow small{display:block;margin-top:5px;color:var(--muted);font-size:.74rem}
+.adminForm{background:#f3f8fa;border:1px solid var(--line);padding:18px;border-radius:13px;margin:15px 0}
+.adminForm .grid-body{grid-template-columns:1fr 1fr}
+.adminForm input{font-weight:500}
+.adminHint{background:#e8f8f3;border:1px solid #b8e5df;border-radius:12px;padding:11px 13px;font-size:.8rem;line-height:1.5}
+#adminFeedback{min-height:20px;font-size:.82rem;font-weight:750;margin:9px 0}
+@media(max-width:780px){.adminForm .grid-body{grid-template-columns:1fr}}
+
 [hidden]{display:none!important}
 @media(max-width:780px){.grid-body,.setup{grid-template-columns:1fr}.hero{margin:-20px -13px 18px;padding:20px 14px}.card{padding:15px}#frame{height:calc(100vh - 180px);min-height:580px}.footer img{width:140px}}
 </style>
 </head>
 <body>
 <header class="top"><img src="../assets/em-logo-header.svg" alt="Escuela de Maestros">
-  <span class="tag">MATRIZ PCI V2 · PRUEBA INDEPENDIENTE</span>
+  <div class="actions"><button class="btn small" id="openAdmin" type="button">Panel general · Agregar escuela</button><span class="tag">MATRIZ PCI V2 · PRUEBA INDEPENDIENTE</span></div>
 </header>
 <div id="configScreen">
 <main class="wrap">
+  <section id="schoolAdmin" hidden aria-labelledby="adminTitle">
+    <div class="hero"><div class="eyebrow">Panel general · Administración · Datos simulados</div>
+      <h1 id="adminTitle">Administración de escuelas</h1>
+      <p>Desde este panel se dará de alta una institución sin modificar ninguna de las escuelas existentes.</p>
+    </div>
+    <div class="notice"><strong>Prueba online sin conexión real.</strong> Este formulario utiliza únicamente el almacenamiento local del navegador: ninguna escuela ni clave se crea en Supabase. No ingreses información confidencial.</div>
+    <section class="card">
+      <div class="topline">
+        <div><div class="eyebrow">Gestión institucional</div><h2>Escuelas registradas en esta prueba</h2><p class="muted">Podés dar de alta un colegio ficticio y luego abrir su configuración de orientaciones, turnos y PCI.</p></div>
+        <div class="actions"><button id="newSchoolBtn" type="button" class="btn primary">+ Agregar escuela</button><button id="closeSchoolAdmin" type="button" class="btn">Volver a los PCI</button></div>
+      </div>
+      <form id="newSchoolForm" class="adminForm" hidden>
+        <div class="eyebrow">Alta de escuela · Prueba</div><h3>Datos de la nueva institución</h3>
+        <div class="grid-body">
+          <label><span>Nombre oficial *</span><input id="adminSchoolName" type="text" maxlength="150" required placeholder="Ejemplo: Escuela de prueba"></label>
+          <label><span>CUE o código institucional *</span><input id="adminSchoolCue" maxlength="35" required placeholder="DEMO-003"></label>
+          <label><span>Correo institucional (opcional)</span><input id="adminSchoolEmail" type="email" maxlength="180" placeholder="escuela@ejemplo.test"></label>
+          <label><span>Año de incorporación</span><input id="adminSchoolYear" type="number" min="2020" max="2100" value="2026" required></label>
+        </div>
+        <div class="actions"><button type="submit" class="btn primary">Guardar escuela de prueba</button><button type="button" id="cancelNewSchool" class="btn">Cancelar</button></div>
+      </form>
+      <div id="adminFeedback" role="status" aria-live="polite"></div>
+      <div id="demoSchools" aria-label="Escuelas ficticias cargadas"></div>
+      <div class="adminHint"><strong>En producción:</strong> el botón estará disponible solo para Administración. El servidor comprobará permisos, asignará ID y claves propias y registrará el alta en Supabase. La demo no ejecuta esas operaciones.</div>
+    </section>
+  </section>
+  <div id="institutionSetup">
   <div class="hero"><div class="eyebrow">Matriz PCI Completa · Configuración inicial</div>
     <h1>Configuración institucional y proyectos curriculares</h1>
     <p>Definí cuántas orientaciones y turnos tiene la escuela. Cada combinación puede contar con uno o varios PCI independientes.</p>
@@ -91,6 +127,7 @@ table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid
       <span class="tag" id="totalPcis"></span></div>
     <div id="pciList" class="pci-grid"></div>
   </section>
+  </div>
   <div class="footer"><img src="../assets/em-logo-footer.svg" alt="Escuela de Maestros"><span>Prueba de configuración institucional · sin conexión real</span></div>
 </main>
 </div>
