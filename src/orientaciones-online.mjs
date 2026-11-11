@@ -162,6 +162,11 @@ async function init(){
     $('showNewSchool').hidden=!canCreateSchool();
     $('btnAddPci').disabled=!canEdit();
     $('showNewSchool').onclick=()=>show('formNewSchool',true);
+    // Acceso directo desde Panel general; requiere sesión administrativa real.
+    if(new URL(location.href).searchParams.get('accion')==='alta-escuela'&&canCreateSchool()){
+      show('formNewSchool',true);
+      $('schoolNameInput').focus();
+    }
     $('cancelSchool').onclick=()=>show('formNewSchool',false);
     $('btnAddPci').onclick=()=>show('formCreatePci',true);
     $('cancelPci').onclick=()=>show('formCreatePci',false);
