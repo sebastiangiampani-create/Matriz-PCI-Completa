@@ -38,14 +38,17 @@ Ejemplo: una misma institución puede tener, simultáneamente,
 Cada PCI tiene `pci_id`, `model`, `orientation_id` o `specialty_name`,
 `shift_id` y `process_id` independientes.
 
-**Cuidado especial con la migración:** `public.pci_proposals.data.profile`
-es una propiedad del documento histórico, **NO** una definición excluyente
-de las modalidades actuales de la escuela. Si una institución tiene
-documentos históricos separados para Media y Técnica, primero se
-identifican y respaldan ambas fuentes. Nunca se fusionan ni se sustituye
-el registro de una modalidad por el de otra automáticamente. El origen
-protegido de cada nuevo PCI debe identificarse y homologarse con su
-propio modelo antes de declarar completo un traslado. En el esquema
+**Escuelas ya existentes:** la base tiene una fila por colegio. No se crean
+filas duplicadas ni se solicita otra clave al incorporar Media o Técnica.
+`data.profile` expresa solamente el formato del documento histórico
+existente; no permite determinar todas las modalidades que la institución
+ofrece. Los modelos se configuran por PCI nuevo, mediante `model`, en la
+misma escuela (`school_id`) y sin actualizar `public.pci_proposals`.
+No modificar automáticamente ni reasignar las áreas históricas de ese
+registro; cualquier homologación nueva debe verificarse en una copia
+independiente.
+
+En el esquema
 aditivo actual el PCI original se captura sin reemplazarlo; esto por sí
 solo **no demuestra** que ya se recuperaron todas las fuentes históricas
 de una institución con modelos mixtos.
