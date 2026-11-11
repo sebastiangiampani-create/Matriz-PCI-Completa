@@ -86,7 +86,7 @@ test('si el proyecto histórico tiene materia o trabajo previo, NUNCA sobrescrib
   project(existing,id).members=[{id:'legado',name:'Proyecto de la institución',hours:3}];
   const before=structuredClone(existing);
   assert.throws(()=>setFoAlternative(existing,id,'B'),/no coincide/);
-  assert.throws(()=>assignPvfReference(existing,id),/no se reemplaza/);
+  assert.throws(()=>assignPvfReference(existing,id),/no se reemplaza/i);
   assert.deepEqual(existing,before);
   const beforeReset=structuredClone(existing);
   assert.deepEqual(seedOfferStructure(existing,id,refs),beforeReset,'La inicialización no elimina proyectos históricos');
@@ -130,4 +130,15 @@ test('la bolsa FO no reubica la materia anual PVF como laboratorio/taller',()=>{
         id+' alternativa '+alt);
     }
   }
+});
+
+test('no cambiar alternativa sobre un Proyecto de Vinculación con planes o contenidos previos',()=>{
+  const id='economia_administracion';
+  const existing=seedOfferStructure(make([id]),id,refs);
+  const prior=structuredClone(existing);
+  project(prior,id).plans=[{id:'plan_histórico',stages:{evaluacion:{description:'No borrar'}}}];
+  const before=structuredClone(prior);
+  assert.throws(()=>setFoAlternative(prior,id,'B'),/Hay contenidos o planes/);
+  assert.deepEqual(prior,before);
+  assert.throws(()=>assignPvfReference(prior,id),/desarrollo pedagógico/);
 });
