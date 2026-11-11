@@ -16,17 +16,18 @@
   <main>
     <section class="intro">
       <div><span class="eyebrow">Gestión institucional</span><h1>Proyectos curriculares por orientación</h1>
-      <p>Una escuela puede tener varios PCI. Cada orientación conserva sus propios agrupamientos, planes y decisiones curriculares; la matriz histórica no se sobrescribe.</p></div>
+      <p><strong>Para las escuelas que ya están registradas:</strong> seleccioná la institución de siempre y agregale PCI de Media, Técnica o ambos modelos. No hay que darla de alta de nuevo ni modificar las claves de acceso; los contenidos y planes históricos se conservan.</p></div>
       <span id="status" role="status" aria-live="polite" class="status">Comprobando conexión…</span>
     </section>
     <div id="fatal" class="warning" hidden></div>
     <div class="layout" id="app" hidden>
       <aside class="panel sidebar">
-        <div class="sectionTitle"><h2>Escuela</h2></div>
+        <div class="sectionTitle"><h2>Escuela existente</h2></div>
         <select id="school" aria-label="Elegir escuela"></select>
+        <p class="muted">Se utiliza el mismo registro, ID y acceso institucional. Los modelos son de cada PCI, no de la escuela completa.</p>
         <p id="schoolLabel" class="muted"></p>
         <hr>
-        <div class="sectionTitle"><h2>Sus PCI</h2><button type="button" id="btnAddPci" class="btn primary">+ Nuevo PCI</button></div>
+        <div class="sectionTitle"><h2>Sus PCI</h2><button type="button" id="btnAddPci" class="btn primary">+ Agregar modelo / PCI</button></div>
         <div id="pciList" class="pciList"></div>
         <p class="note"><strong>Una escuela puede ofrecer Bachillerato/Media y Técnica al mismo tiempo.</strong> Cada PCI tiene modelo, orientación o especialidad, turno y guardado propios. El acceso y las claves institucionales son únicos; los datos históricos no se reescriben.</p>
         <form id="formCreatePci" class="formCard" hidden>
@@ -49,7 +50,7 @@
           <div class="actions"><button type="submit" class="btn primary">Crear PCI</button><button type="button" class="btn" id="cancelPci">Cancelar</button></div>
         </form>
         <hr>
-        <button id="showNewSchool" class="btn" type="button" hidden>+ Agregar escuela</button>
+        <button id="showNewSchool" class="btn" type="button" hidden>+ Dar de alta una escuela nueva</button>
         <form id="formNewSchool" class="formCard" hidden>
           <h3>Nueva institución</h3>
           <label>Nombre oficial<input id="schoolNameInput" required maxlength="150"></label>
