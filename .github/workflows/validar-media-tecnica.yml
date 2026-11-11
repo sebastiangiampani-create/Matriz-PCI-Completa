@@ -10,6 +10,9 @@ on:
       - src/orientaciones-release-core.mjs
       - tests/multipci/**
       - tests/orientaciones-release.test.mjs
+      - src/tecnica/**
+      - pci-tecnica-pautas.html
+      - tests/pautas-pci-20261005.test.mjs
       - .github/workflows/validar-media-tecnica.yml
   workflow_dispatch:
 
@@ -44,7 +47,7 @@ jobs:
         with:
           node-version: '22'
       - name: Seguridad de las rutas, ramas y planes
-        run: node --test tests/multipci/api.test.mjs tests/orientaciones-release.test.mjs tests/edge-package.test.mjs
+        run: node --test tests/multipci/api.test.mjs tests/orientaciones-release.test.mjs tests/edge-package.test.mjs tests/pautas-pci-20261005.test.mjs
       - name: Estructura de prueba totalmente ficticia
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
