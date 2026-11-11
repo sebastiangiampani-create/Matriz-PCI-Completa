@@ -34,7 +34,7 @@ jobs:
       - name: Instalar navegador Chromium
         run: |
           npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Probar tres PCI, dos turnos y aislamiento del mapa original
         run: node tests/institucion-v2-browser.mjs
       - name: Conservar capturas para revisión visual
