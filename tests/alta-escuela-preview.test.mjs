@@ -41,6 +41,13 @@ function page(initialUrl,storage=new Map()){
     storage,assigned:()=>assigned};
 }
 
+function enableTechnical(p){
+  p.get('modelTechCheck').checked=true;
+  p.get('modelTechCheck').onchange();
+  p.get('saveConfig').onclick();
+  assert.equal(p.state().models.includes('tecnica'),true);
+}
+
 test('la vista reproduce la pantalla administrativa y el formulario de alta',()=>{
   assert.match(html,/id="openAdmin"/);
   assert.match(html,/id="schoolAdmin"/);
@@ -77,6 +84,8 @@ test('el formulario de prueba guarda una escuela nueva sin alterar el PCI previo
   assert.equal(target.searchParams.has('panel'),false);
   const next=page(p.assigned(),p.storage);
   assert.equal(next.state().school,'Colegio Ficticio Río');
+  assert.equal(next.state().pcis.length,0,'No inventar un PCI Media al registrar otra escuela');
+  assert.equal(next.state().models.length,0,'Las modalidades requieren elección institucional');
   assert.ok(p.storage.has(PREFIX+':school:'+schools[1].id));
   assert.ok(p.storage.has(PREFIX),'Se perdió la configuración anterior');
 });
@@ -100,6 +109,7 @@ test('el simulador no dispone de red, claves ni operaciones reales en Supabase',
 
 test('una escuela puede tener orientaciones Media y especialidades Técnicas independientes',()=>{
   const p=page('https://example.test/preview-v2-real/institucion.html');
+  enableTechnical(p);
   const before=p.storage.get(PREFIX);
   const mediaId=p.state().pcis[0].id;
   p.get('technicalSpecialty').value='Computación';
@@ -121,6 +131,7 @@ test('una escuela puede tener orientaciones Media y especialidades Técnicas ind
 });
 test('reducir cantidad de PCI Técnicos conserva proyectos anteriores',()=>{
   const p=page('https://example.test/preview-v2-real/institucion.html');
+  enableTechnical(p);
   p.get('technicalSpecialty').value='Construcciones';
   p.get('technicalShift').value='Noche';
   p.get('technicalQuantity').value='3';
@@ -136,6 +147,7 @@ test('reducir cantidad de PCI Técnicos conserva proyectos anteriores',()=>{
 });
 test('un PCI Técnico muestra ficha pendiente y nunca abre el editor C1-C10 de Media',()=>{
   const p=page('https://example.test/preview-v2-real/institucion.html');
+  enableTechnical(p);
   p.get('technicalSpecialty').value='Electromecánica';
   p.get('technicalShift').value='Vespertino';
   p.get('technicalQuantity').value='1';
@@ -162,6 +174,7 @@ test('la vista técnica ofrece 26 nombres propios de especialidades del document
 });
 test('una denominación no incluida no registra nuevos PCI ficticios',()=>{
   const p=page('https://example.test/preview-v2-real/institucion.html');
+  enableTechnical(p);
   p.get('technicalSpecialty').value='Programación';
   p.get('technicalShift').value='Tarde';
   p.get('technicalQuantity').value='1';
@@ -172,7 +185,8 @@ test('una denominación no incluida no registra nuevos PCI ficticios',()=>{
 test('escuela mixta usa una sola escuela y dos modelos: sin duplicar CUE ni PCI',()=>{
   const p=page('https://example.test/preview-v2-real/institucion.html');
   assert.equal(p.get('modelMediaCheck').checked,true);
-  assert.equal(p.get('modelTechCheck').checked,true);
+  assert.equal(p.get('modelTechCheck').checked,false,'Técnica no debe activarse sin que la escuela la elija');
+  enableTechnical(p);
   const mediaId=p.state().pcis[0].id;
   p.get('technicalSpecialty').value='Computación';
   p.get('technicalShift').value='Tarde';
@@ -195,6 +209,8 @@ test('escuela mixta usa una sola escuela y dos modelos: sin duplicar CUE ni PCI'
 test('escuela exclusivamente técnica conserva los PCI de Media y sus claves si cambia de modelo',()=>{
   const p=page('https://example.test/preview-v2-real/institucion.html');
   const old=p.state().pcis[0].id;
+  p.get('modelTechCheck').checked=true;
+  p.get('modelTechCheck').onchange();
   p.get('modelMediaCheck').checked=false;
   p.get('modelMediaCheck').onchange();
   assert.equal(p.get('mediaBlock').hidden,true);
@@ -215,6 +231,7 @@ test('escuela exclusivamente técnica conserva los PCI de Media y sus claves si 
 
 test('escuela solo Media conserva la especialidad técnica histórica al deshabilitar Técnica',()=>{
   const p=page('https://example.test/preview-v2-real/institucion.html');
+  enableTechnical(p);
   p.get('technicalSpecialty').value='Electrónica';
   p.get('technicalShift').value='Noche';
   p.get('technicalQuantity').value='1';
@@ -241,4 +258,19 @@ test('no permite desactivar las dos modalidades simultáneamente',()=>{
   p.get('saveConfig').onclick();
   assert.equal(p.storage.get(PREFIX),before);
   assert.match(p.get('feedback').textContent,/por lo menos una modalidad/i);
+});
+
+test('corrige el defecto de modalidades activadas por defecto sin tocar PCI ya guardados',()=>{
+  const first=page('https://example.test/preview-v2-real/institucion.html');
+  const original=first.state();
+  assert.deepEqual(original.models,['comun']);
+  const old=structuredClone(original);
+  old.models=['comun','tecnica'];
+  delete old.modelsConfigured;
+  first.storage.set(PREFIX,JSON.stringify(old));
+  const revised=page('https://example.test/preview-v2-real/institucion.html',first.storage);
+  assert.equal(revised.get('modelMediaCheck').checked,true);
+  assert.equal(revised.get('modelTechCheck').checked,false);
+  assert.deepEqual(revised.state().pcis.map(x=>x.id),original.pcis.map(x=>x.id));
+  assert.equal(revised.state().pcis[0].orientation,original.pcis[0].orientation);
 });
