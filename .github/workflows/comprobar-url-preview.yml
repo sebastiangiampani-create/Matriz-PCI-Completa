@@ -32,6 +32,12 @@ jobs:
           curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/src/institucion-pci-demo.js" -o institucion.js
           grep -q 'Cantidad de orientaciones' institucion.html
           grep -q 'Cantidad de turnos' institucion.html
+          grep -q 'id="modelMediaCheck"' institucion.html
+          grep -q 'id="modelTechCheck"' institucion.html
+          grep -q 'id="mediaBlock"' institucion.html
+          grep -q 'id="techBlock"' institucion.html
+          grep -q 'Para Media habilitá' institucion.js
+          grep -q "state.models.includes(model)" institucion.js
           grep -q 'PCI independientes de la escuela' institucion.html
           grep -q 'Abrir PCI y mapa C1' institucion.js
           grep -q 'Especialidades técnicas de la misma escuela' institucion.html
