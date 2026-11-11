@@ -156,8 +156,15 @@ table{border-collapse:collapse;width:100%;min-width:590px}th,td{border:1px solid
 <section id="workspaceScreen" hidden aria-label="PCI de prueba">
   <div class="workbar"><button class="btn small" id="back" type="button">← Volver a la configuración institucional</button>
     <div><strong id="workingTitle"></strong><p class="muted" id="workingMeta"></p></div>
-    <span class="tag">PRUEBA · Sin Supabase</span></div>
+    <div class="actions"><a id="pvfJump" href="#pvfPanel" class="btn small" hidden>Ver Proyecto de Vinculación A/B · 5.º</a>
+    <span class="tag">PRUEBA · Sin Supabase</span></div></div>
   <iframe id="frame" title="Mapa curricular V2 original" referrerpolicy="no-referrer"></iframe>
+  <section id="pvfPanel" class="card" style="margin:14px auto;max-width:1390px" hidden>
+    <div class="eyebrow">Formación Orientada · Proyecto anual</div>
+    <h2>Proyecto de Vinculación con el Futuro · Alternativas A/B</h2>
+    <p class="muted">Consulta de la tabla oficial de los Bachilleratos: materia y carga horaria por orientación, en C9 y C10. El mapa original permanece intacto.</p>
+    <iframe id="pvfFrame" title="Tabla del Proyecto de Vinculación de Bachillerato" style="width:100%;min-height:930px;border:0;border-radius:12px" loading="lazy" src="about:blank"></iframe>
+  </section>
   <section id="technicalPendingDemo" class="card" style="margin:16px auto;max-width:1050px" hidden>
     <div class="eyebrow">Rama Técnica · PCI independiente</div>
     <h2 id="technicalPendingName">Especialidad técnica</h2>
