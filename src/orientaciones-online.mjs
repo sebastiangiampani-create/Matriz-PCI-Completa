@@ -57,6 +57,74 @@ function download(name,data){
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob),a=elem('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
+
+// Copia TEMPORAL por pestaña, escuela, PCI y unidad. No se sube a ninguna otra
+// escuela ni se usa como respaldo externo. Un conflicto nunca se auto-fusiona.
+function draftKey(kind,id,target=pci){
+  if(!target?.pci_id||!Number.isSafeInteger(Number(target.school_id)))return null;
+  return ['pci-orientaciones-borrador-v1',target.school_id,target.pci_id,kind,id].join(':');
+}
+function rememberDraft(kind,id,document,revision){
+  const key=draftKey(kind,id);
+  if(!key)return;
+  try{
+    sessionStorage.setItem(key,JSON.stringify({
+      school_id:pci.school_id,pci_id:pci.pci_id,
+      original_sha256:pci.legacy_sha256,kind,id,base_revision:revision,
+      document,time:new Date().toISOString()
+    }));
+  }catch{
+    message('El navegador no pudo guardar la copia temporal: descargá el borrador antes de salir.','warn');
+  }
+}
+function forgetDraft(kind,id){
+  const key=draftKey(kind,id);
+  if(key)try{sessionStorage.removeItem(key)}catch{}
+}
+function recallDraft(kind,id,currentRevision,target,validate){
+  const key=draftKey(kind,id,target);
+  let cached;
+  try{cached=JSON.parse(sessionStorage.getItem(key)||'null')}catch{return null}
+  if(!cached||cached.school_id!==target.school_id||
+    cached.pci_id!==target.pci_id||cached.original_sha256!==target.legacy_sha256||
+    cached.kind!==kind||cached.id!==id)return null;
+  if(cached.base_revision!==currentRevision){
+    message('El servidor cambió mientras existía un borrador local. No se fusiona ni sobrescribe. Descargá la copia para revisar.','warn');
+    if(confirm('Hay un borrador local de este PCI con una revisión anterior. ¿Descargarlo para comparar?'))
+      download('PCI-CONFLICTO-'+target.school_id+'-'+kind+'.json',cached);
+    return null;
+  }
+  try{validate(cached.document)}catch{
+    message('Se encontró un borrador local incompatible. No fue aplicado ni eliminado.','error');
+    if(confirm('El borrador de esta unidad no pudo validarse. ¿Descargarlo?'))
+      download('PCI-BORRADOR-REVISAR-'+target.school_id+'-'+kind+'.json',cached);
+    return null;
+  }
+  if(confirm('Hay un borrador local sin guardar de este PCI. ¿Recuperarlo?')){
+    message('Borrador recuperado localmente; todavía tenés que guardarlo en el servidor.','warn');
+    return cached.document;
+  }
+  return null;
+}
+function markDirty(kind){
+  if(kind==='fg'&&fgDoc&&selectedFgArea){
+    fgDirty=true;rememberDraft('fg',selectedFgArea,fgDoc,fgRevision);
+  }else if(kind==='oferta'&&pci&&workspace){
+    offerDirty=true;rememberDraft('oferta','mapa-oferta-v1',newOfferUnit({pci,workspace}),offerRevision);
+  }else if(kind==='fo'&&foDoc&&selectedFoSpace){
+    foDirty=true;rememberDraft('fo',selectedFoSpace,foDoc,foRevision);
+  }
+}
+function normalizeForCompare(value){
+  if(Array.isArray(value))return value.map(normalizeForCompare);
+  if(value&&typeof value==='object')return Object.fromEntries(
+    Object.keys(value).sort().map(k=>[k,normalizeForCompare(value[k])])
+  );
+  return value;
+}
+function equivalent(a,b){
+  return JSON.stringify(normalizeForCompare(a))===JSON.stringify(normalizeForCompare(b));
+}
 async function loadReferences(){
   status('Cargando las dos bases curriculares…');
   const [matrix,fg,fo,rules]=await Promise.all([loadMatrixContents(),loadV2Fg(),loadV2Fo(),loadV2Rules()]);
@@ -110,12 +178,12 @@ async function init(){
     $('saveOffer').onclick=saveOffer;
     $('foAlternative').addEventListener('change',()=>{
       if(!pci||!workspace)return;
-      try{workspace=setFoAlternative(workspace,pci.orientation_id,$('foAlternative').value);offerDirty=true;renderOffer();message('Alternativa FO cambiada, todavía sin guardar.','warn');}
+      try{workspace=setFoAlternative(workspace,pci.orientation_id,$('foAlternative').value);markDirty('oferta');renderOffer();message('Alternativa FO cambiada, todavía sin guardar.','warn');}
       catch(error){message(error.message,'error');renderOffer();}
     });
     $('confirmFoContents').onclick=()=>{
       if(!pci||!workspace)return;
-      try{workspace=confirmFoContentAfterOffer(workspace,{orientationId:pci.orientation_id,refs,foRows:refs.fo});offerDirty=true;renderOffer();message('Contenidos FO confirmados por la regla curricular. Falta guardar.','warn');}
+      try{workspace=confirmFoContentAfterOffer(workspace,{orientationId:pci.orientation_id,refs,foRows:refs.fo});markDirty('oferta');renderOffer();message('Contenidos FO confirmados por la regla curricular. Falta guardar.','warn');}
       catch(error){message(error.message,'error');}
     };
     window.addEventListener('beforeunload',e=>{if(fgDirty||foDirty||offerDirty){e.preventDefault();e.returnValue='';}});
@@ -191,6 +259,12 @@ async function openPci(id){
     }
     pci=p;workspace=working;auto=imported;fgSourceState=source;offerRevision=Number(saved.revision)||0;
     fgDirty=false;offerDirty=false;foDirty=false;selectedFgArea=null;selectedFoSpace=null;
+    const offerRecovered=recallDraft('oferta','mapa-oferta-v1',offerRevision,p,
+      value=>restoreOfferUnit({pci:p,workspace:working,document:value}));
+    if(offerRecovered){
+      workspace=restoreOfferUnit({pci:p,workspace:working,document:offerRecovered});
+      offerDirty=true;
+    }
     $('pciName').textContent=pcis.find(i=>i.pci_id===id)?.title||p.orientation_id;
     $('pciTag').textContent=ORIENTATIONS.find(o=>o.id===p.orientation_id)?.name||'Orientación';
     $('pciInfo').textContent=(hasHistoric?'Origen histórico protegido':'Plantilla nueva (documento original vacío)')+' · '+p.status+' · '+AUTO_VALIDATION_LABEL;
@@ -211,10 +285,17 @@ async function getUnit(forPci,component,unitKind,unitId,baseVersion){
   });
 }
 async function saveUnit(component,unitKind,unitId,baseVersion,document,revision){
-  return call('save-school-pci-unit',{
+  const result=await call('save-school-pci-unit',{
     school_id:schoolId,pci_id:pci.pci_id,component,unit_kind:unitKind,unit_id:unitId,
     base_version:baseVersion,document,expected_revision:revision
   });
+  const next=Number(result.revision);
+  if(result.ok!==true||!Number.isSafeInteger(next)||next!==revision+1)
+    throw Error('El servidor no confirmó una revisión nueva. Se conserva el borrador.');
+  const remote=await getUnit(pci,component,unitKind,unitId,baseVersion);
+  if(!remote.exists||Number(remote.revision)!==next||!equivalent(remote.document,document))
+    throw Error('La lectura posterior no coincide con el guardado. Conservá el borrador y revisá antes de continuar.');
+  return result;
 }
 function setTab(next,force=false){
   if(!force && !canLeave())return;
@@ -239,9 +320,12 @@ async function openFgArea(area){
   if(fgDirty&&!confirm('Hay cambios de FG sin guardar. ¿Abrir otra área sin guardar?'))return;
   try{
     const saved=await getUnit(pci,'fg','area',area,'fg-sec-aprende-v2/1');
-    const doc=saved.exists?guardFgUnit(saved.document,pci,area):
+    const serverDoc=saved.exists?guardFgUnit(saved.document,pci,area):
       newFgUnit({pci,area,convertedAreas:auto.currentFg.areas});
-    selectedFgArea=area;fgDoc=doc;fgRevision=Number(saved.revision)||0;fgDirty=false;
+    const currentRevision=Number(saved.revision)||0;
+    const recovered=recallDraft('fg',area,currentRevision,pci,
+      value=>guardFgUnit(value,pci,area));
+    selectedFgArea=area;fgDoc=recovered||serverDoc;fgRevision=currentRevision;fgDirty=!!recovered;
     renderAreas();renderFgEditor();
   }catch(error){message(error.message,'error');}
 }
@@ -254,18 +338,18 @@ function renderFgEditor(){
     note('strong',(g.name||'Espacio '+(gi+1))+' · '+(g.level||'nivel s/d'),card);
     note('p',(g.items||[]).length+' contenidos · '+(g.plansBimestrales||[]).length+' planes · C'+(g.startTerm||'?'),card);
     card.appendChild(field('Sinopsis / descripción del espacio',g.summary??g.synopsis??'',v=>{
-      g.summary=v;fgDirty=true;message('Cambios de FG pendientes de guardar.','warn');
+      g.summary=v;markDirty('fg');message('Cambios de FG pendientes de guardar.','warn');
     }));
     (g.plansBimestrales||[]).forEach((plan,pi)=>{
       const details=elem('details');const summary=elem('summary',plan.name||'Plan '+(pi+1));details.appendChild(summary);
-      details.appendChild(field('Sinopsis',plan.synopsis||'',v=>{plan.synopsis=v;fgDirty=true;}));
-      details.appendChild(field('Objetivos',plan.objectives||'',v=>{plan.objectives=v;fgDirty=true;}));
+      details.appendChild(field('Sinopsis',plan.synopsis||'',v=>{plan.synopsis=v;markDirty('fg');}));
+      details.appendChild(field('Objetivos',plan.objectives||'',v=>{plan.objectives=v;markDirty('fg');}));
       for(const stage of stages){
         const val=plan.stages?.[stage];
         const label=stageLabel[stage];
         details.appendChild(field(label,typeof val==='string'?val:val?.description||'',v=>{
           const edited=editStageDescription(plan,stage,v);
-          plan.stages=edited.stages;fgDirty=true;
+          plan.stages=edited.stages;markDirty('fg');
         }));
       }
       card.appendChild(details);
@@ -278,7 +362,7 @@ function renderFgEditor(){
   save.onclick=()=>safeSave(async()=>{
     const payload=guardFgUnit(fgDoc,pci,selectedFgArea);
     const reply=await saveUnit('fg','area',selectedFgArea,'fg-sec-aprende-v2/1',payload,fgRevision);
-    fgRevision=Number(reply.revision);fgDirty=false;
+    fgRevision=Number(reply.revision);fgDirty=false;forgetDraft('fg',selectedFgArea);
     renderFgEditor();message('Área FG guardada en el PCI de esta orientación. La matriz histórica no cambió.');
   }).catch(()=>{});
   actions.appendChild(save);
@@ -326,7 +410,7 @@ function renderOffer(){
       const add=elem('button','Agregar materia FO','btn');add.type='button';
       add.disabled=!canEdit()||!select.options?.length;
       add.onclick=()=>{
-        try{workspace=assignFoSubject(workspace,{orientationId:pci.orientation_id,spaceId:space.id,subjectId:select.value,refs});offerDirty=true;renderOffer();message('Mapa modificado, pendiente de guardar.','warn');}
+        try{workspace=assignFoSubject(workspace,{orientationId:pci.orientation_id,spaceId:space.id,subjectId:select.value,refs});markDirty('oferta');renderOffer();message('Mapa modificado, pendiente de guardar.','warn');}
         catch(error){message(error.message,'error');}
       };card.appendChild(add);
     }
@@ -339,7 +423,7 @@ function renderOffer(){
     const addContent=elem('button','Incorporar contenido para revisión','btn');addContent.type='button';
     addContent.disabled=!canEdit()||!foList.length;
     addContent.onclick=()=>{
-      try{workspace=stageFoContent(workspace,{orientationId:pci.orientation_id,spaceId:space.id,contentId:foSelect.value,foRows:foList});offerDirty=true;renderOffer();message('Contenido FO registrado como provisional; no cuenta hasta validar la oferta.','warn');}
+      try{workspace=stageFoContent(workspace,{orientationId:pci.orientation_id,spaceId:space.id,contentId:foSelect.value,foRows:foList});markDirty('oferta');renderOffer();message('Contenido FO registrado como provisional; no cuenta hasta validar la oferta.','warn');}
       catch(error){message(error.message,'error');}
     };
     card.appendChild(addContent);
@@ -358,7 +442,7 @@ async function saveOffer(){
   await safeSave(async()=>{
     const payload=newOfferUnit({pci,workspace});
     const result=await saveUnit('oferta','map','mapa-oferta-v1','oferta-pci-orientacion-v1',payload,offerRevision);
-    offerRevision=Number(result.revision);offerDirty=false;renderOffer();
+    offerRevision=Number(result.revision);offerDirty=false;forgetDraft('oferta','mapa-oferta-v1');renderOffer();
     message('Mapa FO guardado con revisión '+offerRevision+'. Los demás PCI no se modificaron.');
   }).catch(()=>{});
 }
@@ -376,9 +460,12 @@ async function openFoSpace(id){
   const space=getCurrentOffer().spaces.find(s=>s.id===id);if(!space)return;
   try{
     const saved=await getUnit(pci,'fo','space',space.id,'fo-sec-aprende-v2/1');
-    const development=saved.exists?guardFoUnit(saved.document,pci,space.id):
+    const serverDoc=saved.exists?guardFoUnit(saved.document,pci,space.id):
       newFoUnit({pci,space,development:newFoDevelopment({orientation:pci.orientation_id,slot:space.id,format:space.kind,year:space.year})});
-    selectedFoSpace=id;foDoc=development;foRevision=Number(saved.revision)||0;foDirty=false;
+    const currentRevision=Number(saved.revision)||0;
+    const recovered=recallDraft('fo',id,currentRevision,pci,
+      value=>guardFoUnit(value,pci,space.id));
+    selectedFoSpace=id;foDoc=recovered||serverDoc;foRevision=currentRevision;foDirty=!!recovered;
     renderFoSpaces();renderFoEditor();
   }catch(error){message(error.message,'error');}
 }
@@ -388,18 +475,18 @@ function renderFoEditor(){
   note('p','Revisión '+foRevision+' · '+(foRevision?'Guardado':'Borrador no guardado'),host,'muted');
   const card=elem('div',undefined,'workCard');
   for(const [name,key] of [['Objetivo general','objective'],['Sinopsis general','synopsis'],['Contexto problematizador','context'],['Práctica / producto / eje','practiceAxis']]){
-    card.appendChild(field(name,foDoc[key],v=>{foDoc[key]=v;foDirty=true;}));
+    card.appendChild(field(name,foDoc[key],v=>{foDoc[key]=v;markDirty('fo');}));
   }
   for(const [pi,plan] of (foDoc.plansBimestrales||[]).entries()){
     const details=elem('details');if(pi===0)details.open=true;
     details.appendChild(elem('summary',plan.name||'Plan bimestral '+(pi+1)));
     for(const [label,key] of [['Sinopsis','synopsis'],['Objetivos de aprendizaje','objectives']]){
-      details.appendChild(field(label,plan[key],v=>{plan[key]=v;foDirty=true;}));
+      details.appendChild(field(label,plan[key],v=>{plan[key]=v;markDirty('fo');}));
     }
     for(const id of stages){
       details.appendChild(field(stageLabel[id],plan.stages?.[id]?.description||'',v=>{
         plan.stages={...plan.stages,[id]:{...(plan.stages?.[id]||{}),description:v}};
-        foDirty=true;
+        markDirty('fo');
       }));
     }
     card.appendChild(details);
@@ -412,7 +499,7 @@ function renderFoEditor(){
     const space=getCurrentOffer().spaces.find(s=>s.id===selectedFoSpace);
     const payload=newFoUnit({pci,space,development:foDoc});
     const reply=await saveUnit('fo','space',selectedFoSpace,'fo-sec-aprende-v2/1',payload,foRevision);
-    foRevision=Number(reply.revision);foDirty=false;renderFoEditor();
+    foRevision=Number(reply.revision);foDirty=false;forgetDraft('fo',selectedFoSpace);renderFoEditor();
     message('Planes FO guardados con revisión '+foRevision+'.');
   }).catch(()=>{});
   actions.appendChild(save);
