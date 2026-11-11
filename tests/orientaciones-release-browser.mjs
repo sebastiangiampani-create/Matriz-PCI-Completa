@@ -37,6 +37,14 @@ try{
     sessionStorage.setItem('pci_access_session',JSON.stringify({role:'admin',token:'TEST-SOLO-CI'}));
   });
   await page.route('https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-access',async route=>{
+    if(route.request().method()==='OPTIONS'){
+      await route.fulfill({status:200,headers:{
+        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Allow-Headers':'content-type',
+        'Access-Control-Allow-Methods':'POST, OPTIONS'
+      }});
+      return;
+    }
     const b=route.request().postDataJSON()||{};
     let data={};
     switch(b.action){
