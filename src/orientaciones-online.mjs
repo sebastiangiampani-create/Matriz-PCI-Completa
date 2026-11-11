@@ -6,7 +6,7 @@
 import {ORIENTATIONS,createOrientationPackage} from './integracion-curricular/bridge.js';
 import {loadMatrixContents,loadV2Fg,loadV2Fo,loadV2Rules,selectFoByOrientation} from './integracion-curricular/catalogos.js';
 import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integracion-curricular/auto-validacion-importacion.js';
-import {seedOfferStructure,foSubjectBank,assignFoSubject,offerMapRows,validateOfferStructure,stageFoContent} from './integracion-curricular/mapa-oferta.js';
+import {seedOfferStructure,foSubjectBank,assignFoSubject,offerMapRows,validateOfferStructure,stageFoContent,setFoAlternative,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
 import {newFoDevelopment,FO_STAGES} from './integracion-curricular/desarrollo-fo-modelo.js';
 import {requireSchoolPci,newFgUnit,guardFgUnit,newOfferUnit,restoreOfferUnit,newFoUnit,guardFoUnit,inventory,editStageDescription} from './orientaciones-release-core.mjs';
 
@@ -107,6 +107,16 @@ async function init(){
     };
     document.querySelectorAll('.tab').forEach(el=>el.onclick=()=>setTab(el.dataset.tab));
     $('saveOffer').onclick=saveOffer;
+    $('foAlternative').addEventListener('change',()=>{
+      if(!pci||!workspace)return;
+      try{workspace=setFoAlternative(workspace,pci.orientation_id,$('foAlternative').value);offerDirty=true;renderOffer();message('Alternativa FO cambiada, todavía sin guardar.','warn');}
+      catch(error){message(error.message,'error');renderOffer();}
+    });
+    $('confirmFoContents').onclick=()=>{
+      if(!pci||!workspace)return;
+      try{workspace=confirmFoContentAfterOffer(workspace,{orientationId:pci.orientation_id,refs,foRows:refs.fo});offerDirty=true;renderOffer();message('Contenidos FO confirmados por la regla curricular. Falta guardar.','warn');}
+      catch(error){message(error.message,'error');}
+    };
     window.addEventListener('beforeunload',e=>{if(fgDirty||foDirty||offerDirty){e.preventDefault();e.returnValue='';}});
     show('app');
     await reloadSchool();
@@ -291,6 +301,9 @@ function renderOffer(){
   }
   const grid=$('offerGrid');grid.replaceChildren();
   const current=getCurrentOffer(),alternative=current.subjectAlternative||'A';
+  $('foAlternative').value=alternative;
+  $('foAlternative').disabled=!canEdit()||current.spaces.some(s=>(s.members||[]).length>0);
+  $('confirmFoContents').disabled=!canEdit();
   let bank;
   try{bank=foSubjectBank({orientationId:pci.orientation_id,refs,alternative});}
   catch(error){note('p',error.message,grid,'muted');return;}
