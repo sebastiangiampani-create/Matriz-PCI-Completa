@@ -10,6 +10,9 @@ on:
       - 'preview-v2-real/src/institucion-pci-demo.js'
       - 'pci-orientaciones-demo.html'
       - 'tests/institucion-v2-browser.mjs'
+      - 'tests/pautas-tecnicas-browser.mjs'
+      - 'pci-tecnica-pautas.html'
+      - 'src/tecnica/**'
       - '.github/workflows/validar-institucion-v2.yml'
   workflow_dispatch:
 
@@ -31,17 +34,22 @@ jobs:
           test -s preview-v2-real/app.html
           node --check preview-v2-real/src/institucion-pci-demo.js
           node --check tests/institucion-v2-browser.mjs
+          node --check tests/pautas-tecnicas-browser.mjs
       - name: Instalar navegador Chromium
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install chromium
       - name: Probar tres PCI, dos turnos y aislamiento del mapa original
         run: node tests/institucion-v2-browser.mjs
+      - name: Probar mapa técnico con el diseño de Escuela de Maestros
+        run: node tests/pautas-tecnicas-browser.mjs
       - name: Conservar capturas para revisión visual
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vista-institucional-orientaciones-turnos-v2
-          path: test-artifacts/v2-config-institucional/
+          path: |
+            test-artifacts/v2-config-institucional/
+            test-artifacts/mapa-tecnico-2026/
           if-no-files-found: ignore
           retention-days: 7

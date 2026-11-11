@@ -45,6 +45,8 @@ try{
   await page.screenshot({path:output+'/02-mecanica-excepciones.png',fullPage:true});
 
   await page.goto(base+'/preview-v2-real/institucion.html',{waitUntil:'domcontentloaded'});
+  await page.locator('#modelTechCheck').check();
+  await page.locator('#saveTechnicalConfig').click();
   await page.locator('#technicalForm').waitFor({state:'visible',timeout:30000});
   await page.locator('#technicalSpecialty').selectOption({label:'Mecánica'});
   await page.locator('#technicalShift').selectOption('Noche');
@@ -58,6 +60,8 @@ try{
   await frame.locator('#mapBody tr').first().waitFor({timeout:30000});
   assert.equal(await frame.locator('#specialty').inputValue(),'mecanica');
   assert.match(await frame.locator('#mapHead').textContent(),/C12/);
+  assert.equal(await frame.locator('body').getAttribute('class'),'embed-preview');
+  assert.equal(await frame.locator('header').isVisible(),false,'No se debe duplicar la cabecera Escuela de Maestros');
   assert.equal(await page.locator('#frame').isVisible(),false,'El mapa de Media no debe abrirse en Técnica');
   assert.deepEqual(requests,[],'La vista preliminar no debe consultar Supabase real');
   assert.deepEqual(errors,[],'Error Javascript en vista técnica: '+errors.join(' | '));
