@@ -114,6 +114,9 @@ export function assignPvfReference(pack,orientationId){
   const project=w.fo.spaces.find(s=>s.kind==='proyecto');
   if(!project)throw new Error('No existe el Proyecto de Vinculación anual en esta orientación.');
   const expected=pvfReference(orientationId,w.fo.subjectAlternative||'A');
+  if(array(project.contentIds).length||array(project.provisionalContentIds).length||
+      array(project.plans).length)
+    throw new Error('El Proyecto de Vinculación ya contiene desarrollo pedagógico. No se reasigna automáticamente.');
   if(array(project.members).length){
     if(validatePvfProject(project,{orientationId,alternative:w.fo.subjectAlternative||'A'}).valid)
       return clone(pack);
@@ -132,6 +135,9 @@ export function setFoAlternative(pack,orientationId,alternative){
   const project=w.fo.spaces.find(s=>s.kind==='proyecto');
   const oldAlternative=w.fo.subjectAlternative||'A';
   // Un proyecto histórico no reconocido no se pisa al cambiar de alternativa.
+  if(project&&(array(project.contentIds).length||array(project.provisionalContentIds).length||
+    array(project.plans).length))
+    throw new Error('Hay contenidos o planes ya elaborados en el Proyecto de Vinculación. Antes de cambiar la alternativa, revisá y resguardá ese trabajo.');
   if(project&&array(project.members).length&&
      !validatePvfProject(project,{orientationId,alternative:oldAlternative}).valid)
     throw new Error('El Proyecto de Vinculación existente no coincide con la tabla oficial. Descargá y revisá el proyecto antes de cambiar de alternativa.');
