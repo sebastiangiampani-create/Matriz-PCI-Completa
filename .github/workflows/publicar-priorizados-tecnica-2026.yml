@@ -5,6 +5,7 @@ on:
       - release/pci-orientaciones-aditivo-20261111
     paths:
       - ".github/workflows/publicar-priorizados-tecnica-2026.yml"
+      - "scripts/tecnica/revisar_extraccion_2026.py"
   workflow_dispatch:
 permissions:
   actions: read
