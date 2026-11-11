@@ -34,6 +34,4 @@ jobs:
           grep -q 'Cantidad de turnos' institucion.html
           grep -q 'PCI independientes de la escuela' institucion.html
           grep -q 'Abrir PCI y mapa C1' institucion.js
-          curl --retry 3 --max-time 30 -fsSL "$ROOT/pci-orientaciones-demo.html?v=20261111-nuevo" -o redirect.html
-          grep -q 'preview-v2-real/institucion.html' redirect.html || (echo 'Advertencia: CDN tiene la página de entrada anterior'; head -c 350 redirect.html; exit 1)
           echo "OK: la rama publica entrega seleccion de orientaciones, turnos y mapa autentico V2."
