@@ -28,6 +28,12 @@ jobs:
           grep -q 'id="matrix"' app-core.html || (echo 'Error: matriz original' && exit 1)
           grep -q 'v47-phase2-matrix.js' app.html || (echo 'Error: módulo V2' && exit 1)
           grep -q 'matriz' app-core.html || (echo 'Error: contenido V2' && exit 1)
-          curl --retry 3 --max-time 30 -fsSL "$ROOT/pci-orientaciones-demo.html?v=20261111-correcta" -o redirect.html
-          grep -q 'preview-v2-real/app.html' redirect.html || (echo 'Error: CDN sirvió redirect anterior'; head -c 500 redirect.html; exit 1)
-          echo "OK: la rama publica entrega la aplicacion autentica V2 y sus recursos esenciales."
+          curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/institucion.html" -o institucion.html
+          curl --retry 3 --max-time 30 -fsSL "$ROOT/preview-v2-real/src/institucion-pci-demo.js" -o institucion.js
+          grep -q 'Cantidad de orientaciones' institucion.html
+          grep -q 'Cantidad de turnos' institucion.html
+          grep -q 'PCI independientes de la escuela' institucion.html
+          grep -q 'Abrir PCI y mapa C1' institucion.js
+          curl --retry 3 --max-time 30 -fsSL "$ROOT/pci-orientaciones-demo.html?v=20261111-nuevo" -o redirect.html
+          grep -q 'preview-v2-real/institucion.html' redirect.html || (echo 'Advertencia: CDN tiene la página de entrada anterior'; head -c 350 redirect.html; exit 1)
+          echo "OK: la rama publica entrega seleccion de orientaciones, turnos y mapa autentico V2."
