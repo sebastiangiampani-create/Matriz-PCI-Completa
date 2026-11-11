@@ -1,0 +1,29 @@
+name: Validar Proyecto de Vinculación Media A/B
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/integracion-curricular/proyecto-vinculacion-2026.mjs'
+      - 'src/integracion-curricular/mapa-oferta.js'
+      - 'tests/pvf-bachillerato-2026.test.mjs'
+      - 'src/orientaciones-online.mjs'
+      - '.github/workflows/validar-pvf-bachillerato.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar-pvf:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxis del catálogo de Proyecto de Vinculación
+        run: |
+          node --check src/integracion-curricular/proyecto-vinculacion-2026.mjs
+          node --check src/integracion-curricular/mapa-oferta.js
+          node --check src/orientaciones-online.mjs
+      - name: Probar 16 orientaciones, A/B, horas, persistencia y origen histórico
+        run: node --test tests/pvf-bachillerato-2026.test.mjs tests/integracion-mapa-oferta.test.js
