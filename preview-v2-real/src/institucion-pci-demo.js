@@ -116,7 +116,7 @@
     renderCombinations();
   }
   function isActive(p){
-    return state.combos.some(c=>c.orientation===p.orientation&&c.shift===p.shift);
+    return state.combos.some(c=>c.orientation===p.orientation&&c.shift===p.shift&&p.number<=c.quantity);
   }
   function renderPcis(){
     const host=$('pciList');host.replaceChildren();
