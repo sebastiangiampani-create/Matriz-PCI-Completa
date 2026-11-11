@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+  <title>Mis PCI por orientación · Matriz PCI</title>
+  <link rel="stylesheet" href="pci-orientaciones.css?v=20261111">
+</head>
+<body>
+  <header class="banner">
+    <div class="brand"><div class="brandmark" aria-hidden="true">PCI</div>
+      <div><strong>Matriz PCI Completa</strong><small>Escuela de Maestros · Secundaria Aprende</small></div>
+    </div>
+    <nav aria-label="Navegación principal"><a href="index.html">Inicio</a><a href="panel-general.html">Administración</a><a href="panel-escuela.html">Panel institucional</a></nav>
+  </header>
+  <main>
+    <section class="intro">
+      <div><span class="eyebrow">Gestión institucional</span><h1>Proyectos curriculares por orientación</h1>
+      <p>Una escuela puede tener varios PCI. Cada orientación conserva sus propios agrupamientos, planes y decisiones curriculares; la matriz histórica no se sobrescribe.</p></div>
+      <span id="status" role="status" aria-live="polite" class="status">Comprobando conexión…</span>
+    </section>
+    <div id="fatal" class="warning" hidden></div>
+    <div class="layout" id="app" hidden>
+      <aside class="panel sidebar">
+        <div class="sectionTitle"><h2>Escuela</h2></div>
+        <select id="school" aria-label="Elegir escuela"></select>
+        <p id="schoolLabel" class="muted"></p>
+        <hr>
+        <div class="sectionTitle"><h2>Sus PCI</h2><button type="button" id="btnAddPci" class="btn primary">+ Nuevo PCI</button></div>
+        <div id="pciList" class="pciList"></div>
+        <p class="note">Cada PCI se guarda de manera independiente. No se mezclan dos orientaciones ni se reescribe la FG original.</p>
+        <form id="formCreatePci" class="formCard" hidden>
+          <label>Orientación<select id="orientation" required></select></label>
+          <label>Nombre del PCI<input id="pciTitleInput" maxlength="150" required placeholder="Ej.: Economía · Turno Mañana"></label>
+          <div class="actions"><button type="submit" class="btn primary">Crear PCI</button><button type="button" class="btn" id="cancelPci">Cancelar</button></div>
+        </form>
+        <hr>
+        <button id="showNewSchool" class="btn" type="button" hidden>+ Agregar escuela</button>
+        <form id="formNewSchool" class="formCard" hidden>
+          <h3>Nueva institución</h3>
+          <label>Nombre oficial<input id="schoolNameInput" required maxlength="150"></label>
+          <label>CUE o código<input id="schoolCueInput" required maxlength="35"></label>
+          <label>Correo institucional<input id="schoolEmailInput" type="email" maxlength="180"></label>
+          <label>Año de incorporación<input id="schoolYearInput" type="number" min="2020" max="2100" value="2026"></label>
+          <div class="actions"><button type="submit" class="btn primary">Dar de alta</button><button type="button" class="btn" id="cancelSchool">Cancelar</button></div>
+        </form>
+      </aside>
+      <section class="workspace">
+        <div id="empty" class="panel"><h2>Elegí un PCI</h2><p class="muted">Seleccioná un proyecto de esta escuela para ver sus orientaciones y trabajar con las dos bases curriculares.</p></div>
+        <section id="editor" hidden>
+          <div class="panel">
+            <div class="topline"><div><span class="eyebrow" id="pciTag">Orientación</span><h2 id="pciName"></h2><p id="pciInfo" class="muted"></p></div>
+              <button type="button" id="downloadOriginal" class="btn">Descargar FG original</button></div>
+            <div class="metrics" id="metrics"></div>
+            <div class="navtabs" role="tablist" aria-label="Secciones del PCI">
+              <button type="button" class="tab active" data-tab="fg">Formación General</button>
+              <button type="button" class="tab" data-tab="oferta">Mapa de la Oferta</button>
+              <button type="button" class="tab" data-tab="fo">Formación Orientada</button>
+            </div>
+            <div id="message" class="message" role="status" aria-live="polite"></div>
+          </div>
+          <div class="panel pane" id="fgPane">
+            <div class="topline"><div><span class="eyebrow">FG Matriz histórica → FG V2</span><h3>Formación General por área</h3><p class="muted">Los contenidos y las secuencias anteriores se importan sin cambiar el documento original. Las equivalencias V2 se identifican automáticamente.</p></div></div>
+            <div class="split">
+              <div id="areaList" class="areaList"></div>
+              <div id="areaEditor">
+                <p class="muted">Elegí un área para revisar sus agrupamientos y guardar la copia propia de esta orientación.</p>
+              </div>
+            </div>
+          </div>
+          <div class="panel pane" id="offerPane" hidden>
+            <div class="topline"><div><span class="eyebrow">Formación General + Formación Orientada</span><h3>Mapa de la Oferta · C1 a C10</h3><p class="muted">Distribución de laboratorios, talleres y Proyecto de Vinculación. Las materias de FO se seleccionan según la orientación y su carga horaria.</p></div><button type="button" id="saveOffer" class="btn primary">Guardar mapa</button></div>
+            <div class="mapScroll"><table class="mapTable"><thead id="mapHead"></thead><tbody id="mapBody"></tbody></table></div>
+            <h4>Espacios de Formación Orientada</h4>
+            <div class="offerGrid" id="offerGrid"></div>
+            <p id="offerValidation" class="note"></p>
+          </div>
+          <div class="panel pane" id="foPane" hidden>
+            <div class="topline"><div><span class="eyebrow">FO · Desarrollo curricular</span><h3>Planes de aprendizaje</h3><p class="muted">Cada espacio FO guarda sus objetivos, sinopsis y las cuatro etapas de cada plan, con control de versiones.</p></div></div>
+            <div class="split">
+              <div id="foSpaces" class="areaList"></div>
+              <div id="foEditor"><p class="muted">Elegí un espacio FO a la izquierda para desarrollar sus planes.</p></div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+  <footer>PCI · Versión por orientación · Módulo aditivo. La matriz original se mantiene independiente.</footer>
+  <script type="module" src="src/orientaciones-online.mjs?v=20261111"></script>
+</body>
+</html>
