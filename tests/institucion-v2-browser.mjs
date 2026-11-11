@@ -42,7 +42,9 @@ try {
   await page.getByRole('checkbox',{name:'Economía y Administración · Tarde habilitado'}).uncheck();
   await page.getByRole('checkbox',{name:'Ciencias Naturales · Mañana habilitado'}).uncheck();
   await page.getByRole('spinbutton',{name:'Cantidad de PCI Economía y Administración · Mañana'}).fill('2');
-  assert.match(await page.locator('#summary').textContent(),/3 PCI previstos/);
+  assert.equal(await page.locator('#modelMediaCheck').isChecked(),true);
+  assert.equal(await page.locator('#modelTechCheck').isChecked(),false);
+  assert.match(await page.locator('#summary').textContent(),/3 PCI de Media previstos/);
   await page.locator('#saveConfig').click();
   assert.equal(await page.locator('#pciList .pci-card').count(),3);
   const entries=await page.evaluate(()=>window.__PCIDEMO__.getState());
