@@ -23,3 +23,18 @@ test('la alta directa valida la sesión y solo se abre para administradores',asy
   assert.match(module,/get\('accion'\)==='alta-escuela'&&canCreateSchool\(\)/);
   assert.match(module,/call\('create-school-v2',body\)/);
 });
+
+
+test('una sola sesión institucional permite mostrar Media y Técnica en grupos separados',async()=>{
+  const view=await readFile(new URL('../src/orientaciones-online.mjs',import.meta.url),'utf8');
+  const html=await readFile(new URL('../pci-orientaciones.html',import.meta.url),'utf8');
+  const style=await readFile(new URL('../pci-orientaciones.css',import.meta.url),'utf8');
+  assert.match(view,/for\(const model of \['comun','tecnica'\]\)/);
+  assert.match(view,/pcis\.filter\(p=>\(p\.model==='tecnica'\?'tecnica':'comun'\)===model\)/);
+  assert.match(view,/Bachillerato \/ Media · 5 niveles/);
+  assert.match(view,/Educación Técnica · 6 niveles/);
+  assert.match(html,/Una escuela puede ofrecer Bachillerato\/Media y Técnica al mismo tiempo/);
+  assert.match(style,/pciModelHeading/);
+  assert.match(view,/const model=\$\('pciModel'\)\.value;/);
+  assert.match(view,/const result=await call\('get-school-pci',\{school_id:schoolId,pci_id:id\}\)/);
+});
