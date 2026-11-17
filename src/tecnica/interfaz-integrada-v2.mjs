@@ -174,7 +174,7 @@ export function createIntegratedTechnicalUI({
    createWarning(card,s.year+'º · C'+s.term+(s.duration==='anual'?'–C'+s.endTerm:'')+
      ' · '+choiceLabel(s)+' · '+s.contentIds.length+' referencias vinculadas');
    btn(card,'Editar espacio en el mapa',()=>{activeSpace=s.id;tab='oferta';activateTab();});
-   btn(card,'Desarrollar los cuatro planes',()=>{tab='fo';activePlanId=s.id;activateTab();});
+   btn(card,'Desarrollar los cuatro planes',()=>{tab='fo';activateTab();openPlan(s.id);});
   }
  }
  function renderTable(){
@@ -346,7 +346,7 @@ export function createIntegratedTechnicalUI({
   createWarning(curric,related.length+' referencias de páginas disponibles. Año/campo inferidos: '+
    'la selección no constituye homologación automática.');
   const planBtn=btn(panel,'Abrir planes del espacio',()=>{
-   activePlanId=s.id;tab='fo';activateTab();
+   tab='fo';activateTab();openPlan(s.id);
   });planBtn.disabled=!pci;
   summarizeMap();buildHeader();
  }
