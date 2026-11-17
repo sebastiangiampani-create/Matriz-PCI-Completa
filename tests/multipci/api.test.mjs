@@ -157,7 +157,7 @@ test('Técnica conserva el bloqueo de contenidos Media y admite su propio borrad
     assert.match(r.body.error,/PCI Técnico/);
   }
   const doc=technicalOfferSeed({pci:rec,source:{especialidad_id:'computacion',
-    sha256_pdf:'b'.repeat(64),asignaturas:[]}});
+    sha256_pdf:'85b890f7ff1ffbbfba0a7321bd592663255e644b31045321688dc55ee12e2f52',asignaturas:[]}});
   const map=await status(await f.ctx('save-school-pci-unit',{
     school_id:1001,pci_id:PCI_ID,component:'oferta',unit_kind:'map',
     unit_id:'mapa-oferta-tecnica-v1',base_version:'oferta-tecnica-v1',
@@ -191,7 +191,7 @@ test('los planes técnicos exigen mapa vigente y mantienen cuatro etapas',async(
     status:'borrador'};
   f.setRecords([rec]);
   const map=technicalOfferSeed({pci:rec,source:{especialidad_id:'computacion',
-    sha256_pdf:'b'.repeat(64),asignaturas:[]}});
+    sha256_pdf:'85b890f7ff1ffbbfba0a7321bd592663255e644b31045321688dc55ee12e2f52',asignaturas:[]}});
   const target=map.spaces[0],doc=technicalPlanSeed({pci:rec,space:target,offer:map});
   const req={school_id:1001,pci_id:PCI_ID,component:'fo',unit_kind:'space',
     unit_id:target.id,base_version:'fo-tecnica-v1',expected_revision:0,document:doc};
