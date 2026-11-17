@@ -43,7 +43,7 @@ try{
  assert.ok(afterSearch>0&&afterSearch<35,'La búsqueda filtra sin tocar el mapa');
  await page.locator('#contentSearch').fill('');
  await page.locator('#contentList > details').first().locator('summary').click();
- assert.ok(await page.locator('#contentList > details').first().locator('a[href*="#page="]').count());
+ await page.locator('#contentList > details').first().locator('a[href*="#page="]').waitFor({state:'attached'});
  assert.equal(await page.locator('#mapTable').innerHTML(),originalHtml,'La búsqueda no reescribe el mapa');
  await page.locator('#specialty').selectOption('quimica');
  await page.waitForFunction(()=>document.querySelector('#contentStatus')?.textContent.includes('45 asignaturas o secciones'),null,{timeout:30000});
