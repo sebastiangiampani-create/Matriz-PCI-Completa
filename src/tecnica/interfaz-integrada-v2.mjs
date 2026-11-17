@@ -89,6 +89,7 @@ export function createIntegratedTechnicalUI({
   message('Cambios del plan técnico pendientes de guardar.','warn');
  }
  function setLabels(tech){
+  $('downloadOriginal').textContent=tech?'Descargar PCI histórico':'Descargar FG original';
   const n=document.querySelector('[data-tab="fo"]');
   if(n)n.textContent=tech?'Formación Técnico-Específica':defaultText.tab3;
   const fgDescription=$('fgPane')?.querySelector('.topline .muted');
