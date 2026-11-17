@@ -2,11 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {handleMultiPci} from '../../src/multipci/pci-workspace-handlers.mjs';
+import {technicalOfferSeed,technicalPlanSeed} from '../../src/tecnica/espacio-trabajo-v2.mjs';
 globalThis.crypto ??= webcrypto;
 const PCI_ID='a3a3a3a3-1111-4111-8111-aaaaaaaaaaaa';
 
 function fixture(session={role:'editor',school_id:1001}){
   const calls=[];
+  let technicalMap=null;
   let records=[{pci_id:PCI_ID,orientation_id:'economia_administracion',
     process_id:'process-test-1',model:'comun',curriculum_status:'ready',
     shift_id:'manana',status:'borrador',title:'Economía'}];
@@ -16,7 +18,11 @@ function fixture(session={role:'editor',school_id:1001}){
     if(fn==='pci_workspace_create_pci_v2')return {data:{ok:true,pci_id:PCI_ID},error:null};
     if(fn==='pci_workspace_create_school_v1')return {data:{ok:true,school_id:1002},error:null};
     if(fn==='pci_workspace_get_pci_v1')return {data:{pci_id:PCI_ID,source_protected:true,legacy_sha256:'a'.repeat(64),legacy_state:{areas:{}}},error:null};
-    if(fn==='pci_collab_get_unit_v1')return {data:{exists:false,revision:0},error:null};
+    if(fn==='pci_collab_get_unit_v1'){
+      if(technicalMap&&args.p_component==='oferta'&&args.p_unit_id==='mapa-oferta-tecnica-v1')
+        return {data:{exists:true,revision:1,document:technicalMap},error:null};
+      return {data:{exists:false,revision:0},error:null};
+    }
     if(fn==='pci_collab_save_unit_v1')return {data:{ok:true,revision:1},error:null};
     throw new Error('RPC inesperado: '+fn);
   }};
@@ -25,7 +31,7 @@ function fixture(session={role:'editor',school_id:1001}){
     inScope:(s,sid)=>s.role==='admin'||Number(s.school_id)===sid,
     hasPerm:()=>false,actorFromSession:()=>({name:'Docente de prueba'})
   });
-  return {ctx,calls,setRecords:r=>records=r};
+  return {ctx,calls,setRecords:r=>records=r,setTechnicalMap:doc=>{technicalMap=doc;}};
 }
 async function status(resp){return {status:resp.status,body:await resp.json()};}
 
@@ -134,11 +140,13 @@ test('un colegio puede registrar un PCI Media y otro de Técnica en distintos tu
   assert.equal(writes[1].args.p_orientation_id,null);
   assert.ok(calls.every(x=>x.fn!=='pci_proposals'));
 });
-test('la composición técnica pendiente no puede leer ni guardar unidades de Media',async()=>{
+test('Técnica conserva el bloqueo de contenidos Media y admite su propio borrador versionado',async()=>{
   const f=fixture();
-  f.setRecords([{pci_id:PCI_ID,orientation_id:'tecnica_aabbccdd',model:'tecnica',
+  const rec={pci_id:PCI_ID,school_id:1001,orientation_id:'tecnica_aabbccdd',model:'tecnica',
     curriculum_status:'pending_rules',shift_id:'tarde',specialty_name:'Computación',
-    process_id:'technical-1',status:'borrador',title:'Técnica'}]);
+    process_id:'technical-1',legacy_sha256:'a'.repeat(64),
+    status:'borrador',title:'Técnica'};
+  f.setRecords([rec]);
   for(const action of ['get-school-pci-unit','save-school-pci-unit']){
     const r=await status(await f.ctx(action,{
       school_id:1001,pci_id:PCI_ID,component:'fg',unit_kind:'area',
@@ -146,11 +154,58 @@ test('la composición técnica pendiente no puede leer ni guardar unidades de Me
       expected_revision:0,document:{schema:'pci-fg-area-v2/1'}
     }));
     assert.equal(r.status,423);
-    assert.match(r.body.error,/pendiente de reglas/i);
+    assert.match(r.body.error,/PCI Técnico/);
   }
-  assert.ok(!f.calls.some(x=>x.fn==='pci_collab_get_unit_v1'));
-  assert.ok(!f.calls.some(x=>x.fn==='pci_collab_save_unit_v1'));
+  const doc=technicalOfferSeed({pci:rec,source:{especialidad_id:'computacion',
+    sha256_pdf:'b'.repeat(64),asignaturas:[]}});
+  const map=await status(await f.ctx('save-school-pci-unit',{
+    school_id:1001,pci_id:PCI_ID,component:'oferta',unit_kind:'map',
+    unit_id:'mapa-oferta-tecnica-v1',base_version:'oferta-tecnica-v1',
+    expected_revision:0,document:doc
+  }));
+  assert.equal(map.status,200);
+  const save=f.calls.find(x=>x.fn==='pci_collab_save_unit_v1');
+  assert.ok(save);assert.equal(save.args.p_orientation_id,'tecnica_aabbccdd');
+  assert.equal(save.args.p_process_id,'technical-1');
+  assert.equal(save.args.p_document.schema,'pci-oferta-tecnica-v1/1');
+  assert.equal(save.args.p_document.model,'tecnica');
+  const fake={...doc,model:'comun'};
+  const bad=await status(await f.ctx('save-school-pci-unit',{
+    school_id:1001,pci_id:PCI_ID,component:'oferta',unit_kind:'map',
+    unit_id:'mapa-oferta-tecnica-v1',base_version:'oferta-tecnica-v1',
+    expected_revision:0,document:fake
+  }));
+  assert.equal(bad.status,400,'No se admite una oferta del otro modelo');
+  const read=await status(await f.ctx('get-school-pci-unit',{
+    school_id:1001,pci_id:PCI_ID,component:'oferta',unit_kind:'map',
+    unit_id:'mapa-oferta-tecnica-v1',base_version:'oferta-tecnica-v1'
+  }));
+  assert.equal(read.status,200);
+  assert.ok(!f.calls.some(x=>x.fn==='pci_proposals'),'La matriz histórica nunca se escribe');
 });
+test('los planes técnicos exigen mapa vigente y mantienen cuatro etapas',async()=>{
+  const f=fixture();
+  const rec={pci_id:PCI_ID,school_id:1001,orientation_id:'tecnica_aabbccdd',
+    model:'tecnica',curriculum_status:'pending_rules',specialty_name:'Computación',
+    process_id:'technical-1',legacy_sha256:'a'.repeat(64),
+    status:'borrador'};
+  f.setRecords([rec]);
+  const map=technicalOfferSeed({pci:rec,source:{especialidad_id:'computacion',
+    sha256_pdf:'b'.repeat(64),asignaturas:[]}});
+  const target=map.spaces[0],doc=technicalPlanSeed({pci:rec,space:target,offer:map});
+  const req={school_id:1001,pci_id:PCI_ID,component:'fo',unit_kind:'space',
+    unit_id:target.id,base_version:'fo-tecnica-v1',expected_revision:0,document:doc};
+  const missing=await status(await f.ctx('save-school-pci-unit',req));
+  assert.equal(missing.status,409,'El plan no puede publicarse sin su mapa');
+  f.setTechnicalMap(map);
+  const saved=await status(await f.ctx('save-school-pci-unit',req));
+  assert.equal(saved.status,200);
+  const wrong=await status(await f.ctx('save-school-pci-unit',{
+    ...req,document:{...doc,year:5}
+  }));
+  assert.equal(wrong.status,409,'No se puede adjuntar un plan al año equivocado');
+});
+
 test('validar nombre de especialidad y turno antes de insertar PCI',async()=>{
   const f=fixture();
   const bad=await status(await f.ctx('create-school-pci',{
