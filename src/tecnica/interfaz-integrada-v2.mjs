@@ -231,7 +231,7 @@ export function createIntegratedTechnicalUI({
   const short=el('div',layout,undefined,'areaList');
   short.setAttribute('aria-label','Espacios curriculares del PCI Técnico');
   for(const s of list){
-   const b=btn(short,s.name+' · '+s.year+'º C'+s.term+
+   const b=btn(short,(s.included===false?'[Por definir] ':'')+s.name+' · '+s.year+'º C'+s.term+
      (s.duration==='anual'?'–C'+s.endTerm:'')+' · '+s.contentIds.length+' refs',
      ()=>{activeSpace=s.id;renderOffer();},'areaItem'+(s.id===activeSpace?' active':''));
    b.title='Abrir agrupamiento curricular';
@@ -279,6 +279,18 @@ export function createIntegratedTechnicalUI({
   el('h4',panel,s.name+' · '+s.year+'º');
   createWarning(panel,'C'+s.term+(s.duration==='anual'?'–C'+s.endTerm:'')+
    ' · '+choiceLabel(s)+' · '+s.format);
+  if(/^t-taller-especialidad-[456]$/.test(s.id)){
+   const opt=btn(panel,s.included===false?'Incorporar este taller según el plan de la especialidad':
+     'Marcar este taller como no ofertado, sin borrar sus datos',()=>{
+    if(s.included!==false && !confirm(
+      'El taller se ocultará del mapa pero sus datos permanecerán en el borrador. ¿Continuar?'))return;
+    try{offer=updateTechnicalSpace(offer,s.id,{included:s.included===false});changedOffer();}
+    catch(err){message(err.message,'error');}
+   });
+   opt.disabled=!writable();
+   createWarning(panel,'La cantidad de Talleres de la Especialidad (1 a 4) depende del diseño curricular vigente. '+
+     (s.included===false?'Este espacio variable NO está incorporado en la oferta.':'Este espacio se considera parte de la oferta.'));
+  }
   const detail=el('div',panel,undefined,'split');
   const basics=el('div',detail);
   const nameInput=field(basics,'Nombre del espacio',s.name,v=>{
@@ -346,12 +358,12 @@ export function createIntegratedTechnicalUI({
    if(!select.value)return;
    try{offer=setTechnicalSubject(offer,s.id,select.value,bank,true);changedOffer();}
    catch(err){message(err.message,'error');}
-  });add.disabled=!writable();
+  });add.disabled=!writable()||s.included===false;
   createWarning(curric,related.length+' referencias de páginas disponibles. Año/campo inferidos: '+
    'la selección no constituye homologación automática.');
   const planBtn=btn(panel,'Abrir planes del espacio',()=>{
    tab='fo';activateTab();openPlan(s.id);
-  });planBtn.disabled=!pci;
+  });planBtn.disabled=!pci||s.included===false;
   summarizeMap();buildHeader();
  }
  function renderPlanList(){
@@ -364,7 +376,7 @@ export function createIntegratedTechnicalUI({
   for(const s of offer.spaces.filter(x=>!spaceYear||x.year===spaceYear).sort((a,b)=>a.year-b.year||a.term-b.term)){
    const b=btn(host,s.name+' · '+s.year+'º'+(s.duration==='anual'?' anual':' C'+s.term),
     ()=>openPlan(s.id),'areaItem'+(activePlanId===s.id?' active':''));
-   b.disabled=!pci;
+   b.disabled=!pci||s.included===false;
   }
  }
  async function openPlan(id){
