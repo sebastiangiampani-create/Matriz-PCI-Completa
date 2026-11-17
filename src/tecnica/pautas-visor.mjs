@@ -177,9 +177,107 @@ function evaluate(){
   for(const problem of result.errors)add(host,'li','Incumplimiento: '+problem.message+' (p. '+problem.page+')','error');
   for(const problem of result.warnings)add(host,'li','Pendiente: '+problem.message+' (p. '+problem.page+')');
 }
+
+/*
+ * Fuentes priorizadas 2026: CONSULTA dentro del mapa técnico original.
+ * No se homologan automáticamente materias, años ni campos; no se escribe
+ * en el estado de la escuela, ni se asigna contenido a agrupamientos.
+ */
+const PRIORITIZED_FIELD_LABELS=Object.freeze({
+  formacion_general:'Formación General',
+  formacion_cientifico_tecnologica:'Formación Científico-Tecnológica',
+  formacion_tecnica_especifica:'Formación Técnico-Específica',
+  practicas_profesionalizantes:'Prácticas Profesionalizantes'
+});
+const normalized=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es');
+let prioritizedDocument=null,prioritizedLoadToken=0;
+function safeSourceUrl(value){
+  try{
+    const result=new URL(String(value));
+    return result.protocol==='https:'&&result.hostname==='static.buenosaires.gob.ar'
+      &&result.pathname.toLowerCase().endsWith('.pdf')?result.href:null;
+  }catch{return null;}
+}
+function renderPrioritized(){
+  const host=$('contentList');host.replaceChildren();
+  if(!prioritizedDocument)return;
+  const term=normalized($('contentSearch').value.trim());
+  const field=$('contentField').value;
+  const matched=prioritizedDocument.asignaturas.filter(entry=>
+    (!field||entry.campo_estimado===field)&&normalized(entry.asignatura).includes(term));
+  $('contentStatus').textContent=matched.length+' de '+
+    prioritizedDocument.asignaturas.length+' asignaturas o secciones del documento. '+
+    'Campos y años extraídos automáticamente: pendientes de validación.';
+  const url=safeSourceUrl(prioritizedDocument.fuente_url);
+  for(const entry of matched){
+    const details=add(host,'details',undefined);
+    const summary=add(details,'summary',undefined);
+    add(summary,'strong',entry.asignatura);
+    add(summary,'small',
+      (PRIORITIZED_FIELD_LABELS[entry.campo_estimado]||'Campo sin verificar')+
+      ' · PDF pp. '+entry.pagina_inicio+'–'+entry.pagina_fin);
+    details.addEventListener('toggle',()=>{
+      if(!details.open||details.dataset.loaded==='yes')return;
+      details.dataset.loaded='yes';
+      const body=add(details,'div',undefined,'source-detail');
+      if(url){
+        const a=add(body,'a','Abrir esta sección en el PDF oficial');
+        a.href=url+'#page='+Number(entry.pagina_inicio);
+        a.target='_blank';a.rel='noopener noreferrer';
+      }
+      add(body,'p','Texto extraído de la fuente. Verificá el diseño curricular de la especialidad antes de seleccionar contenidos.','muted');
+      for(const page of entry.paginas){
+        const section=add(body,'details',undefined);
+        add(section,'summary','Página '+page.pagina_pdf+(page.pagina_sin_texto?' · sin texto extraíble':''));
+        const pre=add(section,'pre',page.texto_pagina||'Sin texto extraíble: consultar el PDF.');
+        pre.hidden=true;
+        section.addEventListener('toggle',()=>{pre.hidden=!section.open;});
+      }
+    });
+  }
+  if(!matched.length)add(host,'p','No hay coincidencias con los filtros actuales.','muted');
+}
+async function loadPrioritized(){
+  const token=++prioritizedLoadToken;
+  const id=resolveStatus().id;
+  prioritizedDocument=null;
+  $('contentList').replaceChildren();
+  $('contentSearch').value='';
+  $('contentField').value='';
+  const status=$('contentStatus');
+  status.setAttribute('aria-busy','true');
+  status.textContent='Cargando referencia oficial para '+resolveStatus().name+'…';
+  const source=$('contentPdf');source.hidden=true;source.removeAttribute('href');
+  if(!SPECIALTIES.some(item=>item.id===id)){
+    status.removeAttribute('aria-busy');
+    status.textContent='Esta especialidad no tiene una fuente oficial identificada en el catálogo.';
+    return;
+  }
+  try{
+    const response=await fetch('data/tecnica/priorizados/'+encodeURIComponent(id)+'.json',{cache:'no-store'});
+    if(!response.ok)throw Error('No está disponible el documento de esta especialidad.');
+    const parsed=await response.json();
+    if(token!==prioritizedLoadToken)return;
+    if(parsed.especialidad_id!==id||!Array.isArray(parsed.asignaturas)||!parsed.sha256_pdf)
+      throw Error('La fuente oficial no coincide con la especialidad seleccionada.');
+    prioritizedDocument=parsed;
+    const url=safeSourceUrl(parsed.fuente_url);
+    if(url){source.href=url;source.hidden=false;}
+    renderPrioritized();
+  }catch(error){
+    if(token!==prioritizedLoadToken)return;
+    status.textContent=error.message+' El mapa de composición sigue disponible sin modificar datos.';
+  }finally{
+    if(token===prioritizedLoadToken)status.removeAttribute('aria-busy');
+  }
+}
+$('contentSearch').addEventListener('input',renderPrioritized);
+$('contentField').addEventListener('change',renderPrioritized);
+
 sel.addEventListener('change',()=>{
   current=all.find(x=>x.id===sel.value)||all[0];
   stats();map();annual();
+  loadPrioritized();
   $('results').replaceChildren();
 });
 $('format').addEventListener('change',defaultDuration);
@@ -193,5 +291,5 @@ $('exampleInvalid').addEventListener('click',()=>{
   $('weeklyHours').value='10';
   evaluate();
 });
-defaultDuration();stats();map();annual();
+defaultDuration();stats();map();annual();loadPrioritized();
 window.__TECNICA_REGLAS__={ruleSet:RULESET_ID,readonly:true,check:evaluate};
