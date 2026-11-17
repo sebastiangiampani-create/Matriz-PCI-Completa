@@ -29,6 +29,7 @@ try{
  page.on('request',r=>{if(/supabase\.co|functions\/v1\/pci-access/.test(r.url()))remote.push(r.url());});
  await page.goto(base+'/pci-tecnica-pautas.html?especialidad=computacion',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.querySelector('#contentStatus')?.textContent.includes('35 asignaturas o secciones'),null,{timeout:30000});
+ await page.locator('#officialContents > summary').click();
  assert.equal(await page.locator('#mapHead tr').count(),2,'Se preservan los dos encabezados del mapa');
  assert.equal(await page.locator('#mapHead tr').last().locator('th').count(),12,'El mapa conserva C1-C12');
  assert.equal(await page.locator('#mapBody tr').count(),13,'Se conservan las filas curriculares originales');
