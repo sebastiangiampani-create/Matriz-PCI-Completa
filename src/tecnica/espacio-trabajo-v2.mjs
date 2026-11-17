@@ -33,10 +33,10 @@ export const technicianYear=term=>Math.ceil(Number(term)/2);
 export function technicianTerms(year){return [2*Number(year)-1,2*Number(year)];}
 
 function slot({id,year,term,format,area,label,duration='cuatrimestral',character='obligatorio',
-  provisional=false,requiredPlan=false,kind='fg',hours=null}){
+  provisional=false,requiredPlan=false,kind='fg',hours=null,included=true}){
  return {id,year,term,endTerm:duration==='anual'?term+1:term,format,area,name:label,
   duration,character,kind,weeklyHours:hours,subjectIds:[],contentIds:[],
-  notes:'',provisional,requiredPlan,confirmed:false};
+  notes:'',provisional,requiredPlan,confirmed:false,included};
 }
 function createSlots(specialty){
  const out=[],put=x=>out.push(slot(x));
@@ -93,7 +93,7 @@ function createSlots(specialty){
   id:'t-taller-especialidad-'+year,year,term:2*year-1,
   format:'taller_especialidad',area:'Taller de la Especialidad',
   label:'Taller de la Especialidad · '+year+'º',duration:'anual',
-  provisional:year>3,requiredPlan:true,kind:'fo'
+  provisional:year>3,requiredPlan:true,kind:'fo',included:year===3
  });
  const annual=getAnnualSubjects(specialty.id);
  if(annual)for(let year=4;year<=6;year++)put({
@@ -284,6 +284,7 @@ export function setTechnicalSubject(document,spaceId,sourceId,bank,enabled){
  const draft=copy(document),s=draft.spaces.find(x=>x.id===spaceId);
  const src=bank.find(x=>x.id===sourceId);
  if(!s||!src)throw Error('No se reconoció el espacio o referencia curricular.');
+ if(s.included===false)throw Error('Activá este espacio variable en el mapa antes de vincular contenidos.');
  if(src.year!==null&&src.year!==s.year)
   throw Error('La referencia pertenece a otro año. Revisá el diseño curricular; no se mezclan niveles.');
  if(!s.area||!TECH_FG_AREAS.concat(TECH_SPECIFIC_AREAS).includes(s.area))
@@ -303,7 +304,11 @@ export function setTechnicalSubject(document,spaceId,sourceId,bank,enabled){
 export function updateTechnicalSpace(document,spaceId,changes){
  const next=copy(document),s=next.spaces.find(x=>x.id===spaceId);
  if(!s)throw Error('Espacio técnico inexistente');
- const props=['name','character','weeklyHours','notes'];
+ const props=['name','character','weeklyHours','notes','included'];
+ if(Object.hasOwn(changes,'included')&&
+   (!/^t-taller-especialidad-[456]$/.test(s.id)||typeof changes.included!=='boolean'))
+   throw Error('Solo se permite elegir la oferta variable de los talleres de especialidad de 4.º a 6.º.');
+
  for(const key of props)if(Object.hasOwn(changes,key))s[key]=changes[key];
  if(!['obligatorio','electivo'].includes(s.character))throw Error('Carácter inválido');
  if(s.weeklyHours!==null&&(!Number.isFinite(Number(s.weeklyHours))||Number(s.weeklyHours)<=0||Number(s.weeklyHours)>45))
@@ -316,14 +321,14 @@ export function technicalMapRows(document){
  return {terms,areas:areas.map(area=>({
   area,cells:terms.map(t=>({
    ...t,spaces:document.spaces.filter(s=>s.area===area&&s.year===t.year&&
-     s.term<=t.term&&s.endTerm>=t.term)
+     s.included!==false&&s.term<=t.term&&s.endTerm>=t.term)
   }))
  }))};
 }
 export function technicalCoverage(document,bank,{area=null,year=null,planContentIds=[]}={}){
  const scopes=bank.filter(r=>(!area||r.area===area)&&(!year||r.year===year));
  const universe=new Set(scopes.map(x=>x.id));
- const relevant=document.spaces.filter(s=>(!area||s.area===area)&&(!year||s.year===year));
+ const relevant=document.spaces.filter(s=>s.included!==false&&(!area||s.area===area)&&(!year||s.year===year));
  const used=new Set(relevant.flatMap(x=>x.contentIds).filter(id=>universe.has(id)));
  const plan=new Set(asArr(planContentIds).filter(id=>used.has(id)));
  const count=universe.size;
@@ -336,6 +341,7 @@ export function validateTechnicalDraft(document,bank){
  const specialty=findSpecialty(document.specialty_id),issues=[],warnings=[];
  if(!specialty)return {valid:false,partial:false,issues:['Especialidad desconocida'],warnings};
  for(const s of document.spaces){
+  if(s.included===false)continue;
   const req={
    year:s.year,term:s.term,format:s.format,duration:s.duration,
    weeklyHours:s.weeklyHours,subjects:s.subjectIds,
@@ -386,7 +392,7 @@ export function validateTechnicalDraft(document,bank){
   readyForPublication:false};
 }
 export function technicalPlanSeed({pci,space,offer}){
- if(!space?.id||offer?.pci_id!==pci?.pci_id||offer?.model!=='tecnica')
+ if(!space?.id||space.included===false||offer?.pci_id!==pci?.pci_id||offer?.model!=='tecnica')
   throw Error('El plan no corresponde al PCI técnico.');
  return {schema:TECH_PLAN_SCHEMA,model:'tecnica',
   school_id:Number(pci.school_id),pci_id:pci.pci_id,
