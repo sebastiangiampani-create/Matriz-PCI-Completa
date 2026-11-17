@@ -45,10 +45,10 @@ try{
  const page=await context.newPage();
  page.on('pageerror',e=>errors.push(e.message));
  page.on('request',r=>{if(r.url().includes('supabase.co'))requests.push(r.url());});
- await page.addInitScript(()=>{
+ await context.addInitScript(()=>{
   sessionStorage.setItem('pci_access_session',JSON.stringify({role:'admin',token:'TEST-SOLO-CI'}));
  });
- await page.route('https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-access',async route=>{
+ await context.route('https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-access',async route=>{
   const b=route.request().postDataJSON()||{};
   let data={},status=200;
   const key=[b.pci_id,b.component,b.unit_kind,b.unit_id].join('|');
@@ -158,6 +158,19 @@ try{
  await page.locator('[data-tab="oferta"]').click();
  assert.match(await page.locator('#offerPane .topline h3').textContent(),/C1 a C10/);
  await page.screenshot({path:'test-artifacts/tecnica-integrada/04-media-sin-alterar.png',fullPage:true});
+ const phone=await context.newPage();
+ await phone.setViewportSize({width:390,height:844});
+ phone.on('pageerror',e=>errors.push('móvil: '+e.message));
+ await phone.goto(base+'/pci-orientaciones.html?school='+school,{waitUntil:'domcontentloaded'});
+ await phone.locator('#app').waitFor({state:'visible',timeout:30000});
+ await phone.locator('#pciList .pciItem').filter({hasText:'PCI Computación'}).click();
+ await phone.waitForFunction(()=>document.querySelector('#pciName')?.textContent==='PCI Computación');
+ await phone.locator('[data-tab="oferta"]').click();
+ await phone.waitForFunction(()=>document.querySelector('#mapHead tr:last-child')?.children.length===12);
+ assert.equal(await phone.evaluate(()=>document.documentElement.scrollWidth>innerWidth+3),false,
+  'El diseño responsive técnico debe permitir el mapa horizontal sin desbordar toda la página');
+ assert.ok(await phone.locator('#offerGrid .areaList').count(),'La lista curricular lateral sigue accesible en móvil');
+ await phone.screenshot({path:'test-artifacts/tecnica-integrada/05-movil-mapa.png',fullPage:true});
  assert.deepEqual(errors,[]);
  assert.equal(requests.every(x=>x.includes('/pci-access')),true,
   'Se usó exclusivamente la API institucional de prueba interceptada');
