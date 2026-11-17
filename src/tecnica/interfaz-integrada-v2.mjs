@@ -100,6 +100,19 @@ export function createIntegratedTechnicalUI({
   if(offerDescription)offerDescription.textContent=tech?
     'Seis niveles con troncales anuales, integraciones, espacios formativos, especialidad y dos proyectos de Vinculación. La carga horaria debe comprobarse con el diseño particular.':
     'Distribución de laboratorios, talleres y Proyecto de Vinculación. Las materias de FO se seleccionan según la orientación y su carga horaria.';
+  const fgEyebrow=$('fgPane')?.querySelector('.topline .eyebrow');
+  if(fgEyebrow)fgEyebrow.textContent=tech?
+    'Formación General + Científico-Tecnológica':'FG Matriz histórica → FG V2';
+  const offerEyebrow=$('offerPane')?.querySelector('.topline .eyebrow');
+  if(offerEyebrow)offerEyebrow.textContent=tech?
+    'Mapa de la oferta · Educación Técnica':'Formación General + Formación Orientada';
+  const foEyebrow=$('foPane')?.querySelector('.topline .eyebrow');
+  if(foEyebrow)foEyebrow.textContent=tech?
+    'Desarrollo curricular técnico':'FO · Desarrollo curricular';
+  const offerListTitle=$('offerPane')?.querySelector(':scope > h4');
+  if(offerListTitle)offerListTitle.textContent=tech?
+    'Espacios curriculares de Educación Técnica':'Espacios de Formación Orientada';
+  $('foSpaces')?.classList.toggle('tech-plan-index',tech);
   const fgH=$('fgPane')?.querySelector('.topline h3');
   const offerH=$('offerPane')?.querySelector('.topline h3');
   const foH=$('foPane')?.querySelector('.topline h3');
@@ -135,7 +148,8 @@ export function createIntegratedTechnicalUI({
  function summarizeMap(){
   const audit=validateTechnicalDraft(offer,bank),coverage=technicalCoverage(offer,bank);
   const count=offer.spaces.reduce((out,s)=>out+s.contentIds.length,0);
-  const flag=audit.issues.length?'Inconsistencias de composición: '+audit.issues.length:'Estructura provisional';
+  const flag=audit.issues.length?
+    audit.issues.length+' espacios requieren revisión de composición':'Estructura provisional';
   $('offerValidation').textContent=flag+' · '+audit.warnings.length+' observaciones pendientes'+
     ' · '+count+' referencias documentales distribuidas'+
     ' · revisión '+offerRevision+(offerDirty?' · Sin guardar':' · Guardado');
