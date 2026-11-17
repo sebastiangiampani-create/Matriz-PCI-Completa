@@ -11,6 +11,7 @@ import {seedOfferStructure,foSubjectBank,assignFoSubject,offerMapRows,validateOf
 import {newFoDevelopment,FO_STAGES} from './integracion-curricular/desarrollo-fo-modelo.js';
 import {pvfReference,validatePvfProject} from './integracion-curricular/proyecto-vinculacion-2026.mjs';
 import {SPECIALTIES,findSpecialty} from './tecnica/pautas-pci-20261005.mjs';
+import {createIntegratedTechnicalUI} from './tecnica/interfaz-integrada-v2.mjs';
 import {requireSchoolPci,newFgUnit,guardFgUnit,newOfferUnit,restoreOfferUnit,newFoUnit,guardFoUnit,inventory,editStageDescription} from './orientaciones-release-core.mjs';
 
 const API='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-access';
@@ -32,6 +33,7 @@ let session=null,schools=[],schoolId=null,pcis=[],pci=null,workspace=null,auto=n
 let selectedFgArea=null,fgDoc=null,fgRevision=0,fgDirty=false;
 let offerRevision=0,offerDirty=false,selectedFoSpace=null,foDoc=null,foRevision=0,foDirty=false;
 let tab='fg',busy=false;
+const technical=createIntegratedTechnicalUI({canEdit,getUnit,saveUnit,saveSafe:safeSave,download,rememberDraft,forgetDraft,message,status});
 
 async function call(action,data={}){
   const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:session?.token,...data}),cache:'no-store'});
@@ -45,7 +47,7 @@ function fatal(str){$('fatal').textContent=str;show('fatal');status('No disponib
 function canEdit(){return !!session && (session.role==='admin'||session.role==='editor'||session.role==='user'&&(session.permissions||[]).includes('pci.edit'));}
 function canCreateSchool(){return session?.role==='admin';}
 function canLeave(){
-  if(!(fgDirty||foDirty||offerDirty))return true;
+  if(!(fgDirty||foDirty||offerDirty||technical.isDirty()))return true;
   return confirm('Tenés cambios sin guardar. ¿Querés salir sin guardarlos? Podés descargarlos antes de continuar.');
 }
 function safeSave(task){
@@ -185,7 +187,7 @@ async function init(){
       });
     };
     document.querySelectorAll('.tab').forEach(el=>el.onclick=()=>setTab(el.dataset.tab));
-    $('saveOffer').onclick=saveOffer;
+    $('saveOffer').onclick=()=>technical.active?technical.saveOffer():saveOffer();
     $('foAlternative').addEventListener('change',()=>{
       if(!pci||!workspace)return;
       try{workspace=setFoAlternative(workspace,pci.orientation_id,$('foAlternative').value);markDirty('oferta');renderOffer();message('Alternativa FO cambiada, todavía sin guardar.','warn');}
@@ -209,6 +211,7 @@ async function reloadSchool(){
   $('schoolLabel').textContent=(school?.cue||'Sin CUE')+' · ID '+schoolId;
   const data=await call('list-school-pcis',{school_id:schoolId});
   pcis=Array.isArray(data.pcis)?data.pcis:[];
+  technical.close();
   pci=null;workspace=null;auto=null;selectedFgArea=null;selectedFoSpace=null;
   fgDirty=false;foDirty=false;offerDirty=false;
   show('editor',false);show('technicalPending',false);show('empty');renderPcis();
@@ -322,22 +325,23 @@ async function openPci(id){
     status('Cargando PCI y resguardo histórico…');
     const result=await call('get-school-pci',{school_id:schoolId,pci_id:id});
     if(result.pci?.model==='tecnica'){
-      // Ficha de especialidad registrada sin habilitar editor Media/FO.
+      // Mismo editor institucional FG → Oferta → Desarrollo curricular V2.
+      // La especialidad y el PCI registrados identifican la fuente y el ámbito.
       const tech=result.pci;
-      if(Number(tech.school_id)!==schoolId)
-        throw Error('PCI técnico de otra escuela: lectura rechazada.');
+      if(Number(tech.school_id)!==schoolId || !tech.legacy_sha256 ||
+        !tech.orientation_id || !tech.process_id)
+        throw Error('Falta validar la escuela o el resguardo original de este PCI Técnico.');
+      technical.close();
       pci=tech;workspace=null;auto=null;fgDirty=false;offerDirty=false;foDirty=false;
-      show('empty',false);show('editor',false);show('technicalPending');
-      $('technicalName').textContent=tech.title;
-      $('technicalRulesFrame').src='pci-tecnica-pautas.html?especialidad='+encodeURIComponent(tech.specialty_name||'');
-      $('technicalInfo').textContent=(tech.specialty_name||'Especialidad pendiente')+
-        ' · Turno '+({manana:'mañana',tarde:'tarde',vespertino:'vespertino',noche:'noche'}[tech.shift_id]||'sin definir')+
-        ' · Documento original conservado sin modificaciones';
-      renderPcis();
-      message('La especialidad técnica no usa las reglas de Formación Orientada de Media.','warn');
-      status('Técnica registrada · pendiente de reglas');
+      selectedFgArea=null;selectedFoSpace=null;
+      await technical.open(tech);
+      show('technicalPending',false);
+      show('empty',false);show('editor');
+      renderPcis();setTab('fg',true);
+      status('PCI Técnico · mapa C1–C12 y planes de aprendizaje');
       return;
     }
+    technical.close();
     show('technicalPending',false);
     const p=requireSchoolPci(result.pci,schoolId);
     if(!ORIENTATIONS.some(o=>o.id===p.orientation_id))
@@ -398,10 +402,13 @@ async function saveUnit(component,unitKind,unitId,baseVersion,document,revision)
   return result;
 }
 function setTab(next,force=false){
-  if(!force && !canLeave())return;
+  if(!['fg','oferta','fo'].includes(next))return;
+  // Cambiar de pestaña técnica no descarta el borrador; cambia solo de vista.
+  if(!technical.active && !force && !canLeave())return;
   tab=next;
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===next));
   for(const name of ['fg','offer','fo'])show(name+'Pane',next===(name==='offer'?'oferta':name));
+  if(technical.active){technical.renderTab(next);return;}
   if(next==='oferta')renderOffer();
   if(next==='fo')renderFoSpaces();
 }
