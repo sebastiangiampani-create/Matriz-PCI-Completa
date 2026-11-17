@@ -43,3 +43,9 @@ footer{text-align:center;color:#68818e;font-size:.78rem;padding:15px}
 .tech-offer-view .workCard textarea{min-height:65px}
 .tech-offer-view .workCard details{margin:6px 0}
 @media(max-width:900px){.tech-offer-view>.split,.tech-offer-view .workCard>.split{grid-template-columns:minmax(0,1fr)}.tech-offer-view .areaList{max-height:220px}}
+
+
+/* Índice de planes técnico V2: mismo menú de áreas, altura acotada. */
+#foSpaces.tech-plan-index{max-height:560px;overflow-y:auto;align-content:start;padding-right:3px}
+#foSpaces.tech-plan-index .areaItem{padding:9px 11px;font-size:.78rem;line-height:1.3}
+#foSpaces.tech-plan-index .areaItem.active{padding:8px 10px}
