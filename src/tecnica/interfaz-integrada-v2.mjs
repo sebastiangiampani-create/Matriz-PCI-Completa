@@ -34,7 +34,7 @@ const field=(host,label,value,callback,{multiline=true}={})=>{
  const wrapper=el('label',host);el('span',wrapper,label);
  const input=el(multiline?'textarea':'input',wrapper);
  input.value=value==null?'':String(value);
- input.addEventListener('input',()=>callback(input.value));
+ input.addEventListener('change',()=>callback(input.value));
  return input;
 };
 const normalized=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
