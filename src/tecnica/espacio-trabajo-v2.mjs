@@ -243,7 +243,9 @@ export function setTechnicalSubject(document,spaceId,sourceId,bank,enabled){
  if(!s.area||!TECH_FG_AREAS.concat(TECH_SPECIFIC_AREAS).includes(s.area))
   throw Error('Área curricular inválida.');
  // Los contenidos de distintas especialidades nunca se mezclan.
- if(src.source_sha256!==document.source_sha256)throw Error('La fuente oficial pertenece a otra especialidad.');
+ if(src.source_sha256!==document.source_sha256||
+   !src.sectionId.startsWith(document.specialty_id+'-'))
+   throw Error('La fuente oficial pertenece a otra especialidad.');
  const ids=new Set(s.contentIds);
  if(enabled)ids.add(src.id);else ids.delete(src.id);
  s.contentIds=[...ids];s.subjectIds=[...new Set(
@@ -335,6 +337,7 @@ export function technicalPlanSeed({pci,space,offer}){
   school_id:Number(pci.school_id),pci_id:pci.pci_id,
   orientation_id:pci.orientation_id,process_id:pci.process_id,
   original_sha256:pci.legacy_sha256,specialty_id:offer.specialty_id,
+  specialty_name:offer.specialty_name,
   source_sha256:offer.source_sha256,space_id:space.id,year:space.year,format:space.format,
   name:space.name,objective:'',synopsis:'',context:'',practiceAxis:'',
   contentIds:[...space.contentIds],status:'borrador_no_homologado',
