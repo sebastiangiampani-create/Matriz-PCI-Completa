@@ -52,10 +52,50 @@ function contentUnit(body){
   const unitId=text(body.unit_id,240),version=text(body.base_version,160);
   if(!ALLOWED_KINDS[component]?.has(kind)||!unitId)return null;
   if(component==='fg'&&!FG_BASES.has(version))return null;
-  if(component==='fo'&&version!=='fo-sec-aprende-v2/1')return null;
+  if(component==='fo'&&!['fo-sec-aprende-v2/1','fo-tecnica-v1'].includes(version))return null;
   if(component==='articulacion'&&version!=='pci-articulacion-fg-fo/1')return null;
-  if(component==='oferta'&&version!=='oferta-pci-orientacion-v1')return null;
+  if(component==='oferta'&&!['oferta-pci-orientacion-v1','oferta-tecnica-v1'].includes(version))return null;
   return {component,kind,unitId,version};
+}
+function checkTechnicalDocument({doc,unit,registered,original,sid,pciId}){
+  const base=doc&&doc.model==='tecnica'&&doc.status==='borrador_no_homologado'&&
+    Number(doc.school_id)===sid&&doc.pci_id===pciId&&
+    doc.orientation_id===registered.orientation_id&&
+    doc.process_id===registered.process_id&&
+    doc.original_sha256===original.legacy_sha256&&
+    doc.specialty_name===registered.specialty_name&&
+    /^[0-9a-f]{64}$/i.test(String(doc.source_sha256||''))&&
+    /^[a-z0-9_]{3,100}$/.test(String(doc.specialty_id||''));
+  if(!base)return false;
+  if(unit.component==='oferta'&&unit.kind==='map'&&unit.version==='oferta-tecnica-v1'){
+    if(doc.schema!=='pci-oferta-tecnica-v1/1'||!Array.isArray(doc.spaces)||
+      doc.spaces.length<30||doc.spaces.length>160)return false;
+    const ids=new Set();
+    for(const space of doc.spaces){
+      if(!space||typeof space.id!=='string'||ids.has(space.id)||space.id.length>240||
+        !Number.isInteger(space.year)||space.year<1||space.year>6||
+        !Number.isInteger(space.term)||space.term<1||space.term>12||
+        Math.ceil(space.term/2)!==space.year||
+        !['anual','cuatrimestral'].includes(space.duration)||
+        space.endTerm!==(space.duration==='anual'?space.term+1:space.term)||
+        !Array.isArray(space.subjectIds)||!Array.isArray(space.contentIds)||
+        space.contentIds.length>400||space.subjectIds.length>400||
+        typeof space.name!=='string'||space.name.length>240)return false;
+      ids.add(space.id);
+    }
+    return true;
+  }
+  if(unit.component==='fo'&&unit.kind==='space'&&unit.version==='fo-tecnica-v1'){
+    return doc.schema==='pci-fo-tecnica-v1/1'&&doc.space_id===unit.unitId&&
+      Number.isInteger(doc.year)&&doc.year>=1&&doc.year<=6&&
+      typeof doc.format==='string'&&doc.format.length<80&&
+      Array.isArray(doc.plansBimestrales)&&doc.plansBimestrales.length===4&&
+      doc.plansBimestrales.every((plan,index)=>plan&&Number(plan.number)===index+1&&
+        plan.stages&&typeof plan.stages==='object'&&
+        ['punto_partida','indagacion','produccion','evaluacion'].every(stage=>
+          plan.stages[stage]&&typeof plan.stages[stage]==='object'));
+  }
+  return false;
 }
 export async function handleMultiPci({action,body,session,db,cors,inScope,hasPerm,actorFromSession}){
   if(!ACTIONS.has(action))return null;
@@ -137,12 +177,19 @@ export async function handleMultiPci({action,body,session,db,cors,inScope,hasPer
       const found=await rpc('pci_workspace_get_pci_v1',{p_school_id:sid,p_pci_id:pciId});
       return found?reply({pci:found}):reply({error:'PCI no encontrado'},404);
     }
-    // Denegar cualquier lectura/escritura de unidades técnicas hasta
-    // validar e incorporar la composición oficial de esa especialidad.
-    if(registered.model==='tecnica'||registered.curriculum_status==='pending_rules')
-      return reply({error:'Las especialidades técnicas están registradas, pero su composición curricular permanece pendiente de reglas oficiales.'},423);
     const unit=contentUnit(body);
     if(!unit)return reply({error:'Componente curricular o versión inválida'},400);
+    const technical=registered.model==='tecnica';
+    // Técnica usa su propio contrato y sus propios IDs de PCI/Proceso. Nunca
+    // habilitar formatos de Media en una especialidad ni viceversa.
+    const permitted=technical?
+      (unit.component==='oferta'&&unit.kind==='map'&&unit.version==='oferta-tecnica-v1')||
+      (unit.component==='fo'&&unit.kind==='space'&&unit.version==='fo-tecnica-v1'):
+      (registered.curriculum_status!=='pending_rules'&&
+        !['oferta-tecnica-v1','fo-tecnica-v1'].includes(unit.version));
+    if(!permitted)return reply({error:technical?
+      'Este PCI Técnico admite exclusivamente mapa y planes técnicos; no admite contenidos de Media.':
+      'La unidad no corresponde a este modelo curricular.'},423);
     const scope={
       p_school_id:sid,p_orientation_id:registered.orientation_id,
       p_process_id:registered.process_id,p_component:unit.component,
@@ -168,7 +215,21 @@ export async function handleMultiPci({action,body,session,db,cors,inScope,hasPer
        doc.orientation_id!==registered.orientation_id ||
        doc.original_sha256!==original.legacy_sha256)
       return reply({error:'Documento asociado a otra institución, PCI o versión de origen'},409);
-    if((unit.component==='fg' && (
+    if(technical){
+      if(!checkTechnicalDocument({doc,unit,registered,original,sid,pciId}))
+        return reply({error:'Borrador técnico inválido, no homologado o perteneciente a otra especialidad.'},400);
+      if(unit.component==='fo'){
+        const parent=await rpc('pci_collab_get_unit_v1',{
+          ...scope,p_component:'oferta',p_unit_kind:'map',p_unit_id:'mapa-oferta-tecnica-v1'
+        });
+        const parentSpace=parent?.exists&&parent.document?.model==='tecnica'&&
+          parent.document?.specialty_id===doc.specialty_id&&
+          parent.document?.source_sha256===doc.source_sha256&&
+          parent.document?.spaces?.find?.(s=>s.id===doc.space_id);
+        if(!parentSpace||parentSpace.year!==doc.year||parentSpace.format!==doc.format)
+          return reply({error:'Primero guardá el mapa técnico vigente; el espacio o su año no coincide.'},409);
+      }
+    }else if((unit.component==='fg' && (
          unit.kind!=='area' || doc.schema!=='pci-fg-area-v2/1' ||
          doc.area!==unit.unitId || !Array.isArray(doc.groups))) ||
        (unit.component==='fo' && (
