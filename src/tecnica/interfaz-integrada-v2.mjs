@@ -107,6 +107,7 @@ export function createIntegratedTechnicalUI({
   if(foH)foH.textContent=tech?'Desarrollo curricular y planes de aprendizaje':'Planes de aprendizaje';
   const a=$('foAlternative')?.closest('label');
   if(a)a.hidden=tech;
+  if(!tech)$('offerGrid').classList.remove('tech-offer-view');
   $('confirmFoContents').hidden=tech;
   $('saveOffer').textContent=tech?'Guardar mapa técnico':'Guardar mapa';
   const foDescription=$('foPane')?.querySelector('.topline .muted');
@@ -213,7 +214,7 @@ export function createIntegratedTechnicalUI({
  function renderOffer(){
   if(!offer)return;
   renderTable();
-  const target=$('offerGrid');target.replaceChildren();
+  const target=$('offerGrid');target.replaceChildren();target.classList.add('tech-offer-view');
   const tools=el('div',target,undefined,'actions');
   picker(tools,'Año',[['0','Todos'],...[1,2,3,4,5,6].map(y=>[y,y+'º'])],spaceYear,v=>{
    spaceYear=Number(v);activeSpace=null;renderOffer();
@@ -225,11 +226,13 @@ export function createIntegratedTechnicalUI({
   const year=Number(spaceYear);
   const list=offer.spaces.filter(x=>(!year||x.year===year)&&(!spaceArea||x.area===spaceArea)).sort(
    (a,b)=>a.year-b.year||a.term-b.term||a.area.localeCompare(b.area));
-  const short=el('div',target,undefined,'offerGrid');
+  const layout=el('div',target,undefined,'split');
+  const short=el('div',layout,undefined,'areaList');
+  short.setAttribute('aria-label','Espacios curriculares del PCI Técnico');
   for(const s of list){
    const b=btn(short,s.name+' · '+s.year+'º C'+s.term+
      (s.duration==='anual'?'–C'+s.endTerm:'')+' · '+s.contentIds.length+' refs',
-     ()=>{activeSpace=s.id;renderOffer();},'offerCard'+(s.id===activeSpace?' active':''));
+     ()=>{activeSpace=s.id;renderOffer();},'areaItem'+(s.id===activeSpace?' active':''));
    b.title='Abrir agrupamiento curricular';
   }
   for(let y=4;y<=6;y++){
@@ -270,8 +273,8 @@ export function createIntegratedTechnicalUI({
    button.title='Vinculación con el Futuro, según Diseño Curricular de la especialidad';
   }
   const s=offer.spaces.find(x=>x.id===activeSpace);
-  if(!s){createWarning(target,'Elegí un espacio del mapa o de la lista para distribuir materias, contenidos y planificar.');summarizeMap();return;}
-  const panel=el('div',target,undefined,'offerCard');
+  if(!s){createWarning(layout,'Elegí un espacio del mapa o de la lista para distribuir materias, contenidos y planificar.');summarizeMap();return;}
+  const panel=el('div',layout,undefined,'workCard');
   el('h4',panel,s.name+' · '+s.year+'º');
   createWarning(panel,'C'+s.term+(s.duration==='anual'?'–C'+s.endTerm:'')+
    ' · '+choiceLabel(s)+' · '+s.format);
