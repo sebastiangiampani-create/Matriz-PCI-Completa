@@ -67,7 +67,7 @@ function sourcePdf(row){
 const createWarning=(host,message)=>el('p',host,message,'muted');
 export function createIntegratedTechnicalUI({
  canEdit=()=>false,getUnit,saveUnit,saveSafe,
- download,rememberDraft,forgetDraft,
+ download,rememberDraft,forgetDraft,recallDraft,
  message=()=>{},status=()=>{}
 }){
  let pci=null,source=null,bank=[],offer=null,offerRevision=0,offerDirty=false;
@@ -403,7 +403,9 @@ export function createIntegratedTechnicalUI({
    if(token!==loading)return;
    const incoming=remote.exists?guardTechnicalPlan(remote.document,pci,s,offer):technicalPlanSeed({pci,space:s,offer});
    planRevision=Number(remote.revision)||0;
-   plan=copy(incoming);planDirty=false;activePlanId=id;
+   const restored=recallDraft('tecnica-plan',id,planRevision,pci,
+     value=>guardTechnicalPlan(value,pci,s,offer));
+   plan=copy(restored||incoming);planDirty=!!restored;activePlanId=id;
    renderPlanList();renderPlan();
    status('Planes técnicos listos');
   }catch(error){message('No se pudieron abrir los planes de Técnica: '+error.message,'error');}
@@ -511,8 +513,11 @@ export function createIntegratedTechnicalUI({
   if(token!==loading)return;
   const initial=saved.exists?guardTechnicalOffer(saved.document,next,file):
    technicalOfferSeed({pci:next,source:file});
-  pci=next;source=file;bank=technicalSubjectBank(file);offer=initial;
-  offerRevision=Number(saved.revision)||0;offerDirty=false;plan=null;
+  const revision=Number(saved.revision)||0;
+  const restored=recallDraft('oferta-tecnica','mapa-oferta-tecnica-v1',revision,next,
+    value=>guardTechnicalOffer(value,next,file));
+  pci=next;source=file;bank=technicalSubjectBank(file);offer=restored||initial;
+  offerRevision=revision;offerDirty=!!restored;plan=null;
   planRevision=0;planDirty=false;activePlanId=null;activeSpace=null;
   activeArea='Ciencias Sociales';spaceYear=0;spaceArea='';
   setLabels(true);buildHeader();renderTab('fg');
