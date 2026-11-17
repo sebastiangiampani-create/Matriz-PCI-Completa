@@ -220,6 +220,52 @@ export function addTechnicalIntegration(document,{year}){
   character:'electivo',provisional:true,requiredPlan:true,kind:'fo'}));
  return next;
 }
+/**
+ * Opciones expresamente condicionadas por el diseño curricular de la especialidad.
+ * NUNCA se generan como obligatorias cuando no hay identificación oficial.
+ */
+export function addTechnicalRepresentationThird(document){
+ const next=copy(document);
+ if(next.spaces.some(s=>s.id==='t-representacion-3'))
+   throw Error('Tecnología de la Representación de 3.º ya existe.');
+ next.spaces.push(slot({id:'t-representacion-3',year:3,term:5,
+  format:'tecnologia_representacion',area:'Tecnología de la Representación',
+  label:'Tecnología de la Representación · 3º',duration:'anual',
+  requiredPlan:true,provisional:true,kind:'fg'}));
+ return next;
+}
+export function addTechnicalAnnualPending(document,year){
+ const specialty=findSpecialty(document.specialty_id);
+ if(specialty?.status!=='not_defined_in_document')
+   throw Error('Solo las especialidades sin anual definido pueden incorporarlo bajo revisión del plan.');
+ if(![4,5,6].includes(year))throw Error('El espacio anual solo se ofrece entre 4.º y 6.º.');
+ if(document.spaces.some(s=>s.id==='t-anual-'+year))
+   throw Error('Este espacio anual ya existe.');
+ const draft=copy(document);
+ draft.spaces.push(slot({
+  id:'t-anual-'+year,year,term:2*year-1,
+  format:'espacio_anual_especialidad',
+  area:'Espacio anual de la especialidad',
+  label:'Espacio anual pendiente de definición oficial · '+year+'º',
+  duration:'anual',provisional:true,requiredPlan:true,kind:'fo'
+ }));
+ return draft;
+}
+export function addTechnicalProfessionalPractice(document,year){
+ if(![5,6].includes(year))throw Error('La práctica se documenta en 5.º o 6.º según plan.');
+ if(document.spaces.filter(s=>s.format==='practicas_profesionalizantes').length>=2)
+   throw Error('El recorrido de Prácticas Profesionalizantes contempla hasta dos espacios según la especialidad.');
+ if(document.spaces.some(s=>s.id==='t-practicas-'+year))
+   throw Error('Ya hay una práctica registrada en ese año.');
+ const draft=copy(document);
+ draft.spaces.push(slot({
+  id:'t-practicas-'+year,year,term:2*year-1,
+  format:'practicas_profesionalizantes',area:'Prácticas Profesionalizantes',
+  label:'Prácticas Profesionalizantes · '+year+'º',
+  duration:'anual',requiredPlan:true,provisional:true,kind:'fo'
+ }));
+ return draft;
+}
 export function moveTechnicalTerm(document,spaceId,targetTerm){
  const draft=copy(document);
  const s=draft.spaces.find(x=>x.id===spaceId);
