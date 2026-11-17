@@ -5,7 +5,7 @@ import {
  TECH_OFFER_SCHEMA,TECH_OFFER_VERSION,TECH_PLAN_SCHEMA,TECH_PLAN_VERSION,
  technicalOfferSeed,technicalSubjectBank,technicalMapRows,technicalCoverage,
  validateTechnicalDraft,addTechnicalIntegration,moveTechnicalTerm,
- setTechnicalSubject,technicalPlanSeed,guardTechnicalOffer,guardTechnicalPlan,
+ setTechnicalSubject,updateTechnicalSpace,technicalPlanSeed,guardTechnicalOffer,guardTechnicalPlan,
  technicianTerms
 } from '../src/tecnica/espacio-trabajo-v2.mjs';
 
@@ -85,6 +85,20 @@ test('excepciones Técnica: ADE tiene 6.º troncal, Geógrafo Matemático no tie
  assert.equal(find(mec,'t-metrologia-3').duration,'cuatrimestral');
  assert.equal(mec.spaces.filter(x=>x.format==='integracion_social').length,8);
  assert.equal(mec.spaces.filter(x=>x.id==='t-matematica-6').length,0);
+});
+test('la oferta del Taller de la Especialidad es variable y se decide sin borrar datos',()=>{
+ const p=pci(),doc=src(),seed=technicalOfferSeed({pci:p,source:doc});
+ assert.equal(find(seed,'t-taller-especialidad-3').included,true);
+ assert.equal(find(seed,'t-taller-especialidad-4').included,false);
+ assert.equal(find(seed,'t-taller-especialidad-5').included,false);
+ assert.equal(find(seed,'t-taller-especialidad-6').included,false);
+ const original=technicalMapRows(seed).areas.find(x=>x.area==='Taller de la Especialidad');
+ assert.equal(original.cells[6].spaces.some(x=>x.id==='t-taller-especialidad-4'),false);
+ const edited=updateTechnicalSpace(seed,'t-taller-especialidad-4',{included:true});
+ const after=technicalMapRows(edited).areas.find(x=>x.area==='Taller de la Especialidad');
+ assert.equal(after.cells[6].spaces.some(x=>x.id==='t-taller-especialidad-4'),true);
+ assert.equal(find(seed,'t-taller-especialidad-4').included,false);
+ assert.throws(()=>updateTechnicalSpace(seed,'t-matematica-1',{included:false}),/Solo se permite/);
 });
 test('ubicación flexible C7 a C12 para Ciudadanía y Trabajo/Ciencia y Tecnología',()=>{
  const map=technicalOfferSeed({pci:pci(),source:src()});
