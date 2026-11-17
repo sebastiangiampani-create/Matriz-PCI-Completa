@@ -33,7 +33,7 @@ let session=null,schools=[],schoolId=null,pcis=[],pci=null,workspace=null,auto=n
 let selectedFgArea=null,fgDoc=null,fgRevision=0,fgDirty=false;
 let offerRevision=0,offerDirty=false,selectedFoSpace=null,foDoc=null,foRevision=0,foDirty=false;
 let tab='fg',busy=false;
-const technical=createIntegratedTechnicalUI({canEdit,getUnit,saveUnit,saveSafe:safeSave,download,rememberDraft,forgetDraft,message,status});
+const technical=createIntegratedTechnicalUI({canEdit,getUnit,saveUnit,saveSafe:safeSave,download,rememberDraft,forgetDraft,recallDraft,message,status});
 
 async function call(action,data={}){
   const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:session?.token,...data}),cache:'no-store'});
@@ -198,7 +198,7 @@ async function init(){
       try{workspace=confirmFoContentAfterOffer(workspace,{orientationId:pci.orientation_id,refs,foRows:refs.fo});markDirty('oferta');renderOffer();message('Contenidos FO confirmados por la regla curricular. Falta guardar.','warn');}
       catch(error){message(error.message,'error');}
     };
-    window.addEventListener('beforeunload',e=>{if(fgDirty||foDirty||offerDirty){e.preventDefault();e.returnValue='';}});
+    window.addEventListener('beforeunload',e=>{if(fgDirty||foDirty||offerDirty||technical.isDirty()){e.preventDefault();e.returnValue='';}});
     show('app');
     await reloadSchool();
     status('Conectado');
