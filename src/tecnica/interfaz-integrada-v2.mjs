@@ -90,6 +90,14 @@ export function createIntegratedTechnicalUI({
  function setLabels(tech){
   const n=document.querySelector('[data-tab="fo"]');
   if(n)n.textContent=tech?'Formación Técnico-Específica':defaultText.tab3;
+  const fgDescription=$('fgPane')?.querySelector('.topline .muted');
+  if(fgDescription)fgDescription.textContent=tech?
+    'Formación General y Científico-Tecnológica: materias y páginas oficiales por nivel. Los agrupamientos y planes históricos siguen disponibles como resguardo; no se eliminan.':
+    'Los contenidos y las secuencias anteriores se importan sin cambiar el documento original. Las equivalencias V2 se identifican automáticamente.';
+  const offerDescription=$('offerPane')?.querySelector('.topline .muted');
+  if(offerDescription)offerDescription.textContent=tech?
+    'Seis niveles con troncales anuales, integraciones, espacios formativos, especialidad y dos proyectos de Vinculación. La carga horaria debe comprobarse con el diseño particular.':
+    'Distribución de laboratorios, talleres y Proyecto de Vinculación. Las materias de FO se seleccionan según la orientación y su carga horaria.';
   const fgH=$('fgPane')?.querySelector('.topline h3');
   const offerH=$('offerPane')?.querySelector('.topline h3');
   const foH=$('foPane')?.querySelector('.topline h3');
@@ -177,8 +185,12 @@ export function createIntegratedTechnicalUI({
   const map=technicalMapRows(offer);
   for(const group of map.areas){
    const tr=el('tr',body);el('th',tr,group.area);
-   for(const cell of group.cells){
-    const td=el('td',tr);
+   for(let i=0;i<group.cells.length;i++){
+    const cell=group.cells[i],td=el('td',tr);
+    // Los espacios anuales ocupan ambos cuatrimestres del nivel.
+    const annual=cell.term%2===1&&cell.spaces.length>0&&
+      cell.spaces.every(x=>x.duration==='anual'&&x.term===cell.term);
+    if(annual){td.colSpan=2;i++;}
     for(const s of cell.spaces){
      const name=s.name.replace(/\s+·\s+\d+º$/,'');
      btn(td,name+(s.duration==='anual'?' · anual':''),()=>{
