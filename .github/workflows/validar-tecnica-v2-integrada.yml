@@ -8,6 +8,7 @@ on:
       - "src/tecnica/interfaz-integrada-v2.mjs"
       - "src/orientaciones-online.mjs"
       - "pci-orientaciones.html"
+      - "pci-orientaciones.css"
       - "migration/concurrencia/003_supabase_scoped_units.sql"
       - "src/multipci/pci-workspace-handlers.mjs"
       - "supabase/functions/pci-access/pci-workspace-handlers.mjs"
