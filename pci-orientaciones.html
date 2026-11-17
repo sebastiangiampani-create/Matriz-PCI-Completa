@@ -3,19 +3,19 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
-  <title>Mis PCI por orientación · Matriz PCI</title>
+  <title>Mis PCI de Media y Técnica · Matriz PCI</title>
   <link rel="stylesheet" href="pci-orientaciones.css?v=20261111">
 </head>
 <body>
   <header class="banner">
     <div class="brand"><img class="school-logo" src="assets/em-logo-header.svg" alt="Escuela de Maestros">
-      <div><strong>Matriz PCI Completa</strong><small>Secundaria Aprende · Proyectos por orientación</small></div>
+      <div><strong>Matriz PCI Completa</strong><small>Secundaria Aprende · Media y Técnica</small></div>
     </div>
     <nav aria-label="Navegación principal"><a href="index.html">Inicio</a><a href="panel-general.html">Administración</a><a href="panel-escuela.html">Panel institucional</a></nav>
   </header>
   <main>
     <section class="intro">
-      <div><span class="eyebrow">Gestión institucional</span><h1>Proyectos curriculares por orientación</h1>
+      <div><span class="eyebrow">Gestión institucional</span><h1>Proyectos curriculares por orientación y especialidad</h1>
       <p><strong>Para las escuelas que ya están registradas:</strong> seleccioná la institución de siempre y agregale PCI de Media, Técnica o ambos modelos. No hay que darla de alta de nuevo ni modificar las claves de acceso; los contenidos y planes históricos se conservan.</p></div>
       <span id="status" role="status" aria-live="polite" class="status">Comprobando conexión…</span>
     </section>
@@ -46,7 +46,7 @@
               <option value="noche">Noche</option>
             </select></label>
           <label>Nombre del PCI<input id="pciTitleInput" maxlength="150" required placeholder="Ej.: Economía · Turno Mañana"></label>
-          <p class="note">La especialidad técnica se registra en esta escuela y se conserva por separado. Su editor estará bloqueado hasta incorporar las nuevas reglas de composición.</p>
+          <p class="note">Media y Técnica comparten la misma interfaz de planificación. Cada PCI conserva su modalidad, su especialidad u orientación, sus planes y un guardado independiente. Los contenidos técnicos requieren contrastar el plan de estudios particular antes de homologarse.</p>
           <div class="actions"><button type="submit" class="btn primary">Crear PCI</button><button type="button" class="btn" id="cancelPci">Cancelar</button></div>
         </form>
         <hr>
@@ -109,7 +109,7 @@
       </section>
     </div>
   </main>
-  <footer>PCI · Versión por orientación · Módulo aditivo. La matriz original se mantiene independiente.</footer>
+  <footer>PCI V2 · Media y Técnica · Misma estructura institucional. La matriz original permanece protegida.</footer>
   <script type="module" src="src/orientaciones-online.mjs?v=20261111"></script>
 </body>
 </html>
