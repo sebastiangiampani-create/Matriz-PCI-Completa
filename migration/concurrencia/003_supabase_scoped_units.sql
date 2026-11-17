@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS pci_collaboration.units (
   ),
   CONSTRAINT units_version_check CHECK (
     (component='fg' AND base_version IN ('fg-matriz-historica/1','fg-sec-aprende-v2/1')) OR
-    (component='fo' AND base_version='fo-sec-aprende-v2/1' AND orientation_id <> '_general') OR
+    (component='fo' AND base_version IN ('fo-sec-aprende-v2/1','fo-tecnica-v1') AND orientation_id <> '_general') OR
     (component='articulacion' AND base_version='pci-articulacion-fg-fo/1') OR
     (component='oferta' AND base_version LIKE 'oferta-%')
   )
@@ -130,7 +130,7 @@ BEGIN
     (p_component='fg' AND p_unit_kind IN ('area','group','plan')
       AND p_base_version IN ('fg-matriz-historica/1','fg-sec-aprende-v2/1')) OR
     (p_component='fo' AND p_unit_kind IN ('space','group','plan')
-      AND p_base_version='fo-sec-aprende-v2/1' AND p_orientation_id <> '_general') OR
+      AND p_base_version IN ('fo-sec-aprende-v2/1','fo-tecnica-v1') AND p_orientation_id <> '_general') OR
     (p_component='articulacion' AND p_unit_kind='link'
       AND p_base_version='pci-articulacion-fg-fo/1') OR
     (p_component='oferta' AND p_unit_kind='map'
