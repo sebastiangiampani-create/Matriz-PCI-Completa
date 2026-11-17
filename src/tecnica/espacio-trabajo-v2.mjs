@@ -52,7 +52,7 @@ function createSlots(specialty){
  for(let year=1;year<=3;year++)for(const half of [1,2])put({
   id:'t-social-'+year+'-'+half,year,term:2*year-2+half,
   format:'integracion_social',area:'Ciencias Sociales',label:'Integración de Ciencias Sociales',
-  character:year===1||year===2?'obligatorio':'electivo',kind:'fg'
+  character:year<=2||(specialty.id==='computacion'&&year===3&&half===1)?'obligatorio':'electivo',kind:'fg'
  });
  for(const half of [1,2])put({
   id:'t-social-flex-'+half,year:4,term:6+half,format:'integracion_social',
@@ -309,6 +309,15 @@ export function validateTechnicalDraft(document,bank){
   pvf:c('vinculacion_futuro')
  };
  const expectedSocial=specialty.id==='computacion'?10:8;
+ const socialObligatory=document.spaces.filter(x=>
+   x.format==='integracion_social'&&x.character==='obligatorio').length;
+ const naturalObligatory=document.spaces.filter(x=>
+   x.format==='integracion_natural'&&x.character==='obligatorio').length;
+ if(socialObligatory!==(specialty.id==='computacion'?5:4))
+   issues.push({code:'SOCIAL_EIO',message:'Ciencias Sociales requiere '+(specialty.id==='computacion'?5:4)+
+      ' espacios obligatorios y el resto electivos.'});
+ if(naturalObligatory!==4)
+   issues.push({code:'NATURAL_EIO',message:'Ciencias Naturales requiere 4 obligatorios y 2 electivos.'});
  for(const [label,actual,expected] of [
   ['Ciencias Sociales',sums.sociales,expectedSocial],
   ['Ciencias Naturales',sums.naturales,6],
