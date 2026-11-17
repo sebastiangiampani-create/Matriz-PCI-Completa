@@ -8,7 +8,8 @@ import {
  TECH_FIELDS,TECH_FG_AREAS,TECH_SPECIFIC_AREAS,TECH_OFFER_VERSION,TECH_PLAN_VERSION,
  technicalSubjectBank,technicalOfferSeed,guardTechnicalOffer,guardTechnicalPlan,
  technicalMapRows,technicalCoverage,technicalPlanSeed,validateTechnicalDraft,
- addTechnicalIntegration,moveTechnicalTerm,setTechnicalSubject,updateTechnicalSpace,
+ addTechnicalIntegration,addTechnicalRepresentationThird,addTechnicalAnnualPending,
+ addTechnicalProfessionalPractice,moveTechnicalTerm,setTechnicalSubject,updateTechnicalSpace,
  technicianTerms,TECH_STAGES
 } from './espacio-trabajo-v2.mjs';
 
@@ -238,6 +239,35 @@ export function createIntegratedTechnicalUI({
     catch(err){message(err.message,'error');}
    });
    b.disabled=!writable()||count>=6;
+  }
+  // Condiciones particulares: habilitar solamente alternativas documentadas
+  // como dependientes del diseño curricular, nunca prescribirlas de oficio.
+  const specialty=findSpecialty(pci.specialty_name);
+  if(!offer.spaces.some(s=>s.id==='t-representacion-3')){
+   const button=btn(tools,'+ Representación anual 3.º · según plan',()=>{
+    try{offer=addTechnicalRepresentationThird(offer);changedOffer();}
+    catch(err){message(err.message,'error');}
+   });button.disabled=!writable();button.title='Requiere comprobar que el plan de esta especialidad la incluye en 3.º';
+  }
+  if(specialty?.status==='not_defined_in_document'){
+   for(const year of [4,5,6]){
+    if(offer.spaces.some(s=>s.id==='t-anual-'+year))continue;
+    const button=btn(tools,'+ Espacio anual de '+year+'º · por definir',()=>{
+     try{offer=addTechnicalAnnualPending(offer,year);changedOffer();}
+     catch(err){message(err.message,'error');}
+    });
+    button.disabled=!writable();
+    button.title='Solo si el diseño curricular vigente lo determina; no consta en pautas del 05/10/2026';
+   }
+  }
+  for(const year of [5,6]){
+   if(offer.spaces.some(s=>s.id==='t-practicas-'+year))continue;
+   const button=btn(tools,'+ Prácticas Profesionalizantes '+year+'º',()=>{
+    try{offer=addTechnicalProfessionalPractice(offer,year);changedOffer();}
+    catch(err){message(err.message,'error');}
+   });
+   button.disabled=!writable();
+   button.title='Vinculación con el Futuro, según Diseño Curricular de la especialidad';
   }
   const s=offer.spaces.find(x=>x.id===activeSpace);
   if(!s){createWarning(target,'Elegí un espacio del mapa o de la lista para distribuir materias, contenidos y planificar.');summarizeMap();return;}
