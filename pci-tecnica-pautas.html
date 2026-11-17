@@ -31,6 +31,16 @@ span.pending{background:#fff4df;color:#745117}
 .msgList li.error{border-color:#ba4053;background:#fff3f4}
 .msgList li.ok{border-color:#178873;background:#eaf7f4}
 footer{color:#6e8390;padding:12px 0;font-size:.76rem}
+/* Los contenidos oficiales se consultan dentro de la MISMA pantalla y estética del mapa PCI V2. */
+.prioritized-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:9px;margin-top:9px}
+.prioritized-list details{min-width:0;border:1px solid #d3e4e8;border-radius:11px;background:#f8fbfc;padding:10px 12px}
+.prioritized-list summary{cursor:pointer;line-height:1.45;list-style-position:inside}
+.prioritized-list summary strong{font-size:.85rem}
+.prioritized-list summary small{display:block;margin:3px 0 0 16px;font-size:.73rem;color:#617b87}
+.prioritized-list .source-detail{margin-top:10px;padding-top:9px;border-top:1px solid #d3e4e8}
+.prioritized-list .source-detail pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:.75rem;line-height:1.45;max-height:300px;overflow:auto;background:#fff;border:1px solid #d9e5e9;border-radius:9px;padding:9px}
+.prioritized-list a{color:#086b67;font-weight:800;font-size:.78rem}
+#contentStatus[aria-busy=true]{color:#087581}
 [hidden]{display:none!important}
 @media(max-width:750px){.panel{padding:13px}.stats{grid-template-columns:1fr 1fr}.row{align-items:flex-start}thead th{font-size:.72rem}}
 </style>
@@ -70,6 +80,26 @@ footer{color:#6e8390;padding:12px 0;font-size:.76rem}
     <p class="muted">Materias de 4.º, 5.º y 6.º de la tabla del documento. No son una lista exhaustiva de la formación técnica específica.</p>
     <div id="annualSubjects" class="grid"></div>
     <div id="exceptions" class="info" style="margin-top:13px"></div>
+  </section>
+
+  <section class="panel" id="officialContents">
+    <div class="row">
+      <div><span class="label">Fuente oficial · Contenidos priorizados CABA</span><h2>Materias y contenidos de la especialidad</h2></div>
+      <a id="contentPdf" class="btn ghost" href="#" target="_blank" rel="noopener noreferrer" hidden>Consultar PDF oficial</a>
+    </div>
+    <p class="muted">Catálogo de referencia incorporado al mapa técnico existente. Los nombres, campos y años detectados automáticamente requieren revisión contra el PDF; todavía no se aplican a planes ni coberturas escolares.</p>
+    <div class="grid">
+      <label><span>Buscar asignatura o sección</span><input type="search" id="contentSearch" placeholder="Ej.: Matemática, Laboratorio, Taller…"></label>
+      <label><span>Campo de formación (clasificación preliminar)</span><select id="contentField">
+        <option value="">Todos los campos</option>
+        <option value="formacion_general">Formación General</option>
+        <option value="formacion_cientifico_tecnologica">Formación Científico-Tecnológica</option>
+        <option value="formacion_tecnica_especifica">Formación Técnico-Específica</option>
+        <option value="practicas_profesionalizantes">Prácticas Profesionalizantes</option>
+      </select></label>
+    </div>
+    <p id="contentStatus" class="muted" role="status" aria-live="polite">Preparando las referencias oficiales…</p>
+    <div id="contentList" class="prioritized-list"></div>
   </section>
   <section class="panel">
     <span class="label">Control pedagógico</span>
