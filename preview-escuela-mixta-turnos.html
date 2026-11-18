@@ -8,7 +8,7 @@
 @media(max-width:960px){.demoLayout{grid-template-columns:1fr}}
 </style></head><body>
 <header class="banner"><div class="brand"><img class="school-logo" src="assets/em-logo-header.svg" alt="Escuela de Maestros"><div><strong>Matriz PCI Completa</strong><small>Vista institucional de Media y Técnica</small></div></div><span class="status">DEMO · Sin datos reales</span></header>
-<main><section class="intro"><div><span class="eyebrow">Organización institucional</span><h1>Una escuela · varios turnos · Media y Técnica</h1><p>Mismo registro institucional y accesos. Cada PCI abre su propio mapa y conserva sus contenidos. Esta pantalla usa datos ficticios y no guarda información.</p></div></section>
+<main><section class="intro"><div><span class="eyebrow">Organización institucional</span><h1>Una escuela · varios turnos · Media, Técnica y BA +15</h1><p>Mismo registro institucional y accesos. Cada PCI abre su propio mapa y conserva sus contenidos. Esta pantalla usa datos ficticios y no guarda información.</p></div></section>
 <div class="demoBanner"><strong>Escuela de demostración · ID ficticio 1001.</strong> Elegí un turno y después una orientación o especialidad para ver su mapa. Los mapas no se mezclan entre turnos.</div>
 <div class="demoLayout">
 <aside class="panel sidebar"><h2>Escuela de demostración</h2><p id="counts" class="muted"></p><label for="filter">Filtrar turno<select id="filter"><option value="todos">Todos los turnos</option><option value="manana">Mañana</option><option value="tarde">Tarde</option><option value="noche">Noche</option></select></label><div class="pciList" id="items"></div></aside>
@@ -20,12 +20,13 @@ const records=[
 {pci_id:'m2',school_id:1001,model:'comun',shift_id:'manana',orientation_id:'ciencias_sociales',title:'Ciencias Sociales y Humanidades',status:'borrador'},
 {pci_id:'t1',school_id:1001,model:'tecnica',shift_id:'manana',orientation_id:'tecnica_computacion',specialty_name:'Computación',title:'Técnico en Computación',status:'borrador'},
 {pci_id:'m3',school_id:1001,model:'comun',shift_id:'tarde',orientation_id:'economia_administracion',title:'Economía y Administración',status:'borrador'},
-{pci_id:'t2',school_id:1001,model:'tecnica',shift_id:'noche',orientation_id:'tecnica_electronica',specialty_name:'Electrónica',title:'Técnico en Electrónica',status:'borrador'}
+{pci_id:'t2',school_id:1001,model:'tecnica',shift_id:'noche',orientation_id:'tecnica_electronica',specialty_name:'Electrónica',title:'Técnico en Electrónica',status:'borrador'},
+{pci_id:'b1',school_id:1001,model:'ba15',shift_id:'noche',orientation_id:'turismo',title:'BA +15 · Turismo',status:'borrador'}
 ];const groups=agruparPcis(records);
 const $=id=>document.getElementById(id);let current=records[0],view='map';
 const shiftName=id=>({manana:'Mañana',tarde:'Tarde',vespertino:'Vespertino',noche:'Noche'}[id]||id);
 function renderList(){
- $('items').replaceChildren();$('counts').textContent=records.length+' PCI · '+groups.length+' turnos · 3 Media · 2 Técnica';
+ $('items').replaceChildren();$('counts').textContent=records.length+' PCI · '+groups.length+' turnos · 3 Media · 2 Técnica · 1 BA +15';
  for(const t of groups){if($('filter').value!=='todos'&&$('filter').value!==t.id)continue;
   const part=document.createElement('section');part.className='pciShiftSection';
   const heading=document.createElement('h3');heading.className='pciShiftHeading';heading.textContent='Turno '+t.nombre+' · '+t.cantidad+' PCI';part.append(heading);
@@ -36,12 +37,13 @@ function renderList(){
  }
 }
 function renderView(){
- const p=current,technical=p.model==='tecnica',n=technical?6:5;
- $('type').textContent=(technical?'Educación Técnica':'Bachillerato / Media')+' · Turno '+shiftName(p.shift_id);
+ const p=current,technical=p.model==='tecnica',ba15=p.model==='ba15',n=technical?6:5;
+ $('type').textContent=(technical?'Educación Técnica':ba15?'Secundaria BA +15':'Bachillerato / Media')+' · Turno '+shiftName(p.shift_id);
  $('title').textContent=p.title;
- $('info').textContent='PCI '+p.pci_id.toUpperCase()+' · '+n+' años · '+(2*n)+' cuatrimestres · Mapa independiente';
+ $('info').textContent=ba15?'PCI '+p.pci_id.toUpperCase()+' · Régimen propio · Mapa pendiente de homologación normativa':'PCI '+p.pci_id.toUpperCase()+' · '+n+' años · '+(2*n)+' cuatrimestres · Mapa independiente';
  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
  const visual=$('visual');visual.replaceChildren();
+ if(ba15){const card=document.createElement('div');card.className='workCard';const h=document.createElement('h3');h.textContent='BA +15 · '+(view==='map'?'Mapa de la oferta':view==='development'?'Desarrollo curricular':'Panel de control');const p=document.createElement('p');p.textContent='Estructura curricular específica pendiente de validar con el Anexo I de la Resolución 1375/MEDGC/25 y sus complementarias. No se emplea el mapa C1–C10 de Media ni el C1–C12 de Técnica. Registro individual, turno y orientación ya identificados.';card.append(h,p);visual.append(card);return;}
  if(view!=='map'){
   const card=document.createElement('div');card.className='workCard';
   const h=document.createElement('h3');h.textContent=view==='development'?'Desarrollo curricular del PCI seleccionado':'Cobertura curricular del PCI seleccionado';
