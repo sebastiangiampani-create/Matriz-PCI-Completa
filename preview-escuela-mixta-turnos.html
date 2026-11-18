@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PCI · Escuela con Media y Técnica</title>
+<link rel="stylesheet" href="pci-orientaciones.css"><style>
+.demoLayout{display:grid;grid-template-columns:minmax(240px,315px) minmax(0,1fr);gap:18px;align-items:start}
+.demoTabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.demoTabs button{border:1px solid #c3d6df;border-radius:10px;background:#f2f7fa;color:#12395c;padding:9px 12px;font-weight:700}.demoTabs button.active{background:#116b7f;color:#fff}
+.demoMap{width:100%;border-collapse:collapse;min-width:680px}.demoMap td,.demoMap th{border:1px solid #cfdee6;padding:11px 8px;text-align:center;font-size:.77rem}.demoMap thead th{background:#d9edf0}.demoMap tbody th{background:#f1f6f7;text-align:left}.demoMap td{height:53px}.demoMap td span{display:block;padding:6px;border-radius:7px;background:#e7f4f5;color:#155467;font-size:.7rem}
+.demoBanner{padding:12px 15px;background:#e6f5f7;border:1px solid #aed7db;border-radius:10px;margin-bottom:14px;font-size:.83rem}.demoShift{margin:12px 0 6px}
+@media(max-width:960px){.demoLayout{grid-template-columns:1fr}}
+</style></head><body>
+<header class="banner"><div class="brand"><img class="school-logo" src="assets/em-logo-header.svg" alt="Escuela de Maestros"><div><strong>Matriz PCI Completa</strong><small>Vista institucional de Media y Técnica</small></div></div><span class="status">DEMO · Sin datos reales</span></header>
+<main><section class="intro"><div><span class="eyebrow">Organización institucional</span><h1>Una escuela · varios turnos · Media y Técnica</h1><p>Mismo registro institucional y accesos. Cada PCI abre su propio mapa y conserva sus contenidos. Esta pantalla usa datos ficticios y no guarda información.</p></div></section>
+<div class="demoBanner"><strong>Escuela de demostración · ID ficticio 1001.</strong> Elegí un turno y después una orientación o especialidad para ver su mapa. Los mapas no se mezclan entre turnos.</div>
+<div class="demoLayout">
+<aside class="panel sidebar"><h2>Escuela de demostración</h2><p id="counts" class="muted"></p><label for="filter">Filtrar turno<select id="filter"><option value="todos">Todos los turnos</option><option value="manana">Mañana</option><option value="tarde">Tarde</option><option value="noche">Noche</option></select></label><div class="pciList" id="items"></div></aside>
+<section class="panel workspace"><span class="eyebrow" id="type">Elegir PCI</span><h2 id="title">Seleccioná una orientación o especialidad</h2><p id="info" class="muted">El mapa conservará las vistas del PCI V2 original.</p><div class="demoTabs"><button class="active" data-view="map">Mapa de la oferta</button><button data-view="development">Desarrollo curricular</button><button data-view="control">Panel de control</button></div><div id="visual" class="mapScroll"></div><p class="note">Vista ilustrativa de navegación: los espacios son ejemplos, no cargas curriculares oficiales. El editor real se mantiene en la rama de trabajo del PR #34.</p></section>
+</div></main><script type="module">
+import {agruparPcis} from './src/pci-turnos-organizacion.mjs';
+const records=[
+{pci_id:'m1',school_id:1001,model:'comun',shift_id:'manana',orientation_id:'economia_administracion',title:'Economía y Administración',status:'borrador'},
+{pci_id:'m2',school_id:1001,model:'comun',shift_id:'manana',orientation_id:'ciencias_sociales',title:'Ciencias Sociales y Humanidades',status:'borrador'},
+{pci_id:'t1',school_id:1001,model:'tecnica',shift_id:'manana',orientation_id:'tecnica_computacion',specialty_name:'Computación',title:'Técnico en Computación',status:'borrador'},
+{pci_id:'m3',school_id:1001,model:'comun',shift_id:'tarde',orientation_id:'economia_administracion',title:'Economía y Administración',status:'borrador'},
+{pci_id:'t2',school_id:1001,model:'tecnica',shift_id:'noche',orientation_id:'tecnica_electronica',specialty_name:'Electrónica',title:'Técnico en Electrónica',status:'borrador'}
+];const groups=agruparPcis(records);
+const $=id=>document.getElementById(id);let current=records[0],view='map';
+const shiftName=id=>({manana:'Mañana',tarde:'Tarde',vespertino:'Vespertino',noche:'Noche'}[id]||id);
+function renderList(){
+ $('items').replaceChildren();$('counts').textContent=records.length+' PCI · '+groups.length+' turnos · 3 Media · 2 Técnica';
+ for(const t of groups){if($('filter').value!=='todos'&&$('filter').value!==t.id)continue;
+  const part=document.createElement('section');part.className='pciShiftSection';
+  const heading=document.createElement('h3');heading.className='pciShiftHeading';heading.textContent='Turno '+t.nombre+' · '+t.cantidad+' PCI';part.append(heading);
+  for(const m of t.modelos){const h=document.createElement('h4');h.className='pciModelHeading';h.textContent=m.nombre;part.append(h);
+    for(const p of m.pcis){const b=document.createElement('button');b.className='pciItem'+(current?.pci_id===p.pci_id?' active':'');b.type='button';
+     const strong=document.createElement('strong');strong.textContent=p.title;const sm=document.createElement('small');sm.textContent=(p.model==='tecnica'?'Especialidad':'Orientación')+' · '+p.status;b.append(strong,sm);b.onclick=()=>{current=p;renderList();renderView()};part.append(b);
+    }}$('items').append(part);
+ }
+}
+function renderView(){
+ const p=current,technical=p.model==='tecnica',n=technical?6:5;
+ $('type').textContent=(technical?'Educación Técnica':'Bachillerato / Media')+' · Turno '+shiftName(p.shift_id);
+ $('title').textContent=p.title;
+ $('info').textContent='PCI '+p.pci_id.toUpperCase()+' · '+n+' años · '+(2*n)+' cuatrimestres · Mapa independiente';
+ document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ const visual=$('visual');visual.replaceChildren();
+ if(view!=='map'){
+  const card=document.createElement('div');card.className='workCard';
+  const h=document.createElement('h3');h.textContent=view==='development'?'Desarrollo curricular del PCI seleccionado':'Cobertura curricular del PCI seleccionado';
+  const desc=document.createElement('p');desc.textContent='Vista '+(view==='development'?'de espacios, contenidos y planes':'de cobertura por nivel y espacio')+' correspondiente exclusivamente a '+p.title+' del turno '+shiftName(p.shift_id)+'.';
+  card.append(h,desc);visual.append(card);return;
+ }
+ const table=document.createElement('table');table.className='demoMap';const head=document.createElement('thead'),row=document.createElement('tr');
+ for(const name of ['Formato',...Array.from({length:2*n},(_,i)=>'C'+(i+1))]){const th=document.createElement('th');th.textContent=name;row.append(th)}head.append(row);table.append(head);
+ const body=document.createElement('tbody');
+ const rows=technical?['Formación general','Científico-tecnológica','Talleres / Especialidad','Prácticas profesionalizantes']:['Troncales FG','Laboratorios FG','Talleres FG','Formación Orientada','Proyecto de Vinculación'];
+ rows.forEach((label,i)=>{const tr=document.createElement('tr'),th=document.createElement('th');th.textContent=label;tr.append(th);
+ for(let col=0;col<2*n;col++){const td=document.createElement('td');if((i===0||((col+i)%3===0))&&!(label.startsWith('Prácticas')&&col<8)){const badge=document.createElement('span');badge.textContent=i===0?'Anual':label.startsWith('Prácticas')?'PP':'Espacio';td.append(badge)}tr.append(td)}body.append(tr)});
+ table.append(body);visual.append(table);
+}
+$('filter').addEventListener('change',renderList);
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.view;renderView()}));
+renderList();renderView();
+</script></body></html>
