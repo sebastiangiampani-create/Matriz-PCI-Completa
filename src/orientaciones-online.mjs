@@ -10,6 +10,7 @@ import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integraci
 import {seedOfferStructure,foSubjectBank,assignFoSubject,offerMapRows,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
 import {newFoDevelopment,FO_STAGES} from './integracion-curricular/desarrollo-fo-modelo.js';
 import {pvfReference,validatePvfProject} from './integracion-curricular/proyecto-vinculacion-2026.mjs';
+import {validateMediaWorkspaceFinal} from './normativa/adaptador-mapa-media-20261117.mjs';
 import {SPECIALTIES,findSpecialty} from './tecnica/pautas-pci-20261005.mjs';
 import {createIntegratedTechnicalUI} from './tecnica/interfaz-integrada-v2.mjs';
 import {requireSchoolPci,newFgUnit,guardFgUnit,newOfferUnit,restoreOfferUnit,newFoUnit,guardFoUnit,inventory,editStageDescription} from './orientaciones-release-core.mjs';
@@ -514,7 +515,7 @@ function renderOffer(){
       const expected=pvfReference(pci.orientation_id,alternative);
       const audit=validatePvfProject(space,{orientationId:pci.orientation_id,alternative});
       note('p','5.º año · ANUAL C9–C10 · Alternativa '+alternative+
-        ' · '+expected.hours+' h · Tabla normativa 05/10/2026 (p. 11)',card,'muted');
+        ' · '+expected.hours+' h · Anexo II 17/11/2026 (pp. 11–12)',card,'muted');
       note('p','Espacio previsto: '+expected.name,card,'muted');
       if(!audit.valid){
         note('p','Revisión necesaria: '+audit.errors.join(' · '),card,'muted');
@@ -564,9 +565,21 @@ function renderOffer(){
   }
   try{
     const result=validateOfferStructure(workspace,pci.orientation_id,refs);
-    $('offerValidation').textContent=(result.valid?'Mapa curricular validado.':'Mapa en construcción: ')+
-      [...result.errors,...result.warnings].slice(0,8).join(' | ')+
-      (offerDirty?' · Hay cambios sin guardar.':' · Revisión '+offerRevision);
+    // El anexo final revisa la misma copia FG/FO sin sustituirla.
+    // Un "guardado" no significa que el plan curricular esté homologado.
+    const normative=validateMediaWorkspaceFinal(workspace,pci.orientation_id);
+    const summary=[
+      'Anexo II 17/11/2026 · Bachillerato',
+      normative.errors.length+' inconsistencias de composición',
+      normative.warnings.length+' aspectos por verificar',
+      result.errors.length+' observaciones previas del mapa',
+      offerDirty?'Cambios sin guardar':'Revisión '+offerRevision
+    ];
+    $('offerValidation').textContent=summary.join(' · ');
+    $('offerValidation').title=[...normative.errors,...normative.warnings]
+      .slice(0,35).map(x=>(x.code||'')+': '+x.message).join('\n')+
+      '\nRevisión previa: '+[...result.errors,...result.warnings].slice(0,35).join(' | ');
+    $('offerValidation').dataset.validated='false';
   }catch(error){$('offerValidation').textContent='Validación pendiente: '+error.message;}
 }
 async function saveOffer(){
