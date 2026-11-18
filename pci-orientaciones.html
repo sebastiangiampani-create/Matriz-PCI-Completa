@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
-  <title>Mis PCI de Media y Técnica · Matriz PCI</title>
+  <title>Mis PCI de Media, Técnica y BA +15 · Matriz PCI</title>
   <link rel="stylesheet" href="pci-orientaciones.css?v=20261111">
 </head>
 <body>
   <header class="banner">
     <div class="brand"><img class="school-logo" src="assets/em-logo-header.svg" alt="Escuela de Maestros">
-      <div><strong>Matriz PCI Completa</strong><small>Secundaria Aprende · Media y Técnica</small></div>
+      <div><strong>Matriz PCI Completa</strong><small>Secundaria Aprende · Media, Técnica y BA +15</small></div>
     </div>
     <nav aria-label="Navegación principal"><a href="index.html">Inicio</a><a href="panel-general.html">Administración</a><a href="panel-escuela.html">Panel institucional</a></nav>
   </header>
   <main>
     <section class="intro">
       <div><span class="eyebrow">Gestión institucional</span><h1>Proyectos curriculares por orientación y especialidad</h1>
-      <p><strong>Para las escuelas que ya están registradas:</strong> seleccioná la institución de siempre y agregale PCI de Media, Técnica o ambos modelos. No hay que darla de alta de nuevo ni modificar las claves de acceso; los contenidos y planes históricos se conservan.</p></div>
+      <p><strong>Para las escuelas que ya están registradas:</strong> seleccioná la institución de siempre y agregale PCI de Media, Técnica o BA +15. No hay que darla de alta de nuevo ni modificar las claves de acceso; los contenidos y planes históricos se conservan.</p></div>
       <span id="status" role="status" aria-live="polite" class="status">Comprobando conexión…</span>
     </section>
     <div id="fatal" class="warning" hidden></div>
@@ -31,13 +31,14 @@
         <p id="pciCounts" class="muted" aria-live="polite">Cargando proyectos…</p>
         <label for="turnFilter">Ver proyectos por turno<select id="turnFilter"><option value="todos">Todos los turnos</option></select></label>
         <div id="pciList" class="pciList"></div>
-        <p class="note"><strong>Una escuela puede ofrecer Bachillerato/Media y Técnica al mismo tiempo.</strong> La navegación se organiza por turno y modalidad. Cada PCI tiene orientación o especialidad, mapa y guardado propios. El acceso y las claves institucionales son únicos; los datos históricos no se reescriben.</p>
+        <p class="note"><strong>Una escuela puede ofrecer Media, Técnica y BA +15 en distintos turnos.</strong> La navegación se organiza por turno y modalidad. Cada PCI tiene orientación o especialidad, mapa y guardado propios. El acceso y las claves institucionales son únicos; los datos históricos no se reescriben.</p>
         <form id="formCreatePci" class="formCard" hidden>
           <label>Rama de formación<select id="pciModel">
               <option value="comun">Educación Media · Orientación</option>
               <option value="tecnica">Educación Técnica · Especialidad</option>
+              <option value="ba15">BA +15 · Secundaria +15</option>
             </select></label>
-          <label id="mediaOrientationGroup">Orientación de Media<select id="orientation" required></select></label>
+          <label id="mediaOrientationGroup">Orientación de Media / BA +15<select id="orientation" required></select></label>
           <label id="technicalSpecialtyGroup" hidden>Especialidad técnica (denominación de las pautas)
             <select id="specialtyName" required disabled><option value="" selected>Seleccionar especialidad técnica</option></select>
             <small>La especialidad tiene nombre propio. No confundirla con los espacios anuales de 4.º, 5.º y 6.º.</small></label>
@@ -64,6 +65,14 @@
       </aside>
       <section class="workspace">
         <div id="empty" class="panel"><h2>Elegí un PCI</h2><p class="muted">Seleccioná un proyecto de esta escuela para trabajar con su rama curricular independiente.</p></div>
+        <section id="ba15Pending" class="panel" hidden>
+          <span class="eyebrow">Secundaria BA +15 · Régimen propio</span>
+          <h2 id="ba15Name">PCI BA +15</h2>
+          <p id="ba15Info" class="muted"></p>
+          <div class="note"><strong>Régimen curricular Secundaria +15.</strong>
+            Referencia: Resolución 1375/MEDGC/25 y complementarias vigentes de 2026. El PCI se registra por turno y orientación, sin heredar las reglas de Media ni las de Técnica.
+            El mapa y las reglas específicas de BA +15 permanecen bloqueados para edición hasta verificar el Anexo I y la implementación correspondiente a la escuela. Los trabajos históricos no se modifican.</div>
+        </section>
         <section id="technicalPending" class="panel" hidden>
           <span class="eyebrow">Educación Técnica · Especialidad</span>
           <h2 id="technicalName">PCI técnico</h2>
