@@ -1,0 +1,209 @@
+{
+  "schema": "pci-tecnica-diseno-curricular-oficial-v1",
+  "objetivo": "Complementar documentos de contenidos priorizados, NO confundirlos con planes de estudio.",
+  "fuente_priorizados": "data/tecnica/fuentes-priorizadas-caba-2026.json",
+  "nota": "Un diseño nuevo puede tener implementación gradual por cohorte; verificar vigencia y gestión antes de cargar horas y materias. El Primer Ciclo no se deduce del Segundo Ciclo.",
+  "normas_verificadas": 3,
+  "disenos_con_caja_extraida": 1,
+  "especialidades": [
+    {
+      "id": "computacion",
+      "especialidad": "Computación",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Computacion.pdf",
+      "status": "estructura_por_anio_extraida_det_y_dgegp",
+      "norma": "80/MEDGC/2026",
+      "fuente_norma": "https://boletinoficial.buenosaires.gob.ar/normativaba/norma/836253",
+      "estructura_url": "https://documentosboletinoficial.buenosaires.gob.ar/publico/PE-RES-MEDGC-MEDGC-80-26-ANX-2.pdf",
+      "estructura_archivo": "computacion-res80-2026.json",
+      "criterio_implementacion": [
+        "DET",
+        "DGEGP"
+      ],
+      "vigencia_desde": 2026,
+      "horas_semanales_verificadas": true
+    },
+    {
+      "id": "automotores",
+      "especialidad": "Automotores",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Automotores.pdf",
+      "status": "estructura_pendiente_extraccion",
+      "norma": "659/MEDGC/2025",
+      "fuente_norma": "https://boletinoficial.buenosaires.gob.ar/normativaba/norma/797351",
+      "anexo_estructura": "IF-2025-23259582-GCABA-SSPIE",
+      "vigencia_desde": 2026,
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "administracion_empresas",
+      "especialidad": "Administración de Empresas",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Admin_empresas.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "mecanica",
+      "especialidad": "Mecánica",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Mecanica.pdf",
+      "status": "estructura_pendiente_extraccion",
+      "norma": "1440/MEDGC/2025",
+      "fuente_norma": "https://boletinoficial.buenosaires.gob.ar/normativaba/norma/823731",
+      "anexo_estructura": "IF-2025-44477023-GCABA-SSPIE",
+      "vigencia_desde": 2026,
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "electronica",
+      "especialidad": "Electrónica",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Electronica.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "electromecanica",
+      "especialidad": "Electromecánica",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Electromecanica.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "electricidad",
+      "especialidad": "Electricidad",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Electricidad.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "diseno_artesanias",
+      "especialidad": "Diseño de Artesanías Aplicadas a la Industria",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Artesanias.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "construcciones",
+      "especialidad": "Construcciones",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Construcciones.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "diseno_comunicacion_publicitaria",
+      "especialidad": "Diseño y Comunicación Publicitaria",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Dise%C3%B1o_Comunic_Publicitaria.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "diseno_interiores",
+      "especialidad": "Diseño de Interiores",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Dise%C3%B1o_interiores.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "diseno_produccion_grafica",
+      "especialidad": "Diseño y Producción Gráfica",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Dise%C3%B1o_Produccion_Grafica.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "geografo_matematico",
+      "especialidad": "Geógrafo Matemático",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Geografo_Matematico.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "industria_alimentos",
+      "especialidad": "Industria de los Alimentos",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Industria_alimentos.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "industria_indumentaria",
+      "especialidad": "Industria de la Indumentaria",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Industria_Indumentaria.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "industria_madera_mueble",
+      "especialidad": "Industrialización de la Madera y el Mueble",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Industrializacion_Madera.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "jardineria_paisajismo_produccion_vegetal",
+      "especialidad": "Jardinería, Paisajismo y Producción Vegetal",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Jardineria.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "metalurgia",
+      "especialidad": "Metalurgia",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Metalurgia.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "optica",
+      "especialidad": "Óptica",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Optica.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "industria_orfebreria",
+      "especialidad": "Orfebrería",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Orfebreria.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "ortesis_protesis",
+      "especialidad": "Órtesis y Prótesis",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Ortesis.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "procesos_productivos_inteligentes",
+      "especialidad": "Procesos Productivos Inteligentes",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Procesos_Inteligentes.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "produccion_multimedial",
+      "especialidad": "Producción Multimedial",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Produccion_multimedial.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "quimica",
+      "especialidad": "Química",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Quimica.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "refrigeracion_ventilacion_calefaccion_aire",
+      "especialidad": "Refrigeración, Ventilación, Calefacción y Aire Acondicionado",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Refrigeracion.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    },
+    {
+      "id": "tic",
+      "especialidad": "Tecnologías de la Información y la Comunicación (TIC)",
+      "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_TIC.pdf",
+      "status": "plan_vigente_por_identificar_y_verificar",
+      "horas_semanales_verificadas": false
+    }
+  ]
+}
