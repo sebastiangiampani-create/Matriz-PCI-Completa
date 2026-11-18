@@ -44,11 +44,12 @@ function yearlyCount(area,list,distribution,errors){
   }
 }
 function canSingle(area,year){
-  return (area==='Ciencias Naturales'&&(year===4||year===5))||
+  return (area==='Ciencias Naturales'&&[1,2,4,5].includes(year))||
     (area==='Ciencias Sociales'&&year===5);
 }
-export function validateFgComposition(areas,refs){
+export function validateFgComposition(areas,refs,{orientationId=null}={}){
   const rules=refs?.rules?.formacion_general;
+  const naturalesOrientation=orientationId==='ciencias_naturales';
   if(!rules)throw new Error('Faltan las reglas normativas de Formación General.');
   const errors=[],warnings=[],confirmed=[];
   for(const area of expectedTrunks){
@@ -62,7 +63,7 @@ export function validateFgComposition(areas,refs){
     }
   }
   const other=[
-    ['Ciencias Naturales','ciencias_naturales',10,'laboratory'],
+    ['Ciencias Naturales','ciencias_naturales',naturalesOrientation?8:10,'laboratory'],
     ['Artes','artes',6,'workshop'],
     ['Tecnologías','tecnologias',8,'workshop'],
     ['Educación Física','educacion_fisica',10,'workshop']
@@ -71,8 +72,13 @@ export function validateFgComposition(areas,refs){
     const list=groups(areas,area);
     expectCount(area,list,count,errors);
     const rule=rules[key];
-    if(Array.isArray(rule.cuatrimestres))expectPeriods(area,list,rule.cuatrimestres,errors);
-    if(rule.distribucion)yearlyCount(area,list,rule.distribucion,errors);
+    if(area==='Ciencias Naturales'&&naturalesOrientation){
+      expectPeriods(area,list,[1,2,3,4,5,6,7,8],errors);
+      yearlyCount(area,list,{1:2,2:2,3:2,4:2,5:0},errors);
+    }else{
+      if(Array.isArray(rule.cuatrimestres))expectPeriods(area,list,rule.cuatrimestres,errors);
+      if(rule.distribucion)yearlyCount(area,list,rule.distribucion,errors);
+    }
     for(const g of list)if(g.kind!==kind)
       errors.push('FG '+area+': formato diferente al prescripto.');
   }
