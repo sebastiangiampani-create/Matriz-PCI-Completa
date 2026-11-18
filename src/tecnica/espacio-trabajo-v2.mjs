@@ -1,11 +1,12 @@
 /**
  * Motor puro de PCI Técnica para la MISMA interfaz de orientaciones V2.
  * No crea usuarios, no escribe en Supabase, no modifica matrices antiguas.
- * Fuente: Pautas 05/10/2026 pp. 13-18 y documentos priorizados CABA 2026.
+ * Fuente vigente: IF-2026-51169092-GCABA-SSPIE (17/11/2026) y priorizados CABA 2026.
  * Las secciones/páginas extraídas NO son contenidos atómicos validados.
  */
 import {TECNICA,findSpecialty,getAnnualSubjects,technicalCalendar,
   validateTechnicalSpace,validateRelation,RULESET_ID} from './pautas-pci-20261005.mjs';
+import {validateFinalComposition} from '../normativa/composicion-pci-20261117.mjs';
 
 export const TECH_OFFER_VERSION='oferta-tecnica-v1';
 export const TECH_OFFER_SCHEMA='pci-oferta-tecnica-v1/1';
@@ -111,12 +112,14 @@ function createSlots(specialty){
   character:index<=2?'obligatorio':'electivo',
   provisional:true,requiredPlan:true,kind:'fo'
  });
- // El documento pp.5 y 17 establece DOS proyectos anuales, en N5 y N6.
+ // Anexo II 17/11: el PVF es un recorrido; se acreditan 1 o 2 PP
+ // en 5.º y/o 6.º según especialidad. Sin su plan NO se eligen solas.
+ // Los placeholders NO forman parte del mapa hasta una decisión explícita.
  for(let year=5;year<=6;year++)put({
-  id:'t-pvf-'+year,year,term:2*year-1,format:'vinculacion_futuro',
-  area:'Proyecto de Vinculación con el Futuro',
-  label:'Proyecto de Vinculación con el Futuro · '+year+'º',
-  duration:'anual',kind:'fo'
+  id:'t-practicas-'+year,year,term:2*year-1,
+  format:'practicas_profesionalizantes',area:'Prácticas Profesionalizantes',
+  label:'Prácticas Profesionalizantes · '+year+'º',
+  duration:'anual',kind:'fo',provisional:true,requiredPlan:true,included:false
  });
  if(specialty.id==='mecanica')put({
   id:'t-metrologia-3',year:3,term:5,format:'metrologia_mecanica',
@@ -252,18 +255,19 @@ export function addTechnicalAnnualPending(document,year){
  return draft;
 }
 export function addTechnicalProfessionalPractice(document,year){
- if(![5,6].includes(year))throw Error('La práctica se documenta en 5.º o 6.º según plan.');
- if(document.spaces.filter(s=>s.format==='practicas_profesionalizantes').length>=2)
-   throw Error('El recorrido de Prácticas Profesionalizantes contempla hasta dos espacios según la especialidad.');
- if(document.spaces.some(s=>s.id==='t-practicas-'+year))
-   throw Error('Ya hay una práctica registrada en ese año.');
- const draft=copy(document);
- draft.spaces.push(slot({
-  id:'t-practicas-'+year,year,term:2*year-1,
-  format:'practicas_profesionalizantes',area:'Prácticas Profesionalizantes',
+ if(![5,6].includes(year))throw Error('Las Prácticas Profesionalizantes se ubican en 5.º o 6.º según el plan.');
+ const draft=copy(document),id='t-practicas-'+year;
+ const current=draft.spaces.find(s=>s.id===id);
+ if(current?.included!==false)throw Error('La Práctica Profesionalizante de ese año ya está activa.');
+ if(current){current.included=true;current.archivedLegacy=false;current.confirmed=false;}
+ else draft.spaces.push(slot({
+  id,year,term:2*year-1,format:'practicas_profesionalizantes',
+  area:'Prácticas Profesionalizantes',
   label:'Prácticas Profesionalizantes · '+year+'º',
   duration:'anual',requiredPlan:true,provisional:true,kind:'fo'
  }));
+ if(draft.spaces.filter(s=>s.format==='practicas_profesionalizantes'&&s.included!==false).length>2)
+  throw Error('La normativa contempla una o dos Prácticas Profesionalizantes.');
  return draft;
 }
 export function moveTechnicalTerm(document,spaceId,targetTerm){
@@ -306,8 +310,8 @@ export function updateTechnicalSpace(document,spaceId,changes){
  if(!s)throw Error('Espacio técnico inexistente');
  const props=['name','character','weeklyHours','notes','included'];
  if(Object.hasOwn(changes,'included')&&
-   (!/^t-taller-especialidad-[456]$/.test(s.id)||typeof changes.included!=='boolean'))
-   throw Error('Solo se permite elegir la oferta variable de los talleres de especialidad de 4.º a 6.º.');
+   (!/^t-(?:taller-especialidad-[456]|practicas-[56])$/.test(s.id)||typeof changes.included!=='boolean'))
+   throw Error('Solo puede seleccionarse la oferta variable de los talleres y prácticas, según plan oficial.');
 
  for(const key of props)if(Object.hasOwn(changes,key))s[key]=changes[key];
  if(!['obligatorio','electivo'].includes(s.character))throw Error('Carácter inválido');
@@ -317,7 +321,9 @@ export function updateTechnicalSpace(document,spaceId,changes){
 }
 export function technicalMapRows(document){
  const terms=technicalCalendar();
- const areas=[...TECH_FG_AREAS,...TECH_SPECIFIC_AREAS];
+ const areas=[...TECH_FG_AREAS,...TECH_SPECIFIC_AREAS].filter(area=>
+  area!=='Proyecto de Vinculación con el Futuro'||
+  document.spaces.some(s=>s.area===area));
  return {terms,areas:areas.map(area=>({
   area,cells:terms.map(t=>({
    ...t,spaces:document.spaces.filter(s=>s.area===area&&s.year===t.year&&
@@ -339,58 +345,87 @@ export function technicalCoverage(document,bank,{area=null,year=null,planContent
 }
 export function validateTechnicalDraft(document,bank){
  const specialty=findSpecialty(document.specialty_id),issues=[],warnings=[];
- if(!specialty)return {valid:false,partial:false,issues:['Especialidad desconocida'],warnings};
- for(const s of document.spaces){
-  if(s.included===false)continue;
-  const req={
+ if(!specialty)return {valid:false,partial:false,issues:[{code:'UNKNOWN_SPECIALTY',
+  message:'Especialidad desconocida'}],warnings,readyForPublication:false};
+ const active=document.spaces.filter(s=>s.included!==false&&!s.archivedLegacy);
+ const count=format=>active.filter(x=>x.format===format).length;
+ const sums={
+  sociales:count('integracion_social'),naturales:count('integracion_natural'),
+  fisica:active.filter(x=>x.area==='Educación Física').length,
+  artes:active.filter(x=>x.area==='Educación Artística').length,
+  practicas:count('practicas_profesionalizantes'),
+  pvfLegado:document.spaces.filter(x=>x.format==='vinculacion_futuro').length
+ };
+ const law=validateFinalComposition({
+  model:'tecnica',specialtyId:specialty.id,spaces:document.spaces,
+  relations:document.relations,
+  officialPlan:specialty.status==='not_defined_in_document'?
+    {annualSpecialtyDefined:false}:null
+ });
+ issues.push(...law.errors.map(e=>({code:e.code,message:e.message,spaceId:e.spaceId})));
+ warnings.push(...law.warnings.map(e=>({code:e.code,message:e.message,spaceId:e.spaceId})));
+ for(const s of active){
+  const data={
    year:s.year,term:s.term,format:s.format,duration:s.duration,
    weeklyHours:s.weeklyHours,subjects:s.subjectIds,
    name:s.name,title:s.name,area:s.area
   };
-  const v=validateTechnicalSpace(req,{specialty:specialty.id,plan:null});
+  const v=validateTechnicalSpace(data,{specialty:specialty.id,plan:null});
   issues.push(...v.errors.map(e=>({spaceId:s.id,message:e.message,code:e.code})));
   warnings.push(...v.warnings.map(e=>({spaceId:s.id,message:e.message,code:e.code})));
-  if(s.requiredPlan||!s.weeklyHours)warnings.push({spaceId:s.id,code:'DESIGN_HOURS_REQUIRED',
-   message:'Corroborar materias y horas según el diseño curricular de esta especialidad.'});
+  if(s.requiredPlan||!s.weeklyHours)
+   warnings.push({spaceId:s.id,code:'DESIGN_HOURS_REQUIRED',
+    message:'Corroborar materias y horas según el diseño curricular de esta especialidad.'});
  }
- const c=(format)=>document.spaces.filter(x=>x.format===format).length;
- const sums={
-  sociales:c('integracion_social'),naturales:c('integracion_natural'),
-  fisica:document.spaces.filter(x=>x.area==='Educación Física').length,
-  artes:document.spaces.filter(x=>x.area==='Educación Artística').length,
-  pvf:c('vinculacion_futuro')
+ if(document.ruleset!==RULESET_ID)
+  warnings.push({code:'OUTDATED_RULESET',message:'El mapa fue preparado con una norma anterior. Se requiere revisión explícita antes de guardar.'});
+ const counts=Object.fromEntries(RANGE.map(y=>[y,active.filter(s=>s.year===y).length]));
+ const seen=new Set();
+ for(const s of active)for(const id of s.contentIds){
+  if(seen.has(id))warnings.push({spaceId:s.id,code:'DUPLICATED_REFERENCE',
+   message:'Referencia usada en más de un espacio. Revisar sin contabilizar doble cobertura.'});
+  seen.add(id);
+ }
+ if(!document.spaces.every(validSpace))
+  issues.push({code:'INVALID_SPACE',message:'Espacio con año, duración o cuatrimestre inválidos'});
+ return {
+  valid:false,partial:issues.length===0,issues,warnings,counts,sums,
+  sourceVersion:document.source_sha256,rulesVersion:document.ruleset,
+  readyForPublication:false,officialPlanVerified:false
  };
- const expectedSocial=specialty.id==='computacion'?10:8;
- const socialObligatory=document.spaces.filter(x=>
-   x.format==='integracion_social'&&x.character==='obligatorio').length;
- const naturalObligatory=document.spaces.filter(x=>
-   x.format==='integracion_natural'&&x.character==='obligatorio').length;
- if(socialObligatory!==(specialty.id==='computacion'?5:4))
-   issues.push({code:'SOCIAL_EIO',message:'Ciencias Sociales requiere '+(specialty.id==='computacion'?5:4)+
-      ' espacios obligatorios y el resto electivos.'});
- if(naturalObligatory!==4)
-   issues.push({code:'NATURAL_EIO',message:'Ciencias Naturales requiere 4 obligatorios y 2 electivos.'});
- for(const [label,actual,expected] of [
-  ['Ciencias Sociales',sums.sociales,expectedSocial],
-  ['Ciencias Naturales',sums.naturales,6],
-  ['Educación Física',sums.fisica,12],
-  ['Educación Artística',sums.artes,2],
-  ['Proyecto de Vinculación con el Futuro',sums.pvf,2]
- ])if(actual!==expected)issues.push({code:'TRAJECTORY_COUNT',
-  message:label+': la trayectoria requiere '+expected+' espacios, hay '+actual});
- const counts=Object.fromEntries(RANGE.map(y=>[y,document.spaces.filter(s=>s.year===y).length]));
- const dup=new Set();
- for(const s of document.spaces)for(const id of s.contentIds){
-  if(dup.has(id))warnings.push({spaceId:s.id,code:'DUPLICATED_REFERENCE',
-   message:'Referencia documental usada más de una vez; revisar solapamiento sin contar cobertura doble.'});
-  dup.add(id);
- }
- if(!document.spaces.every(validSpace))issues.push({code:'INVALID_SPACE',message:'Un espacio tiene año, cuatrimestre o duración inválidos'});
- const ready=issues.length===0&&warnings.length===0;
- return {valid:ready,partial:issues.length===0,issues,warnings,
-  counts,sums,sourceVersion:document.source_sha256,rulesVersion:document.ruleset,
-  readyForPublication:false};
 }
+/**
+ * Migración PREVENTIVA del borrador anterior: mantiene íntegros los espacios
+ * históricos y los planes externos (con sus IDs); NO escribe ni borra datos.
+ * Los antiguos dos PVF no se convierten automáticamente en dos PP.
+ */
+export function prepareTechnicalOfferFinal(document){
+ if(!object(document)||!Array.isArray(document.spaces))
+  throw Error('No se puede revisar este mapa técnico: estructura inválida.');
+ const draft=copy(document);
+ if(draft.ruleset===RULESET_ID)return {document:draft,needsReview:false};
+ const legacy=draft.spaces.filter(s=>s.format==='vinculacion_futuro');
+ for(const s of legacy){
+  s.included=false;
+  s.archivedLegacy=true;
+  s.provisional=true;
+  s.notes=(s.notes||'')+'\nResguardo de proyecto anual creado antes del Anexo II 17/11/2026. No se borró. Revisar correspondencia con Prácticas Profesionalizantes.';
+ }
+ for(const year of [5,6]){
+  if(draft.spaces.some(s=>s.id==='t-practicas-'+year))continue;
+  draft.spaces.push(slot({
+   id:'t-practicas-'+year,year,term:2*year-1,
+   format:'practicas_profesionalizantes',area:'Prácticas Profesionalizantes',
+   label:'Prácticas Profesionalizantes · '+year+'º',duration:'anual',
+   provisional:true,requiredPlan:true,kind:'fo',included:false
+  }));
+ }
+ draft.previousRuleset=draft.ruleset||'desconocido';
+ draft.ruleset=RULESET_ID;
+ draft.needsNormativeReview=true;
+ return {document:draft,needsReview:true,legacySpacesRetained:legacy.map(s=>s.id)};
+}
+
 export function technicalPlanSeed({pci,space,offer}){
  if(!space?.id||space.included===false||offer?.pci_id!==pci?.pci_id||offer?.model!=='tecnica')
   throw Error('El plan no corresponde al PCI técnico.');
