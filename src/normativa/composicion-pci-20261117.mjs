@@ -125,8 +125,7 @@ export function validateCommonSpace(space,{model='bachillerato',year=null,
  if(space?.term!==undefined&&!termMatch({...space,year:level},max))
   errors.push(issue('TERM_YEAR','El cuatrimestre no coincide con el año.',model==='tecnica'?13:8));
  const annual=['troncal','taller_especialidad','taller_primer_ciclo',
-  'espacio_anual_especialidad','tecnologia_representacion','vinculacion_futuro',
-  'practicas_profesionalizantes'];
+  'espacio_anual_especialidad','tecnologia_representacion','vinculacion_futuro'];
  const quarterly=['integracion_social','integracion_natural','integracion_especialidad',
   'laboratorio_social','laboratorio_natural','laboratorio_orientacion','taller_orientacion',
   'espacio_formativo','metrologia_mecanica'];
@@ -186,7 +185,7 @@ export function validateFinalComposition({
  const natural=active.filter(s=>fmt(s)==='integracion_natural'||fmt(s)==='laboratorio_natural');
  const physical=active.filter(s=>area(s)==='educacion fisica');
  const art=active.filter(s=>area(s)==='educacion artistica'||area(s)==='artes');
- const techForm=active.filter(s=>area(s)==='tecnologias');
+ const techForm=active.filter(s=>/tecnolog/.test(area(s)));
  const project=active.filter(s=>fmt(s)==='vinculacion_futuro');
  const pp=active.filter(s=>fmt(s)==='practicas_profesionalizantes');
  const st={
@@ -228,7 +227,7 @@ export function validateFinalComposition({
   bad(pp.length>2,'TECH_PP_TOO_MANY','Solo se contempla una o dos Prácticas Profesionalizantes.',13);
   review(pp.length===0,'TECH_PP_PENDING',
     'Seleccionar una o dos Prácticas Profesionalizantes en 5.º o 6.º según el plan.',13);
-  bad(pp.some(s=>![5,6].includes(y(s))||s.duration!=='anual'),
+  bad(pp.some(s=>![5,6].includes(y(s))),
    'TECH_PP_YEAR','Las prácticas que integran el recorrido corresponden a 5.º o 6.º.',13);
   review(project.length>0,'TECH_PVF_LEGACY',
     'Los proyectos anuales independientes legados deben revisarse; el nuevo mapa cuenta Prácticas Profesionalizantes (1 o 2), no dos proyectos obligatorios.',13);
