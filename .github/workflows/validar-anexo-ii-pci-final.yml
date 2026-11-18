@@ -11,6 +11,11 @@ on:
       - "tests/normativa-final-pci-20261117.test.mjs"
       - "tests/pautas-pci-20261005.test.mjs"
       - "tests/tecnica-integrada-v2.test.mjs"
+      - "src/normativa/adaptador-mapa-media-20261117.mjs"
+      - "src/integracion-curricular/mapa-oferta.js"
+      - "src/integracion-curricular/reglas-composicion-fg.js"
+      - "src/orientaciones-online.mjs"
+      - "tests/adaptador-media-final-20261117.test.mjs"
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,6 +33,8 @@ jobs:
           node --check src/normativa/composicion-pci-20261117.mjs
           node --check src/tecnica/pautas-pci-20261005.mjs
           node --check src/tecnica/espacio-trabajo-v2.mjs
+          node --check src/normativa/adaptador-mapa-media-20261117.mjs
+          node --check src/orientaciones-online.mjs
       - name: Probar todas las reglas finales, 26 especialidades y retrocompatibilidad
         run: |
-          node --test tests/normativa-final-pci-20261117.test.mjs tests/pautas-pci-20261005.test.mjs tests/tecnica-integrada-v2.test.mjs
+          node --test tests/normativa-final-pci-20261117.test.mjs tests/pautas-pci-20261005.test.mjs tests/tecnica-integrada-v2.test.mjs tests/adaptador-media-final-20261117.test.mjs
