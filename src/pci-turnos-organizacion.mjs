@@ -1,6 +1,6 @@
 /** Organizador institucional de PCI, sin modificar ni fusionar documentos. */
 export const TURNOS=[['manana','Mañana'],['tarde','Tarde'],['vespertino','Vespertino'],['noche','Noche']];
-export const MODELOS=[['comun','Bachillerato / Media · mapa C1–C10'],['tecnica','Educación Técnica · mapa C1–C12']];
+export const MODELOS=[['comun','Bachillerato / Media · mapa C1–C10'],['tecnica','Educación Técnica · mapa C1–C12'],['ba15','Secundaria BA +15 · mapa específico pendiente de homologación']];
 export function agruparPcis(pcis){
   if(!Array.isArray(pcis))throw new TypeError('Se requiere una lista de PCI.');
   const ids=new Set();
