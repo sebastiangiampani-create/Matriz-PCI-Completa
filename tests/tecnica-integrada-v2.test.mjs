@@ -53,8 +53,11 @@ test('las 26 especialidades comparten el mismo motor Técnico sin cambiar su ide
   assert.equal(map.spaces.every(x=>x.year>=1&&x.year<=6),true);
   assert.equal(map.spaces.every(x=>x.term>=1&&x.endTerm<=12),true);
   assert.equal(map.spaces.every(x=>x.duration!=='anual'||x.endTerm===x.term+1),true);
-  assert.equal(map.spaces.filter(x=>x.format==='vinculacion_futuro').length,2);
-  assert.deepEqual(map.spaces.filter(x=>x.format==='vinculacion_futuro').map(x=>x.year),[5,6]);
+  assert.equal(map.spaces.filter(x=>x.format==='vinculacion_futuro').length,0);
+  const pp=map.spaces.filter(x=>x.format==='practicas_profesionalizantes');
+  assert.deepEqual(pp.map(x=>x.year),[5,6]);
+  assert.ok(pp.every(x=>x.included===false),
+    'No se deben seleccionar prácticas automáticamente sin el plan de especialidad.');
  }
 });
 test('doce cuatrimestres, celdas anuales de dos términos y excepciones Computación',()=>{
@@ -73,7 +76,8 @@ test('doce cuatrimestres, celdas anuales de dos términos y excepciones Computac
  assert.ok(find(map,'t-matematica-6'),'Computación tiene Matemática sexto');
  assert.ok(find(map,'t-lengua_adicional-6'),'Computación tiene Inglés sexto');
  assert.equal(find(map,'t-anual-4').name,'Laboratorio de Algoritmos y Estructura de Datos');
- assert.deepEqual([find(map,'t-pvf-5').endTerm,find(map,'t-pvf-6').endTerm],[10,12]);
+ assert.equal(find(map,'t-practicas-5').included,false);
+ assert.equal(find(map,'t-practicas-6').included,false);
 });
 test('excepciones Técnica: ADE tiene 6.º troncal, Geógrafo Matemático no tiene anual, Mecánica Metrología',()=>{
  const ade=technicalOfferSeed({pci:pci('Administración de Empresas'),source:src('Administración de Empresas')});
