@@ -102,7 +102,7 @@ test('la oferta del Taller de la Especialidad es variable y se decide sin borrar
  const after=technicalMapRows(edited).areas.find(x=>x.area==='Taller de la Especialidad');
  assert.equal(after.cells[6].spaces.some(x=>x.id==='t-taller-especialidad-4'),true);
  assert.equal(find(seed,'t-taller-especialidad-4').included,false);
- assert.throws(()=>updateTechnicalSpace(seed,'t-matematica-1',{included:false}),/Solo se permite/);
+ assert.throws(()=>updateTechnicalSpace(seed,'t-matematica-1',{included:false}),/Solo puede seleccionarse/);
 });
 test('ubicación flexible C7 a C12 para Ciudadanía y Trabajo/Ciencia y Tecnología',()=>{
  const map=technicalOfferSeed({pci:pci(),source:src()});
