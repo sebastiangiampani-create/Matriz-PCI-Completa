@@ -18,7 +18,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript'
 const server=createServer(async(req,res)=>{
  try{
   const pathname=decodeURIComponent(new URL(req.url,'http://local').pathname);
-  const file=resolve(root,'.'+(pathname==='/'?'/app.html':pathname));
+  const file=resolve(root,'.'+(pathname==='/'?'/preview-integracion-matriz.html':pathname));
   if(!file.startsWith(root+sep))throw Error('Ruta inválida');
   const body=await readFile(file);res.writeHead(200,{'Content-Type':mime[extname(file)]||'text/plain'});res.end(body);
  }catch{res.writeHead(404);res.end('Not found');}
@@ -33,7 +33,7 @@ try{
  page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)+' | '+String(e.stack||'sin pila').slice(0,900)));
  page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});
  page.on('request',r=>{if(/supabase\.(co|com)/.test(r.url()))network.push(r.url());});
- await page.goto(base+'/app.html',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'/preview-integracion-matriz.html',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.PCIApp?.ready&&window.PCIV2OriginalCoverage,null,{timeout:60000});
  const originBefore=await page.evaluate(()=>localStorage.getItem('pciAppV2'));
  await page.locator('#pciImportOpen').click();await page.locator('#pciImportPrepare').click();
@@ -95,7 +95,7 @@ try{
  const storage=await context.storageState();
  const mobile=await browser.newContext({viewport:{width:390,height:844},storageState:storage});
  const phone=await mobile.newPage();phone.on('pageerror',e=>errors.push(String(e)));
- await phone.goto(base+'/app.html',{waitUntil:'domcontentloaded'});
+ await phone.goto(base+'/preview-integracion-matriz.html',{waitUntil:'domcontentloaded'});
  await phone.waitForFunction(()=>window.PCIApp?.ready&&window.PCIFoDesarrollo,null,{timeout:60000});
  await phone.locator('#pciDemoFoCards [data-pci-fo-format="talleres"]').click();
  await phone.locator('#pciFoGroupCards .v97-group-coverage').first().waitFor({timeout:60000});
