@@ -18,6 +18,8 @@ const array=x=>Array.isArray(x)?x:[];
 const int=x=>Number.isInteger(Number(x))?Number(x):0;
 const PERIOD={3:[5,6],4:[7,8],5:[9,10]};
 const COUNTS={3:1,4:1,5:2};
+// Anexo II 17/11/2026, p.10: orientación Ciencias Naturales, espacios FO de 5.º pueden superar 9 h.
+const allowExpandedHours=(orientationId,year)=>orientationId==='ciencias_naturales'&&Number(year)===5;
 const typeLabel={laboratorio:'Laboratorio FO',taller:'Taller FO',proyecto:'Proyecto de Vinculación con el Futuro'};
 function ws(pack,id){
   const w=pack?.orientations?.[id];
@@ -173,8 +175,8 @@ export function assignFoSubject(pack,{orientationId,spaceId,subjectId,refs}){
     throw new Error('No se conoce la carga horaria oficial de esta materia. Revisar catálogo.');
   const max=Number(refs.rules.laboratorios?.max_horas_catedra)||9;
   const hc=totalHours(s,subject);
-  if(s.kind==='laboratorio'&&hc>max)
-    throw new Error('Superaría el máximo de '+max+' horas cátedra del laboratorio.');
+  if(hc>max&&!allowExpandedHours(orientationId,s.year))
+    throw new Error('Superaría el máximo de '+max+' horas cátedra de este espacio.');
   const upd=clone(pack);
   const target=upd.orientations[orientationId].fo.spaces.find(x=>x.id===spaceId);
   target.members.push(subject);
@@ -185,8 +187,8 @@ export function assignFoSubject(pack,{orientationId,spaceId,subjectId,refs}){
     x.id!==spaceId&&x.year===s.year&&x.term===otherTerm&&x.kind===s.kind);
   if(mirror&&!mirror.members.some(x=>x.id===subject.id)){
     const otherTotal=totalHours(mirror,subject);
-    if(s.kind==='laboratorio'&&otherTotal>max)
-      throw new Error('La réplica anual superaría el máximo de horas del laboratorio par.');
+    if(otherTotal>max&&!allowExpandedHours(orientationId,s.year))
+      throw new Error('La réplica anual superaría el máximo de horas del espacio par.');
     const conflict=upd.orientations[orientationId].fo.spaces.some(x=>
       x.id!==mirror.id&&x.term===mirror.term&&array(x.members).some(m=>m.id===subject.id));
     if(conflict)throw new Error('La réplica anual duplicaría la materia dentro del cuatrimestre par.');
@@ -245,14 +247,17 @@ export function validateOfferStructure(pack,orientationId,refs){
       errors.push(s.name+': contiene materias de otro año.');
     const hc=totalHours(s);
     if(hc===null)errors.push(s.name+': no se conoce la carga horaria de todas sus materias.');
-    else if(s.kind==='laboratorio'&&hc>(Number(refs.rules.laboratorios?.max_horas_catedra)||9))
-      errors.push(s.name+': supera el máximo permitido de horas cátedra.');
+    else if(hc>(Number(refs.rules.laboratorios?.max_horas_catedra)||9)){
+      if(allowExpandedHours(orientationId,s.year))
+        warnings.push(s.name+': excepción de 5.º Ciencias Naturales, verificar horas del diseño curricular vigente.');
+      else errors.push(s.name+': supera el máximo permitido de nueve horas cátedra.');
+    }
     if(!array(s.members).length&&array(s.contentIds).length)
       warnings.push(s.name+': tiene contenidos de un espacio todavía sin conformación.');
   }
   // Use the same V2 normative structure for the copied Matriz FG.
   // Missing curricular membership is a review warning, not a guessed subject.
-  const fgValidation=validateFgComposition(w.fg.areas,refs);
+  const fgValidation=validateFgComposition(w.fg.areas,refs,{orientationId});
   errors.push(...fgValidation.errors);
   warnings.push(...fgValidation.warnings);
   return {valid:errors.length===0&&warnings.length===0,
