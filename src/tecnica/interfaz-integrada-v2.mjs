@@ -99,7 +99,7 @@ export function createIntegratedTechnicalUI({
     'Los contenidos y las secuencias anteriores se importan sin cambiar el documento original. Las equivalencias V2 se identifican automáticamente.';
   const offerDescription=$('offerPane')?.querySelector('.topline .muted');
   if(offerDescription)offerDescription.textContent=tech?
-    'Seis niveles con troncales anuales, integraciones, espacios formativos, especialidad y dos proyectos de Vinculación. La carga horaria debe comprobarse con el diseño particular.':
+    'Seis niveles con troncales anuales, integraciones, espacios formativos, especialidad y recorrido de Vinculación con 1 o 2 Prácticas Profesionalizantes según el plan. La carga horaria requiere validación.':
     'Distribución de laboratorios, talleres y Proyecto de Vinculación. Las materias de FO se seleccionan según la orientación y su carga horaria.';
   const fgEyebrow=$('fgPane')?.querySelector('.topline .eyebrow');
   if(fgEyebrow)fgEyebrow.textContent=tech?
@@ -282,7 +282,7 @@ export function createIntegratedTechnicalUI({
      catch(err){message(err.message,'error');}
     });
     button.disabled=!writable();
-    button.title='Solo si el diseño curricular vigente lo determina; no consta en pautas del 05/10/2026';
+    button.title='Solo si el diseño curricular vigente lo determina; el Anexo II del 17/11/2026 no define esta especialidad.';
    }
   }
   for(const year of [5,6]){
