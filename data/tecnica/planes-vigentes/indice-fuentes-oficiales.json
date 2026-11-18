@@ -2,7 +2,7 @@
   "schema": "pci-tecnica-diseno-curricular-oficial-v1",
   "objetivo": "Complementar documentos de contenidos priorizados, NO confundirlos con planes de estudio.",
   "fuente_priorizados": "data/tecnica/fuentes-priorizadas-caba-2026.json",
-  "nota": "Un diseño nuevo puede tener implementación gradual por cohorte; verificar vigencia y gestión antes de cargar horas y materias. El Primer Ciclo no se deduce del Segundo Ciclo.",
+  "nota": "Un diseño nuevo puede tener implementación gradual por cohorte; verificar vigencia y gestión antes de cargar horas y materias. El Primer Ciclo no se deduce del Segundo Ciclo. Para Mecánica y Automotores se han confirmado las cargas globales por año, pero la desagregación completa de unidades curriculares sigue pendiente.",
   "normas_verificadas": 3,
   "disenos_con_caja_extraida": 1,
   "especialidades": [
@@ -26,12 +26,24 @@
       "id": "automotores",
       "especialidad": "Automotores",
       "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Automotores.pdf",
-      "status": "estructura_pendiente_extraccion",
+      "status": "estructura_oficial_identificada_totales_por_anio_verificados_pendiente_de_desglose",
       "norma": "659/MEDGC/2025",
       "fuente_norma": "https://boletinoficial.buenosaires.gob.ar/normativaba/norma/797351",
       "anexo_estructura": "IF-2025-23259582-GCABA-SSPIE",
       "vigencia_desde": 2026,
-      "horas_semanales_verificadas": false
+      "horas_semanales_verificadas": false,
+      "estructura_url": "https://documentosboletinoficial.buenosaires.gob.ar/publico/PE-RES-MEDGC-MEDGC-659-25-ANX-1.pdf",
+      "horas_semanales_por_anio_verificadas": {
+        "criterio_jurisdiccional": {
+          "3": 48,
+          "4": 46,
+          "5": 48,
+          "6": 48
+        }
+      },
+      "horas_reloj_segundo_ciclo": {
+        "criterio_jurisdiccional": 4560
+      }
     },
     {
       "id": "administracion_empresas",
@@ -44,12 +56,31 @@
       "id": "mecanica",
       "especialidad": "Mecánica",
       "priorizados_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Mecanica.pdf",
-      "status": "estructura_pendiente_extraccion",
+      "status": "estructura_oficial_identificada_totales_por_anio_verificados_pendiente_de_desglose",
       "norma": "1440/MEDGC/2025",
       "fuente_norma": "https://boletinoficial.buenosaires.gob.ar/normativaba/norma/823731",
       "anexo_estructura": "IF-2025-44477023-GCABA-SSPIE",
       "vigencia_desde": 2026,
-      "horas_semanales_verificadas": false
+      "horas_semanales_verificadas": false,
+      "estructura_url": "https://documentosboletinoficial.buenosaires.gob.ar/publico/PE-RES-MEDGC-MEDGC-1440-25-ANX.pdf",
+      "horas_semanales_por_anio_verificadas": {
+        "DET": {
+          "3": 48,
+          "4": 46,
+          "5": 48,
+          "6": 48
+        },
+        "DGEGP": {
+          "3": 48,
+          "4": 46,
+          "5": 48,
+          "6": 48
+        }
+      },
+      "horas_reloj_segundo_ciclo": {
+        "DET": 4560,
+        "DGEGP": 4560
+      }
     },
     {
       "id": "electronica",
@@ -205,5 +236,7 @@
       "status": "plan_vigente_por_identificar_y_verificar",
       "horas_semanales_verificadas": false
     }
-  ]
+  ],
+  "disenos_con_fuente_estructura_localizada": 3,
+  "disenos_con_totales_semanales_verificados": 3
 }
