@@ -16,6 +16,9 @@ on:
       - "tests/tecnica-integrada-browser.mjs"
       - "tests/multipci/api.test.mjs"
   workflow_dispatch:
+concurrency:
+  group: tecnica-integrada-v2-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
