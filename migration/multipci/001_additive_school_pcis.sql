@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS pci_workspace.pcis (
   orientation_id text NOT NULL CHECK (orientation_id ~ '^[a-z][a-z0-9_]{2,79}$'),
   process_id text NOT NULL CHECK (length(process_id) BETWEEN 1 AND 160),
   title text NOT NULL CHECK (length(btrim(title)) BETWEEN 3 AND 150),
-  model text NOT NULL DEFAULT 'comun' CHECK (model IN ('comun','tecnica')),
+  model text NOT NULL DEFAULT 'comun' CHECK (model IN ('comun','tecnica','ba15')),
   shift_id text NOT NULL DEFAULT 'manana'
     CHECK (shift_id IN ('manana','tarde','vespertino','noche')),
   specialty_name text NULL,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS pci_workspace.pcis (
   legacy_source_model text NOT NULL DEFAULT 'comun'
     CHECK (legacy_source_model IN ('comun','tecnica')),
   CONSTRAINT pci_mixed_model_valid CHECK (
-    (model='comun' AND specialty_name IS NULL) OR
+    (model IN ('comun','ba15') AND specialty_name IS NULL) OR
     (model='tecnica' AND specialty_name IS NOT NULL
      AND length(btrim(specialty_name)) BETWEEN 3 AND 150)
   ),
@@ -141,11 +141,11 @@ DECLARE
   v_curriculum_status text;
 BEGIN
   IF p_school_id IS NULL OR p_school_id<1001
-    OR p_model IS NULL OR p_model NOT IN ('comun','tecnica')
+    OR p_model IS NULL OR p_model NOT IN ('comun','tecnica','ba15')
     OR p_shift_id IS NULL OR p_shift_id NOT IN ('manana','tarde','vespertino','noche')
     OR p_title IS NULL OR length(btrim(p_title)) NOT BETWEEN 3 AND 150
     OR p_actor IS NULL OR length(btrim(p_actor)) NOT BETWEEN 1 AND 180
-    OR (p_model='comun' AND (
+    OR (p_model IN ('comun','ba15') AND (
       p_orientation_id IS NULL OR p_orientation_id !~ '^[a-z][a-z0-9_]{2,79}$'
       OR p_specialty_name IS NOT NULL))
     OR (p_model='tecnica' AND (
@@ -166,10 +166,12 @@ BEGIN
     'tecnica_' || substr(encode(pg_catalog.sha256(
       pg_catalog.convert_to(lower(btrim(p_specialty_name)),'UTF8')),'hex'),1,16)
     ELSE p_orientation_id END;
-  v_curriculum_status=CASE WHEN p_model='tecnica' THEN 'pending_rules' ELSE 'ready' END;
+  v_curriculum_status=CASE WHEN p_model IN ('tecnica','ba15') THEN 'pending_rules' ELSE 'ready' END;
   v_catalog_fg=CASE WHEN p_model='tecnica' THEN 'tecnica_reglas_pendientes/0'
+    WHEN p_model='ba15' THEN 'ba15_reglas_pendientes/0'
     ELSE 'fg-sec-aprende-v2/1' END;
   v_catalog_fo=CASE WHEN p_model='tecnica' THEN 'tecnica_especialidades_pendientes/0'
+    WHEN p_model='ba15' THEN 'ba15_orientaciones_pendientes/0'
     ELSE 'fo-sec-aprende-v2/1' END;
   v_hash=encode(pg_catalog.sha256(pg_catalog.convert_to(v_original::text,'UTF8')),'hex');
   INSERT INTO pci_workspace.legacy_snapshots(
