@@ -195,8 +195,35 @@ export function validateFinalComposition({
  };
  const review=(condition,code,message,page)=>{if(condition)warnings.push(issue(code,message,page,'warning'));};
  const bad=(condition,code,message,page)=>{if(condition)errors.push(issue(code,message,page));};
+ const perYear=(set,expected,tag,page)=>{
+  for(let year=1;year<=expected.length;year++){
+   const expectedCount=expected[year-1],actual=set.filter(x=>y(x)===year).length;
+   if(expectedCount!==null&&expectedCount!==actual)
+    bad(true,tag+'_YEAR_'+year,tag+' en '+year+'.º: se requieren '+expectedCount+
+      ' espacios, hay '+actual+'.',page);
+  }
+ };
+ const core=(label,years,page)=>{
+  const key=norm(label);
+  const matching=annualCore.filter(s=>norm(s.area)===key||
+    norm(s.name).split(' · ')[0]===key);
+  perYear(matching,Array.from({length:max},(_,i)=>years.includes(i+1)?1:0),
+    'TRONCAL_'+key.replace(/\s+/g,'_').toUpperCase(),page);
+ };
  if(mode==='tecnica'){
   const extra=norm(specialtyId)==='computacion';
+  const extended=extra||norm(specialtyId)==='administracion_empresas';
+  core('Matemática',extended?[1,2,3,4,5,6]:[1,2,3,4,5],13);
+  core('Lengua y Literatura',[1,2,3,4,5],13);
+  core('Lengua Adicional',extended?[1,2,3,4,5,6]:[1,2,3,4,5],13);
+  const expectedSocialByYear=extra?[2,2,2,4,0,0]:[2,2,2,null,null,null];
+  // Las dos materias flexibles pueden estar en 4.º, 5.º o 6.º.
+  perYear(slots,expectedSocialByYear,'TECH_SOCIAL',13);
+  perYear(natural,[2,2,2,0,0,0],'TECH_NATURAL',13);
+  perYear(physical,[2,2,2,2,2,2],'TECH_EDUCACION_FISICA',13);
+  perYear(art,[2,0,0,0,0,0],'TECH_EDUCACION_ARTISTICA',13);
+  perYear(active.filter(s=>fmt(s)==='taller_primer_ciclo'),[1,1,0,0,0,0],
+    'TECH_TALLER_PRIMER_CICLO',16);
   const socialTarget=extra?10:8;
   bad(slots.length!==socialTarget,'TECH_SOCIAL_COUNT',
     'Ciencias Sociales: '+socialTarget+' espacios en la trayectoria ('+
@@ -245,7 +272,16 @@ export function validateFinalComposition({
      'TECH_FLEX_SOCIAL_YEAR','Ciudadanía y Trabajo / Ciencia y Tecnología se ubica en 4.º, 5.º o 6.º.',13);
   }
  }else{
+  core('Matemática',[1,2,3,4,5],8);
+  core('Lengua y Literatura',[1,2,3,4,5],8);
+  core('Lengua Adicional',[1,2,3,4,5],8);
   const split=selectedSocialOption===12;
+  perYear(slots,[2,2,split?4:2,2,2],'BACH_SOCIAL',8);
+  perYear(natural,isBachNaturales(orientation)?[2,2,2,2,0]:[2,2,2,2,2],
+    'BACH_NATURAL',8);
+  perYear(physical,[2,2,2,2,2],'BACH_EDUCACION_FISICA',8);
+  perYear(art,[2,2,0,2,0],'BACH_ARTES',8);
+  perYear(techForm,[2,2,2,2,0],'BACH_TECNOLOGIAS',8);
   const socialExpected=split?12:10;
   if(selectedSocialOption!=null&&![10,12].includes(selectedSocialOption))
     errors.push(issue('BACH_SOCIAL_OPTION','La opción de Ciencias Sociales debe ser 10 o 12 laboratorios.',9));
