@@ -16,10 +16,10 @@ const space=(format,year,hours,other={})=>({
    format==='espacio_anual_especialidad'?'anual':'cuatrimestral',
   ...other
 });
-test('proveniencia textual: 19 páginas y advertencia de referencia normativa incompleta',()=>{
-  assert.equal(SOURCE.pages,19);
-  assert.equal(RULESET_ID,'pci-pautas-2026-10-05/1');
-  assert.match(SOURCE.legalReference,/XXX/);
+test('proveniencia actual: Anexo II final 20 páginas, firma 17/11/2026',()=>{
+  assert.equal(SOURCE.pages,20);
+  assert.equal(RULESET_ID,'pci-anexo-ii-2026-11-17/1');
+  assert.equal(SOURCE.legalReference,'IF-2026-51169092-GCABA-SSPIE');
   assert.equal(TECNICA.levels,6);assert.equal(TECNICA.terms,12);
   assert.equal(BACHILLERATO.levels,5);assert.equal(BACHILLERATO.terms,10);
   assert.equal(GENERAL.maxWeeklyHours,9);
