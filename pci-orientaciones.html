@@ -28,8 +28,10 @@
         <p id="schoolLabel" class="muted"></p>
         <hr>
         <div class="sectionTitle"><h2>Sus PCI</h2><button type="button" id="btnAddPci" class="btn primary">+ Agregar modelo / PCI</button></div>
+        <p id="pciCounts" class="muted" aria-live="polite">Cargando proyectos…</p>
+        <label for="turnFilter">Ver proyectos por turno<select id="turnFilter"><option value="todos">Todos los turnos</option></select></label>
         <div id="pciList" class="pciList"></div>
-        <p class="note"><strong>Una escuela puede ofrecer Bachillerato/Media y Técnica al mismo tiempo.</strong> Cada PCI tiene modelo, orientación o especialidad, turno y guardado propios. El acceso y las claves institucionales son únicos; los datos históricos no se reescriben.</p>
+        <p class="note"><strong>Una escuela puede ofrecer Bachillerato/Media y Técnica al mismo tiempo.</strong> La navegación se organiza por turno y modalidad. Cada PCI tiene orientación o especialidad, mapa y guardado propios. El acceso y las claves institucionales son únicos; los datos históricos no se reescriben.</p>
         <form id="formCreatePci" class="formCard" hidden>
           <label>Rama de formación<select id="pciModel">
               <option value="comun">Educación Media · Orientación</option>
