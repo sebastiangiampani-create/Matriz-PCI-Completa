@@ -217,7 +217,7 @@ async function reloadSchool(){
   technical.close();
   pci=null;workspace=null;auto=null;selectedFgArea=null;selectedFoSpace=null;
   fgDirty=false;foDirty=false;offerDirty=false;
-  show('editor',false);show('technicalPending',false);show('empty');renderPcis();
+  show('editor',false);show('technicalPending',false);show('ba15Pending',false);show('empty');renderPcis();
 }
 function renderPcis(){
   const host=$('pciList');host.replaceChildren();
@@ -232,7 +232,8 @@ function renderPcis(){
   selector.value=TURNOS.some(([id])=>id===current)?current:'todos';
   const totalMedia=pcis.filter(p=>p.model==='comun').length;
   const totalTecnica=pcis.filter(p=>p.model==='tecnica').length;
-  counts.textContent=pcis.length+' PCI · '+turnos.length+' turnos · '+totalMedia+' Media · '+totalTecnica+' Técnica';
+  const totalBa15=pcis.filter(p=>p.model==='ba15').length;
+  counts.textContent=pcis.length+' PCI · '+turnos.length+' turnos · '+totalMedia+' Media · '+totalTecnica+' Técnica · '+totalBa15+' BA +15';
   if(!pcis.length){
     note('p','Esta escuela todavía no tiene PCI nuevos. El PCI histórico se conserva.',host,'muted');
     return;
@@ -291,7 +292,7 @@ function updatePciModelFields(){
 async function createPci(e){
   e.preventDefault();if(!canEdit())return;
   const model=$('pciModel').value;
-  const orientationId=model==='comun' ? $('orientation').value : '';
+  const orientationId=model!=='tecnica' ? $('orientation').value : '';
   const rawSpecialty=model==='tecnica' ? $('specialtyName').value.trim() : '';
   const specialtyName=model==='tecnica'?findSpecialty(rawSpecialty)?.name||'':'';
   if(model==='tecnica'&&!specialtyName){
@@ -320,6 +321,7 @@ async function createPci(e){
     if(result?.pci_id)await openPci(result.pci_id);
     status(model==='tecnica'?
       'Especialidad técnica registrada. Su mapa C1–C12 queda disponible para construcción y validación según el Anexo II final.':
+      model==='ba15'?'PCI BA +15 registrado. La edición curricular queda pendiente de homologación normativa.':
       'PCI de Media creado sin modificar la matriz histórica.');
   }catch(error){status('No se creó','error');message(error.message,'error');}
 }
@@ -340,6 +342,22 @@ async function openPci(id){
   try{
     status('Cargando PCI y resguardo histórico…');
     const result=await call('get-school-pci',{school_id:schoolId,pci_id:id});
+    if(result.pci?.model==='ba15'){
+      const b=result.pci;
+      if(Number(b.school_id)!==schoolId || !b.pci_id || !b.orientation_id || !b.legacy_sha256)
+        throw Error('Identidad o resguardo del PCI BA +15 incompletos.');
+      technical.close();pci=b;workspace=null;auto=null;
+      fgDirty=false;foDirty=false;offerDirty=false;
+      show('editor',false);show('technicalPending',false);show('empty',false);
+      show('ba15Pending',true);
+      $('ba15Name').textContent=pcis.find(x=>x.pci_id===id)?.title||'PCI BA +15';
+      $('ba15Info').textContent='Turno '+({manana:'mañana',tarde:'tarde',vespertino:'vespertino',noche:'noche'}[b.shift_id]||b.shift_id)+
+        ' · Orientación '+(ORIENTATIONS.find(x=>x.id===b.orientation_id)?.name||b.orientation_id)+
+        ' · Documento histórico protegido';
+      renderPcis();
+      status('BA +15: PCI independiente registrado; mapa curricular a homologar');
+      return;
+    }
     if(result.pci?.model==='tecnica'){
       // Mismo editor institucional FG → Oferta → Desarrollo curricular V2.
       // La especialidad y el PCI registrados identifican la fuente y el ámbito.
@@ -351,14 +369,14 @@ async function openPci(id){
       pci=tech;workspace=null;auto=null;fgDirty=false;offerDirty=false;foDirty=false;
       selectedFgArea=null;selectedFoSpace=null;
       await technical.open(tech);
-      show('technicalPending',false);
+      show('technicalPending',false);show('ba15Pending',false);
       show('empty',false);show('editor');
       renderPcis();setTab('fg',true);
       status('PCI Técnico · mapa C1–C12 y planes de aprendizaje');
       return;
     }
     technical.close();
-    show('technicalPending',false);
+    show('technicalPending',false);show('ba15Pending',false);
     const p=requireSchoolPci(result.pci,schoolId);
     if(!ORIENTATIONS.some(o=>o.id===p.orientation_id))
       throw Error('La orientación no existe en el catálogo institucional.');
