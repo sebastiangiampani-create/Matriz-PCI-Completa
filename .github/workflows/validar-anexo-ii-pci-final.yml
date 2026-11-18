@@ -17,6 +17,9 @@ on:
       - "src/orientaciones-online.mjs"
       - "tests/adaptador-media-final-20261117.test.mjs"
   workflow_dispatch:
+concurrency:
+  group: normativa-final-pci-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
