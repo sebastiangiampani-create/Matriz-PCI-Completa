@@ -489,6 +489,13 @@ export function createIntegratedTechnicalUI({
  }
  async function saveOffer(){
   if(!pci||!writable())return;
+  if(offer.needsNormativeReview&&!offer.normativeReviewAcknowledged){
+   if(!confirm('El mapa anterior contiene espacios de una versión previa. '+
+     'Se conservaron sus datos sin borrarlos. Antes de guardar, verificá las Prácticas Profesionalizantes '+
+     '(una o dos según especialidad) y el plan vigente. ¿Confirmás que revisaste esta diferencia normativa?'))return;
+   offer={...offer,normativeReviewAcknowledged:true};
+   rememberDraft('oferta-tecnica','mapa-oferta-tecnica-v1',offer,offerRevision);
+  }
   try{
    const payload=guardTechnicalOffer(offer,pci,source);
    const result=await saveSafe(async()=>await saveUnit('oferta','map','mapa-oferta-tecnica-v1',
