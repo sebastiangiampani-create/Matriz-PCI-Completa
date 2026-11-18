@@ -104,11 +104,11 @@ export function validateTechnicalSpace(space,{specialty=null,plan=null}={}){
     warnings.push(issue('SPECIALTY_HOURS_REQUIRE_PLAN','La excepción al tope de nueve horas exige verificar el plan de la especialidad.',5,'warning'));
   }
   const memberCount=Array.isArray(space?.subjects)?space.subjects.length:null;
-  if(format==='integracion_natural'&&[2,3].includes(year)&&memberCount!==null&&memberCount<2)
+  if(format==='integracion_natural'&&[2,3].includes(year)&&memberCount!==null&&memberCount>0&&memberCount<2)
     errors.push(issue('NATURAL_MIN_2','En 2.º y 3.º, el espacio de integración de Naturales no puede tener una sola asignatura.',14));
   if(format==='integracion_natural'&&![1,2,3].includes(year))
     errors.push(issue('NATURAL_YEAR','Naturales de Técnica se organiza en 1.º, 2.º y 3.º.',13));
-  if(format==='integracion_social'&&memberCount!==null&&memberCount<2){
+  if(format==='integracion_social'&&memberCount!==null&&memberCount>0&&memberCount<2){
     // Solo hay excepción si el DC de la especialidad prevé una única
     // materia del área para ese año: no inferirlo automáticamente.
     if(!plan?.singleSocialSubjectYears?.includes(year))
@@ -145,6 +145,11 @@ export function validateTechnicalSpace(space,{specialty=null,plan=null}={}){
     else if(space?.title && normalize(space.title)!==normalize(item.subjects[year]))
       errors.push(issue('ANNUAL_SUBJECT_MISMATCH','El nombre no coincide con el espacio anual establecido para esta especialidad y año.',16));
   }
+  if(format==='practicas_profesionalizantes'&&![5,6].includes(year))
+    errors.push(issue('PP_YEAR','Prácticas Profesionalizantes se ubican en 5.º o 6.º según especialidad.',13));
+  if(format==='vinculacion_futuro')
+    warnings.push(issue('PVF_LEGACY_REVIEW',
+      'El Anexo II vigente no exige dos proyectos independientes: revisar la relación con una o dos Prácticas Profesionalizantes.',13,'warning'));
   if(format==='metrologia_mecanica'&&!(findSpecialty(specialty)?.id==='mecanica'&&year===3))
     errors.push(issue('METROLOGY_EXCEPTION','Metrología y Producción Industrial es una excepción de Mecánica en 3.º.',15));
   return {valid:errors.length===0,errors,warnings,ruleSet:RULESET_ID};
