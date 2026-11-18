@@ -4,6 +4,7 @@
  * No hace escritura al cargar, ni usa localStorage, ni toca pci_proposals.data.
  */
 import {ORIENTATIONS,createOrientationPackage} from './integracion-curricular/bridge.js';
+import {agruparPcis,TURNOS} from './pci-turnos-organizacion.mjs';
 import {migrateState} from '../pci-model.js';
 import {loadMatrixContents,loadV2Fg,loadV2Fo,loadV2Rules,selectFoByOrientation} from './integracion-curricular/catalogos.js';
 import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integracion-curricular/auto-validacion-importacion.js';
@@ -166,6 +167,7 @@ async function init(){
     sel.addEventListener('change',async()=>{if(!canLeave()){sel.value=String(schoolId);return;}schoolId=Number(sel.value);await reloadSchool().catch(err=>message(err.message,'error'));});
     $('showNewSchool').hidden=!canCreateSchool();
     $('btnAddPci').disabled=!canEdit();
+    $('turnFilter').addEventListener('change',renderPcis);
     $('showNewSchool').onclick=()=>show('formNewSchool',true);
     // Acceso directo desde Panel general; requiere sesión administrativa real.
     if(new URL(location.href).searchParams.get('accion')==='alta-escuela'&&canCreateSchool()){
@@ -219,31 +221,44 @@ async function reloadSchool(){
 }
 function renderPcis(){
   const host=$('pciList');host.replaceChildren();
+  const selector=$('turnFilter');
+  const counts=$('pciCounts');
+  const turnos=agruparPcis(pcis);
+  const current=selector.value;
+  selector.replaceChildren();
+  for(const [value,label] of [['todos','Todos los turnos'],...TURNOS.map(([id,name])=>[id,'Turno '+name])]){
+    const option=elem('option',label);option.value=value;selector.appendChild(option);
+  }
+  selector.value=TURNOS.some(([id])=>id===current)?current:'todos';
+  const totalMedia=pcis.filter(p=>p.model==='comun').length;
+  const totalTecnica=pcis.filter(p=>p.model==='tecnica').length;
+  counts.textContent=pcis.length+' PCI · '+turnos.length+' turnos · '+totalMedia+' Media · '+totalTecnica+' Técnica';
   if(!pcis.length){
     note('p','Esta escuela todavía no tiene PCI nuevos. El PCI histórico se conserva.',host,'muted');
     return;
   }
-  // Una sola escuela y un solo acceso pueden tener a la vez dos modelos.
-  // La rama curricular corresponde al PCI, no a pci_proposals.profile.
-  for(const model of ['comun','tecnica']){
-    const records=pcis.filter(p=>(p.model==='tecnica'?'tecnica':'comun')===model);
-    if(!records.length)continue;
-    const label=model==='comun'?
-      'Bachillerato / Media · 5 niveles (C1–C10)':
-      'Educación Técnica · 6 niveles (C1–C12)';
-    note('h3',label+' · '+records.length+' PCI',host,'pciModelHeading');
-    records.forEach(p=>{
-      const button=elem('button',undefined,'pciItem'+(p.pci_id===pci?.pci_id?' active':''));button.type='button';
-      const track=model==='tecnica'?
-        ('Especialidad: '+(p.specialty_name||'Pendiente de identificar')):
-        ('Orientación: '+(ORIENTATIONS.find(o=>o.id===p.orientation_id)?.name||p.orientation_id));
-      const shift={manana:'Mañana',tarde:'Tarde',vespertino:'Vespertino',noche:'Noche'}[p.shift_id]||'Mañana';
-      note('strong',p.title,button);
-      note('small',track+' · Turno '+shift+' · '+
-        (model==='tecnica'?'Validación curricular técnica pendiente':p.status),button);
-      button.onclick=()=>openPci(p.pci_id);
-      host.appendChild(button);
-    });
+  // El mismo school_id y la misma sesión contienen todos los turnos y
+  // modalidades. Cada botón abre el pci_id individual, nunca otro turno.
+  for(const turno of turnos){
+    if(selector.value!=='todos'&&selector.value!==turno.id)continue;
+    const section=elem('section',undefined,'pciShiftSection');
+    note('h3','Turno '+turno.nombre+' · '+turno.cantidad+' PCI',section,'pciShiftHeading');
+    for(const modelo of turno.modelos){
+      note('h4',modelo.nombre+' · '+modelo.pcis.length,section,'pciModelHeading');
+      for(const p of modelo.pcis){
+        const button=elem('button',undefined,'pciItem'+(p.pci_id===pci?.pci_id?' active':''));
+        button.type='button';
+        const track=p.model==='tecnica'?
+          ('Especialidad: '+p.specialty_name):
+          ('Orientación: '+(ORIENTATIONS.find(o=>o.id===p.orientation_id)?.name||p.orientation_id));
+        note('strong',p.title,button);
+        note('small',track+' · '+p.status,button);
+        button.setAttribute('aria-label','Abrir '+track+' · Turno '+turno.nombre+' · '+p.title);
+        button.onclick=()=>openPci(p.pci_id);
+        section.appendChild(button);
+      }
+    }
+    host.appendChild(section);
   }
 }
 function populateSpecialties(){
