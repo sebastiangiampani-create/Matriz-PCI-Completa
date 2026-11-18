@@ -233,9 +233,13 @@ export function validateFinalComposition({
     'Los proyectos anuales independientes legados deben revisarse; el nuevo mapa cuenta Prácticas Profesionalizantes (1 o 2), no dos proyectos obligatorios.',13);
   const compulsorySoc=slots.filter(s=>s.character==='obligatorio').length;
   const compulsoryNat=natural.filter(s=>s.character==='obligatorio').length;
-  bad(compulsorySoc!==(extra?5:4),'TECH_SOCIAL_EIO',
-    'Obligatorios de Sociales: '+(extra?5:4)+'.',15);
-  bad(compulsoryNat!==4,'TECH_NATURAL_EIO','Obligatorios de Naturales: 4.',15);
+  if(slots.every(x=>['obligatorio','electivo'].includes(x.character)))
+   bad(compulsorySoc!==(extra?5:4),'TECH_SOCIAL_EIO',
+     'Obligatorios de Sociales: '+(extra?5:4)+'.',15);
+  else review(true,'TECH_SOCIAL_EIO_PENDING','Falta definir las alternativas EIO/EIE de Sociales.',15);
+  if(natural.every(x=>['obligatorio','electivo'].includes(x.character)))
+   bad(compulsoryNat!==4,'TECH_NATURAL_EIO','Obligatorios de Naturales: 4.',15);
+  else review(true,'TECH_NATURAL_EIO_PENDING','Falta definir las alternativas EIO/EIE de Naturales.',15);
   for(const s of slots){
    if(s.id?.startsWith('t-social-flex-'))bad(![4,5,6].includes(y(s)),
      'TECH_FLEX_SOCIAL_YEAR','Ciudadanía y Trabajo / Ciencia y Tecnología se ubica en 4.º, 5.º o 6.º.',13);
@@ -267,9 +271,14 @@ export function validateFinalComposition({
   }
   const countSoc=slots.filter(s=>s.character==='obligatorio').length;
   const countNat=natural.filter(s=>s.character==='obligatorio').length;
-  bad(countSoc!==(split?6:5),'BACH_SOCIAL_EIO','Sociales requiere '+(split?6:5)+' laboratorios obligatorios.',9);
-  bad(countNat!==(isBachNaturales(orientation)?4:5),
-    'BACH_NATURAL_EIO','Naturales requiere '+(isBachNaturales(orientation)?4:5)+' laboratorios obligatorios.',10);
+  if(slots.every(x=>['obligatorio','electivo'].includes(x.character)))
+   bad(countSoc!==(split?6:5),'BACH_SOCIAL_EIO',
+     'Sociales requiere '+(split?6:5)+' laboratorios obligatorios.',9);
+  else review(true,'BACH_SOCIAL_EIO_PENDING','Falta definir EIO/EIE de Sociales.',9);
+  if(natural.every(x=>['obligatorio','electivo'].includes(x.character)))
+   bad(countNat!==(isBachNaturales(orientation)?4:5),'BACH_NATURAL_EIO',
+     'Naturales requiere '+(isBachNaturales(orientation)?4:5)+' laboratorios obligatorios.',10);
+  else review(true,'BACH_NATURAL_EIO_PENDING','Falta definir EIO/EIE de Naturales.',10);
  }
  if(optionsLockedAt&&schoolYearStart){
   if(!validityDate(optionsLockedAt)||!validityDate(schoolYearStart))
