@@ -70,8 +70,17 @@ function checkTechnicalDocument({doc,unit,registered,original,sid,pciId}){
     TECH_OFFICIAL_SOURCES.get(registered.specialty_name)?.sha256===doc.source_sha256;
   if(!base)return false;
   if(unit.component==='oferta'&&unit.kind==='map'&&unit.version==='oferta-tecnica-v1'){
-    if(doc.schema!=='pci-oferta-tecnica-v1/1'||!Array.isArray(doc.spaces)||
-      doc.spaces.length<30||doc.spaces.length>160)return false;
+    // Ninguna unidad escrita bajo las pautas obsoletas del 05/10 se
+    // vuelve a guardar como "vigente" sin revisión explícita.
+    if(doc.schema!=='pci-oferta-tecnica-v1/1'||
+      doc.ruleset!=='pci-anexo-ii-2026-11-17/1'||
+      (doc.needsNormativeReview===true&&doc.normativeReviewAcknowledged!==true)||
+      !Array.isArray(doc.spaces)||doc.spaces.length<30||doc.spaces.length>160)return false;
+    const active=doc.spaces.filter(s=>s?.included!==false&&!s?.archivedLegacy);
+    if(active.some(s=>s.format==='vinculacion_futuro')||
+      active.filter(s=>s.format==='practicas_profesionalizantes').length>2||
+      active.some(s=>s.format==='practicas_profesionalizantes'&&![5,6].includes(s.year)))
+      return false;
     const ids=new Set();
     for(const space of doc.spaces){
       if(!space||typeof space.id!=='string'||ids.has(space.id)||space.id.length>240||
