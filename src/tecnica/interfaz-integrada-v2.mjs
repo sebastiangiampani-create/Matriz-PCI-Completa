@@ -8,6 +8,7 @@ import {
  TECH_FIELDS,TECH_FG_AREAS,TECH_SPECIFIC_AREAS,TECH_OFFER_VERSION,TECH_PLAN_VERSION,
  technicalSubjectBank,technicalOfferSeed,guardTechnicalOffer,guardTechnicalPlan,
  technicalMapRows,technicalCoverage,technicalPlanSeed,validateTechnicalDraft,
+ prepareTechnicalOfferFinal,
  addTechnicalIntegration,addTechnicalRepresentationThird,addTechnicalAnnualPending,
  addTechnicalProfessionalPractice,moveTechnicalTerm,setTechnicalSubject,updateTechnicalSpace,
  technicianTerms,TECH_STAGES
@@ -236,8 +237,14 @@ export function createIntegratedTechnicalUI({
   });
   picker(tools,'Formato', [['','Todos'],...['Troncales','Ciencias Sociales','Ciencias Naturales',
    'Taller de la Especialidad','Espacio anual de la especialidad','Integración de la Especialidad',
-   'Proyecto de Vinculación con el Futuro','Prácticas Profesionalizantes'].map(x=>[x,x])],
+   'Prácticas Profesionalizantes'].map(x=>[x,x])],
    spaceArea,v=>{spaceArea=v;activeSpace=null;renderOffer()});
+  const pvfLegend=el('p',target,
+    'Proyecto de Vinculación con el Futuro (Técnica): Recorrido Formativo Integrado — '+
+    'Actividades Educativas con Integración en Contextos, Experiencias Formativas Vocacionales y '+
+    'una o dos Prácticas Profesionalizantes en 5.º/6.º según la especialidad. '+
+    'No se crean dos proyectos anuales independientes.','muted');
+  pvfLegend.style.margin='2px 0 12px';
   const year=Number(spaceYear);
   const list=offer.spaces.filter(x=>(!year||x.year===year)&&(!spaceArea||x.area===spaceArea)).sort(
    (a,b)=>a.year-b.year||a.term-b.term||a.area.localeCompare(b.area));
@@ -279,13 +286,13 @@ export function createIntegratedTechnicalUI({
    }
   }
   for(const year of [5,6]){
-   if(offer.spaces.some(s=>s.id==='t-practicas-'+year))continue;
+   if(offer.spaces.some(s=>s.id==='t-practicas-'+year&&s.included!==false))continue;
    const button=btn(tools,'+ Prácticas Profesionalizantes '+year+'º',()=>{
     try{offer=addTechnicalProfessionalPractice(offer,year);changedOffer();}
     catch(err){message(err.message,'error');}
    });
    button.disabled=!writable();
-   button.title='Vinculación con el Futuro, según Diseño Curricular de la especialidad';
+   button.title='Incluir práctica de este año solo si corresponde al diseño curricular de la especialidad';
   }
   const s=offer.spaces.find(x=>x.id===activeSpace);
   if(!s){createWarning(layout,'Elegí un espacio del mapa o de la lista para distribuir materias, contenidos y planificar.');summarizeMap();return;}
@@ -305,6 +312,22 @@ export function createIntegratedTechnicalUI({
    createWarning(panel,'La cantidad de Talleres de la Especialidad (1 a 4) depende del diseño curricular vigente. '+
      (s.included===false?'Este espacio variable NO está incorporado en la oferta.':'Este espacio se considera parte de la oferta.'));
   }
+  if(/^t-practicas-[56]$/.test(s.id)){
+   const toggle=btn(panel,s.included===false?
+     'Incorporar Práctica Profesionalizante según plan':
+     'Desactivar esta práctica sin borrar sus contenidos',()=>{
+       if(s.included!==false&&!confirm(
+         'Se ocultará la práctica del mapa, pero el borrador conservará sus referencias y planes. ¿Continuar?'))return;
+       try{offer=updateTechnicalSpace(offer,s.id,{included:s.included===false});changedOffer();}
+       catch(err){message(err.message,'error');}
+     });
+   toggle.disabled=!writable();
+   createWarning(panel,'El diseño curricular determina si la especialidad acredita una o dos '+
+     'Prácticas Profesionalizantes en 5.º y/o 6.º. No se asignan automáticamente.');
+  }
+  if(s.archivedLegacy)
+   createWarning(panel,'Espacio histórico preservado por cambio normativo 17/11/2026. '+
+    'No se eliminó: revisar su relación con las Prácticas Profesionalizantes antes de modificarlo.');
   const detail=el('div',panel,undefined,'split');
   const basics=el('div',detail);
   const nameInput=field(basics,'Nombre del espacio',s.name,v=>{
@@ -377,7 +400,7 @@ export function createIntegratedTechnicalUI({
    'la selección no constituye homologación automática.');
   const planBtn=btn(panel,'Abrir planes del espacio',()=>{
    tab='fo';activateTab();openPlan(s.id);
-  });planBtn.disabled=!pci||s.included===false;
+  });planBtn.disabled=!pci||(s.included===false&&!s.archivedLegacy);
   summarizeMap();buildHeader();
  }
  function renderPlanList(){
@@ -390,7 +413,7 @@ export function createIntegratedTechnicalUI({
   for(const s of offer.spaces.filter(x=>!spaceYear||x.year===spaceYear).sort((a,b)=>a.year-b.year||a.term-b.term)){
    const b=btn(host,s.name+' · '+s.year+'º'+(s.duration==='anual'?' anual':' C'+s.term),
     ()=>openPlan(s.id),'areaItem'+(activePlanId===s.id?' active':''));
-   b.disabled=!pci||s.included===false;
+   b.disabled=!pci||(s.included===false&&!s.archivedLegacy);
   }
  }
  async function openPlan(id){
@@ -401,7 +424,11 @@ export function createIntegratedTechnicalUI({
    status('Cargando planes del espacio...');
    const remote=await getUnit(pci,'fo','space',id,TECH_PLAN_VERSION);
    if(token!==loading)return;
-   const incoming=remote.exists?guardTechnicalPlan(remote.document,pci,s,offer):technicalPlanSeed({pci,space:s,offer});
+   if(s.archivedLegacy&&!remote.exists)
+     throw Error('Este espacio es histórico, pero no tiene planes guardados en la nueva unidad. '+
+       'El origen permanece conservado sin convertirlo.');
+   const incoming=remote.exists?guardTechnicalPlan(remote.document,pci,s,offer):
+     technicalPlanSeed({pci,space:s,offer});
    planRevision=Number(remote.revision)||0;
    const restored=recallDraft('tecnica-plan',id,planRevision,pci,
      value=>guardTechnicalPlan(value,pci,s,offer));
@@ -456,7 +483,7 @@ export function createIntegratedTechnicalUI({
   }
   const actions=el('div',host,undefined,'actions');
   const save=btn(actions,'Guardar los cuatro planes',()=>savePlan(),'btn primary');
-  save.disabled=!writable();
+  save.disabled=!writable()||offer.spaces.find(s=>s.id===plan?.space_id)?.archivedLegacy;
   btn(actions,'Descargar planes en JSON',()=>download(
    'tecnica-planes-'+pci.school_id+'-'+pci.pci_id+'-'+plan.space_id+'.json',plan));
  }
@@ -475,7 +502,7 @@ export function createIntegratedTechnicalUI({
   }catch(error){message('No se guardó el mapa técnico: '+error.message,'error');}
  }
  async function savePlan(){
-  if(!pci||!plan||!writable())return;
+  if(!pci||!plan||!writable()||offer.spaces.find(s=>s.id===plan.space_id)?.archivedLegacy)return;
   const space=offer.spaces.find(x=>x.id===plan.space_id);
   if(!space)return;
   try{
@@ -516,13 +543,20 @@ export function createIntegratedTechnicalUI({
   const revision=Number(saved.revision)||0;
   const restored=recallDraft('oferta-tecnica','mapa-oferta-tecnica-v1',revision,next,
     value=>guardTechnicalOffer(value,next,file));
-  pci=next;source=file;bank=technicalSubjectBank(file);offer=restored||initial;
-  offerRevision=revision;offerDirty=!!restored;plan=null;
+  const prepared=prepareTechnicalOfferFinal(restored||initial);
+  pci=next;source=file;bank=technicalSubjectBank(file);offer=prepared.document;
+  offerRevision=revision;offerDirty=!!restored||prepared.needsReview;plan=null;
+  if(prepared.needsReview)
+   rememberDraft('oferta-tecnica','mapa-oferta-tecnica-v1',offer,offerRevision);
   planRevision=0;planDirty=false;activePlanId=null;activeSpace=null;
   activeArea='Ciencias Sociales';spaceYear=0;spaceArea='';
   setLabels(true);buildHeader();renderTab('fg');
-  message('PCI Técnico abierto con el mismo flujo V2. '+bank.length+
-   ' referencias documentales consultables. La cobertura es provisoria hasta aprobar el plan.');
+  message((prepared.needsReview?
+    'Anexo II del 17/11/2026: borrador anterior adaptado SOLO en memoria, sin borrar espacios ni planes. '+
+    'Revisá Prácticas Profesionalizantes antes de guardar. ':
+    'PCI Técnico abierto con el mismo flujo V2. ')+
+    bank.length+' referencias documentales consultables; pendiente de validación curricular.',
+    prepared.needsReview?'warn':'');
   return true;
  }
  function close(){
