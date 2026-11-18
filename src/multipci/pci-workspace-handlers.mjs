@@ -18,7 +18,7 @@ const ALLOWED_KINDS={
   oferta:new Set(['map'])
 };
 const FG_BASES=new Set(['fg-matriz-historica/1','fg-sec-aprende-v2/1']);
-const MODELS=new Set(['comun','tecnica']);
+const MODELS=new Set(['comun','tecnica','ba15']);
 const SHIFTS=new Set(['manana','tarde','vespertino','noche']);
 // Catálogo de nombres propios explicitados en Pautas PCI 05/10/2026, pp.16-17.
 // Solo controla el ALTA; no reescribe documentos previos ni borra otros PCI.
@@ -165,13 +165,13 @@ export async function handleMultiPci({action,body,session,db,cors,inScope,hasPer
       const specialty=text(body.specialty_name,150);
       const title=text(body.title,150);
       if(!MODELS.has(model)||!SHIFTS.has(shift)||title.length<3 ||
-        (model==='comun' && (!ALLOWED_ORIENTATIONS.has(orientation)||specialty.length>0)) ||
+        (model!=='tecnica' && (!ALLOWED_ORIENTATIONS.has(orientation)||specialty.length>0)) ||
         (model==='tecnica' && (!SPECIALTY_NAMES.has(specialty) || orientation.length>0)))
         return reply({error:'Rama, orientación, especialidad o turno inválidos'},400);
       // Técnica: se registra ficha e historia, SIN habilitar editor de Media.
       // No inventamos la composición de especialidades pendiente de normativa.
       const result=await rpc('pci_workspace_create_pci_v2',{
-        p_school_id:sid,p_orientation_id:model==='comun'?orientation:null,
+        p_school_id:sid,p_orientation_id:model!=='tecnica'?orientation:null,
         p_title:title,p_actor:actorName,p_model:model,p_shift_id:shift,
         p_specialty_name:model==='tecnica'?specialty:null
       });
@@ -188,6 +188,7 @@ export async function handleMultiPci({action,body,session,db,cors,inScope,hasPer
       const found=await rpc('pci_workspace_get_pci_v1',{p_school_id:sid,p_pci_id:pciId});
       return found?reply({pci:found}):reply({error:'PCI no encontrado'},404);
     }
+    if(registered.model==='ba15') return reply({error:'BA +15: la edición curricular está pendiente de homologar su régimen específico. El registro y el documento histórico permanecen protegidos.'},423);
     const unit=contentUnit(body);
     if(!unit)return reply({error:'Componente curricular o versión inválida'},400);
     const technical=registered.model==='tecnica';
