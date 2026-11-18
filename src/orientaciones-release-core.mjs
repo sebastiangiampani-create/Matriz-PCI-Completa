@@ -18,6 +18,8 @@ export function requireSchoolPci(pci,schoolId){
     throw Error('Datos institucionales o procedencia de la FG inválidos.');
   if(pci.model==='tecnica')
     throw Error('Especialidad Técnica en espera de las nuevas reglas de composición. No utilizar el editor de Media.');
+  if(pci.model==='ba15')
+    throw Error('BA +15 necesita su propia homologación curricular. No utilizar el editor de Media.');
   return pci;
 }
 
