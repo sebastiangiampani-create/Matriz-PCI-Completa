@@ -31,3 +31,12 @@ test('no admite turnos desconocidos, especialidad ausente ni PCI duplicado',()=>
 test('la escuela sin nuevos PCI no borra los registros históricos',()=>{
  assert.deepEqual(agruparPcis([]),[]);
 });
+
+test('BA +15 convive con Media y Técnica en el mismo registro y otro turno',()=>{
+ const mixed=[...source,make('ba15-noche-turismo','noche','ba15','turismo')];
+ const result=agruparPcis(mixed);
+ const night=result.find(g=>g.id==='noche');
+ assert.deepEqual(night.modelos.map(m=>m.id),['tecnica','ba15']);
+ assert.equal(night.modelos.find(m=>m.id==='ba15').pcis[0].orientation_id,'turismo');
+ assert.equal(new Set(result.flatMap(t=>t.modelos.flatMap(m=>m.pcis.map(p=>p.pci_id)))).size,6);
+});
