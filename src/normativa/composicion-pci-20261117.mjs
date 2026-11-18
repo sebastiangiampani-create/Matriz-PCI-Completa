@@ -216,9 +216,16 @@ export function validateFinalComposition({
   core('Matemática',extended?[1,2,3,4,5,6]:[1,2,3,4,5],13);
   core('Lengua y Literatura',[1,2,3,4,5],13);
   core('Lengua Adicional',extended?[1,2,3,4,5,6]:[1,2,3,4,5],13);
-  const expectedSocialByYear=extra?[2,2,2,4,0,0]:[2,2,2,null,null,null];
-  // Las dos materias flexibles pueden estar en 4.º, 5.º o 6.º.
-  perYear(slots,expectedSocialByYear,'TECH_SOCIAL',13);
+  // En Computación Historia/Geografía agregan dos espacios en 4.º.
+  // Los dos espacios de Ciudadanía y Trabajo / Ciencia y Tecnología
+  // pueden ubicarse en 4.º, 5.º o 6.º en TODAS las especialidades.
+  perYear(slots,[2,2,2,null,null,null],'TECH_SOCIAL',13);
+  if(extra){
+   const computingExtra=slots.filter(x=>String(x.id||'').startsWith('t-social-comp-'));
+   bad(computingExtra.length!==2||computingExtra.some(x=>y(x)!==4),
+     'TECH_COMPUTING_SOCIAL_4TH',
+     'Computación incorpora dos integraciones de Historia y Geografía en 4.º.',13);
+  }
   perYear(natural,[2,2,2,0,0,0],'TECH_NATURAL',13);
   perYear(physical,[2,2,2,2,2,2],'TECH_EDUCACION_FISICA',13);
   perYear(art,[2,0,0,0,0,0],'TECH_EDUCACION_ARTISTICA',13);
