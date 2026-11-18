@@ -4,7 +4,7 @@ import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
 const port = 4185;
-const url = 'http://127.0.0.1:' + port + '/app.html';
+const url = 'http://127.0.0.1:' + port + '/preview-integracion-matriz.html';
 const artifacts = 'test-artifacts/integracion-matriz/';
 const server = spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1'], {stdio:'inherit'});
 let browser;
