@@ -1,80 +1,26 @@
 /**
- * Reglas curriculares tomadas de "Pautas para la construcción del PCI",
- * versión aportada 05-10-2026, pp. 3-18.
- *
- * No es un catálogo completo de planes de estudio por especialidad.
- * No ejecuta escrituras, ni lee/redacta la matriz histórica.
+ * Adaptador compatible de pautas PCI para el editor V2.
+ * La fuente normativa vigente es Anexo II de 17/11/2026.
+ * Conserva importaciones antiguas sin aplicar reglas del 05/10.
+ * NO modifica estados ni guardados escolares.
  */
-export const RULESET_ID='pci-pautas-2026-10-05/1';
-export const SOURCE={
-  title:'Pautas para la construcción del Proyecto Curricular Institucional (PCI)',
-  date:'2026-10-05',pages:19,
-  sectionCommon:[3,4,5,6,7],
-  sectionBachillerato:[8,9,10,11,12],
-  sectionTecnica:[13,14,15,16,17,18],
-  legalReference:'Res N°XXX (referencia incompleta en el documento entregado)',
-  completeness:'reglas_generales_y_anuales; planes_por_especialidad_pendientes'
-};
+import {
+ FINAL_RULESET_ID,FINAL_SOURCE,FINAL_COMMON,FINAL_BACHILLERATO,FINAL_TECNICA
+} from '../normativa/composicion-pci-20261117.mjs';
+export const RULESET_ID=FINAL_RULESET_ID;
+export const SOURCE=Object.freeze({
+ ...FINAL_SOURCE,
+ legalReference:FINAL_SOURCE.number,
+ sectionCommon:[2,3,4,5,6,7],
+ sectionBachillerato:[8,9,10,11,12],
+ sectionTecnica:[13,14,15,16,17,18,19],
+ completeness:'reglas_finales_composicion; planes_por_especialidad_por_validar'
+});
 export const SHIFTS=Object.freeze(['manana','tarde','vespertino','noche']);
-export const GENERAL={
-  maxWeeklyHours:9,
-  exceptionExceeds9:'integracion_especialidad_tecnica',
-  annualCore:['Matemática','Lengua y Literatura','Lengua Adicional'],
-  quarterFormats:['laboratorio','integracion','taller','espacio_formativo'],
-  futureProject:'Proyecto de Vinculación con el Futuro',
-  integration:{plan:'comun',evaluation:'colegiada',grade:'compartida'},
-  articulation:{plan:'independiente',evaluation:'separada',grade:'individual'}
-};
-export const BACHILLERATO={
-  levels:5,terms:10,
-  core:{matematica:[1,2,3,4,5],lengua_literatura:[1,2,3,4,5],lengua_adicional:[1,2,3,4,5]},
-  annualCore:true,
-  socials:{byYear:[2,2,'2_o_4',2,2],requiredTotals:[10,12]},
-  naturals:{byYear:[2,2,2,2,2],total:10,naturalesOrientationTotal:8},
-  physicalEducation:{byYear:[2,2,2,2,2],total:10},
-  arts:{byYear:[2,2,0,2,0],total:6},
-  technology:{byYear:[2,2,2,2,0],total:8},
-  orientationLabs:{byYear:[0,0,1,1,2],total:4,required:4},
-  orientationWorkshops:{byYear:[0,0,1,1,2],total:4,electiveOffers:true},
-  futureProject:{year:5,annual:true,total:1}
-};
-export const TECNICA={
-  levels:6,terms:12,
-  core:{
-    matematica:{years:[1,2,3,4,5],sixthOnly:['computacion','administracion_empresas']},
-    lengua_literatura:{years:[1,2,3,4,5]},
-    lengua_adicional:{years:[1,2,3,4,5],sixthOnly:['computacion','administracion_empresas']}
-  },
-  socialIntegration:{
-    total:8,compSpecialtyTotal:10,mandatory:4,elective:4,
-    computacionMandatory:5,computacionElective:5,
-    mainYears:[1,2,3],standardByYear:[2,2,2],
-    flexibleYearForCiudadaniaTrabajoCienciaTecnologia:[4,5,6],
-    compAdditionalInFourth:2
-  },
-  naturalIntegration:{
-    total:6,mandatory:4,elective:2,byYear:[2,2,2,0,0,0],
-    singleSubjectAllowedYears:[1]
-  },
-  physicalEducation:{total:12,byYear:[2,2,2,2,2,2]},
-  artistic:{total:2,byYear:[2,0,0,0,0,0]},
-  representation:{annual:true,years:[1,2],thirdDependsOnSpecialty:true},
-  firstCycleWorkshop:{annual:true,years:[1,2],sections:['Tecnología de Base','Tecnología de Producción','Proyecto']},
-  specialtyWorkshop:{annual:true,possibleYears:[3,4,5,6],countDependsOnSpecialty:true},
-  specialtyAnnual:{annual:true,years:[4,5,6],exceptNoAnnual:['geografo_matematico']},
-  specialtyIntegration:{quarterly:true,possiblePerYear:[4,6],years:[4,5,6],maxHoursDependsOnPlan:true},
-  professionalPractices:{possibleYears:[5,6],countDependsOnSpecialty:true},
-  futureProjectComponents:[
-    'Actividades Educativas con Integración en Contextos',
-    'Experiencias Formativas Vocacionales',
-    'Prácticas Profesionalizantes'
-  ],
-  specialExceptions:{
-    mecanica:{year:3,subject:'Metrología y Producción Industrial',
-      duration:'cuatrimestral',separateFromSpecialtyWorkshop:true},
-    computacion:{socialTotal:10,subjectPairInFourth:['Historia','Geografía']}
-  }
-};
+export const GENERAL=FINAL_COMMON;
+export const BACHILLERATO=FINAL_BACHILLERATO;
+export const TECNICA=FINAL_TECNICA;
+
 // Espacio anual de la especialidad según la TABLA de las pp.16-17 del PDF.
 // No atribuir este catálogo a asignaturas cuatrimestrales, que no figuran
 // de forma exhaustiva en el documento.
