@@ -304,7 +304,7 @@ async function createPci(e){
     await reloadSchool();
     if(result?.pci_id)await openPci(result.pci_id);
     status(model==='tecnica'?
-      'Especialidad técnica registrada, pendiente de reglas de composición.':
+      'Especialidad técnica registrada. Su mapa C1–C12 queda disponible para construcción y validación según el Anexo II final.':
       'PCI de Media creado sin modificar la matriz histórica.');
   }catch(error){status('No se creó','error');message(error.message,'error');}
 }
