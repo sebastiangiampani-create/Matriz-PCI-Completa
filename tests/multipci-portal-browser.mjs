@@ -149,7 +149,19 @@ try{
  await page.waitForTimeout(250);
  await page.screenshot({path:'test-artifacts/multipci-portal/escuela-muestra-pci-v2.png',fullPage:true});
  await page.screenshot({path:'test-artifacts/multipci-portal/ba15-vista-superior.png',fullPage:false});
- console.log('E2E OK: escuela existente, BA+15 agregado, Media conservada, mapa C1-C8, guardado rev1 por PCI y sin errores JS.');
+ await page.locator('#ba15Pending [data-back-to-school]').click();
+ await page.locator('#empty:not([hidden])').waitFor();
+ assert.equal(await page.locator('.school-offer-card').count(),2,'La escuela conserva Media y suma BA+15 en otra tarjeta');
+ await page.screenshot({path:'test-artifacts/multipci-portal/escuela-media-y-ba15.png',fullPage:true});
+ const baCard=page.locator('.school-offer-card').filter({hasText:'Economía y Administración'});
+ await baCard.getByRole('button',{name:/Abrir Desarrollo Curricular/}).click();
+ const baPlanButton=page.locator('#ba15Builder').getByRole('button',{name:'Desarrollo curricular',exact:true});
+ await baPlanButton.waitFor();
+ assert.equal(await baPlanButton.evaluate(e=>e.classList.contains('primary')),true,'El acceso de BA+15 debe abrir la vista de desarrollo, no el mapa');
+ assert.equal(state.pcis.length,2,'La navegación no debe borrar ningún PCI');
+ assert.equal(state.units.get(unitKey)?.revision,1,'La navegación no modifica el guardado online');
+ assert.equal(pageConsole.length,0,'La nueva navegación no debe generar errores JavaScript: '+pageConsole.join(' | '));
+ console.log('E2E OK: escuela Media+BA15, mapa y desarrollo desde tarjetas, retorno, filtros, guardado rev1 por PCI y sin errores JS.');
 } finally {
  await browser.close();
  await new Promise(resolveClose=>server.close(resolveClose));
