@@ -1,0 +1,40 @@
+name: Verificar acceso seguro a multi-PCI
+on:
+  push:
+    branches: [release/multipci-aditivo-seguro-20261118]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  edge-http:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Comprobar servicio activo sin credenciales y rechazo de acceso anónimo
+        run: |
+          node --input-type=module <<'JS'
+          const endpoint='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-multipci';
+          const send=async body=>{
+           const response=await fetch(endpoint,{
+             method:'POST',headers:{'Content-Type':'application/json'},
+             body:JSON.stringify(body),signal:AbortSignal.timeout(12000)
+           });
+           return {status:response.status,body:await response.json()};
+          };
+          const health=await send({action:'health'});
+          if(health.status!==200 || health.body.ok!==true ||
+             health.body.legacy_writes!==false)
+            throw Error('Health inesperado: '+JSON.stringify(health));
+          const unknown=await send({action:'list-school-pcis',school_id:1001});
+          if(unknown.status!==401)
+            throw Error('La lectura sin sesión no fue rechazada: '+JSON.stringify(unknown));
+          const fabricated=await send({action:'create-school-pci',school_id:1001,
+             model:'comun',shift_id:'manana',title:'NO DEBE CREARSE',orientation_id:'comunicacion',
+             token:'token-invalido'});
+          if(fabricated.status!==401)
+            throw Error('La escritura sin sesión no fue rechazada: '+JSON.stringify(fabricated));
+          console.log('Edge OK: health 200, lectura anónima 401, escritura con token inválido 401, cero escrituras.');
+          JS
