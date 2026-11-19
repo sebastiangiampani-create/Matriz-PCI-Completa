@@ -71,3 +71,12 @@ footer{text-align:center;color:#68818e;font-size:.78rem;padding:15px}
 .ba15Member{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.8rem;border-radius:8px;background:#eef6f8;padding:7px}
 .ba15Member .btn{padding:5px 8px}
 @media(max-width:850px){.ba15BuilderGrid{grid-template-columns:1fr}}
+
+/* Mapa BA+15 completo por cuatrimestre. */
+#ba15Builder .mapTable{min-width:1100px}
+#ba15Builder .mapTable th,#ba15Builder .mapTable td{min-width:110px}
+#ba15Builder .slot{width:100%;border:1px solid #a9d6db;text-align:left;cursor:pointer;white-space:normal;font-weight:650}
+.ba15EmptySlot{width:100%;border:1px dashed #c8dbe3;background:#f6fafb;color:#537584;border-radius:8px;min-height:35px;cursor:pointer}
+.ba15DemoEditor .mapTable{min-width:1100px}
+.ba15DemoEditor .slot{width:100%;cursor:pointer;white-space:normal;text-align:left}
+.ba15DemoEditor .ba15EmptySlot{width:100%;border:1px dashed #c8dbe3;background:#f6fafb;border-radius:8px}
