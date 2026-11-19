@@ -357,6 +357,7 @@ try{
      }
    }
    else if(body.action==='list-school-pcis')data={pcis:initialPcis};
+   else if(body.action==='get-school-legacy-links')data={source_updated_at:'2026-11-19T17:00:00Z',source_model:'comun',rows:[],document:null,revision:0,exists:false};
    else throw Error('Acción no simulada para portal desde panel: '+body.action);
    await route.fulfill({status:200,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(data)});
  });
