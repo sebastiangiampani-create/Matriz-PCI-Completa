@@ -846,6 +846,207 @@ function setTab(next,force=false,routeMode='push'){
   writeRoute(routeMode,pci?.pci_id,next);
   return next!=='oferta';
 }
+
+function filterDevelopmentCards(){
+ const level=$('pciDevelopmentLevel')?.value||'todos';
+ const formation=$('pciDevelopmentFormation')?.value||'todos';
+ for(const card of $('pciDevelopmentCards')?.querySelectorAll('.pci-development-card')||[]){
+  card.hidden=(level!=='todos'&&card.dataset.level!==level)||
+   (formation!=='todos'&&card.dataset.formation!==formation);
+ }
+}
+function renderDevelopmentOverview(){
+ const token=++developmentRequestSeq;
+ if(!pci)return;
+ const cardHost=$('pciDevelopmentCards'),stats=$('pciDevelopmentStats'),levels=$('pciDevelopmentLevelCoverage');
+ cardHost.replaceChildren();stats.replaceChildren();levels.replaceChildren();
+ const items=[],tasks=[];
+ const add=(item)=>items.push({
+  component:'FG',area:'',level:0,term:0,format:'Espacio curricular',
+  historical:false,legacyContents:0,...item
+ });
+ if(technical.active){
+  for(const s of technical.offer?.spaces||[]){
+   if(s.included===false)continue;
+   add({id:s.id,name:s.name,level:Number(s.year)||0,term:Number(s.term)||0,
+    format:s.area||s.kind||'Espacio técnico',area:s.area||'',component:s.kind==='fg'?'FG':'FO',
+    document:s,technical:true,plansExpected:4});
+  }
+ }else if(workspace){
+  const composition=compositionFor(workspace,pci);
+  const seen=new Set();
+  for(const [area,data] of Object.entries(fgSourceState?.areas||{})){
+   for(const group of data?.groups||[]){
+    const id=String(group.id);
+    if(seen.has(area+':'+id))continue;seen.add(area+':'+id);
+    add({id,name:group.name||'Agrupamiento FG',level:Number(group.level||group.year)||0,
+     term:Number(group.startTerm||group.term)||0,format:group.kind||group.type||'FG',
+     area,component:'FG',document:group,historical:true,
+     legacyContents:Array.isArray(group.items)?group.items.length:0,
+     plansExpected:(group.plansBimestrales||[]).length||4});
+   }
+  }
+  for(const group of composition?.groups||[]){
+   if(!(group.members||[]).some(m=>m.component==='FG'))continue;
+   const id=String(group.id),area=String(group.area||'');
+   if(seen.has(area+':'+id))continue;seen.add(area+':'+id);
+   add({id,name:group.name||'Nuevo agrupamiento',level:Number(group.year)||0,
+    term:Number(group.term)||0,format:group.kind||'FG',area,component:'FG',
+    document:{...group,plansBimestrales:[],curricularSubjects:group.members},
+    plansExpected:4});
+  }
+  for(const space of getCurrentOffer()?.spaces||[]){
+   add({id:String(space.id),name:space.name,level:Number(space.year)||0,
+    term:Number(space.term||space.startTerm)||0,
+    format:space.kind||'FO',component:'FO',area:'Formación Orientada',
+    document:space,plansExpected:4});
+  }
+ }
+ items.sort((a,b)=>a.level-b.level||a.term-b.term||
+  a.component.localeCompare(b.component)||String(a.name).localeCompare(String(b.name),'es'));
+ let foCatalog=[];
+ if(!technical.active&&refs.fo){
+  try{foCatalog=selectFoByOrientation(refs.fo,pci.orientation_id,ORIENTATIONS)}
+  catch{foCatalog=[]}
+ }
+ function itemMetrics(item){
+  const ids=spaceContentIds(item.document);
+  if(item.technical)return {label:ids.length+' referencias documentales',coverage:null,ids};
+  const subjectObjects=item.document?.curricularSubjects||item.document?.members||[];
+  const subjects=subjectObjects.map(m=>typeof m==='string'?m:m.name||m.subject||'').filter(Boolean);
+  const coverage=item.component==='FO'?
+   foCoverage(foCatalog,{ids,orientationLabel:'Trayectoria de la orientación'}) :
+   fgCoverage(refs.fg||[],{year:item.level,area:item.area,subjects,ids});
+  let label;
+  if(item.component==='FG'&&item.historical&&item.legacyContents&&
+     !item.saved&&coverage.used===0){
+   label=item.legacyContents+' contenidos históricos · equivalencia V2 a revisar';
+  }else if(coverage.pending){
+   label=ids.length+' contenidos seleccionados · cobertura sin referencia válida';
+  }else{
+   label=coverage.used+'/'+coverage.total+' contenidos · '+coverage.percent+'%'+
+    (coverage.basis==='trajectory'?' (trayectoria)':' (nivel)');
+  }
+  return {label,coverage,ids};
+ }
+ function update(){
+  if(developmentRequestSeq!==token||tab!=='desarrollo'||!pci)return;
+  cardHost.replaceChildren();stats.replaceChildren();levels.replaceChildren();
+  const overview=developmentCounts(items.map(x=>x.document));
+  for(const [value,label] of [[items.length,'Espacios del PCI'],
+    [items.reduce((n,x)=>n+(x.plansExpected||0),0),'Planes previstos / históricos'],
+    [overview.uniqueContents,'Contenidos únicos identificados']]){
+   const box=elem('div',undefined,'pci-development-stat');
+   note('strong',value,box);note('small',label,box);stats.append(box);
+  }
+  const levSelect=$('pciDevelopmentLevel'),previousLevel=levSelect.value;
+  levSelect.replaceChildren();
+  for(const [value,label] of [['todos','Todos los niveles'],...Array.from(
+    new Set(items.map(x=>x.level).filter(Boolean))).sort((a,b)=>a-b)
+    .map(y=>[String(y),'Nivel '+y])]){
+   const o=elem('option',label);o.value=String(value);levSelect.append(o);
+  }
+  levSelect.value=[...levSelect.options].some(o=>o.value===previousLevel)?previousLevel:'todos';
+  for(const item of items){
+   const card=elem('button',undefined,'pci-development-card');
+   card.type='button';card.dataset.formation=item.component;
+   card.dataset.level=String(item.level);
+   const formation=item.component==='FG'?'Formación General':'Formación Orientada';
+   note('small',formation+' · Nivel '+(item.level||'a definir')+
+     (item.term?' · C'+item.term:''),card);
+   note('strong',item.name,card);
+   note('span',item.format+(item.area&&item.area!=='Formación Orientada'?' · '+item.area:''),card);
+   const counts=itemMetrics(item);
+   note('span',counts.label,card,'pci-development-card-count');
+   const planCount=(item.document?.plansBimestrales||item.document?.planes||[]).length;
+   note('small',planCount+' planes cargados · '+item.plansExpected+' previstos',card);
+   card.onclick=()=>{
+    if(item.technical){
+     if(setTab('fo',true))technical.openDevelopmentSpace(item.id).catch(e=>message(e.message,'error'));
+    }else if(item.component==='FO'){
+     if(setTab('fo',true))openFoSpace(item.id).catch(e=>message(e.message,'error'));
+    }else if(setTab('fg',true)){
+     openFgArea(item.area).then(()=>{
+      const g=[...$('areaEditor').querySelectorAll('[data-fg-group-id]')]
+       .find(x=>x.dataset.fgGroupId===item.id);
+      (g||$('areaEditor')).scrollIntoView({behavior:'smooth',block:'start'});
+     }).catch(e=>message(e.message,'error'));
+    }
+   };
+   cardHost.append(card);
+  }
+  filterDevelopmentCards();
+  if(!items.length){
+   note('p','Todavía no hay espacios para desarrollar. Completá el Constructor curricular.','muted',cardHost);
+   return;
+  }
+  if(technical.active){
+   note('p','Las referencias técnicas se informan según la especialidad y su fuente documental; no se traducen a porcentajes FG de Media.','muted',levels);
+   return;
+  }
+  const keys=new Map();
+  for(const item of items.filter(x=>x.component==='FG'&&x.level>0&&x.area)){
+   const key=item.level+':'+item.area;
+   if(!keys.has(key))keys.set(key,[]);
+   keys.get(key).push(item);
+  }
+  for(const [key,group] of keys){
+   const first=group[0],historicNeedsReview=group.some(x=>x.historical&&x.legacyContents&&!x.saved&&
+    !spaceContentIds(x.document).length);
+   const p=elem('div',undefined,'pci-development-level-row');
+   note('strong','Nivel '+first.level+' · '+first.area,p);
+   if(historicNeedsReview){
+    note('span','La FG histórica requiere revisar equivalencias antes de calcular el porcentaje.','muted',p);
+   }else{
+    const coverage=groupCoverageForLevel(group.map(x=>({
+     ...x.document,year:x.level,area:x.area,
+     subjects:x.document?.curricularSubjects||x.document?.members||[]
+    })),refs.fg||[],{year:first.level,area:first.area});
+    note('span',coverage.pending?'Cobertura pendiente de catálogo':
+     coverage.used+'/'+coverage.total+' contenidos · '+coverage.percent+'%',p);
+   }
+   levels.append(p);
+  }
+  if(!keys.size)note('p','El desarrollo FG por nivel se habilita con agrupamientos FG vinculados.','muted',levels);
+ }
+ update();
+ if(technical.active)return;
+ // Lectura únicamente de unidades ya existentes, sin modificar planes ni mapa.
+ const fgAreas=[...new Set(items.filter(x=>x.component==='FG').map(x=>x.area))];
+ for(const area of fgAreas){
+  tasks.push(async()=>{
+   const response=await getUnit(pci,'fg','area',area,'fg-sec-aprende-v2/1');
+   if(!response.exists||developmentRequestSeq!==token||tab!=='desarrollo')return;
+   for(const item of items.filter(x=>x.component==='FG'&&x.area===area)){
+    const doc=response.document?.groups?.find(g=>String(g.id)===item.id);
+    if(doc){item.document=doc;item.saved=true;item.plansExpected=(doc.plansBimestrales||[]).length||4;}
+   }
+   update();
+  });
+ }
+ for(const item of items.filter(x=>x.component==='FO')){
+  tasks.push(async()=>{
+   const response=await getUnit(pci,'fo','space',item.id,'fo-sec-aprende-v2/1');
+   if(!response.exists||developmentRequestSeq!==token||tab!=='desarrollo')return;
+   item.document={...response.document,contentIds:uniqueIdsForSummary(
+    item.document?.contentIds,response.document?.items)};
+   item.saved=true;item.plansExpected=(response.document?.plansBimestrales||[]).length||4;
+   update();
+  });
+ }
+ // Límite de consultas simultáneas y protección ante cambio de escuela/PCI.
+ let cursor=0;
+ void Promise.allSettled(Array.from({length:Math.min(4,tasks.length)},async()=>{
+  while(cursor<tasks.length&&developmentRequestSeq===token&&tab==='desarrollo'){
+   const task=tasks[cursor++];
+   try{await task()}catch{/* Fallo de lectura: mantener métricas provisionales, nunca mostrar cero falso. */}
+  }
+ }));
+}
+function uniqueIdsForSummary(...arrays){
+ return [...new Set(arrays.flatMap(v=>Array.isArray(v)?v:[]).map(String))];
+}
+
 function renderAreas(){
   const host=$('areaList');host.replaceChildren();
   const staged=workspace&&pci?compositionFor(workspace,pci):null;
