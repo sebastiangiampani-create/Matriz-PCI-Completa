@@ -300,11 +300,11 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
       td.append(tile);
      }
      if(!spaces.length){
-      const empty=button(pickedSubject?'Soltar materia aquí':'＋ Crear espacio',()=>{
+      const empty=button(pickedSubject?'Soltar materia aquí':'＋',()=>{
        if(pickedSubject){newSpaceWithSubject(pickedSubject,t.numero,format);return;}
        term=t.numero;selected=null;render();
       },'ba15EmptySlot ba15DropTile');
-      empty.title='Soltá una materia del mismo nivel para crear un agrupamiento';
+      empty.title='Soltá una materia del mismo nivel para crear un agrupamiento; sin materia seleccionada abre ese cuatrimestre';
       makeDropTarget(empty,id=>newSpaceWithSubject(id,t.numero,format));
       td.append(empty);
      }
