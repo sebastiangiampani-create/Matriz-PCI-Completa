@@ -80,6 +80,26 @@ try{
  await page.waitForFunction(()=>document.getElementById('pciCounts')?.textContent?.includes('1 PCI'));
  const historic=await page.locator('#historicalPciLink').getAttribute('href');
  assert.match(historic||'',/escuela-online\.html\?school=1001/,'La escuela debe poder abrir su FG original');
+ const design=await page.evaluate(()=>{
+   const bg=(selector)=>getComputedStyle(document.querySelector(selector)).backgroundColor;
+   return {
+     header:document.querySelector('header.site-top')?.getBoundingClientRect().height,
+     logo:document.querySelector('header.site-top .brand img')?.getAttribute('src'),
+     ba:document.querySelector('header.site-top .ba')?.getAttribute('src'),
+     body:bg('body'),
+     hero:bg('.pci-hero'),
+     cardRadius:getComputedStyle(document.querySelector('.sidebar.card')).borderRadius,
+     primary:getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()
+   };
+ });
+ assert.equal(design.header,77,'La cabecera debe conservar la altura original');
+ assert.match(design.logo||'',/assets\/em-logo-header\.svg/,'Debe reutilizarse el logo del app original');
+ assert.match(design.ba||'',/assets\/ba-logo\.png/,'Debe reutilizarse el logo de Buenos Aires');
+ assert.equal(design.body,'rgb(255, 255, 255)','El fondo debe ser blanco como el PCI original');
+ assert.equal(design.hero,'rgb(237, 243, 248)','La franja principal debe coincidir con app.css');
+ assert.equal(design.cardRadius,'20px','Las tarjetas deben mantener el radio del PCI original');
+ assert.equal(design.primary,'#12395c','Usar el azul institucional original');
+ await page.screenshot({path:'test-artifacts/multipci-portal/escuela-selector-original.png',fullPage:true});
  await page.locator('#pciList').getByText('Comunicación · Turno mañana').waitFor();
  await page.locator('#btnAddPci').click();
  await page.locator('#formCreatePci:not([hidden])').waitFor();
@@ -90,6 +110,8 @@ try{
  await page.locator('#formCreatePci button[type=submit]').click();
  await page.locator('#ba15Pending:not([hidden])').waitFor({timeout:20000});
  await page.locator('#ba15Builder').getByRole('button',{name:'Mapa C1–C8'}).waitFor();
+ const mapHeader=await page.locator('#ba15Builder .mapTable thead th').first().evaluate(e=>getComputedStyle(e).backgroundColor);
+ assert.equal(mapHeader,'rgb(18, 57, 92)','Encabezado de matriz debe usar azul oscuro como el original');
  await page.locator('#pciList').getByText('Comunicación · Turno mañana').waitFor();
  await page.locator('#pciList').getByText('Economía y Administración · Turno noche').waitFor();
  assert.equal(state.pcis.length,2,'Crear BA +15 debe agregar un PCI sin borrar Media');
