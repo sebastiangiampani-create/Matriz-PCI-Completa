@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PCI · Escuela con Media y Técnica</title>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PCI · Escuela con Media, Técnica y BA +15</title>
 <link rel="stylesheet" href="pci-orientaciones.css"><style>
 .demoLayout{display:grid;grid-template-columns:minmax(240px,315px) minmax(0,1fr);gap:18px;align-items:start}
 .demoTabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.demoTabs button{border:1px solid #c3d6df;border-radius:10px;background:#f2f7fa;color:#12395c;padding:9px 12px;font-weight:700}.demoTabs button.active{background:#116b7f;color:#fff}
@@ -74,7 +74,7 @@ function renderView(){
     body.append(sum);
   }
   table.append(body);visual.append(table);
-  const foot=document.createElement('p');foot.className='muted';foot.textContent='Fuente: Resolución 1375/MEDGC/25, Anexo I (IF-2025-44785236-GCABA-SSPIE). Mapa base para consulta, sin edición ni datos escolares reales.';visual.append(foot);return;
+  const foot=document.createElement('p');foot.className='muted';foot.textContent='Fuente: Resolución 1375/MEDGC/25, Anexo I (IF-2025-44785236-GCABA-SSPIE). La matriz de consulta y el constructor de prueba se editan solamente en esta pestaña; no hay datos escolares reales ni guardado de servidor.';visual.append(foot);return;
  }
 
  if(view!=='map'){
