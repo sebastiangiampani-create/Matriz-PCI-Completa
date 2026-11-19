@@ -164,9 +164,21 @@ try{
  await page.waitForTimeout(350);
  assert.equal(page.url(),beforeCancel,'Cancelar Atrás debe conservar el mismo PCI y fase');
  assert.equal(await page.locator('#mapBody .constructor-group.propuesta').count(),2,'El agrupamiento pendiente permanece');
+ await page.evaluate(()=>{
+  window.__dragTrace=[];
+  for(const evt of ['dragstart','dragenter','dragover','drop','dragend']){
+   document.addEventListener(evt,e=>window.__dragTrace.push({
+    event:evt,target:e.target?.className||e.target?.tagName,
+    types:[...(e.dataTransfer?.types||[])],
+    text:e.dataTransfer?.getData('text/plain')||'',
+    prevented:e.defaultPrevented
+   }),true);
+  }
+ });
  await page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Geografía'}).first()
    .dragTo(page.locator('#mapBody .constructor-group.propuesta').first());
  console.log('DRAG DEBUG',JSON.stringify(await page.evaluate(()=>({
+   events:window.__dragTrace,
    message:document.getElementById('message')?.textContent,
    status:document.getElementById('status')?.textContent,
    phase:document.getElementById('pciPhaseState')?.textContent,
