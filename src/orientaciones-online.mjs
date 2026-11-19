@@ -5,6 +5,7 @@
  */
 import {ORIENTATIONS,createOrientationPackage} from './integracion-curricular/bridge.js';
 import {agruparPcis,TURNOS} from './pci-turnos-organizacion.mjs';
+import {parsePciRoute,pciRouteHref,samePciRoute} from './pci-router.mjs';
 import {migrateState} from '../pci-model.js';
 import {mostrarMapaBa15} from './ba15/mapa-ui.mjs';
 import {montarConstructorBa15} from './ba15/constructor-ui.mjs';
@@ -40,7 +41,8 @@ const refs={};
 let session=null,schools=[],schoolId=null,pcis=[],pci=null,workspace=null,auto=null,fgSourceState=null;
 let selectedFgArea=null,fgDoc=null,fgRevision=0,fgDirty=false;
 let offerRevision=0,offerDirty=false,selectedFoSpace=null,foDoc=null,foRevision=0,foDirty=false;
-let tab='fg',busy=false,ba15Controller=null;
+let tab='oferta',busy=false,ba15Controller=null;
+let routeDepth=0,undoingPop=false,handlingPop=false,routeInitialized=false;
 const technical=createIntegratedTechnicalUI({canEdit,getUnit,saveUnit,saveSafe:safeSave,download,rememberDraft,forgetDraft,recallDraft,message,status,onPhaseChange:()=>refreshPhaseState()});
 
 async function call(action,data={}){
@@ -60,9 +62,86 @@ function showAuthRequired(reason='Ingresá con las credenciales habituales de la
   status('Ingresá para continuar');
 }
 function canEdit(){return !!session && (session.role==='admin'||session.role==='editor'||session.role==='user'&&(session.permissions||[]).includes('pci.edit'));}
+function hasUnsaved(){
+  return !!(fgDirty||foDirty||offerDirty||technical.isDirty()||ba15Controller?.isDirty()||busy);
+}
 function canLeave(){
-  if(!(fgDirty||foDirty||offerDirty||technical.isDirty()||ba15Controller?.isDirty()))return true;
-  return confirm('Tenés cambios sin guardar. ¿Querés salir sin guardarlos? Podés descargarlos antes de continuar.');
+  if(!hasUnsaved())return true;
+  return confirm('Este PCI tiene cambios sin guardar o un guardado en curso. Si salís, la versión online no incluirá esos cambios. ¿Querés salir igualmente?');
+}
+function updateNavigationLinks(){
+  const home=pciRouteHref(location.href,{schoolId,pciId:null});
+  for(const id of ['schoolHomeLink','brandHomeLink'])$(id).href=home;
+  const role=session?.role,permission=session?.permissions||[];
+  const admin=role==='admin'||role==='user'&&(permission.includes('dashboard.view')||permission.includes('institutional.view'));
+  $('adminPanelLink').hidden=!admin;
+  $('schoolPanelLink').hidden=!(admin||role==='school_admin');
+  $('schoolPanelLink').href='panel-escuela.html?school='+encodeURIComponent(schoolId)+(admin?'&admin=1':'');
+}
+function writeRoute(mode='push',pciId=pci?.pci_id||null,view=tab){
+  if(!schoolId)return;
+  const next=pciRouteHref(location.href,{schoolId,pciId,view});
+  const old=location.pathname+location.search+location.hash;
+  if(mode==='none')return;
+  if(mode==='push'&&next===old)return;
+  const depth=mode==='push'?routeDepth+1:routeDepth;
+  history[mode==='push'?'pushState':'replaceState']({scope:'pci-v2-route',depth},'',next);
+  routeDepth=depth;routeInitialized=true;
+  updateNavigationLinks();
+}
+async function onHistoryChange(event){
+  if(undoingPop){undoingPop=false;return}
+  if(handlingPop||event.state?.scope!=='pci-v2-route')return;
+  const destination=parsePciRoute(location.href);
+  const targetDepth=Number(event.state.depth)||0;
+  const current={schoolId,pciId:pci?.pci_id||null,view:tab};
+  if(samePciRoute(destination,current)){routeDepth=targetDepth;return;}
+  const stayingInsidePci=destination.schoolId===schoolId&&
+    !!destination.pciId&&destination.pciId===pci?.pci_id;
+  if(!stayingInsidePci&&!canLeave()){
+    // Volver/Avanzar no descarta un borrador: cancelar restaura
+    // la entrada exacta del historial que tenía el usuario.
+    undoingPop=true;
+    history.go(targetDepth<routeDepth?1:-1);
+    return;
+  }
+  handlingPop=true;
+  try{
+    if(destination.schoolId!==schoolId){
+      if(!schools.some(x=>Number(x.school_id)===destination.schoolId))
+        throw Error('La escuela de esta dirección no está disponible para esta sesión.');
+      schoolId=destination.schoolId;
+      $('school').value=String(schoolId);
+      await reloadSchool();
+    }
+    if(destination.pciId){
+      if(!pcis.some(x=>x.pci_id===destination.pciId))
+        throw Error('El PCI indicado en el historial no pertenece a esta escuela.');
+      if(stayingInsidePci){
+        // Cambiar de pestaña NO vuelve a descargar ni reemplazar el
+        // documento FG/FO que está abierto y quizá aún no fue guardado.
+        if(pci.model==='ba15'){
+          const text=destination.view==='fo'?'2 · Desarrollo curricular':'1 · Constructor C1–C8';
+          const button=[...$('ba15Builder').querySelectorAll('button')].find(b=>b.textContent.trim()===text);
+          if(button&&!button.disabled)button.click();
+          tab=button&&!button.disabled?destination.view:'oferta';
+        }else setTab(destination.view,true,'none');
+      }else await openPci(destination.pciId,destination.view,'none',true);
+    }else if(pci){
+      returnToSchool('none',true);
+    }
+    routeDepth=targetDepth;
+    if(destination.pciId&&tab!==destination.view)writeRoute('replace',pci?.pci_id,tab);
+    updateNavigationLinks();
+  }catch(error){
+    message('No se pudo recuperar la navegación: '+error.message,'error');
+    writeRoute('replace',pci?.pci_id||null,tab);
+  }finally{handlingPop=false}
+}
+function goHome(event){
+  if(event&&(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||event.button!==0))return;
+  if(event)event.preventDefault();
+  returnToSchool('push');
 }
 function safeSave(task){
   if(busy||!canEdit())return;
@@ -173,10 +252,12 @@ async function init(){
     }
     const verified=await call('session-info');session={...session,...verified};
     await loadReferences();
-    const requested=Number(new URL(location.href).searchParams.get('school'));
+    const requestedRoute=parsePciRoute(location.href);
+    const requested=requestedRoute.schoolId;
     if(session.role==='admin'||session.role==='user'){
       const result=await call('list-schools');schools=result.schools||[];
       const possible=schools.find(s=>Number(s.school_id)===requested);
+      if(requested&&!possible)throw Error('Esta escuela no está autorizada para la sesión actual.');
       schoolId=Number(possible?.school_id||schools[0]?.school_id)||null;
     }else{
       schoolId=Number(session.school_id);
@@ -187,10 +268,26 @@ async function init(){
     const sel=$('school');sel.replaceChildren();
     schools.forEach(s=>{const option=elem('option',s.name||'Escuela '+s.school_id);option.value=String(s.school_id);sel.appendChild(option);});
     sel.value=String(schoolId);
-    sel.addEventListener('change',async()=>{if(!canLeave()){sel.value=String(schoolId);return;}schoolId=Number(sel.value);await reloadSchool().catch(err=>message(err.message,'error'));});
+    sel.addEventListener('change',async()=>{
+      const previous=schoolId,next=Number(sel.value);
+      if(next===previous)return;
+      if(!canLeave()){sel.value=String(previous);return;}
+      try{
+        schoolId=next;
+        await reloadSchool();
+        writeRoute('push',null,'oferta');
+        status('Escuela seleccionada: '+schools.find(s=>Number(s.school_id)===schoolId)?.name);
+      }catch(error){
+        schoolId=previous;sel.value=String(previous);
+        await reloadSchool().catch(()=>{});
+        message('No se pudo cambiar de escuela: '+error.message,'error');
+      }
+    });
     $('btnAddPci').disabled=!canEdit();
     $('turnFilter').addEventListener('change',renderPcis);
-    document.querySelectorAll('[data-back-to-school]').forEach(btn=>btn.addEventListener('click',returnToSchool));
+    document.querySelectorAll('[data-back-to-school]').forEach(btn=>btn.addEventListener('click',()=>returnToSchool('push')));
+    for(const id of ['schoolHomeLink','brandHomeLink'])$(id).addEventListener('click',goHome);
+    window.addEventListener('popstate',onHistoryChange);
     $('btnAddPci').onclick=()=>show('formCreatePci',true);
     $('cancelPci').onclick=()=>show('formCreatePci',false);
     const o=$('orientation');
@@ -217,9 +314,22 @@ async function init(){
       try{workspace=confirmFoContentAfterOffer(workspace,{orientationId:pci.orientation_id,refs,foRows:refs.fo});markDirty('oferta');renderOffer();message('Contenidos FO confirmados por la regla curricular. Falta guardar.','warn');}
       catch(error){message(error.message,'error');}
     };
-    window.addEventListener('beforeunload',e=>{if(fgDirty||foDirty||offerDirty||technical.isDirty()){e.preventDefault();e.returnValue='';}});
+    window.addEventListener('beforeunload',e=>{if(hasUnsaved()){e.preventDefault();e.returnValue='';}});
     show('app');
     await reloadSchool();
+    routeDepth=Number(history.state?.scope==='pci-v2-route'?history.state.depth:0)||0;
+    if(requestedRoute.pciId){
+      // No se crea una revisión ni se reemplaza ningún dato: solo se
+      // recupera el PCI identificado en la misma escuela autorizada.
+      if(!pcis.some(p=>p.pci_id===requestedRoute.pciId)){
+        message('Este enlace ya no corresponde a un PCI de la escuela. Se abrió la selección de orientaciones.','warn');
+        writeRoute('replace',null,'oferta');
+      }else{
+        await openPci(requestedRoute.pciId,requestedRoute.view,'replace',true);
+        if(!pci||pci.pci_id!==requestedRoute.pciId)writeRoute('replace',null,'oferta');
+      }
+    }else writeRoute('replace',null,'oferta');
+    updateNavigationLinks();
     status('Conectado');
   }catch(error){
     if(error?.status===401){
@@ -359,8 +469,8 @@ function renderSchoolHome(){
   }
   host.append(grid);
 }
-function returnToSchool(){
-  if(!canLeave())return;
+function returnToSchool(mode='push',skipGuard=false){
+  if(!skipGuard&&!canLeave())return false;
   technical.close();ba15Controller?.destroy();ba15Controller=null;
   pci=null;workspace=null;auto=null;
   $('editor').classList.remove('technical-editor');
@@ -368,8 +478,12 @@ function returnToSchool(){
   fgDirty=false;foDirty=false;offerDirty=false;
   show('editor',false);show('technicalPending',false);show('ba15Pending',false);show('empty',true);
   $('app').classList.add('school-home');
+  show('formCreatePci',false);
+  tab='oferta';
   renderPcis();
+  writeRoute(mode,null,'oferta');
   window.scrollTo(0,0);
+  return true;
 }
 function populateSpecialties(){
   const select=$('specialtyName');select.replaceChildren();
@@ -434,8 +548,8 @@ async function createPci(e){
       'PCI de Media creado sin modificar la matriz histórica.');
   }catch(error){status('No se creó','error');message(error.message,'error');}
 }
-async function openPci(id,requestedTab='oferta'){
-  if(!canLeave())return;
+async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false){
+  if(!skipGuard&&!canLeave())return;
   try{
     status('Cargando PCI y resguardo histórico…');
     const result=await call('get-school-pci',{school_id:schoolId,pci_id:id});
@@ -477,11 +591,13 @@ async function openPci(id,requestedTab='oferta'){
         ' · Documento histórico protegido';
       $('app').classList.remove('school-home');
       renderPcis();
+      tab='oferta';
       if(requestedTab==='fo'){
         const go=[...$('ba15Builder').querySelectorAll('button')].find(b=>b.textContent.trim()==='2 · Desarrollo curricular');
-        if(go&&!go.disabled)go.click();
+        if(go&&!go.disabled){go.click();tab='fo';}
         else status('Primero completá y guardá el Constructor curricular BA +15 de este PCI.');
       }else status('BA +15: Fase 1 Constructor C1–C8; Fase 2 después del mapa completo y guardado');
+      writeRoute(routeMode,b.pci_id,tab);
       return;
     }
     if(result.pci?.model==='tecnica'){
@@ -501,7 +617,8 @@ async function openPci(id,requestedTab='oferta'){
       $('editor').classList.add('technical-editor');
       $('offerGrid').closest('details').open=true;
       $('app').classList.remove('school-home');
-      renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true);
+      renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true,'none');
+      writeRoute(routeMode,tech.pci_id,tab);
       status('PCI Técnico · Fase 1 construcción C1–C12; Fase 2 solo tras mapa revisado y guardado');
       return;
     }
@@ -546,7 +663,8 @@ async function openPci(id,requestedTab='oferta'){
     show('empty',false);show('editor');
     $('editor').classList.remove('technical-editor');
     $('app').classList.remove('school-home');
-    renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true);renderAreas();
+    renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true,'none');renderAreas();
+    writeRoute(routeMode,p.pci_id,tab);
     const gate=refreshPhaseState();
     if(requestedTab!=='oferta'&&!gate.ready)
       message('Primero completá la Fase 1 del PCI antes de entrar al Desarrollo Curricular. '+gate.detail,'warn');
@@ -603,7 +721,7 @@ function refreshPhaseState(){
   $('continueDevelopment').disabled=!gate.ready;
   return gate;
 }
-function setTab(next,force=false){
+function setTab(next,force=false,routeMode='push'){
   if(!['fg','oferta','fo'].includes(next))return false;
   // La Fase 2 solo se habilita después de un mapa completo y GUARDADO
   // del PCI seleccionado. Ningún dato histórico se borra ni se reescribe.
@@ -614,14 +732,20 @@ function setTab(next,force=false){
       next='oferta';
     }
   }
-  if(!technical.active&&!force&&!canLeave())return false;
+  // Cambiar de fase dentro del mismo PCI no descarta el documento cargado.
+  // Si la Fase 1 está pendiente, la puerta curricular ya impide avanzar.
   tab=next;
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===next));
   for(const name of ['fg','offer','fo'])show(name+'Pane',next===(name==='offer'?'oferta':name));
-  if(technical.active){technical.renderTab(next);refreshPhaseState();return next!=='oferta';}
+  if(technical.active){
+    technical.renderTab(next);refreshPhaseState();
+    writeRoute(routeMode,pci?.pci_id,next);
+    return next!=='oferta';
+  }
   if(next==='oferta')renderOffer();
   if(next==='fo')renderFoSpaces();
   refreshPhaseState();
+  writeRoute(routeMode,pci?.pci_id,next);
   return next!=='oferta';
 }
 function renderAreas(){

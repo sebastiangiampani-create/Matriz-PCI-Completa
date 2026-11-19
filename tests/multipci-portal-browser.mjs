@@ -105,6 +105,20 @@ try{
  await page.locator('#schoolPciCards').getByText('Comunicación').first().waitFor();
  await page.locator('.school-offer-card button[aria-label^="Abrir Mapa de la Oferta"]').click();
  await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
+ // Atrás y Adelante no deben salir a una escuela diferente ni recargar el PCI.
+ await page.waitForFunction(()=>new URL(location.href).searchParams.get('pci')==='00000000-0000-4000-8000-000000000001');
+ await page.evaluate(()=>history.back());
+ await page.locator('#empty:not([hidden])').waitFor({timeout:15000});
+ assert.equal(await page.locator('#school').inputValue(),'1001');
+ assert.equal(await page.evaluate(()=>new URL(location.href).searchParams.has('pci')),false);
+ await page.evaluate(()=>history.forward());
+ await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
+ assert.equal(await page.evaluate(()=>new URL(location.href).searchParams.get('pci')),'00000000-0000-4000-8000-000000000001');
+ await page.locator('#schoolHomeLink').click();
+ await page.locator('#empty:not([hidden])').waitFor({timeout:15000});
+ assert.equal(await page.evaluate(()=>new URL(location.href).searchParams.has('pci')),false,'Inicio debe volver a la escuela, no reiniciar sesión');
+ await page.evaluate(()=>history.back());
+ await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
  assert.equal(await page.locator('#fgPane').isHidden(),true,'El PCI inicia en Fase 1, no en el desarrollo FG');
  assert.equal(await page.locator('#continueDevelopment').isDisabled(),true,'La Fase 2 no puede iniciar sin mapa completo y guardado');
  assert.equal(await page.locator('[data-tab="fo"]').isDisabled(),true,'El botón Desarrollo FO debe estar deshabilitado por la Fase 1');
@@ -139,6 +153,17 @@ try{
  await page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Historia'}).first().click();
  await page.locator('#mapBody .constructor-group.propuesta').first().click();
  await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Historia').waitFor();
+ // Un borrador pendiente no se descarta con la flecha Atrás si se cancela.
+ const beforeCancel=page.url();
+ const rejectedBack=new Promise(resolve=>page.once('dialog',async dialog=>{
+   assert.match(dialog.message(),/cambios sin guardar/);
+   await dialog.dismiss();resolve();
+ }));
+ await page.evaluate(()=>history.back());
+ await rejectedBack;
+ await page.waitForTimeout(350);
+ assert.equal(page.url(),beforeCancel,'Cancelar Atrás debe conservar el mismo PCI y fase');
+ assert.equal(await page.locator('#mapBody .constructor-group.propuesta').count(),2,'El agrupamiento pendiente permanece');
  await page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Geografía'}).first()
    .dragTo(page.locator('#mapBody .constructor-group.propuesta').first());
  await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Geografía').waitFor();
@@ -159,9 +184,15 @@ try{
  assert.ok(mediaSaved.document.fo.spaces.some(s=>(s.members||[]).length>0),'Materia oficial FO asignada a espacio de orientación sin reemplazar FG');
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#app:not([hidden])').waitFor({timeout:25000});
- await page.locator('.school-offer-card button[aria-label^="Abrir Mapa de la Oferta"]').click();
+ await page.locator('#offerPane:not([hidden])').waitFor({timeout:25000});
+ assert.equal(await page.evaluate(()=>new URL(location.href).searchParams.get('pci')),'00000000-0000-4000-8000-000000000001','Recargar reabre el mismo PCI, no la portada');
  await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Geografía').waitFor({timeout:12000});
  assert.equal(state.units.get(mediaKey)?.revision,1,'La reapertura no crea una revisión ni altera el historial');
+ await page.locator('#brandHomeLink').click();
+ await page.locator('#empty:not([hidden])').waitFor({timeout:15000});
+ assert.equal(await page.locator('#school').inputValue(),'1001','El logo conserva la escuela seleccionada');
+ await page.evaluate(()=>history.back());
+ await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
  await page.screenshot({path:'test-artifacts/multipci-portal/constructor-media-fg-fo-mapa.png',fullPage:false});
  assert.equal(state.pcis.length,1,'Abrir el mapa no crea ni sobrescribe PCI');
  await page.locator('#editor [data-back-to-school]').click();
@@ -276,6 +307,11 @@ try{
 
  // Desde Panel de control, «Organización curricular» debe abrir el módulo
  // nuevo de esa misma escuela. Conservar el enlace histórico «FG existente».
+ const adminCatalog=[{
+   school_id:1001,name:'Escuela N.º 99 · Prueba automatizada',cue:'DEMO-001',
+   model:'comun',progress:{edited_spaces:3,total_spaces:10,assigned_contents:5},
+   audit:{participant_count:1,total_events:0}
+ }];
  const panelPage=await browser.newPage({viewport:{width:1440,height:900}});
  const panelErrors=[];
  panelPage.on('pageerror',e=>panelErrors.push(e.message));
@@ -292,11 +328,7 @@ try{
      throw Error('El panel usa un token no autorizado');
    let value;
    if(body.action==='session-info')value={role:'admin',permissions:['pci.view','pci.edit','institutional.view','audit.view'],all_schools:true,school_ids:[]};
-   else if(body.action==='list-schools')value={schools:[{
-     school_id:1001,name:'Escuela N.º 99 · Prueba automatizada',cue:'DEMO-001',
-     model:'comun',progress:{edited_spaces:3,total_spaces:10,assigned_contents:5},
-     audit:{participant_count:1,total_events:0}
-   }]};
+   else if(body.action==='list-schools')value={schools:adminCatalog};
    else if(body.action==='get-school-dashboard')value={
      school:{school_id:1001,name:'Escuela N.º 99 · Prueba automatizada',cue:'DEMO-001',model:'comun',
        edit_code:'PCI-0000',primary_code:'DIR-DEMO'},progress:{edited_spaces:3,total_spaces:10,assigned_contents:5},
@@ -315,14 +347,43 @@ try{
    }
    let data;
    if(body.action==='session-info')data={role:'admin',permissions:['pci.view','pci.edit'],all_schools:true,school_ids:[]};
-   else if(body.action==='list-schools')data={schools:[{school_id:1001,name:'Escuela N.º 99 · Prueba automatizada',cue:'DEMO-001'}]};
+   else if(body.action==='list-schools')data={schools:adminCatalog};
+   else if(body.action==='create-school-v2'){
+     if(adminCatalog.some(s=>s.cue===body.cue)){status=409;data={error:'El CUE ya existe'};}
+     else{
+       const id=1002;
+       adminCatalog.push({school_id:id,name:body.name,cue:body.cue,model:'comun',progress:{total_spaces:0,edited_spaces:0,assigned_contents:0},audit:{}});
+       data={ok:true,school_id:id,name:body.name,edit_code:'PCI-9988',primary_code:'DIR-00AABBCC'};
+     }
+   }
    else if(body.action==='list-school-pcis')data={pcis:initialPcis};
    else throw Error('Acción no simulada para portal desde panel: '+body.action);
    await route.fulfill({status:200,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(data)});
  });
  await panelPage.goto('http://127.0.0.1:'+port+'/panel-general.html',{waitUntil:'domcontentloaded'});
- const dashboardOrg=panelPage.locator('#rows a').filter({hasText:'Organización curricular'}).first();
+ const dashboardOrg=panelPage.locator('#rows a[href*="school=1001"]').filter({hasText:'Organización curricular'}).first();
  await dashboardOrg.waitFor({timeout:20000});
+ // Solo superadmin puede crear escuelas; el alta queda en la API oficial
+ // y no en un formulario dentro de la pantalla curricular de una escuela.
+ await panelPage.locator('#manageSchoolsBtn').click();
+ await panelPage.locator('#manageSchoolsDialog[open]').waitFor();
+ await panelPage.locator('#schoolDbStatus').getByText(/Supabase conectado/).waitFor();
+ await panelPage.locator('#newSchoolName').fill('Colegio de prueba');
+ await panelPage.locator('#newSchoolCue').fill('DEMO-001');
+ await panelPage.locator('#newSchoolSubmit').click();
+ await panelPage.locator('#schoolCreateStatus').getByText(/ya pertenece/).waitFor();
+ assert.equal(adminCatalog.length,1,'Un CUE duplicado no crea ni sobrescribe escuelas');
+ await panelPage.locator('#newSchoolCue').fill('CUE-Z99');
+ panelPage.once('dialog',dialog=>dialog.accept());
+ await panelPage.locator('#newSchoolSubmit').click();
+ await panelPage.locator('#schoolDbCreated:not(.hidden)').waitFor({timeout:15000});
+ assert.equal(await panelPage.locator('#schoolDbEditCode').textContent(),'PCI-9988');
+ assert.match(await panelPage.locator('#schoolDbOpenPci').getAttribute('href'),/school=1002/);
+ assert.equal(adminCatalog.length,2,'La escuela debe crearse en el catálogo de Supabase');
+ await panelPage.locator('#manageSchoolsClose').click();
+ await panelPage.locator('#rows tr').filter({hasText:'Colegio de prueba'}).waitFor({timeout:15000});
+ assert.equal(adminCatalog[0].school_id,1001,'No se reescribe la escuela anterior');
+ await panelPage.screenshot({path:'test-artifacts/multipci-portal/panel-admin-alta-escuela.png',fullPage:true});
  assert.match(await dashboardOrg.getAttribute('href'),/pci-orientaciones\.html\?school=1001&from=panel-general/);
  assert.match(await panelPage.locator('#rows a').filter({hasText:'FG existente'}).first().getAttribute('href'),
    /escuela-online\.html\?school=1001/,'FG histórica debe permanecer accesible');
