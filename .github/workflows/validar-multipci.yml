@@ -12,6 +12,8 @@ on:
       - pci-orientaciones.css
       - src/orientaciones-online.mjs
       - src/pci-turnos-organizacion.mjs
+      - src/ba15/**
+      - tests/ba15-reglas.test.mjs
       - tests/turnos-modalidades.test.mjs
       - src/orientaciones-release-core.mjs
       - tests/orientaciones-release.test.mjs
@@ -65,8 +67,10 @@ jobs:
         run: |
           node --check src/orientaciones-online.mjs
           node --check src/pci-turnos-organizacion.mjs
+          node --check src/ba15/reglas-curriculares.mjs
+          node --check src/ba15/mapa-ui.mjs
           node --check src/orientaciones-release-core.mjs
-          node --test tests/multipci/*.test.mjs tests/orientaciones-release.test.mjs tests/turnos-modalidades.test.mjs tests/edge-package.test.mjs tests/navegacion-orientaciones.test.mjs tests/deploy-gate.test.mjs
+          node --test tests/multipci/*.test.mjs tests/orientaciones-release.test.mjs tests/turnos-modalidades.test.mjs tests/ba15-reglas.test.mjs tests/edge-package.test.mjs tests/navegacion-orientaciones.test.mjs tests/deploy-gate.test.mjs
       - name: Probar el módulo online en Chromium con Supabase simulado
         run: |
           npm install --no-save playwright@1.55.0
