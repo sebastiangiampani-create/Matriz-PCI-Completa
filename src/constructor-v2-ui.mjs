@@ -196,7 +196,7 @@ export function renderUnifiedConstructor({
        (kind==='laboratorio'?'Laboratorio ':kind==='taller'?'Taller ':'Espacio ')+
        subject.name+' · '+level+'º';
       const updated=createGrouping(composition,{year:level,term,area,kind,name,replicate:true});
-      const created=updated.groups.find(g=>g.name===name&&g.term<=term&&g.endTerm>=term);
+      const created=updated.groups[updated.groups.length-(kind==='troncal'?1:2)]||null;
       if(!created)throw Error('No se pudo ubicar el agrupamiento en el cuatrimestre.');
       const assigned=placeSubject(updated,{groupId:created.id,subject});
       onChange(assigned);
