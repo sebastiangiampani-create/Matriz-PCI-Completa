@@ -977,11 +977,11 @@ function renderDevelopmentOverview(){
   }
   filterDevelopmentCards();
   if(!items.length){
-   note('p','Todavía no hay espacios para desarrollar. Completá el Constructor curricular.','muted',cardHost);
+   note('p','Todavía no hay espacios para desarrollar. Completá el Constructor curricular.',cardHost,'muted');
    return;
   }
   if(technical.active){
-   note('p','Las referencias técnicas se informan según la especialidad y su fuente documental; no se traducen a porcentajes FG de Media.','muted',levels);
+   note('p','Las referencias técnicas se informan según la especialidad y su fuente documental; no se traducen a porcentajes FG de Media.',levels,'muted');
    return;
   }
   const keys=new Map();
@@ -1007,7 +1007,7 @@ function renderDevelopmentOverview(){
    }
    levels.append(p);
   }
-  if(!keys.size)note('p','El desarrollo FG por nivel se habilita con agrupamientos FG vinculados.','muted',levels);
+  if(!keys.size)note('p','El desarrollo FG por nivel se habilita con agrupamientos FG vinculados.',levels,'muted');
  }
  update();
  if(technical.active)return;
@@ -1044,7 +1044,7 @@ function renderDevelopmentOverview(){
  }));
 }
 function uniqueIdsForSummary(...arrays){
- return [...new Set(arrays.flatMap(v=>Array.isArray(v)?v:[]).map(String))];
+ return [...new Set(arrays.flatMap(v=>Array.isArray(v)?v:[]).filter(x=>typeof x==='string'||typeof x==='number').map(String))];
 }
 
 function renderAreas(){
