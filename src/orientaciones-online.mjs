@@ -6,6 +6,7 @@
 import {ORIENTATIONS,createOrientationPackage} from './integracion-curricular/bridge.js';
 import {agruparPcis,TURNOS} from './pci-turnos-organizacion.mjs';
 import {migrateState} from '../pci-model.js';
+import {mostrarMapaBa15} from './ba15/mapa-ui.mjs';
 import {loadMatrixContents,loadV2Fg,loadV2Fo,loadV2Rules,selectFoByOrientation} from './integracion-curricular/catalogos.js';
 import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integracion-curricular/auto-validacion-importacion.js';
 import {seedOfferStructure,foSubjectBank,assignFoSubject,offerMapRows,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
@@ -351,6 +352,7 @@ async function openPci(id){
       show('editor',false);show('technicalPending',false);show('empty',false);
       show('ba15Pending',true);
       $('ba15Name').textContent=pcis.find(x=>x.pci_id===id)?.title||'PCI BA +15';
+      mostrarMapaBa15({metrics:$('ba15Metrics'),navigation:$('ba15Navigation'),map:$('ba15Map'),validation:$('ba15Validation')});
       $('ba15Info').textContent='Turno '+({manana:'mañana',tarde:'tarde',vespertino:'vespertino',noche:'noche'}[b.shift_id]||b.shift_id)+
         ' · Orientación '+(ORIENTATIONS.find(x=>x.id===b.orientation_id)?.name||b.orientation_id)+
         ' · Documento histórico protegido';
