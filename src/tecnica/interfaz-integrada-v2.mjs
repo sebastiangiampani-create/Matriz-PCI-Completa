@@ -4,6 +4,7 @@
  * No hay segunda aplicación ni sesión nueva. No llama a Supabase directamente.
  */
 import {findSpecialty,TECNICA,validateRelation} from './pautas-pci-20261005.mjs';
+import {phaseGate as evaluatePhaseGate} from '../pci-flujo-fases.mjs';
 import {
  TECH_FIELDS,TECH_FG_AREAS,TECH_SPECIFIC_AREAS,TECH_OFFER_VERSION,TECH_PLAN_VERSION,
  technicalSubjectBank,technicalOfferSeed,guardTechnicalOffer,guardTechnicalPlan,
@@ -43,7 +44,7 @@ const normalized=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,''
 const labels={punto_partida:'Punto de partida',indagacion:'Indagación',
  produccion:'Producción',evaluacion:'Evaluación'};
 const defaultText={
- tab3:'Formación Orientada',heading3:'Planes de aprendizaje',heading1:'Formación General por área',
+ tab3:'2 · Desarrollo FO',heading3:'Planes de aprendizaje',heading1:'Formación General por área',
  heading2:'Mapa de la Oferta · C1 a C10'
 };
 function choiceLabel(s){return s.character==='electivo'?'Electivo':'Obligatorio';}
@@ -69,7 +70,7 @@ const createWarning=(host,message)=>el('p',host,message,'muted');
 export function createIntegratedTechnicalUI({
  canEdit=()=>false,getUnit,saveUnit,saveSafe,
  download,rememberDraft,forgetDraft,recallDraft,
- message=()=>{},status=()=>{}
+ message=()=>{},status=()=>{},onPhaseChange=()=>{}
 }){
  let pci=null,source=null,bank=[],offer=null,offerRevision=0,offerDirty=false;
  let activeArea='Ciencias Sociales',activeSpace=null,activePlanId=null,plan=null,
@@ -79,10 +80,21 @@ export function createIntegratedTechnicalUI({
  function writable(){
   return !!pci&&canEdit()&&['borrador','en_revision'].includes(pci.status);
  }
+ function phaseGate(){
+   if(!pci||!offer)return evaluatePhaseGate({issues:['El mapa técnico no está disponible.']});
+   const audit=validateTechnicalDraft(offer,bank);
+   const issues=(audit.issues||[]).map(x=>x.message);
+   if(offer.needsNormativeReview&&!offer.normativeReviewAcknowledged)
+     issues.push('Revisá los espacios históricos y las Prácticas Profesionalizantes antes de continuar.');
+   return evaluatePhaseGate({
+     revision:offerRevision,dirty:offerDirty,issues,warnings:(audit.warnings||[]).map(x=>x.message),
+     label:'Constructor de Educación Técnica'
+   });
+ }
  function changedOffer(){
   offerDirty=true;
   rememberDraft('oferta-tecnica','mapa-oferta-tecnica-v1',offer,offerRevision);
-  renderOffer();
+  renderOffer();onPhaseChange();
   message('Mapa técnico modificado. Guardá el borrador; el PCI histórico permanece intacto.','warn');
  }
  function changedPlan(){
@@ -92,7 +104,7 @@ export function createIntegratedTechnicalUI({
  function setLabels(tech){
   $('downloadOriginal').textContent=tech?'Descargar PCI histórico':'Descargar FG original';
   const n=document.querySelector('[data-tab="fo"]');
-  if(n)n.textContent=tech?'Formación Técnico-Específica':defaultText.tab3;
+  if(n)n.textContent=tech?'2 · Desarrollo técnico-específico':'2 · Desarrollo FO';
   const fgDescription=$('fgPane')?.querySelector('.topline .muted');
   if(fgDescription)fgDescription.textContent=tech?
     'Formación General y Científico-Tecnológica: materias y páginas oficiales por nivel. Los agrupamientos y planes históricos siguen disponibles como resguardo; no se eliminan.':
@@ -398,9 +410,11 @@ export function createIntegratedTechnicalUI({
   });add.disabled=!writable()||s.included===false;
   createWarning(curric,related.length+' referencias de páginas disponibles. Año/campo inferidos: '+
    'la selección no constituye homologación automática.');
-  const planBtn=btn(panel,'Abrir planes del espacio',()=>{
+  const planBtn=btn(panel,'2 · Abrir desarrollo del espacio',()=>{
+   const gate=phaseGate();
+   if(!gate.ready){message('Primero completá el constructor técnico de este PCI. '+gate.detail,'warn');return;}
    tab='fo';activateTab();openPlan(s.id);
-  });planBtn.disabled=!pci||(s.included===false&&!s.archivedLegacy);
+  });planBtn.disabled=!pci||(s.included===false&&!s.archivedLegacy)||!phaseGate().ready;
   summarizeMap();buildHeader();
  }
  function renderPlanList(){
@@ -417,6 +431,7 @@ export function createIntegratedTechnicalUI({
   }
  }
  async function openPlan(id){
+  if(!phaseGate().ready){message('Primero completá y guardá el mapa técnico. '+phaseGate().detail,'warn');return;}
   if(planDirty&&activePlanId!==id&&!confirm('Este plan tiene cambios sin guardar. ¿Descartar la edición al abrir otro espacio?'))return;
   const s=offer?.spaces.find(x=>x.id===id);if(!s)return;
   const token=++loading;
@@ -503,12 +518,13 @@ export function createIntegratedTechnicalUI({
    if(!result)return;
    offerRevision=Number(result.revision);offerDirty=false;
    forgetDraft('oferta-tecnica','mapa-oferta-tecnica-v1');
-   buildHeader();renderOffer();
+   buildHeader();renderOffer();onPhaseChange();
    message('Mapa de la Oferta Técnica guardado por PCI con revisión '+offerRevision+
      '. Sigue pendiente la validación del plan de estudios.','');
   }catch(error){message('No se guardó el mapa técnico: '+error.message,'error');}
  }
  async function savePlan(){
+  if(!phaseGate().ready){message('El mapa técnico ya no está confirmado. '+phaseGate().detail,'warn');return;}
   if(!pci||!plan||!writable()||offer.spaces.find(s=>s.id===plan.space_id)?.archivedLegacy)return;
   const space=offer.spaces.find(x=>x.id===plan.space_id);
   if(!space)return;
@@ -523,6 +539,10 @@ export function createIntegratedTechnicalUI({
   }catch(error){message('No se guardaron los planes: '+error.message,'error');}
  }
  function renderTab(next){
+  if(next!=='oferta'&&!phaseGate().ready){
+   message('Fase 1 pendiente: completá y guardá el constructor técnico. '+phaseGate().detail,'warn');
+   next='oferta';
+  }
   tab=next;
   if(next==='fg')renderFg();
   else if(next==='oferta')renderOffer();
@@ -557,7 +577,7 @@ export function createIntegratedTechnicalUI({
    rememberDraft('oferta-tecnica','mapa-oferta-tecnica-v1',offer,offerRevision);
   planRevision=0;planDirty=false;activePlanId=null;activeSpace=null;
   activeArea='Ciencias Sociales';spaceYear=0;spaceArea='';
-  setLabels(true);buildHeader();renderTab('fg');
+  setLabels(true);buildHeader();renderTab('oferta');
   message((prepared.needsReview?
     'Anexo II del 17/11/2026: borrador anterior adaptado SOLO en memoria, sin borrar espacios ni planes. '+
     'Revisá Prácticas Profesionalizantes antes de guardar. ':
@@ -573,7 +593,7 @@ export function createIntegratedTechnicalUI({
  }
  function isDirty(){return !!(offerDirty||planDirty);}
  return {
-  open,close,renderTab,saveOffer,isDirty,
+  open,close,renderTab,saveOffer,isDirty,phaseGate,
   get active(){return !!pci;},
   get offer(){return offer?copy(offer):null;},
   get source(){return source;}

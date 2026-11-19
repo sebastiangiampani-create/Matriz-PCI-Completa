@@ -128,14 +128,20 @@
             <div class="topline"><div><span class="eyebrow" id="pciTag">Orientación</span><h2 id="pciName"></h2><p id="pciInfo" class="muted"></p></div>
               <button type="button" id="downloadOriginal" class="btn">Descargar FG original</button></div>
             <div class="metrics" id="metrics"></div>
-            <div class="navtabs" role="tablist" aria-label="Secciones del PCI">
-              <button type="button" class="tab active" data-tab="fg">Formación General</button>
-              <button type="button" class="tab" data-tab="oferta">Mapa de la Oferta</button>
-              <button type="button" class="tab" data-tab="fo">Formación Orientada</button>
+            <div class="pci-phase-flow" aria-label="Secuencia curricular por PCI">
+              <span><strong>1</strong> Construcción curricular completa</span>
+              <span class="pci-phase-arrow" aria-hidden="true">›</span>
+              <span><strong>2</strong> Desarrollo curricular</span>
             </div>
+            <div class="navtabs" role="tablist" aria-label="Fases del PCI">
+              <button type="button" class="tab active" data-tab="oferta">1 · Constructor curricular</button>
+              <button type="button" class="tab" data-tab="fg">2 · Desarrollo FG</button>
+              <button type="button" class="tab" data-tab="fo">2 · Desarrollo FO</button>
+            </div>
+            <p id="pciPhaseState" class="pci-phase-state" role="status" aria-live="polite"></p>
             <div id="message" class="message" role="status" aria-live="polite"></div>
           </div>
-          <div class="panel card pane" id="fgPane">
+          <div class="panel card pane" id="fgPane" hidden>
             <div class="topline"><div><span class="eyebrow">FG Matriz histórica → FG V2</span><h3>Formación General por área</h3><p class="muted">Los contenidos y las secuencias anteriores se importan sin cambiar el documento original. Las equivalencias V2 se identifican automáticamente.</p></div></div>
             <div class="split original-workspace">
               <div id="areaList" class="areaList content-bag card"></div>
@@ -203,6 +209,10 @@
               </div>
             </div>
             <p id="offerValidation" class="note"></p>
+            <div class="pci-phase-next">
+              <p>La Fase 2 usa los espacios y agrupamientos de esta orientación. Guardá y revisá la composición antes de pasar al desarrollo de contenidos y planes.</p>
+              <button id="continueDevelopment" type="button" class="btn primary" disabled>Continuar al Desarrollo Curricular</button>
+            </div>
           </div>
           <div class="panel pane" id="foPane" hidden>
             <div class="topline"><div><span class="eyebrow">FO · Desarrollo curricular</span><h3>Planes de aprendizaje</h3><p class="muted">Cada espacio FO guarda sus objetivos, sinopsis y las cuatro etapas de cada plan, con control de versiones.</p></div></div>
@@ -219,6 +229,6 @@
     <img class="logo-blanco" src="assets/em-logo-footer.svg?v=20260902" alt="Escuela de Maestros">
     <img class="ministerio" src="assets/ministerio-footer.svg?v=20260902" alt="Ministerio de Educación · Buenos Aires Ciudad">
   </footer>
-  <script type="module" src="src/orientaciones-online.mjs?v=20261119-constructor-1"></script>
+  <script type="module" src="src/orientaciones-online.mjs?v=20261119-fases-1"></script>
 </body>
 </html>

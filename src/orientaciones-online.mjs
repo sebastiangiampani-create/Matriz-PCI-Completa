@@ -11,7 +11,9 @@ import {montarConstructorBa15} from './ba15/constructor-ui.mjs';
 import {loadMatrixContents,loadV2Fg,loadV2Fo,loadV2Rules,selectFoByOrientation} from './integracion-curricular/catalogos.js';
 import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integracion-curricular/auto-validacion-importacion.js';
 import {seedOfferStructure,foSubjectBank,assignFoSubject,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
-import {withComposition} from './integracion-curricular/constructor-mapa-unificado.mjs';
+import {withComposition,compositionFor,arrangementWarnings} from './integracion-curricular/constructor-mapa-unificado.mjs';
+import {phaseGate,phaseText} from './pci-flujo-fases.mjs';
+import {proposedFgAreas,emptyFgAreaUnit,inheritFgComposition} from './pci-fase-desarrollo-fg.mjs';
 import {renderUnifiedConstructor} from './constructor-v2-ui.mjs';
 import {newFoDevelopment,FO_STAGES} from './integracion-curricular/desarrollo-fo-modelo.js';
 import {pvfReference,validatePvfProject} from './integracion-curricular/proyecto-vinculacion-2026.mjs';
@@ -39,7 +41,7 @@ let session=null,schools=[],schoolId=null,pcis=[],pci=null,workspace=null,auto=n
 let selectedFgArea=null,fgDoc=null,fgRevision=0,fgDirty=false;
 let offerRevision=0,offerDirty=false,selectedFoSpace=null,foDoc=null,foRevision=0,foDirty=false;
 let tab='fg',busy=false,ba15Controller=null;
-const technical=createIntegratedTechnicalUI({canEdit,getUnit,saveUnit,saveSafe:safeSave,download,rememberDraft,forgetDraft,recallDraft,message,status});
+const technical=createIntegratedTechnicalUI({canEdit,getUnit,saveUnit,saveSafe:safeSave,download,rememberDraft,forgetDraft,recallDraft,message,status,onPhaseChange:()=>refreshPhaseState()});
 
 async function call(action,data={}){
   const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:session?.token,...data}),cache:'no-store'});
@@ -204,6 +206,7 @@ async function init(){
     };
     document.querySelectorAll('.tab').forEach(el=>el.onclick=()=>setTab(el.dataset.tab));
     $('saveOffer').onclick=()=>technical.active?technical.saveOffer():saveOffer();
+    $('continueDevelopment').onclick=()=>setTab('fg',true);
     $('foAlternative').addEventListener('change',()=>{
       if(!pci||!workspace)return;
       try{workspace=setFoAlternative(workspace,pci.orientation_id,$('foAlternative').value);markDirty('oferta');renderOffer();message('Alternativa FO cambiada, todavía sin guardar.','warn');}
@@ -342,11 +345,11 @@ function renderSchoolHome(){
         note('p',p.title,main,'muted');
         card.append(main);
         const bottom=elem('div',undefined,'school-offer-actions');
-        const map=elem('button','Mapa de la Oferta','btn primary');
+        const map=elem('button','1 · Constructor curricular','btn primary');
         map.type='button';
         map.setAttribute('aria-label','Abrir Mapa de la Oferta de '+p.title);
         map.onclick=()=>openPci(p.pci_id,'oferta');
-        const develop=elem('button','Desarrollo Curricular','btn secondary');
+        const develop=elem('button','2 · Desarrollo curricular','btn secondary');
         develop.type='button';
         develop.setAttribute('aria-label','Abrir Desarrollo Curricular de '+p.title);
         develop.onclick=()=>openPci(p.pci_id,p.model==='ba15'?'fo':'fg');
@@ -360,6 +363,7 @@ function returnToSchool(){
   if(!canLeave())return;
   technical.close();ba15Controller?.destroy();ba15Controller=null;
   pci=null;workspace=null;auto=null;
+  $('editor').classList.remove('technical-editor');
   selectedFgArea=null;selectedFoSpace=null;fgDoc=null;foDoc=null;
   fgDirty=false;foDirty=false;offerDirty=false;
   show('editor',false);show('technicalPending',false);show('ba15Pending',false);show('empty',true);
@@ -430,7 +434,7 @@ async function createPci(e){
       'PCI de Media creado sin modificar la matriz histórica.');
   }catch(error){status('No se creó','error');message(error.message,'error');}
 }
-async function openPci(id,requestedTab='fg'){
+async function openPci(id,requestedTab='oferta'){
   if(!canLeave())return;
   try{
     status('Cargando PCI y resguardo histórico…');
@@ -460,10 +464,12 @@ async function openPci(id,requestedTab='fg'){
       ba15Controller=montarConstructorBa15($('ba15Builder'),identity,{
         initialDraft:remoteDraft,
         canEditRemote:canEdit()&&['borrador','en_revision'].includes(b.status),
+        savedRevision:revision,
         saveRemote:async document=>{
           if(pci?.pci_id!==b.pci_id)throw Error('Se cambió de PCI: no se permite guardar en otro.');
           const result=await saveUnit('oferta','map',unitId,baseVersion,document,revision);
           revision=Number(result.revision);
+          return revision;
         }
       });
       $('ba15Info').textContent='Turno '+({manana:'mañana',tarde:'tarde',vespertino:'vespertino',noche:'noche'}[b.shift_id]||b.shift_id)+
@@ -472,10 +478,10 @@ async function openPci(id,requestedTab='fg'){
       $('app').classList.remove('school-home');
       renderPcis();
       if(requestedTab==='fo'){
-        const go=[...$('ba15Builder').querySelectorAll('button')].find(b=>b.textContent.trim()==='Desarrollo curricular');
-        go?.click();
-      }
-      status('BA +15: constructor C1–C8 habilitado como borrador por PCI; homologación final pendiente');
+        const go=[...$('ba15Builder').querySelectorAll('button')].find(b=>b.textContent.trim()==='2 · Desarrollo curricular');
+        if(go&&!go.disabled)go.click();
+        else status('Primero completá y guardá el Constructor curricular BA +15 de este PCI.');
+      }else status('BA +15: Fase 1 Constructor C1–C8; Fase 2 después del mapa completo y guardado');
       return;
     }
     if(result.pci?.model==='tecnica'){
@@ -492,9 +498,11 @@ async function openPci(id,requestedTab='fg'){
       await technical.open(tech);
       show('technicalPending',false);show('ba15Pending',false);
       show('empty',false);show('editor');
+      $('editor').classList.add('technical-editor');
+      $('offerGrid').closest('details').open=true;
       $('app').classList.remove('school-home');
-      renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'fg',true);
-      status('PCI Técnico · mapa C1–C12 y planes de aprendizaje');
+      renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true);
+      status('PCI Técnico · Fase 1 construcción C1–C12; Fase 2 solo tras mapa revisado y guardado');
       return;
     }
     technical.close();
@@ -536,10 +544,14 @@ async function openPci(id,requestedTab='fg'){
       const item=elem('div',undefined,'metric');note('strong',num,item);note('small',label,item);host.appendChild(item);
     }
     show('empty',false);show('editor');
+    $('editor').classList.remove('technical-editor');
     $('app').classList.remove('school-home');
-    renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'fg',true);renderAreas();
-    message('PCI cargado. El guardado es siempre explícito y nunca reemplaza la matriz histórica.');
-    status('Listo para editar');
+    renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true);renderAreas();
+    const gate=refreshPhaseState();
+    if(requestedTab!=='oferta'&&!gate.ready)
+      message('Primero completá la Fase 1 del PCI antes de entrar al Desarrollo Curricular. '+gate.detail,'warn');
+    else message('Constructor de este PCI abierto. Guardá y validá el mapa antes de desarrollar; la FG histórica no se reemplaza.');
+    status('PCI · Fase 1 Constructor curricular');
   }catch(error){status('No se abrió el PCI','error');message(error.message,'error');}
 }
 async function getUnit(forPci,component,unitKind,unitId,baseVersion){
@@ -560,39 +572,96 @@ async function saveUnit(component,unitKind,unitId,baseVersion,document,revision)
     throw Error('La lectura posterior no coincide con el guardado. Conservá el borrador y revisá antes de continuar.');
   return result;
 }
+function currentPhaseGate(){
+  if(!pci)return phaseGate({issues:['Elegí un PCI para construir su mapa curricular.']});
+  if(technical.active)return technical.phaseGate();
+  if(pci.model==='comun'&&workspace){
+    try{
+      const validation=validateOfferStructure(workspace,pci.orientation_id,refs);
+      const draft=compositionFor(workspace,pci);
+      // Los agrupamientos propuestos no forman parte de la FG histórica;
+      // deben revisarse también antes de pasar a planes.
+      return phaseGate({revision:offerRevision,dirty:offerDirty,
+        issues:[...(validation.errors||[]),...arrangementWarnings(draft)],
+        warnings:validation.warnings||[],label:'Constructor de Media'});
+    }catch(error){
+      return phaseGate({revision:offerRevision,dirty:offerDirty,issues:[error.message]});
+    }
+  }
+  return phaseGate({issues:['Todavía no se cargó el constructor de este PCI.']});
+}
+function refreshPhaseState(){
+  const gate=currentPhaseGate();
+  const label=$('pciPhaseState');
+  label.textContent=phaseText(gate);
+  label.classList.toggle('ready',gate.ready);
+  for(const btn of document.querySelectorAll('.navtabs [data-tab]')){
+    const isPlan=btn.dataset.tab!=='oferta';
+    btn.setAttribute('aria-disabled',String(isPlan&&!gate.ready));
+    if(isPlan)btn.title=gate.ready?'Abrir desarrollo del PCI':'Primero completá, revisá y guardá la Fase 1 de este PCI.';
+  }
+  $('continueDevelopment').disabled=!gate.ready;
+  return gate;
+}
 function setTab(next,force=false){
-  if(!['fg','oferta','fo'].includes(next))return;
-  // Cambiar de pestaña técnica no descarta el borrador; cambia solo de vista.
-  if(!technical.active && !force && !canLeave())return;
+  if(!['fg','oferta','fo'].includes(next))return false;
+  // La Fase 2 solo se habilita después de un mapa completo y GUARDADO
+  // del PCI seleccionado. Ningún dato histórico se borra ni se reescribe.
+  if(next!=='oferta'){
+    const gate=refreshPhaseState();
+    if(!gate.ready){
+      message('Primero completá el Constructor curricular de este PCI. '+gate.detail,'warn');
+      next='oferta';
+    }
+  }
+  if(!technical.active&&!force&&!canLeave())return false;
   tab=next;
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===next));
   for(const name of ['fg','offer','fo'])show(name+'Pane',next===(name==='offer'?'oferta':name));
-  if(technical.active){technical.renderTab(next);return;}
+  if(technical.active){technical.renderTab(next);refreshPhaseState();return next!=='oferta';}
   if(next==='oferta')renderOffer();
   if(next==='fo')renderFoSpaces();
+  refreshPhaseState();
+  return next!=='oferta';
 }
 function renderAreas(){
   const host=$('areaList');host.replaceChildren();
-  const areas=Object.keys(fgSourceState?.areas||{});
-  if(!areas.length)note('p','Esta escuela aún no tiene agrupamientos FG; se podrán construir dentro del proceso.',host,'muted');
+  const staged=workspace&&pci?compositionFor(workspace,pci):null;
+  const areas=[...new Set([...Object.keys(fgSourceState?.areas||{}),...proposedFgAreas(staged)])];
+  if(!areas.length)note('p','No hay agrupamientos FG. Completá primero el constructor del PCI.',host,'muted');
   areas.forEach(area=>{
-    const groups=fgSourceState.areas[area]?.groups||[];
+    const original=fgSourceState?.areas?.[area]?.groups||[];
+    const proposed=(staged?.groups||[]).filter(g=>g.area===area&&
+      (g.members||[]).some(m=>m.component==='FG'));
     const button=elem('button',undefined,'areaItem'+(area===selectedFgArea?' active':''));button.type='button';
-    note('strong',area,button);note('small',groups.length+' agrupamientos de origen',button);
+    note('strong',area,button);
+    note('small',original.length+' históricos · '+proposed.length+' propuestos',button);
     button.onclick=()=>openFgArea(area);host.appendChild(button);
   });
 }
 async function openFgArea(area){
   if(fgDirty&&!confirm('Hay cambios de FG sin guardar. ¿Abrir otra área sin guardar?'))return;
   try{
+    const original=Object.hasOwn(fgSourceState?.areas||{},area);
+    const composition=compositionFor(workspace,pci);
+    if(!original&&!proposedFgAreas(composition).includes(area))
+      throw Error('El área no pertenece a la FG de este PCI.');
     const saved=await getUnit(pci,'fg','area',area,'fg-sec-aprende-v2/1');
     const serverDoc=saved.exists?guardFgUnit(saved.document,pci,area):
-      newFgUnit({pci,area,convertedAreas:auto.currentFg.areas});
+      original?newFgUnit({pci,area,convertedAreas:auto.currentFg.areas}):
+      emptyFgAreaUnit(pci,area);
     const currentRevision=Number(saved.revision)||0;
     const recovered=recallDraft('fg',area,currentRevision,pci,
       value=>guardFgUnit(value,pci,area));
-    selectedFgArea=area;fgDoc=recovered||serverDoc;fgRevision=currentRevision;fgDirty=!!recovered;
+    const inherited=inheritFgComposition({unit:recovered||serverDoc,composition,pci,area});
+    selectedFgArea=area;fgDoc=inherited.unit;fgRevision=currentRevision;
+    fgDirty=!!recovered||inherited.changed;
+    if(inherited.changed)markDirty('fg');
     renderAreas();renderFgEditor();
+    if(inherited.conflicts.length)
+      message('Se conservaron desarrollos anteriores: revisar manualmente materias de '+inherited.conflicts.join(', ')+'.','warn');
+    else if(inherited.changed)
+      message(inherited.added.length+' agrupamientos de la Fase 1 heredados en el Desarrollo FG. Guardá el área para confirmar sus planes.','warn');
   }catch(error){message(error.message,'error');}
 }
 function renderFgEditor(){
@@ -661,12 +730,10 @@ function renderOffer(){
       }catch(error){message(error.message,'error');}
     },
     onOpenHistoricalArea:area=>{
-      setTab('fg',true);
-      openFgArea(area).catch(error=>message(error.message,'error'));
+      if(setTab('fg',true))openFgArea(area).catch(error=>message(error.message,'error'));
     },
     onOpenFoSpace:id=>{
-      setTab('fo',true);
-      openFoSpace(id).catch(error=>message(error.message,'error'));
+      if(setTab('fo',true))openFoSpace(id).catch(error=>message(error.message,'error'));
     },
     onError:text=>message(text,'error'),
     onNotice:text=>message(text,'warn')
@@ -753,6 +820,7 @@ function renderOffer(){
       '\nRevisión previa: '+[...result.errors,...result.warnings].slice(0,35).join(' | ');
     $('offerValidation').dataset.validated='false';
   }catch(error){$('offerValidation').textContent='Validación pendiente: '+error.message;}
+  refreshPhaseState();
 }
 async function saveOffer(){
   if(!pci)return;
@@ -760,7 +828,7 @@ async function saveOffer(){
     const payload=newOfferUnit({pci,workspace});
     const result=await saveUnit('oferta','map','mapa-oferta-v1','oferta-pci-orientacion-v1',payload,offerRevision);
     offerRevision=Number(result.revision);offerDirty=false;forgetDraft('oferta','mapa-oferta-v1');renderOffer();
-    message('Mapa FO guardado con revisión '+offerRevision+'. Los demás PCI no se modificaron.');
+    message('Fase 1 guardada con revisión '+offerRevision+'. El desarrollo del PCI se habilita solo al completar su composición.');
   }).catch(()=>{});
 }
 function renderFoSpaces(){

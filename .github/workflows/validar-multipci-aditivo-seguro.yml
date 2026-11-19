@@ -31,6 +31,8 @@ jobs:
                           $2 == "pci-orientaciones.html" ||
                           $2 == "pci-orientaciones.css" ||
                           $2 == "src/orientaciones-online.mjs" ||
+                          $2 == "src/ba15/constructor-ui.mjs" ||
+                          $2 == "src/tecnica/interfaz-integrada-v2.mjs" ||
                           $2 ~ /^tests\/multipci-portal-browser\.mjs$/ ||
                           $2 == ".github/workflows/validar-multipci-aditivo-seguro.yml") { next }
             { print "CAMBIO FUERA DEL MODULO NUEVO:", $0; bad=1 }
@@ -41,6 +43,10 @@ jobs:
       - name: Verificar sintaxis de los módulos nuevos
         run: |
           node --check src/orientaciones-online.mjs
+          node --check src/pci-flujo-fases.mjs
+          node --check src/pci-fase-desarrollo-fg.mjs
+          node --check tests/pci-fase-desarrollo-fg.test.mjs
+          node --check tests/pci-flujo-fases.test.mjs
           node --check src/constructor-v2-ui.mjs
           node --check src/integracion-curricular/constructor-mapa-unificado.mjs
           node --check tests/constructor-mapa-unificado.test.mjs
@@ -53,7 +59,7 @@ jobs:
           node --check tests/multipci-portal-browser.mjs
       - name: Probar currícula y guardado aislado por PCI
         run: |
-          node --test tests/constructor-mapa-unificado.test.mjs tests/ba15-reglas.test.mjs tests/ba15-constructor.test.mjs tests/turnos-modalidades.test.mjs tests/orientaciones-release.test.mjs tests/tecnica-integrada-v2.test.mjs tests/adaptador-media-final-20261117.test.mjs tests/integracion-catalogos.test.js
+          node --test tests/pci-fase-desarrollo-fg.test.mjs tests/pci-flujo-fases.test.mjs tests/constructor-mapa-unificado.test.mjs tests/ba15-reglas.test.mjs tests/ba15-constructor.test.mjs tests/turnos-modalidades.test.mjs tests/orientaciones-release.test.mjs tests/tecnica-integrada-v2.test.mjs tests/adaptador-media-final-20261117.test.mjs tests/integracion-catalogos.test.js
   navegador-multi-pci:
     runs-on: ubuntu-24.04
     needs: motor-curricular-y-resguardo

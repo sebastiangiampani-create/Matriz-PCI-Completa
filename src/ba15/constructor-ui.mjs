@@ -1,15 +1,17 @@
 import {BA15_NIVELES,BA15_CCC} from './reglas-curriculares.mjs';
 import {loadV2Fg} from '../integracion-curricular/catalogos.js';
+import {phaseGate,phaseText} from '../pci-flujo-fases.mjs';
 import {BA15_TERMS,crearBorradorBa15,crearEspacioBa15,asignarMateriaBa15,quitarMateriaBa15,actualizarEspacioBa15,eliminarEspacioBa15,validarBorradorBa15} from './constructor.mjs';
 const element=(tag,value,klass)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;if(klass)x.className=klass;return x;};
 const button=(label,callback,klass='btn')=>{const x=element('button',label,klass);x.type='button';x.addEventListener('click',callback);return x;};
 const field=(label,value,callback,textarea=false)=>{const l=element('label');l.append(element('span',label));const x=element(textarea?'textarea':'input');x.value=value||'';x.addEventListener('change',()=>callback(x.value));l.append(x);return l;};
 const select=(label,options,change)=>{const l=element('label');l.append(element('span',label));const s=element('select');for(const [v,n] of options){const op=element('option',n);op.value=v;s.append(op)}s.addEventListener('change',()=>change(s.value));l.append(s);return {wrap:l,select:s};};
 const download=(draft)=>{const blob=new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='PCI-BA15-'+draft.schoolId+'-'+draft.pciId+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyDemo=false,saveRemote=null,canEditRemote=false}={}){
+export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyDemo=false,saveRemote=null,canEditRemote=false,savedRevision=0}={}){
  const key=['pci-ba15-borrador-local-v1',identity.schoolId,identity.pciId].join(':');
  let draft=initialDraft?structuredClone(initialDraft):crearBorradorBa15(identity),term=1,selected=null,planIndex=0,view='mapa';
  let nesContents=[],nesLoading=true,nesError='',dirty=false,remoteBusy=false,recoveryDraft=null;
+ let remoteRevision=Number(savedRevision)||0,developmentUnlocked=false;
  const matchesIdentity=saved=>saved?.schema===draft.schema&&
   Number(saved?.schoolId)===Number(draft.schoolId)&&saved?.pciId===draft.pciId&&
   saved?.orientationId===draft.orientationId&&saved?.shiftId===draft.shiftId;
@@ -35,19 +37,37 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   dirty?'Borrador local recuperado. Verificá y guardá online sin reemplazar otro PCI.':
   'Borrador BA +15 independiente. Exportá una copia JSON como resguardo.','muted');
  const save=()=>{if(readOnlyDemo){status.textContent='Demostración: cambios solo en memoria, sin conexión con datos institucionales.';return;}dirty=true;try{sessionStorage.setItem(key,JSON.stringify(draft));status.textContent='Cambios solo en esta pestaña. Usá «Guardar BA +15 online» para confirmarlos en el servidor.';}catch{status.textContent='No se pudo guardar localmente. Exportá el JSON antes de salir.';}};
- const persistRemote=async()=>{if(!saveRemote||!canEditRemote||!dirty||remoteBusy||readOnlyDemo)return;remoteBusy=true;status.textContent='Verificando revisión y guardando BA +15…';const payload=structuredClone(draft);try{await saveRemote(payload);const unchanged=JSON.stringify(payload)===JSON.stringify(draft);dirty=!unchanged;if(unchanged){try{sessionStorage.removeItem(key);}catch{}status.textContent='BA +15 guardado online: revisión confirmada por lectura posterior.';}else{status.textContent='Se guardó una revisión anterior. Hay cambios posteriores sin guardar: conservá el borrador y volvé a guardar.';}}catch(error){status.textContent='NO se guardó online: '+(error?.message||error)+'. Conservá el JSON de resguardo.';}finally{remoteBusy=false;render();}};
- function change(fn){try{draft=fn();save();render();}catch(e){status.textContent='No se modificó: '+e.message;}}
+ const persistRemote=async()=>{if(!saveRemote||!canEditRemote||!dirty||remoteBusy||readOnlyDemo)return;remoteBusy=true;status.textContent='Verificando revisión y guardando BA +15…';const payload=structuredClone(draft);try{const revision=await saveRemote(payload);remoteRevision=Number(revision)||remoteRevision;const unchanged=JSON.stringify(payload)===JSON.stringify(draft);dirty=!unchanged;if(unchanged){try{sessionStorage.removeItem(key);}catch{}status.textContent='BA +15 guardado online: revisión confirmada por lectura posterior.';}else{status.textContent='Se guardó una revisión anterior. Hay cambios posteriores sin guardar: conservá el borrador y volvé a guardar.';}}catch(error){status.textContent='NO se guardó online: '+(error?.message||error)+'. Conservá el JSON de resguardo.';}finally{remoteBusy=false;render();}};
+ function change(fn,phase='constructor'){
+  try{
+    draft=fn();
+    if(phase==='constructor'){developmentUnlocked=false;view='mapa';}
+    save();render();
+  }catch(e){status.textContent='No se modificó: '+e.message;}
+ }
+ function getPhaseStatus(){
+  const check=validarBorradorBa15(draft);
+  return phaseGate({revision:remoteRevision,dirty:dirty&&!developmentUnlocked,
+    issues:[...check.errores,...check.advertencias],label:'BA +15 C1–C8'});
+ }
  function render(){
   host.replaceChildren();
   const tools=element('div','','actions');
-  const validation=validarBorradorBa15(draft);
-  tools.append(button('Mapa C1–C8',()=>{view='mapa';render()},view==='mapa'?'btn primary':'btn'),
-               button('Desarrollo curricular',()=>{view='planes';render()},view==='planes'?'btn primary':'btn'),
-               button('Panel de control',()=>{view='control';render()},view==='control'?'btn primary':'btn'),
-               button('Exportar borrador JSON',()=>download(draft)));
+  const validation=validarBorradorBa15(draft),gate=getPhaseStatus();
+  const builder=button('1 · Constructor C1–C8',()=>{view='mapa';render()},view==='mapa'?'btn primary':'btn');
+  const develop=button('2 · Desarrollo curricular',()=>{
+    const check=getPhaseStatus();
+    if(!check.ready){status.textContent='Primero completá y guardá el mapa BA +15. '+check.detail;view='mapa';render();return;}
+    developmentUnlocked=true;view='planes';render();
+  },view==='planes'?'btn primary':'btn');
+  develop.disabled=!gate.ready;
+  develop.title=gate.ready?'Abrir planes heredados de este PCI':'Completá todas las materias de C1–C8 y guardá el mapa antes de desarrollar.';
+  tools.append(builder,develop,
+    button('Validación de Fase 1',()=>{view='control';render()},view==='control'?'btn primary':'btn'),
+    button('Exportar borrador JSON',()=>download(draft)));
   if(saveRemote&&canEditRemote&&!readOnlyDemo){const online=button(remoteBusy?'Guardando…':'Guardar BA +15 online',persistRemote,'btn primary');online.disabled=!dirty||remoteBusy;tools.append(online);}
   if(recoveryDraft&&!readOnlyDemo)tools.append(button('Descargar borrador anterior protegido',()=>download(recoveryDraft)));
-  host.append(tools,status);
+  host.append(tools,status,element('p',phaseText(gate),'pci-phase-state'+(gate.ready?' ready':'')));
   if(view==='planes'&&term<=2){host.append(element('p',nesLoading?'Cargando contenidos FG oficiales NES de 1.º y 2.º…':nesError?'No se pudo cargar la base NES: '+nesError:'Base NES 1.º + 2.º disponible para Nivel I: '+nesContents.length+' contenidos con año de origen identificado.','muted'));}
   if(view==='control'){
    const total=draft.niveles.reduce((n,l)=>n+l.espacios.length,0);
@@ -124,7 +144,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
      const update=(fn)=>change(()=>{
       const fresh=structuredClone(draft),target=fresh.niveles[levelNum-1].espacios.find(x=>x.id===e.id).planes[planIndex];
       fn(target);return fresh;
-     });
+     },'desarrollo');
      card.append(field('Nombre del plan',p.nombre,v=>update(t=>{t.nombre=v;})));
      card.append(field('Objetivos',p.objetivos,v=>update(t=>{t.objetivos=v;}),true));
      if(levelNum===1&&!nesLoading&&!nesError){
