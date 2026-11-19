@@ -1,3 +1,4 @@
+import {parsePciRoute,pciRouteHref} from '../src/pci-router.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -57,4 +58,17 @@ test('Suma contenidos de documentos nuevos y antiguos sin duplicar identificador
  plansBimestrales:[{contentIds:['4','4']}]});
  assert.deepEqual(info,['1','2','4','3']);
  assert.deepEqual(uniqueIds(['x','x',null,0]),['x','0']);
+});
+
+test('Historial Fase 1 y Fase 2 conserva escuela y PCI, incluso al volver a Inicio',()=>{
+ const pci='00000000-0000-4000-8000-000000000001';
+ const base='https://ejemplo.org/Matriz-PCI-Completa/pci-orientaciones.html?school=1001&from=panel-general';
+ const offer=pciRouteHref(base,{schoolId:1001,pciId:pci,view:'oferta'});
+ const develop=pciRouteHref(offer,{schoolId:1001,pciId:pci,view:'desarrollo'});
+ assert.deepEqual(parsePciRoute(develop),{schoolId:1001,pciId:pci,view:'desarrollo'});
+ assert.equal(parsePciRoute(offer).view,'oferta');
+ const school=pciRouteHref(develop,{schoolId:1001,pciId:null});
+ assert.deepEqual(parsePciRoute(school),{schoolId:1001,pciId:null,view:'oferta'});
+ assert.match(school,/from=panel-general/);
+ assert.ok(!school.includes('pci='));
 });
