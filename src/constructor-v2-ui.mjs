@@ -65,7 +65,7 @@ function ensureIdentity(pci){
   }
 }
 export function renderUnifiedConstructor({
-  pci,workspace,refs,canEdit,onCompositionChange,onFoAssign,
+  pci,workspace,refs,canEdit,onCompositionChange,onFoAssign,onFoMove,
   onOpenHistoricalArea,onOpenFoSpace,onError,onNotice
 }){
   if(!pci||pci.model!=='comun'||!workspace?.orientations?.[pci.orientation_id])return;
@@ -244,7 +244,10 @@ export function renderUnifiedConstructor({
             if(selectedId)assignToHistorical(item.model);
             else onOpenHistoricalArea(item.model.area);
           }
-          else if(item.source==='fo')assignToFo(item.model);
+          else if(item.source==='fo'){
+            if(selectedId)assignToFo(item.model);
+            else onNotice('Elegí una materia FO de la bolsa o arrastrá el formato a otro cuatrimestre del mismo nivel.');
+          }
           else assignToProposal(item.model);
         };
         b.setAttribute('role','button');b.tabIndex=0;
@@ -264,6 +267,15 @@ export function renderUnifiedConstructor({
           ?item.model.hasWork?'FG con contenidos o planes: conservada y protegida. Revisar equivalencias antes de cambiar materias.':
             'Podés asignar materias a una copia de esta plantilla FG. El original se conserva.'
           :'Seleccioná una materia de la bolsa o arrastrala aquí';
+        if(item.source==='fo'&&item.model.kind!=='proyecto'&&edit){
+          b.draggable=true;
+          b.title='Arrastrá este formato FO a otro cuatrimestre del mismo nivel.';
+          b.addEventListener('dragstart',event=>{
+            dragId='';
+            event.dataTransfer?.setData('application/x-pci-fo-format',item.model.id);
+            if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
+          });
+        }
         if(item.source==='legacy'&&!item.model.hasWork)
           droppable(b,event=>assignToHistorical(item.model,event));
         if(item.source==='propuesta'){
@@ -290,6 +302,32 @@ export function renderUnifiedConstructor({
         cell.append(b);
       }
       if(!cell.children.length){
+        const foRow=['Laboratorios FO','Talleres FO'].includes(rowName);
+        if(foRow&&quarterYear(term)>=3){
+          const zone=createAction('↔',()=>{
+            onNotice('Arrastrá aquí un formato FO del mismo nivel para reubicarlo.');
+          },'constructor-empty constructor-empty-drop');
+          zone.setAttribute('aria-label','Reubicar formato de '+rowName+' en C'+term);
+          if(edit){
+            zone.classList.add('drop-zone');
+            zone.addEventListener('dragover',event=>{
+              if(!event.dataTransfer?.types?.includes('application/x-pci-fo-format'))return;
+              event.preventDefault();zone.classList.add('drop-over');
+            });
+            zone.addEventListener('dragleave',()=>zone.classList.remove('drop-over'));
+            zone.addEventListener('drop',event=>{
+              event.preventDefault();zone.classList.remove('drop-over');
+              const id=event.dataTransfer?.getData('application/x-pci-fo-format');
+              const current=foSpaces.find(x=>x.id===id);
+              if(!current||contextRow(current)!==rowName||
+                Number(current.year)!==quarterYear(term)){
+                onError('Acción no permitida: el formato FO debe permanecer en su tipo y nivel.');return;
+              }
+              if(typeof onFoMove==='function')onFoMove(id,term);
+            });
+          }else zone.disabled=true;
+          cell.append(zone);row.append(cell);continue;
+        }
         const plus=createAction('+',()=>addOnEmpty(rowName,term,null),'constructor-empty constructor-empty-drop');
         plus.title='Seleccioná una materia de la bolsa y soltala aquí para construir el agrupamiento de este cuatrimestre.';
         plus.setAttribute('aria-label','Ubicar materia en '+rowName+' · C'+term);
@@ -312,7 +350,7 @@ export function renderUnifiedConstructor({
   );
   levelSelect.onchange=()=>{
     year=Number(levelSelect.value);if(year<3)type='FG';selectedId='';renderUnifiedConstructor({
-      pci,workspace,refs,canEdit,onCompositionChange,onFoAssign,
+      pci,workspace,refs,canEdit,onCompositionChange,onFoAssign,onFoMove,
       onOpenHistoricalArea,onOpenFoSpace,onError,onNotice
     });
   };
