@@ -105,6 +105,57 @@ try{
  await page.locator('#schoolPciCards').getByText('Comunicación').first().waitFor();
  await page.locator('.school-offer-card button[aria-label^="Abrir Mapa de la Oferta"]').click();
  await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
+ try{
+   await page.locator('#mapBody tr').first().waitFor({timeout:12000});
+ }catch(error){
+   console.log('MAPA DEBUG',JSON.stringify(await page.evaluate(()=>({
+     status:document.querySelector('#status')?.textContent,
+     message:document.querySelector('#message')?.textContent,
+     offerVisible:!document.querySelector('#offerPane')?.hidden,
+     bankExists:!!document.querySelector('#constructorSubjectBank'),
+     bankChildren:document.querySelector('#constructorSubjectBank')?.children.length,
+     mapRows:document.querySelector('#mapBody')?.children.length,
+     loadedScripts:[...document.scripts].map(x=>x.src),
+     errorText:document.body.textContent.slice(-1600)
+   }))));
+   console.log('PAGE ERRORS',JSON.stringify(pageConsole));
+   throw error;
+ }
+ assert.equal(await page.locator('#mapBody tr').count(),14,'El mapa V2 completo debe mostrar FG, FO e integración por formato');
+ assert.equal(await page.locator('#schoolAdminTools').count(),0,'El editor escolar no debe permitir altas institucionales');
+ await page.selectOption('#constructorLevel','3');
+ await page.selectOption('#constructorArea','Ciencias Sociales');
+ await page.selectOption('#constructorKind','laboratorio');
+ await page.selectOption('#constructorTerm','5');
+ await page.fill('#constructorName','Laboratorio FG Ciencias Sociales 3.º');
+ await page.locator('#constructorCreate').click();
+ assert.equal(await page.locator('#mapBody .constructor-group.propuesta').count(),2,'Los agrupamientos cuatrimestrales tienen espejo en C5 y C6');
+ await page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Historia'}).first().click();
+ await page.locator('#mapBody .constructor-group.propuesta').first().click();
+ await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Historia').waitFor();
+ await page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Geografía'}).first()
+   .dragTo(page.locator('#mapBody .constructor-group.propuesta').first());
+ await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Geografía').waitFor();
+ await page.selectOption('#constructorBankType','FO');
+ await page.locator('#constructorSubjectBank .constructor-bank-subject').first().waitFor({timeout:15000});
+ await page.locator('#constructorSubjectBank .constructor-bank-subject').first()
+  .dragTo(page.locator('#mapBody .constructor-group.orientada').first());
+ await page.locator('#mapBody .constructor-group.orientada').filter({hasText:'1 materias FO'}).first().waitFor({timeout:15000});
+ await page.locator('#saveOffer').click();
+ await page.waitForFunction(()=>document.getElementById('offerValidation')?.textContent?.includes('Revisión 1'),null,{timeout:12000});
+ const mediaKey=[initialPcis[0].pci_id,'oferta','map','mapa-oferta-v1'].join(':');
+ const mediaSaved=state.units.get(mediaKey);
+ assert.equal(mediaSaved?.revision,1,'El constructor Media debe guardar en el PCI de su orientación');
+ assert.equal(mediaSaved.document.fo.composicionFgV2.groups.length,2,'Los dos espacios cuatrimestrales deben persistirse');
+ assert.deepEqual(state.pcis[0].legacy_state,initialPcis[0].legacy_state,'FG histórica no debe sobrescribirse');
+ assert.equal(mediaSaved.document.fo.composicionFgV2.groups[0].members.length,2,'La copia guarda Historia y Geografía');
+ assert.ok(mediaSaved.document.fo.spaces.some(s=>(s.members||[]).length>0),'Materia oficial FO asignada a espacio de orientación sin reemplazar FG');
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#app:not([hidden])').waitFor({timeout:25000});
+ await page.locator('.school-offer-card button[aria-label^="Abrir Mapa de la Oferta"]').click();
+ await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Geografía').waitFor({timeout:12000});
+ assert.equal(state.units.get(mediaKey)?.revision,1,'La reapertura no crea una revisión ni altera el historial');
+ await page.screenshot({path:'test-artifacts/multipci-portal/constructor-media-fg-fo-mapa.png',fullPage:false});
  assert.equal(state.pcis.length,1,'Abrir el mapa no crea ni sobrescribe PCI');
  await page.locator('#editor [data-back-to-school]').click();
  await page.locator('#empty:not([hidden])').waitFor();
@@ -123,7 +174,11 @@ try{
  await page.locator('#formCreatePci button[type=submit]').click();
  await page.locator('#ba15Pending:not([hidden])').waitFor({timeout:20000});
  await page.locator('#ba15Builder').getByRole('button',{name:'Mapa C1–C8'}).waitFor();
- const mapHeader=await page.locator('#ba15Builder .mapTable thead th').first().evaluate(e=>getComputedStyle(e).backgroundColor);
+ await page.waitForFunction(()=>{
+   const e=document.querySelector('#ba15Builder .mapTable thead th');
+   return e&&getComputedStyle(e).backgroundColor==='rgb(18, 57, 92)';
+ },null,{timeout:12000});
+ const mapHeader=await page.evaluate(()=>getComputedStyle(document.querySelector('#ba15Builder .mapTable thead th')).backgroundColor);
  assert.equal(mapHeader,'rgb(18, 57, 92)','Encabezado de matriz debe usar azul oscuro como el original');
  await page.locator('#pciList').getByText('Comunicación · Turno mañana').waitFor();
  await page.locator('#pciList').getByText('Economía y Administración · Turno noche').waitFor();

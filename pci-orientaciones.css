@@ -773,3 +773,142 @@ h3 {letter-spacing:-.01em;}
   .login-required.panel.card{padding:18px 15px;gap:14px}
   .login-required .button.primary{width:100%}
 }
+
+
+/* Constructor curricular V2 en la orientación: misma identidad institucional */
+.constructor-v2-intro{
+  margin:16px 0 12px;padding:14px 17px;background:#edf3f8;
+  border:1px solid #d8e1e8;border-radius:15px;color:#12395c;
+  font-size:.83rem;line-height:1.48;
+}
+.constructor-v2-intro strong{display:block;font-size:.95rem;font-weight:900;margin-bottom:4px}
+.constructor-v2-intro p{margin:0;color:#4d687b}
+.constructor-shell{
+  display:grid;grid-template-columns:minmax(240px,290px) minmax(0,1fr);
+  gap:14px;margin-top:16px;align-items:start;
+}
+.constructor-side.content-bag.card{
+  min-width:0;position:sticky;top:90px;overflow:auto;
+  max-height:calc(100vh - 110px);
+  border:1px solid #d8e1e8;border-radius:17px;padding:15px;
+  background:#fff;box-shadow:0 9px 27px rgba(21,55,74,.07);
+}
+.constructor-board{min-width:0}
+.builder-head,.builder-map-heading{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+}
+.builder-head h4,.builder-map-heading h4{
+  margin:0 0 8px;font-size:1rem;font-weight:900;color:#12395c;
+}
+.builder-head .pill{padding:4px 9px;background:#e7f8f5;color:#126e65;
+  border-radius:999px;font-size:.67rem;font-weight:850;white-space:nowrap}
+.builder-map-heading p{font-size:.77rem;max-width:720px}
+.builder-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.builder-filters .builder-search{grid-column:1/-1}
+.builder-filters label,.constructor-add-card label{
+  color:#2b5771;font-size:.73rem;font-weight:900;
+}
+.builder-filters select,.builder-filters input,
+.constructor-add-card input,.constructor-add-card select{
+  width:100%;min-height:37px;padding:8px 9px;margin:4px 0 0;
+  border:1px solid #d8e1e8;border-radius:10px;background:#fff;
+}
+.constructor-subject-list{
+  display:grid;gap:6px;max-height:340px;overflow:auto;
+  margin:12px 0;padding:3px;scrollbar-width:thin;
+}
+.constructor-bank-subject{
+  min-height:43px;padding:9px 11px;width:100%;border:1px solid #d8e1e8;
+  border-radius:10px;background:#fff;color:#12395c;text-align:left;
+  font:inherit;font-size:.77rem;font-weight:850;line-height:1.24;cursor:grab;
+}
+.constructor-bank-subject small{display:block;margin-top:5px;font-size:.65rem;font-weight:650}
+.constructor-bank-subject.active{
+  background:#e7f8f5;border:2px solid #126e65;padding:8px 10px;
+}
+.constructor-bank-subject:disabled{opacity:.78;cursor:default}
+.constructor-add-card{padding:14px;border:1px solid #d8e1e8;border-radius:13px;background:#f7fafb}
+.constructor-add-card h4{margin:0 0 12px;font-size:.92rem;color:#12395c}
+.constructor-add-card>label{display:block;margin:9px 0}
+.constructor-add-card .constructor-pair{
+  display:flex;align-items:flex-start;gap:6px;line-height:1.3;
+}
+.constructor-add-card .constructor-pair input{
+  width:15px;height:15px;margin:0;min-height:0;
+}
+.constructor-add-card #constructorCreate{width:100%;white-space:normal}
+.constructor-add-card p{font-size:.69rem;margin:10px 0 0;line-height:1.42}
+.builder-selected-subject{
+  max-width:300px;padding:7px 11px;border-radius:999px;background:#e7f8f5;
+  color:#126e65;font-size:.69rem;font-weight:800;line-height:1.35;
+}
+.layout .constructor-matrix{min-width:1550px}
+.layout .constructor-matrix thead th{min-width:130px;padding:11px 9px}
+.layout .constructor-matrix thead th:first-child{min-width:185px}
+.layout .constructor-matrix tbody th{
+  min-width:185px;max-width:220px;white-space:normal;font-size:.75rem;
+}
+.layout .constructor-matrix td{min-width:130px;padding:5px;vertical-align:top}
+.layout .constructor-matrix .constructor-cell{
+  background:repeating-linear-gradient(-45deg,#fff,#fff 8px,#f8fafc 8px,#f8fafc 16px);
+}
+.constructor-group{
+  display:block;position:relative;
+  margin:3px 0;width:100%;padding:9px 8px;
+  border-radius:11px;border:1px solid #9bd2c9;
+  text-align:left;color:#12395c;background:#e7f8f5;
+  font:inherit;font-size:.69rem;font-weight:850;line-height:1.27;
+  overflow-wrap:anywhere;cursor:pointer;
+}
+.constructor-group small{
+  display:block;font-size:.62rem;line-height:1.32;
+  color:#426578;margin-top:4px;font-weight:600;
+}
+.constructor-group.historia{background:#edf3f8;border-color:#c8d7e3}
+.constructor-group.propuesta{background:#e7f8f5;border-color:#6eb7a8}
+.constructor-group.orientada{background:#e5effc;border-color:#a0bfe3}
+.constructor-group.drop-over{
+  outline:3px solid #126e65;outline-offset:1px;background:#c9f3e9;
+}
+.constructor-group.drop-zone:hover{border-color:#126e65}
+.constructor-members{
+  display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;
+}
+.constructor-member{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 5px;
+  border-radius:6px;background:#fff;color:#163d5e;
+  font-size:.61rem;font-weight:800;line-height:1.2;
+}
+.constructor-remove{
+  display:inline-block;min-height:0;padding:0 3px;border:0;background:#fce7ea;
+  color:#9c2445;border-radius:5px;cursor:pointer;font-size:.72rem;
+}
+.constructor-remove-group{
+  display:inline-flex;min-height:0;margin-top:6px;padding:3px 6px;
+  color:#8c3453;background:#fff2f4;border:1px solid #e8b8c5;
+  border-radius:6px;cursor:pointer;font-size:.61rem;
+}
+.constructor-empty{display:block;color:#beced6;text-align:center;font-weight:700}
+.builder-fo-details{
+  margin:10px 0 14px;border:1px solid #d8e1e8;border-radius:12px;padding:11px 14px;
+}
+.builder-fo-details>summary{font-size:.81rem;font-weight:850;cursor:pointer;color:#12395c}
+.builder-fo-details .offerGrid{padding:14px 0 0}
+@media(max-width:1100px){
+  .constructor-shell{grid-template-columns:minmax(210px,245px) minmax(0,1fr)}
+}
+@media(max-width:780px){
+  .constructor-shell{grid-template-columns:1fr}
+  .constructor-side.content-bag.card{position:static;max-height:none}
+  .constructor-subject-list{max-height:230px}
+  .builder-map-heading{flex-direction:column}
+}
+
+/* Legibilidad de encabezados y navegación de agrupamientos */
+.layout .constructor-matrix thead th small{
+  display:block;color:#dcecf5;font-size:.64rem;font-weight:700;
+  line-height:1.25;margin-top:4px;white-space:normal;
+}
+.constructor-group-title{display:block;font-weight:900}
+.constructor-group:focus-visible{outline:3px solid #126e65;outline-offset:1px}
+.constructor-group:not(.historia){cursor:copy}
