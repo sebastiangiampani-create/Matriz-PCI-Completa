@@ -1120,3 +1120,23 @@ h3 {letter-spacing:-.01em;}
  .layout .pci-development-filters label{width:100%;justify-content:space-between}
  .layout .pci-development-filters select{flex:1;max-width:230px}
 }
+
+/* PCI V2: selector de contenidos, cobertura del espacio y del plan. */
+.layout .pci-v2-coverage{border:1px solid #d2e9e4;background:#f1f8f6;border-radius:12px;padding:12px;margin:10px 0}
+.layout .pci-v2-coverage>strong{color:#126e65;font-size:.82rem}
+.layout .pci-v2-coverage>p{font-size:.82rem;margin:5px 0 7px;color:var(--ink);font-weight:800}
+.layout .pci-v2-coverage>small{display:block;color:#126e65;font-size:.75rem;margin:5px 0}
+.layout .pci-v2-subject-row{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #d2e9e4;padding:6px 0;font-size:.73rem}
+.layout .pci-v2-subject-row strong{white-space:nowrap;color:#126e65}
+.layout .pci-v2-content-picker{border:1px solid var(--line);border-radius:13px;margin:12px 0;overflow:hidden;background:#fff}
+.layout .pci-v2-content-picker>summary{padding:12px 14px;cursor:pointer;background:#f2f7f8;color:var(--ink);font-size:.82rem;font-weight:850}
+.layout .pci-v2-content-body{padding:13px;display:grid;gap:8px}
+.layout .pci-v2-content-body>input{width:100%;box-sizing:border-box;min-height:41px;padding:9px 11px;border:1px solid var(--line);border-radius:10px}
+.layout .pci-v2-content-selected,.layout .pci-v2-content-option{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px;display:flex;gap:9px;align-items:flex-start;justify-content:space-between;font-size:.74rem}
+.layout .pci-v2-content-selected span,.layout .pci-v2-content-option span{line-height:1.45;overflow-wrap:anywhere}
+.layout .pci-v2-content-option{display:grid;grid-template-columns:1fr auto}
+.layout .pci-v2-content-option small{grid-column:1/-1;color:#126e65;font-size:.67rem;font-weight:800}
+.layout .pci-v2-content-option button{font-size:.7rem;align-self:center}
+.layout .pci-v2-content-results{display:grid;gap:7px}
+.layout .pci-v2-content-selected button{font-size:.68rem;white-space:nowrap}
+@media(max-width:650px){.layout .pci-v2-content-option{grid-template-columns:1fr}.layout .pci-v2-subject-row{flex-wrap:wrap}}
