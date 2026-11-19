@@ -29,6 +29,15 @@
       <span id="status" role="status" aria-live="polite" class="status">Comprobando conexión…</span>
     </section>
     <div id="fatal" class="warning" hidden></div>
+    <section id="authRequired" class="panel card login-required" hidden aria-labelledby="loginRequiredTitle">
+      <div>
+        <span class="eyebrow">Acceso institucional</span>
+        <h2 id="loginRequiredTitle">Ingresá para continuar con los PCI de tu escuela</h2>
+        <p id="authHelp" class="muted">Usá el mismo acceso que ya tenés en la plataforma. No es necesario registrar nuevamente tu escuela.</p>
+        <p class="muted">Para abrir la organización curricular desde un enlace externo, iniciá sesión en esta misma pestaña.</p>
+      </div>
+      <a id="authLoginLink" class="button primary" href="index.html?continuar=pci">Ingresar a Organización curricular</a>
+    </section>
     <div class="layout" id="app" hidden>
       <aside class="content-bag card sidebar" aria-label="Selección curricular de la escuela">
         <div class="school-toolbar">
@@ -170,6 +179,6 @@
     <img class="logo-blanco" src="assets/em-logo-footer.svg?v=20260902" alt="Escuela de Maestros">
     <img class="ministerio" src="assets/ministerio-footer.svg?v=20260902" alt="Ministerio de Educación · Buenos Aires Ciudad">
   </footer>
-  <script type="module" src="src/orientaciones-online.mjs?v=20261119-simple-1"></script>
+  <script type="module" src="src/orientaciones-online.mjs?v=20261119-login-1"></script>
 </body>
 </html>
