@@ -477,10 +477,10 @@ async function openPci(id,requestedTab='oferta'){
       $('app').classList.remove('school-home');
       renderPcis();
       if(requestedTab==='fo'){
-        const go=[...$('ba15Builder').querySelectorAll('button')].find(b=>b.textContent.trim()==='Desarrollo curricular');
-        go?.click();
-      }
-      status('BA +15: constructor C1–C8 habilitado como borrador por PCI; homologación final pendiente');
+        const go=[...$('ba15Builder').querySelectorAll('button')].find(b=>b.textContent.trim()==='2 · Desarrollo curricular');
+        if(go&&!go.disabled)go.click();
+        else status('Primero completá y guardá el Constructor curricular BA +15 de este PCI.');
+      }else status('BA +15: Fase 1 Constructor C1–C8; Fase 2 después del mapa completo y guardado');
       return;
     }
     if(result.pci?.model==='tecnica'){
@@ -546,8 +546,11 @@ async function openPci(id,requestedTab='oferta'){
     $('editor').classList.remove('technical-editor');
     $('app').classList.remove('school-home');
     renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true);renderAreas();
-    message('PCI cargado. El guardado es siempre explícito y nunca reemplaza la matriz histórica.');
-    status('Listo para editar');
+    const gate=refreshPhaseState();
+    if(requestedTab!=='oferta'&&!gate.ready)
+      message('Primero completá la Fase 1 del PCI antes de entrar al Desarrollo Curricular. '+gate.detail,'warn');
+    else message('Constructor de este PCI abierto. Guardá y validá el mapa antes de desarrollar; la FG histórica no se reemplaza.');
+    status('PCI · Fase 1 Constructor curricular');
   }catch(error){status('No se abrió el PCI','error');message(error.message,'error');}
 }
 async function getUnit(forPci,component,unitKind,unitId,baseVersion){
