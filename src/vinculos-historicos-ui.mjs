@@ -123,7 +123,7 @@ export function createHistoricAssignmentUI({call,canManage,notify=()=>{},onChang
    const recipients=new Set();
    for(const p of pcis){
     const label=el('label',null,'legacy-target-chip');
-    const check=el('input');check.type='checkbox';check.value=p.pci_id;
+    const check=el('input');check.type='checkbox';check.value=p.pci_id;check.setAttribute('value',p.pci_id);
     check.onchange=()=>{if(check.checked)recipients.add(p.pci_id);else recipients.delete(p.pci_id);};
     label.append(check,document.createTextNode(labelModel(p)));audience.append(label);
    }
@@ -199,7 +199,7 @@ export function createHistoricAssignmentUI({call,canManage,notify=()=>{},onChang
     current.kind==='orientada'&&p.model===first.model&&p.orientation_id===first.orientation_id||
     current.kind==='tecnica'&&p.orientation_id===first.orientation_id;
    const label=el('label',null,'legacy-target-chip');
-   const cb=el('input');cb.type='checkbox';cb.checked=current.mode==='all'||selectedIds.includes(p.pci_id);
+   const cb=el('input');cb.type='checkbox';cb.value=p.pci_id;cb.setAttribute('value',p.pci_id);cb.checked=current.mode==='all'||selectedIds.includes(p.pci_id);
    cb.disabled=current.mode==='all'||!sameOption;
    cb.onchange=()=>{
     const ids=new Set(selectedIds);
