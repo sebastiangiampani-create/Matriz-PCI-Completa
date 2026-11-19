@@ -162,6 +162,54 @@ try{
  assert.equal(state.units.get(unitKey)?.revision,1,'La navegación no modifica el guardado online');
  assert.equal(pageConsole.length,0,'La nueva navegación no debe generar errores JavaScript: '+pageConsole.join(' | '));
  console.log('E2E OK: escuela Media+BA15, mapa y desarrollo desde tarjetas, retorno, filtros, guardado rev1 por PCI y sin errores JS.');
+
+ // Caso real: abrir el enlace del portal en una pestaña SIN sessionStorage
+ // y regresar automáticamente a Organización curricular después del login existente.
+ const authPage=await browser.newPage({viewport:{width:1366,height:850}});
+ const authErrors=[];
+ authPage.on('pageerror',e=>authErrors.push(e.message));
+ await authPage.route('https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-access',async route=>{
+   const body=JSON.parse(route.request().postData()||'{}');
+   let value={},status=200;
+   if(body.action==='public-catalog')
+     value={schools:[{school_id:1001,name:'Escuela N.º 99 · Prueba automatizada',cue:'DEMO-001',model:'comun'}]};
+   else if(body.action==='school-login')
+     value={role:'editor',school_id:1001,identity:{first_name:'Equipo',last_name:'Prueba',email:'prueba@escuela.example'},token:'e2e-fake-session'};
+   else if(body.action==='admin-login')
+     value={role:'admin',user:'admin',token:'e2e-fake-session',permissions:['pci.view','pci.edit'],all_schools:true};
+   else {status=404;value={error:'Acción fuera del escenario de acceso: '+body.action}}
+   await route.fulfill({status,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(value)});
+ });
+ await authPage.route('https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-multipci',async route=>{
+   const body=JSON.parse(route.request().postData()||'{}'),action=body.action;
+   let value={},status=200;
+   if(action==='session-info')value={role:'editor',school_id:1001,permissions:['pci.view','pci.edit'],identity:{first_name:'Equipo',last_name:'Prueba'}};
+   else if(action==='list-school-pcis')value={pcis:initialPcis};
+   else if(action==='get-school-pci')value={pci:initialPcis[0]};
+   else {status=404;value={error:'Acción fuera del escenario de acceso: '+action}}
+   await route.fulfill({status,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(value)});
+ });
+ await authPage.goto('http://127.0.0.1:'+port+'/pci-orientaciones.html',{waitUntil:'domcontentloaded'});
+ await authPage.locator('#authRequired:not([hidden])').waitFor();
+ assert.equal(await authPage.locator('#status').textContent(),'Ingresá para continuar');
+ await authPage.screenshot({path:'test-artifacts/multipci-portal/ingreso-sesion-requerida.png',fullPage:true});
+ await authPage.locator('#authLoginLink').click();
+ await authPage.waitForURL('**/index.html?continuar=pci');
+ await authPage.locator('#schoolSearch').fill('Escuela');
+ await authPage.locator('#schoolResults button').first().click();
+ await authPage.locator('#schoolCode').fill('PCI-1234');
+ await authPage.locator('#firstName').fill('Equipo');
+ await authPage.locator('#lastName').fill('Prueba');
+ await authPage.locator('#email').fill('prueba@escuela.example');
+ await authPage.locator('#schoolSubmit').click();
+ await authPage.waitForURL('**/pci-orientaciones.html?school=1001');
+ await authPage.locator('#app:not([hidden])').waitFor({timeout:25000});
+ assert.equal(await authPage.locator('.school-offer-card').count(),1,'Login debe regresar a la escuela sin borrar los PCI');
+ assert.equal(await authPage.evaluate(()=>JSON.parse(sessionStorage.getItem('pci_access_session')||'{}').role),'editor');
+ await authPage.screenshot({path:'test-artifacts/multipci-portal/ingreso-escuela-recuperado.png',fullPage:true});
+ assert.deepEqual(authErrors,[],'El flujo de autenticación no debe generar errores JS');
+ console.log('E2E LOGIN OK: acceso sin sesión → login institucional → vuelta automática a la misma escuela y sus PCI.');
+
 } finally {
  await browser.close();
  await new Promise(resolveClose=>server.close(resolveClose));
