@@ -33,5 +33,5 @@ jobs:
             throw Error('La ruta no está disponible: '+last);
           };
           await check('index.html','Ingresar a una escuela');
-          await check('pci-orientaciones.html','Proyectos curriculares por orientación y especialidad');
+          await check('pci-orientaciones.html','Organización curricular de la escuela');
           NODE
