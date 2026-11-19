@@ -30,3 +30,14 @@ test('detecta carga faltante y exige documentar talleres articulados',()=>{
  assert.match(result.errores.join(' '),/37 de 38/);
  assert.ok(result.advertencias.some(x=>x.includes('articulación')));
 });
+
+test('un PCI BA +15 no queda aprobado si no documenta las articulaciones exigidas',()=>{
+ const result=validarBa15({exigirArticulaciones:true});
+ assert.equal(result.valido,false);
+ assert.ok(result.errores.some(e=>e.includes('articulación')));
+ const articulaciones={};
+ for(let i=0;i<BA15_NIVELES.length;i++)
+  for(const e of BA15_NIVELES[i].filter(e=>e.formato==='taller'))
+   articulaciones[(i+1)+':'+e.nombre]='Articulado con Matemática';
+ assert.equal(validarBa15({exigirArticulaciones:true,articulaciones}).valido,true);
+});
