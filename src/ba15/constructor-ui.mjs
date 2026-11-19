@@ -1,7 +1,8 @@
 import {BA15_NIVELES,BA15_CCC} from './reglas-curriculares.mjs';
 import {loadV2Fg} from '../integracion-curricular/catalogos.js';
 import {phaseGate,phaseText} from '../pci-flujo-fases.mjs';
-import {updateBa15Plan,readStageDescription} from './desarrollo-plan-seguro.mjs';
+import {updateBa15Plan,readStageField} from './desarrollo-plan-seguro.mjs';
+import {developmentCounts,spaceContentIds,planContentIds} from '../pci-desarrollo-cobertura-v2.mjs';
 import {BA15_TERMS,crearBorradorBa15,crearEspacioBa15,asignarMateriaBa15,quitarMateriaBa15,actualizarEspacioBa15,eliminarEspacioBa15,validarBorradorBa15} from './constructor.mjs';
 const element=(tag,value,klass)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;if(klass)x.className=klass;return x;};
 const button=(label,callback,klass='btn')=>{const x=element('button',label,klass);x.type='button';x.addEventListener('click',callback);return x;};
@@ -52,7 +53,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
  function assignToSpace(subjectId,targetLevel,spaceId){
   if(!mayCompose()){status.textContent='Este PCI está en modo lectura. No se modificó el mapa.';return;}
   if(!subjectId)return;
-  const sourceLevel=Number(String(subjectId).match(/^n(\\d+)s/)?.[1]);
+  const sourceLevel=Number(String(subjectId).match(/^n(\d+)s/)?.[1]);
   if(sourceLevel!==targetLevel){status.textContent='Cada materia se ubica solo en los cuatrimestres de su nivel BA +15.';return;}
   if(draft.niveles[targetLevel-1]?.espacios.find(x=>x.id===spaceId)?.miembros.includes(subjectId))return;
   change(()=>asignarMateriaBa15(draft,{nivel:targetLevel,espacioId:spaceId,materiaId:subjectId}));
@@ -60,7 +61,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
  }
  function newSpaceWithSubject(subjectId,targetTerm,format){
   if(!mayCompose()){status.textContent='Este PCI está en modo lectura. No se modificó el mapa.';return;}
-  const targetLevel=levelForTerm(targetTerm),sourceLevel=Number(String(subjectId).match(/^n(\\d+)s/)?.[1]);
+  const targetLevel=levelForTerm(targetTerm),sourceLevel=Number(String(subjectId).match(/^n(\d+)s/)?.[1]);
   if(!subjectId||sourceLevel!==targetLevel){
    status.textContent='La materia debe permanecer en el nivel que le corresponde.';return;
   }
@@ -112,6 +113,39 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   if(!validation.ready&&structureDirty){
    panel.append(element('p','Completá y guardá primero la Fase 1 de este PCI.','warning'));return;
   }
+  const allSpaces=draft.niveles.flatMap((level,i)=>
+   (level.espacios||[]).map(space=>({...space,nivel:i+1})));
+  const aggregate=developmentCounts(allSpaces);
+  const stats=element('div','','pci-development-stats');
+  for(const [amount,label] of [[aggregate.spaces,'Espacios del PCI'],
+    [aggregate.plans,'Planes asociados'],
+    [aggregate.uniqueContents,'Contenidos únicos seleccionados']]){
+   const stat=element('div','','pci-development-stat');
+   stat.append(element('strong',String(amount)),element('small',label));stats.append(stat);
+  }
+  panel.append(stats);
+  const heading=element('div','','builder-map-heading');
+  heading.append(element('h3','Espacios construidos en la Fase 1'));
+  panel.append(heading);
+  const cards=element('div','','pci-development-cards');
+  for(const space of allSpaces.sort((a,b)=>a.nivel-b.nivel||a.term-b.term)){
+   const ids=spaceContentIds(space);
+   const card=button(space.nombre,()=>{
+    term=space.term;selected=space.id;planIndex=0;render();
+    developmentHost.querySelector('.ba15-plan-editor')?.scrollIntoView({behavior:'smooth',block:'start'});
+   },'pci-development-card'+(selected===space.id?' active':''));
+   const formation=space.formato==='orientado'?'FO':space.formato==='otro'?'Otros formatos':'FG';
+   card.replaceChildren();
+   card.append(element('small',formation+' · Nivel '+['I','II','III','IV'][space.nivel-1]+' · C'+space.term));
+   card.append(element('strong',space.nombre));
+   card.append(element('span',space.formato+' · '+space.miembros.length+' materias'));
+   const metrics=element('span',ids.length+' contenidos seleccionados · '+(space.planes||[]).length+' planes','pci-development-card-count');
+   card.append(metrics);
+   cards.append(card);
+  }
+  if(!allSpaces.length)cards.append(element('p','Este PCI todavía no tiene agrupamientos curriculares. Volvé al constructor.','muted'));
+  panel.append(cards);
+  panel.append(element('p','Los contenidos duplicados entre planes se cuentan una sola vez. En BA +15 no se calcula un porcentaje anual sin una base prescripta homologada para ese nivel.','muted'));
   const nav=element('div','','demoTermNav');
   for(const t of BA15_TERMS){
    nav.append(button('C'+t.numero+' · Nivel '+['I','II','III','IV'][t.nivel-1],()=>{
@@ -153,6 +187,8 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    editor.append(field('Nombre del plan',p.nombre,v=>update({nombre:v})));
    editor.append(field('Sinopsis / descripción del plan',p.sinopsis||'',v=>update({sinopsis:v}),true));
    editor.append(field('Objetivos de aprendizaje',p.objetivos||'',v=>update({objetivos:v}),true));
+   const planCounts=planContentIds(p).length;
+   editor.append(element('p',planCounts+' contenidos vinculados en este plan · '+spaceContentIds(space).length+' contenidos únicos en el agrupamiento.','pci-development-plan-count'));
    const contentBox=element('section','','formCard');
    contentBox.append(element('h4','Contenidos curriculares'));
    const chosen=Array.isArray(p.contenidos)?p.contenidos:[];
@@ -183,7 +219,18 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    editor.append(contentBox);
    editor.append(element('h4','Secuencia didáctica · cuatro momentos'));
    for(const [key,label] of [['punto_partida','Punto de partida'],['indagacion','Indagación'],['produccion','Producción'],['evaluacion','Evaluación']]){
-    editor.append(field(label,readStageDescription(p,key),v=>update({[key]:v}),true));
+    const section=element('details','','pci-development-stage');
+    if(key==='punto_partida')section.open=true;
+    section.append(element('summary',label));
+    for(const [fieldKey,fieldLabel] of [
+      ['description','Descripción de la etapa'],['duration','Duración'],
+      ['activities','Actividades'],['resources','Recursos'],
+      ['evidence','Evidencias de aprendizaje']
+    ]){
+     section.append(field(fieldLabel,readStageField(p,key,fieldKey),v=>
+      update({stagePatch:{stage:key,field:fieldKey,value:v}}),fieldKey!=='duration'));
+    }
+    editor.append(section);
    }
   }
   layout.append(side,editor);panel.append(layout);
@@ -192,6 +239,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
     online.disabled=!dirty||remoteBusy;panel.append(online);
   }
   panel.append(status,element('p',phaseText(validation),'pci-phase-state'));
+  if(!mayCompose())panel.querySelectorAll('input,textarea').forEach(x=>x.disabled=true);
  }
  function getPhaseStatus(){
   const check=validarBorradorBa15(draft);
