@@ -46,10 +46,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Instalar Chromium para navegador de prueba
+      - name: Preparar navegador de prueba
         run: |
           npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install chromium
+          fi
       - name: Simular escuela con Media y agregar BA +15 sin sobrescribir
         run: |
           mkdir -p test-artifacts/multipci-portal
