@@ -1004,3 +1004,21 @@ h3 {letter-spacing:-.01em;}
  .legacy-group-head{align-items:flex-start}
  .historic-assign-toolbar{align-items:flex-start;flex-direction:column}
 }
+
+/* Rescate constructor V2: el destino vacío es realmente arrastrable y navegable. */
+.layout .constructor-empty-drop{
+  box-sizing:border-box;width:100%;min-height:52px;padding:8px;
+  border:1px dashed #bbd0d7;border-radius:9px;
+  color:#567687;background:#f7fbfc;font:inherit;
+  font-size:1rem;font-weight:850;cursor:copy;
+}
+.layout .constructor-empty-drop:hover,
+.layout .constructor-empty-drop.drop-over{
+  background:#d6f2e9;border-color:#126e65;color:#126e65;outline:2px solid #126e65;
+}
+.layout .constructor-empty-drop:focus-visible{
+  outline:3px solid #126e65;outline-offset:2px;
+}
+.layout .constructor-empty-drop:disabled{
+  cursor:default;opacity:.55;background:#f7fafb;
+}
