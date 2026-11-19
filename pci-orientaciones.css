@@ -55,3 +55,19 @@ footer{text-align:center;color:#68818e;font-size:.78rem;padding:15px}
 .pciShiftHeading{margin:0;padding:7px 3px 3px;color:#12395c;font-size:.91rem;font-weight:850}
 .pciShiftSection .pciModelHeading{margin:5px 0 1px;padding:5px 2px;font-size:.75rem;color:#156174}
 .pciShiftSection .pciItem{min-width:0;overflow-wrap:anywhere}
+
+/* Constructor BA +15: mismo sistema de color, tarjetas, botones y navegación V2. */
+#ba15Builder,.ba15DemoEditor{margin-top:15px}
+.demoTermNav{display:flex;flex-wrap:wrap;gap:6px;padding:12px 0;border-bottom:1px solid #dbe6eb}
+.ba15BuilderGrid{display:grid;grid-template-columns:minmax(235px,.9fr) minmax(0,1.5fr);gap:13px;align-items:start;margin-top:12px}
+.ba15BuilderGrid .workCard{min-width:0}
+.ba15Subject{display:flex;flex-wrap:wrap;justify-content:space-between;gap:5px 10px;align-items:center;border-bottom:1px solid #e1e9ed;padding:9px 0}
+.ba15Subject strong{font-size:.8rem;max-width:100%;overflow-wrap:anywhere}
+.ba15Subject small{font-size:.7rem;color:#657a87}
+.ba15Subject button{padding:6px 9px;font-size:.74rem}
+.ba15Space{border:1px solid #d5e2e8;border-radius:11px;padding:10px;margin-top:9px;background:#fff}
+.ba15Space>.pciItem{font-weight:700}
+.ba15Members{display:grid;gap:5px;margin:9px 0}
+.ba15Member{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.8rem;border-radius:8px;background:#eef6f8;padding:7px}
+.ba15Member .btn{padding:5px 8px}
+@media(max-width:850px){.ba15BuilderGrid{grid-template-columns:1fr}}
