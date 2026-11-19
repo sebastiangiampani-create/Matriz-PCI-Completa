@@ -1181,6 +1181,45 @@ function renderV2ContentPicker(host,{title,rows=[],ids=[],onChange,canWrite=fals
  }else if(!rows.length)note('p','No hay catálogo oficial asociado a este ámbito. Se conservan las referencias existentes.',body,'muted');
  section.append(body);host.append(section);
 }
+
+function renderCustomV2Contents(host,plan,{area='',canWrite=false,onDirty,onRefresh}={}){
+ const section=elem('details',undefined,'pci-v2-content-picker');
+ const rows=Array.isArray(plan.customContents)?plan.customContents:[];
+ section.append(elem('summary','Contenidos institucionales propios · '+rows.length));
+ const body=elem('div',undefined,'pci-v2-content-body');
+ for(const item of rows){
+  const row=elem('div',undefined,'pci-v2-content-option');
+  note('small',(item.subject||'Materia')+' · '+(item.axis||'Eje institucional'),row);
+  note('span',item.text||'Contenido sin descripción',row);
+  if(canWrite){
+   const del=elem('button','Quitar','btn');del.type='button';
+   del.onclick=()=>{
+    if(!confirm('¿Quitar este contenido propio de este plan?'))return;
+    plan.customContents=rows.filter(x=>x.id!==item.id);
+    onDirty();onRefresh();
+   };
+   row.append(del);
+  }
+  body.append(row);
+ }
+ if(canWrite){
+  const form=elem('form',undefined,'pci-v2-own-form');
+  const subject=elem('input');subject.required=true;subject.maxLength=140;subject.placeholder='Materia / bloque';
+  const axis=elem('input');axis.maxLength=160;axis.placeholder='Eje / bloque';
+  const text=elem('textarea');text.required=true;text.maxLength=4000;text.placeholder='Contenido institucional';
+  const button=elem('button','Agregar contenido propio','btn primary');button.type='submit';
+  form.append(subject,axis,text,button);
+  form.onsubmit=event=>{
+   event.preventDefault();
+   if(!subject.value.trim()||!text.value.trim())return;
+   const entry={id:'custom:'+crypto.randomUUID(),component:'CUSTOM',
+    area,subject:subject.value.trim(),axis:axis.value.trim(),text:text.value.trim()};
+   plan.customContents=[...rows,entry];onDirty();onRefresh();
+  };
+  body.append(form);
+ }
+ section.append(body);host.append(section);
+}
 function writeV2StageField(plan,id,key,value){
  const current=plan.stages?.[id],old=typeof current==='object'&&current?
   {...current}:typeof current==='string'?{description:current,originalText:current}:{};
@@ -1243,6 +1282,7 @@ function renderFgEditor(){
         ids:plan.contentIds||[],canWrite,onChange:ids=>{
          plan.contentIds=ids;markDirty('fg');renderFgEditor();
         }});
+      renderCustomV2Contents(details,plan,{area:selectedFgArea,canWrite,onDirty:()=>markDirty('fg'),onRefresh:renderFgEditor});
       appendV2Stages(details,plan,()=>markDirty('fg'));
       card.appendChild(details);
     });
@@ -1447,6 +1487,7 @@ function renderFoEditor(){
       ids:plan.contentIds||[],canWrite,onChange:ids=>{
        plan.contentIds=ids;markDirty('fo');renderFoEditor();
       }});
+    renderCustomV2Contents(details,plan,{area:'Formación Orientada',canWrite,onDirty:()=>markDirty('fo'),onRefresh:renderFoEditor});
     appendV2Stages(details,plan,()=>markDirty('fo'));
     card.appendChild(details);
   }
