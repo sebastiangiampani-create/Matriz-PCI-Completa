@@ -164,28 +164,18 @@ try{
  await page.waitForTimeout(350);
  assert.equal(page.url(),beforeCancel,'Cancelar Atrás debe conservar el mismo PCI y fase');
  assert.equal(await page.locator('#mapBody .constructor-group.propuesta').count(),2,'El agrupamiento pendiente permanece');
- await page.evaluate(()=>{
-  window.__dragTrace=[];
-  for(const evt of ['dragstart','dragenter','dragover','drop','dragend']){
-   document.addEventListener(evt,e=>window.__dragTrace.push({
-    event:evt,target:e.target?.className||e.target?.tagName,
-    types:[...(e.dataTransfer?.types||[])],
-    text:e.dataTransfer?.getData('text/plain')||'',
-    prevented:e.defaultPrevented
-   }),true);
-  }
- });
- await page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Geografía'}).first()
-   .dragTo(page.locator('#mapBody .constructor-group.propuesta').first());
- console.log('DRAG DEBUG',JSON.stringify(await page.evaluate(()=>({
-   events:window.__dragTrace,
-   message:document.getElementById('message')?.textContent,
-   status:document.getElementById('status')?.textContent,
-   phase:document.getElementById('pciPhaseState')?.textContent,
-   groupTexts:[...document.querySelectorAll('#mapBody .constructor-group.propuesta')].slice(0,3).map(x=>x.textContent),
-   selected:document.getElementById('constructorSelectedSubject')?.textContent,
-   bank:[...document.querySelectorAll('#constructorSubjectBank .constructor-bank-subject')].filter(x=>/Historia|Geografía/.test(x.textContent)).map(x=>({text:x.textContent,draggable:x.draggable}))
- }))));
+ const geography=page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Geografía'}).first();
+ const target=page.locator('#mapBody .constructor-group.propuesta').first();
+ await geography.scrollIntoViewIfNeeded();
+ await target.scrollIntoViewIfNeeded();
+ const sourceBox=await geography.boundingBox(),targetBox=await target.boundingBox();
+ assert.ok(sourceBox&&targetBox,'La materia y el agrupamiento deben estar visibles para el arrastre.');
+ // Mover como un usuario real: no depender del dragTo sintético de Playwright.
+ await page.mouse.move(sourceBox.x+sourceBox.width/2,sourceBox.y+sourceBox.height/2);
+ await page.mouse.down();
+ await page.mouse.move(sourceBox.x+sourceBox.width/2+8,sourceBox.y+sourceBox.height/2+8,{steps:4});
+ await page.mouse.move(targetBox.x+targetBox.width/2,targetBox.y+targetBox.height/2,{steps:18});
+ await page.mouse.up();
  await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Geografía').waitFor();
  await page.selectOption('#constructorBankType','FO');
  await page.locator('#constructorSubjectBank .constructor-bank-subject').first().waitFor({timeout:15000});
