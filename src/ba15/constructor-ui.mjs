@@ -21,24 +21,17 @@ export function montarConstructorBa15(host,identity){
   const validation=validarBorradorBa15(draft);
   tools.append(button('Mapa C1–C8',()=>{view='mapa';render()},view==='mapa'?'btn primary':'btn'),
                button('Desarrollo curricular',()=>{view='planes';render()},view==='planes'?'btn primary':'btn'),
-               button('CCC',()=>{view='ccc';render()},view==='ccc'?'btn primary':'btn'),
                button('Panel de control',()=>{view='control';render()},view==='control'?'btn primary':'btn'),
                button('Exportar borrador JSON',()=>download(draft)));
   host.append(tools,status);
+  const clarification=element('p','El CCC es una instancia independiente de reconocimiento de saberes previos. No constituye Nivel V, no ocupa cuatrimestres C1–C8 y no suma cobertura del mapa.','muted');
+  host.append(clarification);
   if(view==='control'){
    const total=draft.niveles.reduce((n,l)=>n+l.espacios.length,0);
    const panel=element('div','','workCard');panel.append(element('h3','Control de construcción curricular'),element('p',total+' espacios creados · '+draft.niveles.length+' niveles · 8 cuatrimestres.'));
    const issues=[...validation.errores.map(x=>'ERROR: '+x),...validation.advertencias.map(x=>'REVISAR: '+x)];
    panel.append(element('p',validation.valido?'Cobertura y articulaciones documentadas en la propuesta de prueba.':'Pendientes de revisión: '+issues.length));
    const ul=element('ul');for(const m of issues){ul.append(element('li',m));}panel.append(ul);host.append(panel);return;
-  }
-  if(view==='ccc'){
-   const panel=element('div','','workCard');panel.append(element('h3','Ciclo de Complementación Curricular · 1.º NES'),element('p','No es un quinto nivel. Registrar dispositivo institucional para reconocer o acreditar saberes.'));
-   for(let i=0;i<draft.ccc.length;i++){
-    const a=draft.ccc[i];
-    panel.append(field(a.nombre,a.dispositivo,value=>change(()=>{const next=structuredClone(draft);next.ccc[i].dispositivo=value;return next;}),true));
-   }
-   host.append(panel);return;
   }
   if(view==='mapa'){
    const matrix=element('div','','mapScroll'),tbl=element('table','','mapTable');
