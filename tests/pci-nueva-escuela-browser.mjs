@@ -73,6 +73,7 @@ try{
  const editor=await browser.newPage({viewport:{width:1366,height:900}});
  await routes(editor);
  await editor.goto(origin+'/index.html',{waitUntil:'domcontentloaded'});
+ await editor.locator('#schoolSearch').fill('Prueba');
  await editor.locator('#schoolResults').getByText('Prueba',{exact:true}).first().waitFor({timeout:15000});
  await editor.locator('#schoolResults button').first().click();
  await editor.locator('#schoolCode').fill('PCI-TEST');
