@@ -62,6 +62,11 @@ function showAuthRequired(reason='Ingresá con las credenciales habituales de la
   status('Ingresá para continuar');
 }
 function canEdit(){return !!session && (session.role==='admin'||session.role==='editor'||session.role==='user'&&(session.permissions||[]).includes('pci.edit'));}
+function canDeclareOrientations(){
+  // El referente institucional puede INFORMAR orientaciones y turnos de
+  // su propia escuela, pero no editar contenidos, FG ni planes de aprendizaje.
+  return canEdit()||session?.role==='school_admin';
+}
 function hasUnsaved(){
   return !!(fgDirty||foDirty||offerDirty||technical.isDirty()||ba15Controller?.isDirty()||busy);
 }
@@ -283,7 +288,7 @@ async function init(){
         message('No se pudo cambiar de escuela: '+error.message,'error');
       }
     });
-    $('btnAddPci').disabled=!canEdit();
+    $('btnAddPci').disabled=!canDeclareOrientations();
     $('turnFilter').addEventListener('change',renderPcis);
     document.querySelectorAll('[data-back-to-school]').forEach(btn=>btn.addEventListener('click',()=>returnToSchool('push')));
     for(const id of ['schoolHomeLink','brandHomeLink'])$(id).addEventListener('click',goHome);
@@ -320,7 +325,7 @@ async function init(){
     window.addEventListener('beforeunload',e=>{if(hasUnsaved()){e.preventDefault();e.returnValue='';}});
     show('app');
     await reloadSchool();
-    if(!pcis.length&&canEdit()&&new URLSearchParams(location.search).get('nuevo')==='1')
+    if(!pcis.length&&canDeclareOrientations()&&new URLSearchParams(location.search).get('nuevo')==='1')
       openPciForm();
     routeDepth=Number(history.state?.scope==='pci-v2-route'?history.state.depth:0)||0;
     if(requestedRoute.pciId){
@@ -442,7 +447,7 @@ function renderSchoolHome(){
     note('p','El primer paso es crear su PCI: seleccioná la modalidad (Media, Técnica o BA +15), la orientación o especialidad y el turno. Después vas a construir el mapa con materias FG y FO; finalmente podrás entrar al Desarrollo Curricular de ese PCI.',box,'muted');
     const steps=elem('p','1 · Elegir modalidad y turno   →   2 · Constructor curricular   →   3 · Desarrollo curricular','school-start-steps');
     box.append(steps);
-    if(canEdit()){
+    if(canDeclareOrientations()){
       const start=elem('button','Crear primer PCI y comenzar','btn primary');
       start.id='startFirstPci';start.type='button';
       start.onclick=openPciForm;box.append(start);
@@ -533,7 +538,10 @@ function suggestPciTitle(){
   lastSuggestedPciTitle=suggestion;
 }
 function openPciForm(){
-  if(!canEdit())return;
+  if(!canDeclareOrientations()){
+    message('No tenés autorización para declarar orientaciones de esta escuela.','error');
+    return;
+  }
   show('formCreatePci',true);
   suggestPciTitle();
   $('formCreatePci').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -549,7 +557,11 @@ function updatePciModelFields(){
   suggestPciTitle();
 }
 async function createPci(e){
-  e.preventDefault();if(!canEdit())return;
+  e.preventDefault();
+  if(!canDeclareOrientations()){
+    message('La sesión actual no puede declarar orientaciones de esta escuela.','error');
+    return;
+  }
   const model=$('pciModel').value;
   const orientationId=model!=='tecnica' ? $('orientation').value : '';
   const rawSpecialty=model==='tecnica' ? $('specialtyName').value.trim() : '';
@@ -566,11 +578,17 @@ async function createPci(e){
       manana:'Mañana',tarde:'Tarde',vespertino:'Vespertino',noche:'Noche'
     }[shiftId]||shiftId):'');
   try{
+    if(!title||title.length<3)throw Error('Ingresá un nombre para identificar el PCI.');
+    if(!shiftId||(!orientationId&&model!=='tecnica'))throw Error('Elegí el turno y la orientación antes de crear el PCI.');
+    if(pcis.some(p=>p.model===model&&p.shift_id===shiftId&&
+      (model==='tecnica'?p.specialty_name===specialtyName:p.orientation_id===orientationId)))
+      throw Error('Esta orientación o especialidad ya tiene un PCI en ese turno. Abrí el existente.');
     status('Creando PCI…');
     const result=await call('create-school-pci',{
       school_id:schoolId,model,shift_id:shiftId,orientation_id:orientationId,
       specialty_name:specialtyName,title
     });
+    if(!result?.ok||!result?.pci_id)throw Error('El servidor no confirmó la creación de este PCI. No vuelvas a enviarlo sin actualizar.');
     show('formCreatePci',false);
     $('pciTitleInput').value='';
     lastSuggestedPciTitle='';
@@ -578,7 +596,8 @@ async function createPci(e){
     $('pciModel').value='comun';
     updatePciModelFields();
     await reloadSchool();
-    if(result?.pci_id)await openPci(result.pci_id);
+    await openPci(result.pci_id);
+    if(!canEdit())message('Orientación y turno declarados. Para construir y desarrollar contenidos, ingresá con la clave de edición de esta escuela.','warn');
     status(model==='tecnica'?
       'Especialidad técnica registrada. Su mapa C1–C12 queda disponible para construcción y validación según el Anexo II final.':
       model==='ba15'?'PCI BA +15 creado. Podés construir y guardar su mapa C1–C8; la homologación final queda pendiente.':
