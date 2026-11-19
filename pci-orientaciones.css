@@ -704,3 +704,26 @@ h3 {letter-spacing:-.01em;}
 @media(max-width:700px){
   .layout.school-home #formCreatePci:not([hidden]){grid-template-columns:1fr}
 }
+
+
+/* Administración accesoria fuera del flujo curricular diario. */
+.layout .school-admin-tools{
+  margin-top:12px;
+  padding:7px 3px 0;
+  border-top:1px solid var(--line);
+  color:var(--muted);
+  font-size:.75rem;
+}
+.layout .school-admin-tools summary{
+  width:max-content;
+  font-size:.75rem;
+  font-weight:750;
+  color:var(--ink-soft);
+  cursor:pointer;
+}
+.layout .school-admin-tools #showNewSchool{
+  margin-top:12px;
+}
+.layout .school-admin-tools #formNewSchool{
+  margin-top:12px;
+}
