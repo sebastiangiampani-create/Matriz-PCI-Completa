@@ -14,7 +14,7 @@ import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integraci
 import {seedOfferStructure,foSubjectBank,assignFoSubject,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
 import {withComposition,compositionFor,arrangementWarnings} from './integracion-curricular/constructor-mapa-unificado.mjs';
 import {phaseGate,phaseText} from './pci-flujo-fases.mjs';
-import {spaceContentIds,developmentCounts,fgCoverage,foCoverage,groupCoverageForLevel} from './pci-desarrollo-cobertura-v2.mjs';
+import {spaceContentIds,developmentCounts,fgCoverage,foCoverage,fgUniverse,groupCoverageForLevel,uniqueIds,planContentIds} from './pci-desarrollo-cobertura-v2.mjs';
 import {proposedFgAreas,emptyFgAreaUnit,inheritFgComposition} from './pci-fase-desarrollo-fg.mjs';
 import {renderUnifiedConstructor} from './constructor-v2-ui.mjs';
 import {newFoDevelopment,FO_STAGES} from './integracion-curricular/desarrollo-fo-modelo.js';
@@ -1111,6 +1111,100 @@ async function openFgArea(area){
       message(inherited.added.length+' agrupamientos de la Fase 1 heredados en el Desarrollo FG. Guardá el área para confirmar sus planes.','warn');
   }catch(error){message(error.message,'error');}
 }
+
+function v2MetricText(metric){
+ if(metric?.pending)return 'Porcentaje pendiente: no hay universo prescripto comparable para este nivel.';
+ return metric.used+'/'+metric.total+' contenidos prescriptos · '+metric.percent+'%';
+}
+function renderV2Metric(host,title,metric,{historic=0,dual=false,groupMetric=null}={}){
+ const box=elem('div',undefined,'pci-v2-coverage');
+ note('strong',title,box);
+ const ambiguous=!!historic&&!metric.used;
+ note('p',ambiguous?'La FG anterior conserva '+historic+' contenidos históricos. Revisá equivalencias antes de interpretar la cobertura V2.':
+  v2MetricText(metric),box);
+ if(dual&&groupMetric&&!metric.pending&&!groupMetric.pending){
+  note('small','Dentro del agrupamiento: '+metric.used+'/'+groupMetric.used+
+   ' contenidos · '+(groupMetric.used?Math.round(metric.used/groupMetric.used*1000)/10+'%':'sin asignaciones'),box);
+ }
+ for(const row of metric.bySubject||[]){
+  const line=elem('div',undefined,'pci-v2-subject-row');
+  note('span',row.subject,line);
+  note('strong',row.used+'/'+row.total+' · '+row.percent+'%',line);
+  box.append(line);
+ }
+ host.append(box);
+ return box;
+}
+function renderV2ContentPicker(host,{title,rows=[],ids=[],onChange,canWrite=false}){
+ const selected=uniqueIds(ids);
+ const items=new Map(rows.map(row=>[String(row.id),row]));
+ const section=elem('details',undefined,'pci-v2-content-picker');
+ const summary=elem('summary',title+' · '+selected.length+' contenidos seleccionados');
+ section.append(summary);
+ const body=elem('div',undefined,'pci-v2-content-body');
+ for(const id of selected){
+  const content=items.get(id),line=elem('div',undefined,'pci-v2-content-selected');
+  note('span',content?(content.subject||content.block||'Contenido')+' · '+content.text:
+    'Referencia histórica '+id+' (requiere revisión)',line);
+  if(content&&canWrite){
+   const remove=elem('button','Quitar','btn');remove.type='button';
+   remove.onclick=()=>onChange(selected.filter(x=>x!==id));
+   line.append(remove);
+  }
+  body.append(line);
+ }
+ if(!selected.length)note('p','Todavía no se seleccionaron contenidos oficiales en esta instancia.',body,'muted');
+ if(rows.length&&canWrite){
+  const search=elem('input');search.type='search';search.placeholder='Buscar materia, eje o contenido oficial…';
+  search.setAttribute('aria-label','Buscar contenidos oficiales para '+title);
+  const results=elem('div',undefined,'pci-v2-content-results');
+  const matches=()=>{
+   results.replaceChildren();
+   const query=String(search.value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+   if(query.length<2){
+    note('p','Escribí al menos dos caracteres para buscar contenidos.',results,'muted');return;
+   }
+   const candidates=rows.filter(row=>!selected.includes(String(row.id))&&
+    [row.subject,row.area,row.axis,row.subaxis,row.block,row.text].some(v=>
+     String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(query))).slice(0,35);
+   for(const item of candidates){
+    const option=elem('div',undefined,'pci-v2-content-option');
+    note('small',(item.subject||item.block||'Contenido')+' · '+(item.axis||''),option);
+    note('span',item.text,option);
+    const btn=elem('button','Agregar al '+(title.toLowerCase().includes('plan')?'plan':'espacio'),'btn');
+    btn.type='button';btn.onclick=()=>onChange([...selected,String(item.id)]);
+    option.append(btn);results.append(option);
+   }
+   if(!candidates.length)note('p','No hay coincidencias en la base oficial seleccionada.',results,'muted');
+  };
+  search.addEventListener('input',matches);matches();body.append(search,results);
+ }else if(!rows.length)note('p','No hay catálogo oficial asociado a este ámbito. Se conservan las referencias existentes.',body,'muted');
+ section.append(body);host.append(section);
+}
+function writeV2StageField(plan,id,key,value){
+ const current=plan.stages?.[id],old=typeof current==='object'&&current?
+  {...current}:typeof current==='string'?{description:current,originalText:current}:{};
+ plan.stages={...plan.stages,[id]:{...old,[key]:value}};
+}
+function appendV2Stages(host,plan,onDirty){
+ for(const id of stages){
+  const stage=elem('details',undefined,'pci-development-stage');
+  stage.append(elem('summary',stageLabel[id]));
+  if(id==='punto_partida')stage.open=true;
+  for(const [key,label] of [['description','Desarrollo de la etapa'],
+    ['duration','Duración'],['activities','Actividades'],
+    ['resources','Recursos'],['evidence','Evidencias de aprendizaje']]){
+   const current=plan.stages?.[id];
+   const value=typeof current==='string'?(key==='description'?current:''):
+    String(current?.[key]??'');
+   stage.append(field(label,value,v=>{writeV2StageField(plan,id,key,v);onDirty()},{
+    multiline:key!=='duration'
+   }));
+  }
+  host.append(stage);
+ }
+}
+
 function renderFgEditor(){
   const host=$('areaEditor');host.replaceChildren();if(!fgDoc)return;
   note('h3',selectedFgArea,host);
