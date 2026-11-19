@@ -357,6 +357,7 @@ try{
      }
    }
    else if(body.action==='list-school-pcis')data={pcis:initialPcis};
+   else if(body.action==='get-school-legacy-links')data={source_updated_at:'2026-11-19T17:00:00Z',source_model:'comun',rows:[],document:null,revision:0,exists:false};
    else throw Error('Acción no simulada para portal desde panel: '+body.action);
    await route.fulfill({status:200,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(data)});
  });
@@ -390,6 +391,7 @@ try{
  await dashboardOrg.click();
  await panelPage.waitForURL('**/pci-orientaciones.html?school=1001&from=panel-general');
  await panelPage.locator('#app:not([hidden])').waitFor({timeout:25000});
+ await panelPage.locator('.school-offer-card').first().waitFor({timeout:20000});
  assert.equal(await panelPage.locator('.school-offer-card').count(),1,'El panel lleva a la orientación de su escuela');
  assert.equal(await panelPage.locator('#school').inputValue(),'1001');
 
@@ -403,6 +405,7 @@ try{
  await institutionalOrg.click();
  await panelPage.waitForURL('**/pci-orientaciones.html?school=1001&from=panel-general');
  await panelPage.locator('#app:not([hidden])').waitFor({timeout:25000});
+ await panelPage.locator('.school-offer-card').first().waitFor({timeout:20000});
  assert.equal(await panelPage.locator('.school-offer-card').count(),1);
  assert.deepEqual(panelErrors,[],'Los paneles no deben generar errores JS');
  assert.equal(state.pcis[0].pci_id,initialPcis[0].pci_id,'Navegar desde paneles no modifica PCI');
