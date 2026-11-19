@@ -13,7 +13,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
  let draft=initialDraft?structuredClone(initialDraft):crearBorradorBa15(identity),term=1,selected=null,planIndex=0,view='mapa';
  let nesContents=[],nesLoading=true,nesError='',dirty=false,remoteBusy=false,recoveryDraft=null;
  let pickedSubject=null,dragSubject=null;
- let remoteRevision=Number(savedRevision)||0,developmentUnlocked=false;
+ let remoteRevision=Number(savedRevision)||0,developmentUnlocked=false,structureDirty=false;
  const matchesIdentity=saved=>saved?.schema===draft.schema&&
   Number(saved?.schoolId)===Number(draft.schoolId)&&saved?.pciId===draft.pciId&&
   saved?.orientationId===draft.orientationId&&saved?.shiftId===draft.shiftId;
@@ -24,7 +24,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   if(matchesIdentity(saved)){
    if(initialDraft&&JSON.stringify(saved)!==JSON.stringify(initialDraft)){
     if(confirm('Hay un borrador BA +15 local distinto del servidor. ¿Recuperarlo para revisar y guardar sin perder lo trabajado?')){
-     draft=saved;dirty=true;
+     draft=saved;dirty=true;structureDirty=true;structureDirty=true;
     }else{
      recoveryDraft=saved;
      try{sessionStorage.setItem(key+'.recovery',JSON.stringify(saved));}catch{}
@@ -39,11 +39,11 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   dirty?'Borrador local recuperado. Verificá y guardá online sin reemplazar otro PCI.':
   'Borrador BA +15 independiente. Exportá una copia JSON como resguardo.','muted');
  const save=()=>{if(readOnlyDemo){status.textContent='Demostración: cambios solo en memoria, sin conexión con datos institucionales.';return;}dirty=true;try{sessionStorage.setItem(key,JSON.stringify(draft));status.textContent='Cambios solo en esta pestaña. Usá «Guardar BA +15 online» para confirmarlos en el servidor.';}catch{status.textContent='No se pudo guardar localmente. Exportá el JSON antes de salir.';}};
- const persistRemote=async()=>{if(!saveRemote||!canEditRemote||!dirty||remoteBusy||readOnlyDemo)return;remoteBusy=true;status.textContent='Verificando revisión y guardando BA +15…';const payload=structuredClone(draft);try{const revision=await saveRemote(payload);remoteRevision=Number(revision)||remoteRevision;const unchanged=JSON.stringify(payload)===JSON.stringify(draft);dirty=!unchanged;if(unchanged){try{sessionStorage.removeItem(key);}catch{}status.textContent='BA +15 guardado online: revisión confirmada por lectura posterior.';}else{status.textContent='Se guardó una revisión anterior. Hay cambios posteriores sin guardar: conservá el borrador y volvé a guardar.';}}catch(error){status.textContent='NO se guardó online: '+(error?.message||error)+'. Conservá el JSON de resguardo.';}finally{remoteBusy=false;render();}};
+ const persistRemote=async()=>{if(!saveRemote||!canEditRemote||!dirty||remoteBusy||readOnlyDemo)return;remoteBusy=true;status.textContent='Verificando revisión y guardando BA +15…';const payload=structuredClone(draft);try{const revision=await saveRemote(payload);remoteRevision=Number(revision)||remoteRevision;const unchanged=JSON.stringify(payload)===JSON.stringify(draft);dirty=!unchanged;if(unchanged){structureDirty=false;try{sessionStorage.removeItem(key);}catch{}status.textContent='BA +15 guardado online: revisión confirmada por lectura posterior.';}else{status.textContent='Se guardó una revisión anterior. Hay cambios posteriores sin guardar: conservá el borrador y volvé a guardar.';}}catch(error){status.textContent='NO se guardó online: '+(error?.message||error)+'. Conservá el JSON de resguardo.';}finally{remoteBusy=false;render();}};
  function change(fn,phase='constructor'){
   try{
     draft=fn();
-    if(phase==='constructor'){developmentUnlocked=false;view='mapa';}
+    if(phase==='constructor'){structureDirty=true;developmentUnlocked=false;view='mapa';}
     save();render();
   }catch(e){status.textContent='No se modificó: '+e.message;}
  }
@@ -92,7 +92,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
  function setPhase(next,{silent=false}={}){
   if(next!=='oferta'&&next!=='fo')return false;
   if(next==='fo'){
-   if(!getPhaseStatus().ready&&!developmentUnlocked)return false;
+   if(!getPhaseStatus().ready)return false;
    developmentUnlocked=true;view='planes';selected=null;
   }else{view='mapa';}
   render();
@@ -109,7 +109,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   const previous=button('← Volver al Constructor curricular',()=>setPhase('oferta'),'btn');
   top.append(previous,element('strong','2 · Desarrollo curricular · BA +15'));
   panel.append(top,element('p','Esta instancia desarrolla los espacios del mapa ya guardado. Mantiene cuatro planes por agrupamiento, contenidos, objetivos y secuencias.','muted'));
-  if(!validation.ready&&!developmentUnlocked){
+  if(!validation.ready&&structureDirty){
    panel.append(element('p','Completá y guardá primero la Fase 1 de este PCI.','warning'));return;
   }
   const nav=element('div','','demoTermNav');
@@ -195,7 +195,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
  }
  function getPhaseStatus(){
   const check=validarBorradorBa15(draft);
-  return phaseGate({revision:remoteRevision,dirty:dirty&&!developmentUnlocked,
+  return phaseGate({revision:remoteRevision,dirty:structureDirty,
     issues:[...check.errores,...check.advertencias],label:'BA +15 C1–C8'});
  }
  function render(){
