@@ -792,8 +792,11 @@ function currentPhaseGate(){
       const normative=validateMediaWorkspaceFinal(workspace,pci.orientation_id);
       return phaseGate({revision:offerRevision,dirty:offerDirty,
         issues:[...(validation.errors||[]),...arrangementWarnings(draft),
-          ...normative.errors,...normative.warnings],
-        warnings:validation.warnings||[],label:'Constructor de Media'});
+          ...normative.errors],
+        // Las advertencias documentales no bloquean el acceso al desarrollo;
+        // sí deben revisarse antes de homologar/publicar el PCI.
+        warnings:[...(validation.warnings||[]),...normative.warnings],
+        label:'Constructor de Media'});
     }catch(error){
       return phaseGate({revision:offerRevision,dirty:offerDirty,issues:[error.message]});
     }
