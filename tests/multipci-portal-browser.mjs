@@ -297,7 +297,7 @@ try{
  await authPage.locator('#lastName').fill('Prueba');
  await authPage.locator('#email').fill('prueba@escuela.example');
  await authPage.locator('#schoolSubmit').click();
- await authPage.waitForURL('**/pci-orientaciones.html?school=1001');
+ await authPage.waitForURL('**/pci-orientaciones.html?school=1001&nuevo=1');
  await authPage.locator('#app:not([hidden])').waitFor({timeout:25000});
  assert.equal(await authPage.locator('.school-offer-card').count(),1,'Login debe regresar a la escuela sin borrar los PCI');
  assert.equal(await authPage.evaluate(()=>JSON.parse(sessionStorage.getItem('pci_access_session')||'{}').role),'editor');

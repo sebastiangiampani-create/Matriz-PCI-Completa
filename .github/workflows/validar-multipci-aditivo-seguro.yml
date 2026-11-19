@@ -26,6 +26,9 @@ jobs:
           git diff --name-status origin/main...HEAD | awk '
             $1 == "A" { next }
             $1 == "M" && ($2 == "index.html" ||
+                          $2 == "escuela-online.html" ||
+                          $2 == "supabase/functions/pci-multipci/index.ts" ||
+                          $2 == "src/admin-escuelas-panel.mjs" ||
                           $2 == "panel-general.html" ||
                           $2 == "panel-escuela.html" ||
                           $2 == "pci-orientaciones.html" ||
@@ -37,7 +40,7 @@ jobs:
                           $2 == ".github/workflows/validar-multipci-aditivo-seguro.yml") { next }
             { print "CAMBIO FUERA DEL MODULO NUEVO:", $0; bad=1 }
             END { exit bad }'
-          git diff --quiet origin/main...HEAD -- app.html app.css app.js escuela-online.html tecnica/app.html
+          git diff --quiet origin/main...HEAD -- app.html app.css app.js tecnica/app.html
           grep -q 'function schoolDestination' index.html
           grep -q "get('continuar')==='pci'" index.html
       - name: Verificar sintaxis de los módulos nuevos
@@ -60,6 +63,10 @@ jobs:
           node --check src/tecnica/interfaz-integrada-v2.mjs
           node --check src/tecnica/espacio-trabajo-v2.mjs
           node --check tests/multipci-portal-browser.mjs
+          node --check tests/pci-nueva-escuela-browser.mjs
+          grep -q 'function canDeclareOrientations' supabase/functions/pci-multipci/index.ts
+          grep -q 'if(!canDeclareOrientations(s))' supabase/functions/pci-multipci/index.ts
+          grep -q 'authorizedPci(s,body,saving)' supabase/functions/pci-multipci/index.ts
       - name: Probar currícula y guardado aislado por PCI
         run: |
           node --test tests/pci-navegacion-admin.test.mjs tests/pci-fase-desarrollo-fg.test.mjs tests/pci-flujo-fases.test.mjs tests/constructor-mapa-unificado.test.mjs tests/ba15-reglas.test.mjs tests/ba15-constructor.test.mjs tests/turnos-modalidades.test.mjs tests/orientaciones-release.test.mjs tests/tecnica-integrada-v2.test.mjs tests/adaptador-media-final-20261117.test.mjs tests/integracion-catalogos.test.js
@@ -84,6 +91,7 @@ jobs:
         run: |
           mkdir -p test-artifacts/multipci-portal
           node tests/multipci-portal-browser.mjs
+          node tests/pci-nueva-escuela-browser.mjs
       - name: Conservar captura del recorrido
         if: always()
         uses: actions/upload-artifact@v4
