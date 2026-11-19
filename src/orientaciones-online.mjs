@@ -784,10 +784,13 @@ function currentPhaseGate(){
     try{
       const validation=validateOfferStructure(workspace,pci.orientation_id,refs);
       const draft=compositionFor(workspace,pci);
-      // Los agrupamientos propuestos no forman parte de la FG histórica;
-      // deben revisarse también antes de pasar a planes.
+      // La Fase 2 solo se habilita cuando la composición completa del PCI
+      // cumple la referencia V2 Y el Anexo II final. Revisamos las copias
+      // FG y las propuestas nuevas, nunca escribimos en la FG original.
+      const normative=validateMediaWorkspaceFinal(workspace,pci.orientation_id);
       return phaseGate({revision:offerRevision,dirty:offerDirty,
-        issues:[...(validation.errors||[]),...arrangementWarnings(draft)],
+        issues:[...(validation.errors||[]),...arrangementWarnings(draft),
+          ...normative.errors,...normative.warnings],
         warnings:validation.warnings||[],label:'Constructor de Media'});
     }catch(error){
       return phaseGate({revision:offerRevision,dirty:offerDirty,issues:[error.message]});
