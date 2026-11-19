@@ -135,10 +135,9 @@ async function onHistoryChange(event){
         // Cambiar de pestaña NO vuelve a descargar ni reemplazar el
         // documento FG/FO que está abierto y quizá aún no fue guardado.
         if(pci.model==='ba15'){
-          const text=destination.view==='fo'?'2 · Desarrollo curricular':'1 · Constructor C1–C8';
-          const button=[...$('ba15Builder').querySelectorAll('button')].find(b=>b.textContent.trim()===text);
-          if(button&&!button.disabled)button.click();
-          tab=button&&!button.disabled?destination.view:'oferta';
+          const next=destination.view==='fo'?'fo':'oferta';
+          const changed=ba15Controller?.setPhase(next,{silent:true});
+          tab=changed?next:'oferta';
         }else setTab(destination.view,true,'none');
       }else await openPci(destination.pciId,destination.view,'none',true);
     }else if(pci){
@@ -661,6 +660,7 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
         canEditRemote:canEdit()&&['borrador','en_revision'].includes(b.status),
         savedRevision:revision,
         developmentHost:$('ba15Development'),
+        onPhaseChange:next=>{tab=next;writeRoute('push',pci?.pci_id||null,next);},
         saveRemote:async document=>{
           if(pci?.pci_id!==b.pci_id)throw Error('Se cambió de PCI: no se permite guardar en otro.');
           const result=await saveUnit('oferta','map',unitId,baseVersion,document,revision);
@@ -675,8 +675,7 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
       renderPcis();
       tab='oferta';
       if(requestedTab==='fo'){
-        const go=[...$('ba15Builder').querySelectorAll('button')].find(b=>b.textContent.trim()==='2 · Desarrollo curricular');
-        if(go&&!go.disabled){go.click();tab='fo';}
+        if(ba15Controller.setPhase('fo',{silent:true}))tab='fo';
         else status('Primero completá y guardá el Constructor curricular BA +15 de este PCI.');
       }else status('BA +15: Fase 1 Constructor C1–C8; Fase 2 después del mapa completo y guardado');
       writeRoute(routeMode,b.pci_id,tab);
