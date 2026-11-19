@@ -44,6 +44,13 @@
       <strong id="schoolDbStatus">Consultando Supabase…</strong>
       <button type="button" id="schoolDbRefresh" class="btn">Actualizar listado</button>
     </div>
+    <section class="admin-schools-catalog" aria-label="Catálogo de instituciones existentes">
+      <h3>Escuelas registradas</h3>
+      <label class="field">Buscar por nombre, CUE o ID<input id="schoolDbSearch" type="search" autocomplete="off" placeholder="Buscá antes de crear una escuela"></label>
+      <label class="field"><input id="schoolDbOnlyMissingCue" type="checkbox"> Mostrar solo instituciones sin CUE</label>
+      <p id="schoolDbCatalogCount" class="muted" role="status" aria-live="polite"></p>
+      <div id="schoolDbCatalog" class="admin-schools-catalog-list" style="max-height:240px;overflow:auto"></div>
+    </section>
     <form id="schoolDbForm">
       <h3>Dar de alta una institución faltante</h3>
       <div class="admin-schools-grid">
