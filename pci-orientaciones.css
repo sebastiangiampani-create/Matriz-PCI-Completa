@@ -727,3 +727,49 @@ h3 {letter-spacing:-.01em;}
 .layout .school-admin-tools #formNewSchool{
   margin-top:12px;
 }
+
+
+/* Acceso institucional de continuidad: no cambia la autenticación actual. */
+.login-required.panel.card{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:22px;
+  width:min(960px,100%);
+  margin:25px auto 30px;
+  padding:26px 30px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+}
+.login-required[hidden]{display:none!important}
+.login-required>div{flex:1 1 380px}
+.login-required h2{
+  margin:5px 0 10px;
+  font-size:clamp(1.25rem,2vw,1.65rem);
+  color:var(--ink);
+}
+.login-required .muted{font-size:.84rem;max-width:700px}
+.login-required .button.primary{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:46px;
+  padding:12px 22px;
+  border-radius:999px;
+  border:1px solid var(--ink);
+  background:var(--ink);
+  color:#fff;
+  font-size:.85rem;
+  font-weight:850;
+  text-decoration:none;
+  white-space:normal;
+  text-align:center;
+}
+.login-required .button.primary:hover{background:var(--blue)}
+@media(max-width:600px){
+  .login-required.panel.card{padding:18px 15px;gap:14px}
+  .login-required .button.primary{width:100%}
+}
