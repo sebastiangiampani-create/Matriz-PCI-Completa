@@ -956,3 +956,51 @@ h3 {letter-spacing:-.01em;}
   .pci-phase-next{flex-direction:column;align-items:stretch}
   .pci-phase-next button{width:100%}
 }
+
+
+/* Vinculación aditiva del trabajo histórico a PCI. Conserva la identidad V2. */
+.historic-assign-card{
+  margin:18px 0 12px;padding:20px;border:1px solid #cbdde7;background:#f4f9fb;
+  border-radius:18px;box-shadow:0 10px 24px rgba(18,57,92,.045);
+}
+.historic-assign-head{display:flex;align-items:center;gap:18px;justify-content:space-between}
+.historic-assign-head h3{font-size:1.13rem;margin:6px 0 5px;color:#12395c}
+.historic-assign-head p{font-size:.78rem;line-height:1.5;margin:0;max-width:850px}
+.historic-assign-head button{flex:0 0 auto}
+.historic-assign-toolbar{padding:10px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.78rem}
+.historic-assign-toolbar label{display:flex;gap:7px;align-items:center}
+.legacy-area{margin:10px 0;border:1px solid #d3e0e8;border-radius:12px;background:white;overflow:hidden}
+.legacy-area>summary{padding:13px 16px;background:#e9f2f7;color:#12395c;font-size:.87rem;font-weight:900;cursor:pointer}
+.legacy-area-toolbar{display:flex;gap:9px;align-items:center;padding:13px;flex-wrap:wrap;border-bottom:1px solid #d9e5eb}
+.legacy-area-toolbar .legacy-target-chips{width:100%;border:0;padding:0}
+.legacy-group-card{margin:10px 13px;padding:12px 14px;background:#fff;border:1px solid #d9e5eb;border-radius:12px}
+.legacy-group-card.linked{border-color:#9dcec4;background:#f8fdfb}
+.legacy-group-head{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.legacy-group-head strong{font-size:.86rem;color:#12395c}
+.legacy-group-head small{display:block;margin-top:3px;font-size:.71rem;color:#677d8b}
+.legacy-kind-label{display:flex;align-items:center;flex-wrap:wrap;gap:9px;font-size:.75rem;font-weight:700;margin:12px 0}
+.legacy-kind-label select{border-radius:10px;border:1px solid #cbdde7;background:white;padding:8px;min-height:37px;max-width:100%}
+.legacy-target-chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.legacy-target-chip{display:flex;gap:7px;align-items:center;font-size:.7rem;font-weight:800;color:#12395c;border:1px solid #d3e0e8;border-radius:11px;padding:8px 11px;background:#fff;cursor:pointer;max-width:100%}
+.legacy-target-chip input{accent-color:#08766e;width:16px;height:16px;flex:0 0 auto}
+.legacy-target-chip.all-targets{border-color:#78c6b9;background:#eaf8f4}
+.legacy-target-chip:has(input:disabled){opacity:.5;cursor:not-allowed}
+.legacy-warning{padding:9px 12px;background:#fff7ea;border:1px solid #f0d69b;border-radius:9px;color:#8c5909;font-size:.77rem}
+#historicAssignmentMessage{margin-top:10px}
+#historicAssignmentMessage[data-error="1"]{background:#fff0ee;border-color:#f1b2a9;color:#9c3025}
+.historic-pci-preview{margin:14px 0}
+.legacy-preview{padding:12px 16px;background:#f5f9fc;border:1px solid #d5e2e8;border-radius:14px}
+.legacy-preview>summary{font-size:.82rem;font-weight:900;color:#12395c;cursor:pointer}
+.legacy-preview-group{margin:9px 0;padding:9px 12px;background:white;border:1px solid #d9e5eb;border-radius:10px}
+.legacy-preview-group>summary{font-size:.78rem;font-weight:800;cursor:pointer}
+.legacy-preview-plan{padding:8px 12px;margin:8px 0;border-left:3px solid #8bc0b7;background:#f6fafb;font-size:.75rem}
+.legacy-preview-plan p{margin:5px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:720px){
+ .historic-assign-card{padding:13px}
+ .historic-assign-head{align-items:stretch;flex-direction:column}
+ .historic-assign-head button{width:100%}
+ .legacy-area-toolbar{flex-direction:column;align-items:stretch}
+ .legacy-area-toolbar .btn{width:100%}
+ .legacy-group-head{align-items:flex-start}
+ .historic-assign-toolbar{align-items:flex-start;flex-direction:column}
+}
