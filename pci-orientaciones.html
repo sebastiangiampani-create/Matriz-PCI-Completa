@@ -116,6 +116,7 @@
               <p id="historicAssignmentMessage" class="note" role="status" aria-live="polite"></p>
             </div>
           </section>
+                    <div id="schoolStructureMatrix" class="school-structure-matrix" aria-label="Modelos curriculares por turno"></div>
                     <div id="schoolPciCards" class="schoolPciCards" aria-live="polite"></div>
         </div>
         <section id="ba15Pending" class="panel card" hidden>
@@ -161,14 +162,31 @@
             </div>
             <div class="navtabs" role="tablist" aria-label="Fases del PCI">
               <button type="button" class="tab active" data-tab="oferta">1 · Constructor curricular</button>
-              <button type="button" class="tab" data-tab="fg">2 · Desarrollo FG</button>
-              <button type="button" class="tab" data-tab="fo">2 · Desarrollo FO</button>
+              <button type="button" class="tab" data-tab="desarrollo">2 · Desarrollo curricular</button>
+              <button type="button" class="tab phase-detail-tab" data-tab="fg">Desarrollo FG</button>
+              <button type="button" class="tab phase-detail-tab" data-tab="fo">Desarrollo FO</button>
             </div>
             <div id="pciHistoricLinks" class="historic-pci-preview" hidden></div>
             <p id="pciPhaseState" class="pci-phase-state" role="status" aria-live="polite"></p>
             <div id="message" class="message" role="status" aria-live="polite"></div>
           </div>
+          <section id="developmentPane" class="panel card pane" hidden>
+            <div class="topline"><div><span class="eyebrow">FASE 2 · SEGÚN PCI</span>
+            <h3>Desarrollo Curricular · espacios y planes de aprendizaje</h3>
+            <p class="muted">Los espacios provienen del mapa validado. Elegí una tarjeta para trabajar contenidos, objetivos, cuatro planes y secuencias de PCI V2.</p>
+            </div></div>
+            <div id="pciDevelopmentStats" class="pci-development-stats"></div>
+            <div class="pci-development-filters">
+              <label>Nivel <select id="pciDevelopmentLevel"><option value="todos">Todos los niveles</option></select></label>
+              <label>Formación <select id="pciDevelopmentFormation"><option value="todos">FG + FO</option><option value="FG">Formación General</option><option value="FO">Formación Orientada</option></select></label>
+            </div>
+            <div id="pciDevelopmentCards" class="pci-development-cards"></div>
+            <section class="pci-development-levels"><h4>Cobertura V2 · contenidos únicos por nivel y área</h4>
+              <div id="pciDevelopmentLevelCoverage" aria-live="polite"></div>
+            </section>
+          </section>
           <div class="panel card pane" id="fgPane" hidden>
+            <button type="button" class="text-button" data-back-to-development>← Todos los espacios del PCI</button>
             <div class="topline"><div><span class="eyebrow">FG Matriz histórica → FG V2</span><h3>Formación General por área</h3><p class="muted">Los contenidos y las secuencias anteriores se importan sin cambiar el documento original. Las equivalencias V2 se identifican automáticamente.</p></div></div>
             <div class="split original-workspace">
               <div id="areaList" class="areaList content-bag card"></div>
@@ -242,6 +260,7 @@
             </div>
           </div>
           <div class="panel pane" id="foPane" hidden>
+            <button type="button" class="text-button" data-back-to-development>← Todos los espacios del PCI</button>
             <div class="topline"><div><span class="eyebrow">FO · Desarrollo curricular</span><h3>Planes de aprendizaje</h3><p class="muted">Cada espacio FO guarda sus objetivos, sinopsis y las cuatro etapas de cada plan, con control de versiones.</p></div></div>
             <div class="split">
               <div id="foSpaces" class="areaList content-bag card"></div>
