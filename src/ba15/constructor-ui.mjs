@@ -7,7 +7,7 @@ const button=(label,callback,klass='btn')=>{const x=element('button',label,klass
 const field=(label,value,callback,textarea=false)=>{const l=element('label');l.append(element('span',label));const x=element(textarea?'textarea':'input');x.value=value||'';x.addEventListener('change',()=>callback(x.value));l.append(x);return l;};
 const select=(label,options,change)=>{const l=element('label');l.append(element('span',label));const s=element('select');for(const [v,n] of options){const op=element('option',n);op.value=v;s.append(op)}s.addEventListener('change',()=>change(s.value));l.append(s);return {wrap:l,select:s};};
 const download=(draft)=>{const blob=new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='PCI-BA15-'+draft.schoolId+'-'+draft.pciId+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyDemo=false,saveRemote=null,canEditRemote=false,savedRevision=0}={}){
+export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyDemo=false,saveRemote=null,canEditRemote=false,savedRevision=0,developmentHost=null}={}){
  const key=['pci-ba15-borrador-local-v1',identity.schoolId,identity.pciId].join(':');
  let draft=initialDraft?structuredClone(initialDraft):crearBorradorBa15(identity),term=1,selected=null,planIndex=0,view='mapa';
  let nesContents=[],nesLoading=true,nesError='',dirty=false,remoteBusy=false,recoveryDraft=null;
@@ -88,6 +88,103 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    if(subjectId)onSubject(subjectId);
   });
  }
+ function renderDevelopment(){
+  // Segunda instancia visual. No se ejecuta la composición curricular ni se
+  // ofrecen acciones de modificación del mapa en el Desarrollo.
+  if(!developmentHost)return;
+  const panel=developmentHost;
+  const validation=getPhaseStatus();
+  const top=element('div','','pci-phase-flow');
+  const previous=button('← Volver al Constructor curricular',()=>{view='mapa';render()},'btn');
+  top.append(previous,element('strong','2 · Desarrollo curricular · BA +15'));
+  panel.append(top,element('p','Esta instancia desarrolla los espacios del mapa ya guardado. Mantiene cuatro planes por agrupamiento, contenidos, objetivos y secuencias.','muted'));
+  if(!validation.ready&&!developmentUnlocked){
+   panel.append(element('p','Completá y guardá primero la Fase 1 de este PCI.','warning'));return;
+  }
+  const nav=element('div','','demoTermNav');
+  for(const t of BA15_TERMS){
+   nav.append(button('C'+t.numero+' · Nivel '+['I','II','III','IV'][t.nivel-1],()=>{
+    term=t.numero;selected=null;planIndex=0;render();
+   },'tab'+(t.numero===term?' active':'')));
+  }
+  panel.append(nav);
+  const levelNum=levelForTerm(term),level=draft.niveles[levelNum-1];
+  const available=level.espacios.filter(e=>e.term===term);
+  const layout=element('div','','ba15DevelopmentGrid');
+  const side=element('section','','content-bag card constructor-side'),editor=element('section','','workCard');
+  side.append(element('h3','Espacios curriculares · C'+term));
+  if(!available.length)side.append(element('p','No hay agrupamientos en este cuatrimestre. Volvé al Constructor.','muted'));
+  for(const e of available){
+   const option=button(e.nombre+' · '+e.formato,()=>{
+    selected=e.id;planIndex=0;render();
+   },'constructor-bank-subject'+(selected===e.id?' active':''));
+   option.append(element('small',e.miembros.length+' materias · 4 planes'));
+   side.append(option);
+  }
+  const space=available.find(e=>e.id===selected);
+  if(!space){
+   editor.append(element('h3','Elegí un espacio para desarrollar'),element('p','Los planes de cada agrupamiento se trabajan aquí, separados del armado curricular.','muted'));
+  }else{
+   editor.append(element('h3',space.nombre));
+   editor.append(element('p',space.formato+' · '+space.miembros.map(id=>level.asignaturas.find(s=>s.id===id)?.nombre||id).join(', '),'muted'));
+   const tabs=element('div','','actions');
+   for(let i=0;i<4;i++)tabs.append(button('Plan '+(i+1),()=>{planIndex=i;render()},'tab'+(i===planIndex?' active':''));
+   editor.append(tabs);
+   const p=space.planes[planIndex];
+   const update=fn=>change(()=>{
+    const next=structuredClone(draft),plan=next.niveles[levelNum-1].espacios.find(e=>e.id===space.id).planes[planIndex];
+    fn(plan);return next;
+   },'desarrollo');
+   editor.append(field('Nombre del plan',p.nombre,v=>update(t=>{t.nombre=v;})));
+   editor.append(field('Sinopsis / descripción del plan',p.sinopsis||'',v=>update(t=>{t.sinopsis=v;}),true));
+   editor.append(field('Objetivos de aprendizaje',p.objetivos||'',v=>update(t=>{t.objetivos=v;}),true));
+   const contentBox=element('section','','formCard');
+   contentBox.append(element('h4','Contenidos curriculares'));
+   const chosen=Array.isArray(p.contenidos)?p.contenidos:[];
+   if(levelNum===1)contentBox.append(element('p',nesLoading?'Cargando catálogo NES…':nesError?'Catálogo no disponible: '+nesError:'Contenidos NES de 1.º y 2.º como referencia para Nivel I','muted'));
+   for(const id of chosen){
+    const item=nesContents.find(x=>x.id===id),line=element('div','','ba15Member');
+    line.append(element('span',item?'NES '+item.year+'.º · '+item.subject+' · '+item.text:String(id)));
+    line.append(button('Quitar',()=>update(t=>{t.contenidos=(t.contenidos||[]).filter(x=>x!==id)}),'btn'));
+    contentBox.append(line);
+   }
+   if(levelNum===1&&!nesLoading&&!nesError){
+    const query=element('input');query.type='search';query.placeholder='Buscar contenido, materia o eje…';
+    const results=element('div','','ba15ContentResults');
+    query.addEventListener('input',()=>{
+     results.replaceChildren();
+     const q=query.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+     if(q.length<2)return;
+     const matches=nesContents.filter(x=>!chosen.includes(x.id)&&[x.subject,x.area,x.axis,x.subaxis,x.text].some(v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(q))).slice(0,35);
+     for(const item of matches){
+      const line=element('div','','ba15Subject');
+      line.append(element('small','NES '+item.year+'.º · '+item.subject+' · '+item.axis),element('span',item.text));
+      line.append(button('Agregar al plan',()=>update(t=>{
+       t.contenidos=Array.isArray(t.contenidos)?t.contenidos:[];
+       if(!t.contenidos.includes(item.id))t.contenidos.push(item.id);
+      }),'btn'));results.append(line);
+     }
+    });
+    contentBox.append(query,results);
+   }
+   contentBox.append(field('Otros contenidos / adecuaciones curriculares',p.contenidosPropios||'',v=>update(t=>{t.contenidosPropios=v;}),true));
+   editor.append(contentBox);
+   editor.append(element('h4','Secuencia didáctica · cuatro momentos'));
+   for(const [key,label] of [['punto_partida','Punto de partida'],['indagacion','Indagación'],['produccion','Producción'],['evaluacion','Evaluación']]){
+    editor.append(field(label,typeof p.etapas?.[key]==='string'?p.etapas[key]:p.etapas?.[key]?.description||'',v=>update(t=>{
+     t.etapas=t.etapas||{};
+     if(typeof t.etapas[key]==='object'&&t.etapas[key]!==null)t.etapas[key]={...t.etapas[key],description:v};
+     else t.etapas[key]=v;
+    }),true));
+   }
+  }
+  layout.append(side,editor);panel.append(layout);
+  if(saveRemote&&canEditRemote&&!readOnlyDemo){
+    const online=button(remoteBusy?'Guardando…':'Guardar Desarrollo BA +15 online',persistRemote,'btn primary');
+    online.disabled=!dirty||remoteBusy;panel.append(online);
+  }
+  panel.append(status,element('p',phaseText(validation),'pci-phase-state'));
+ }
  function getPhaseStatus(){
   const check=validarBorradorBa15(draft);
   return phaseGate({revision:remoteRevision,dirty:dirty&&!developmentUnlocked,
@@ -95,13 +192,20 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
  }
  function render(){
   host.replaceChildren();
+  if(developmentHost)developmentHost.replaceChildren();
+  host.hidden=view==='planes'&&!!developmentHost;
+  if(developmentHost)developmentHost.hidden=view!=='planes';
+  if(view==='planes'&&developmentHost){
+    renderDevelopment();
+    return;
+  }
   const tools=element('div','','actions');
   const validation=validarBorradorBa15(draft),gate=getPhaseStatus();
   const builder=button('1 · Constructor C1–C8',()=>{view='mapa';render()},view==='mapa'?'btn primary':'btn');
   const develop=button('2 · Desarrollo curricular',()=>{
     const check=getPhaseStatus();
     if(!check.ready){status.textContent='Primero completá y guardá el mapa BA +15. '+check.detail;view='mapa';render();return;}
-    developmentUnlocked=true;view='planes';render();
+    developmentUnlocked=true;view='planes';selected=null;render();
   },view==='planes'?'btn primary':'btn');
   develop.disabled=!gate.ready;
   develop.title=gate.ready?'Abrir planes heredados de este PCI':'Completá todas las materias de C1–C8 y guardá el mapa antes de desarrollar.';
@@ -216,50 +320,6 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
     if(!members.childNodes.length)members.append(element('p','Sin materias. Arrastrá una desde la bolsa.','muted'));
     card.append(members);
     card.append(field('Articulación pedagógica y espacios vinculados',e.articulacion,value=>change(()=>actualizarEspacioBa15(draft,{nivel:levelNum,espacioId:e.id,changes:{articulacion:value}})),true));
-    if(view==='planes'){
-     const tabs=element('div','','actions');
-     for(let i=0;i<4;i++)tabs.append(button('Plan '+(i+1),()=>{planIndex=i;render()},'tab'+(i===planIndex?' active':'')));
-     card.append(tabs);
-     const p=e.planes[planIndex];
-     const update=(fn)=>change(()=>{
-      const fresh=structuredClone(draft),target=fresh.niveles[levelNum-1].espacios.find(x=>x.id===e.id).planes[planIndex];
-      fn(target);return fresh;
-     },'desarrollo');
-     card.append(field('Nombre del plan',p.nombre,v=>update(t=>{t.nombre=v;})));
-     card.append(field('Objetivos',p.objetivos,v=>update(t=>{t.objetivos=v;}),true));
-     if(levelNum===1&&!nesLoading&&!nesError){
-      const contentBox=element('section','','formCard');
-      contentBox.append(element('h4','Contenidos NES · 1.º y 2.º año'));
-      contentBox.append(element('p','Elegí los contenidos para este plan. El año NES es la procedencia del contenido, no un nuevo nivel BA +15.','muted'));
-      const chosen=Array.isArray(p.contenidos)?p.contenidos:[];
-      for(const id of chosen){
-       const item=nesContents.find(x=>x.id===id);
-       const line=element('div','','ba15Member');
-       line.append(element('span',item?'NES '+item.year+'.º · '+item.subject+' · '+item.text:'Contenido '+id+' (revisar correspondencia)'));
-       line.append(button('Quitar',()=>update(t=>{t.contenidos=(t.contenidos||[]).filter(x=>x!==id);}),'btn'));
-       contentBox.append(line);
-      }
-      const query=element('input');query.type='search';query.placeholder='Buscar por materia, eje o contenido NES…';query.setAttribute('aria-label','Buscar contenidos NES 1.º y 2.º');
-      const results=element('div','','ba15ContentResults');
-      const showMatches=()=>{
-       results.replaceChildren();
-       const search=query.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-       if(search.length<2){results.append(element('p','Escribí al menos dos caracteres para buscar.','muted'));return;}
-       const matches=nesContents.filter(x=>!chosen.includes(x.id)&&[x.subject,x.area,x.axis,x.subaxis,x.text].some(v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(search))).slice(0,35);
-       for(const item of matches){
-        const line=element('div','','ba15Subject');
-        line.append(element('small','NES '+item.year+'.º · '+item.subject+' · '+item.axis));
-        line.append(element('span',item.text));
-        line.append(button('Agregar al plan',()=>update(t=>{t.contenidos=Array.isArray(t.contenidos)?t.contenidos:[];if(!t.contenidos.includes(item.id))t.contenidos.push(item.id);}),'btn'));
-        results.append(line);
-       }
-       if(!matches.length)results.append(element('p','Sin coincidencias. Revisá la búsqueda.','muted'));
-      };
-      query.addEventListener('input',showMatches);contentBox.append(query,results);showMatches();card.append(contentBox);
-     }
-     for(const [key,label] of [['punto_partida','Punto de partida'],['indagacion','Indagación'],['produccion','Producción'],['evaluacion','Evaluación']])
-      card.append(field(label,p.etapas[key],v=>update(t=>{t.etapas[key]=v;}),true));
-    }
     if(mayCompose())card.append(button('Eliminar agrupamiento',()=>{if(confirm('¿Eliminar este espacio del borrador local?'))change(()=>{selected=null;return eliminarEspacioBa15(draft,{nivel:levelNum,espacioId:e.id});});},'btn'));
    }
    main.append(card);
@@ -268,5 +328,5 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
  }
  render();
  loadV2Fg().then(rows=>{nesContents=rows.filter(x=>x.year===1||x.year===2);nesLoading=false;render();}).catch(err=>{nesLoading=false;nesError=err.message||String(err);render();});
- return {destroy(){host.replaceChildren();},getDraft(){return structuredClone(draft);},isDirty(){return dirty;}};
+ return {destroy(){host.replaceChildren();if(developmentHost)developmentHost.replaceChildren();},getDraft(){return structuredClone(draft);},isDirty(){return dirty;}};
 }
