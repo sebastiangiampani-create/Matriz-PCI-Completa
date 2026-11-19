@@ -68,6 +68,11 @@ function canEdit(s){
  return s.role==='admin'||s.role==='editor'
    ||(s.role==='user'&&(s.permissions||[]).includes('pci.edit'));
 }
+function canDeclareOrientations(s){
+ // El referente institucional puede declarar la oferta (modelo, orientación
+ // y turno) de su escuela. NO puede escribir documentos ni planes FG/FO.
+ return canEdit(s)||s.role==='school_admin';
+}
 function actor(s){
  const id=s.identity||{};
  return clean([id.first_name,id.last_name].filter(Boolean).join(' ')||id.email||s.username||s.user||s.role,160);
@@ -155,7 +160,7 @@ Deno.serve(async req=>{
    return json({pcis:Array.isArray(list)?list:[]});
   }
   if(action==='create-school-pci'){
-   if(!canEdit(s))return err('Sin permiso de edición.',403);
+   if(!canDeclareOrientations(s))return err('Sin permiso para declarar orientaciones.',403);
    const model=String(body.model||''),shift=String(body.shift_id||''),title=clean(body.title,150);
    if(!ALLOWED_MODELS.includes(model)||!ALLOWED_SHIFTS.includes(shift)||title.length<3)return err('Modelo, turno o título inválido.');
    const orientation=model==='tecnica'?'':String(body.orientation_id||'');
