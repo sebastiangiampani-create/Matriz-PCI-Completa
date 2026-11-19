@@ -1,4 +1,5 @@
 import {BA15_NIVELES,BA15_CCC} from './reglas-curriculares.mjs';
+import {loadV2Fg} from '../integracion-curricular/catalogos.js';
 import {BA15_TERMS,crearBorradorBa15,crearEspacioBa15,asignarMateriaBa15,quitarMateriaBa15,actualizarEspacioBa15,eliminarEspacioBa15,validarBorradorBa15} from './constructor.mjs';
 const element=(tag,value,klass)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;if(klass)x.className=klass;return x;};
 const button=(label,callback,klass='btn')=>{const x=element('button',label,klass);x.type='button';x.addEventListener('click',callback);return x;};
@@ -8,6 +9,7 @@ const download=(draft)=>{const blob=new Blob([JSON.stringify(draft,null,2)],{typ
 export function montarConstructorBa15(host,identity){
  const key=['pci-ba15-borrador-local-v1',identity.schoolId,identity.pciId].join(':');
  let draft=crearBorradorBa15(identity),term=1,selected=null,planIndex=0,view='mapa';
+ let nesContents=[],nesLoading=true,nesError='';
  try{
   const saved=JSON.parse(sessionStorage.getItem(key)||'null');
   if(saved?.schema===draft.schema&&saved?.schoolId===draft.schoolId&&saved?.pciId===draft.pciId&&saved?.orientationId===draft.orientationId&&saved?.shiftId===draft.shiftId){draft=saved;}
@@ -24,6 +26,7 @@ export function montarConstructorBa15(host,identity){
                button('Panel de control',()=>{view='control';render()},view==='control'?'btn primary':'btn'),
                button('Exportar borrador JSON',()=>download(draft)));
   host.append(tools,status);
+  if(view==='planes'&&term<=2){host.append(element('p',nesLoading?'Cargando contenidos FG oficiales NES de 1.º y 2.º…':nesError?'No se pudo cargar la base NES: '+nesError:'Base NES 1.º + 2.º disponible para Nivel I: '+nesContents.length+' contenidos con año de origen identificado.','muted'));}
   if(view==='control'){
    const total=draft.niveles.reduce((n,l)=>n+l.espacios.length,0);
    const panel=element('div','','workCard');panel.append(element('h3','Control de construcción curricular'),element('p',total+' espacios creados · '+draft.niveles.length+' niveles · 8 cuatrimestres.'));
@@ -102,6 +105,36 @@ export function montarConstructorBa15(host,identity){
      });
      card.append(field('Nombre del plan',p.nombre,v=>update(t=>{t.nombre=v;})));
      card.append(field('Objetivos',p.objetivos,v=>update(t=>{t.objetivos=v;}),true));
+     if(levelNum===1&&!nesLoading&&!nesError){
+      const contentBox=element('section','','formCard');
+      contentBox.append(element('h4','Contenidos NES · 1.º y 2.º año'));
+      contentBox.append(element('p','Elegí los contenidos para este plan. El año NES es la procedencia del contenido, no un nuevo nivel BA +15.','muted'));
+      const chosen=Array.isArray(p.contenidos)?p.contenidos:[];
+      for(const id of chosen){
+       const item=nesContents.find(x=>x.id===id);
+       const line=element('div','','ba15Member');
+       line.append(element('span',item?'NES '+item.year+'.º · '+item.subject+' · '+item.text:'Contenido '+id+' (revisar correspondencia)'));
+       line.append(button('Quitar',()=>update(t=>{t.contenidos=(t.contenidos||[]).filter(x=>x!==id);}),'btn'));
+       contentBox.append(line);
+      }
+      const query=element('input');query.type='search';query.placeholder='Buscar por materia, eje o contenido NES…';query.setAttribute('aria-label','Buscar contenidos NES 1.º y 2.º');
+      const results=element('div','','ba15ContentResults');
+      const showMatches=()=>{
+       results.replaceChildren();
+       const search=query.value.trim().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
+       if(search.length<2){results.append(element('p','Escribí al menos dos caracteres para buscar.','muted'));return;}
+       const matches=nesContents.filter(x=>!chosen.includes(x.id)&&[x.subject,x.area,x.axis,x.subaxis,x.text].some(v=>String(v||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().includes(search))).slice(0,35);
+       for(const item of matches){
+        const line=element('div','','ba15Subject');
+        line.append(element('small','NES '+item.year+'.º · '+item.subject+' · '+item.axis));
+        line.append(element('span',item.text));
+        line.append(button('Agregar al plan',()=>update(t=>{t.contenidos=Array.isArray(t.contenidos)?t.contenidos:[];if(!t.contenidos.includes(item.id))t.contenidos.push(item.id);}),'btn'));
+        results.append(line);
+       }
+       if(!matches.length)results.append(element('p','Sin coincidencias. Revisá la búsqueda.','muted'));
+      };
+      query.addEventListener('input',showMatches);contentBox.append(query,results);showMatches();card.append(contentBox);
+     }
      for(const [key,label] of [['punto_partida','Punto de partida'],['indagacion','Indagación'],['produccion','Producción'],['evaluacion','Evaluación']])
       card.append(field(label,p.etapas[key],v=>update(t=>{t.etapas[key]=v;}),true));
     }
@@ -112,5 +145,6 @@ export function montarConstructorBa15(host,identity){
   layout.append(aside,main);host.append(layout);
  }
  render();
+ loadV2Fg().then(rows=>{nesContents=rows.filter(x=>x.year===1||x.year===2);nesLoading=false;render();}).catch(err=>{nesLoading=false;nesError=err.message||String(err);render();});
  return {destroy(){host.replaceChildren();},getDraft(){return structuredClone(draft);}};
 }
