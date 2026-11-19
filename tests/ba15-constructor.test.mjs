@@ -43,3 +43,14 @@ test('valida duplicación por cuatrimestre sin bloquear una materia en C1 y C2',
  d=asignarMateriaBa15(d,{nivel:1,espacioId:c.id,materiaId:subject});
  assert.ok(validarBorradorBa15(d).advertencias.length>0);
 });
+
+test('CCC queda fuera del cálculo y de los cuatrimestres; el trabajo previo se conserva',()=>{
+ const draft=crearBorradorBa15(id);
+ const before=structuredClone(draft);
+ const result=validarBorradorBa15({...draft,ccc:[]});
+ assert.equal(result.errores.some(x=>x.includes('CCC')),false);
+ assert.equal(result.advertencias.some(x=>x.includes('CCC')),false);
+ assert.equal(draft.ccc.length,10);
+ assert.deepEqual(draft,before);
+ assert.equal(BA15_TERMS.length,8);
+});
