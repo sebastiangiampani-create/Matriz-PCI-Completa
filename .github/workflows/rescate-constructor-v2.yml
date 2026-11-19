@@ -37,3 +37,29 @@ jobs:
         run: |
           git fetch origin main
           git diff --quiet origin/main...HEAD -- app.js app.html app.css pci-model.js escuela-online.html tecnica/app.html supabase/functions/pci-multipci/index.ts
+
+  navegador-constructor-v2:
+    runs-on: ubuntu-latest
+    needs: validar-reglas-v2
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preparar Chrome para la revisión de V2
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+      - name: Probar constructor real, historial, arrastre y vuelta de fases
+        run: |
+          mkdir -p test-artifacts/multipci-portal
+          node tests/multipci-portal-browser.mjs
+      - name: Guardar las capturas sin publicar en main
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rescate-constructor-v2-visual
+          path: test-artifacts/multipci-portal
+          if-no-files-found: ignore
+          retention-days: 7
