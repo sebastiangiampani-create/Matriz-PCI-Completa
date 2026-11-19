@@ -238,7 +238,13 @@ try{
   const source=[...document.querySelectorAll('#ba15Builder .ba15Subject[draggable="true"]')]
    .find(x=>x.textContent.includes('Matemática'));
   const target=document.querySelector('#ba15Builder .mapTable tbody tr:first-child td:first-child .ba15EmptySlot');
-  if(!source||!target)return {ok:false,reason:'falta origen o destino'};
+  if(!source||!target)return {ok:false,reason:'falta origen o destino',
+   sourcePresent:!!source,targetPresent:!!target,
+   cards:[...document.querySelectorAll('#ba15Builder .ba15Subject')].map(x=>({
+    name:x.textContent.slice(0,60),draggable:x.draggable})).slice(0,5),
+   slots:[...document.querySelectorAll('#ba15Builder .mapTable tbody tr:first-child td:first-child button')]
+    .map(x=>({text:x.textContent,className:x.className})).slice(0,5),
+   visibleText:document.querySelector('#ba15Builder')?.textContent?.slice(0,450)};
   const transfer=new DataTransfer();
   source.dispatchEvent(new DragEvent('dragstart',{bubbles:true,cancelable:true,dataTransfer:transfer}));
   target.dispatchEvent(new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:transfer}));
