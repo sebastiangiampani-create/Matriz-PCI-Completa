@@ -72,15 +72,18 @@
           <div class="actions"><button type="submit" class="btn primary">Crear PCI</button><button type="button" class="btn" id="cancelPci">Cancelar</button></div>
         </form>
         <hr>
-        <button id="showNewSchool" class="btn" type="button" hidden>+ Dar de alta una escuela nueva</button>
-        <form id="formNewSchool" class="formCard" hidden>
+        <details id="schoolAdminTools" class="school-admin-tools" hidden>
+          <summary>Administrar escuelas</summary>
+          <button id="showNewSchool" class="btn" type="button" hidden>+ Dar de alta una escuela nueva</button>
+          <form id="formNewSchool" class="formCard" hidden>
           <h3>Nueva institución</h3>
           <label>Nombre oficial<input id="schoolNameInput" required maxlength="150"></label>
           <label>CUE o código<input id="schoolCueInput" required maxlength="35"></label>
           <label>Correo institucional<input id="schoolEmailInput" type="email" maxlength="180"></label>
           <label>Año de incorporación<input id="schoolYearInput" type="number" min="2020" max="2100" value="2026"></label>
           <div class="actions"><button type="submit" class="btn primary">Dar de alta</button><button type="button" class="btn" id="cancelSchool">Cancelar</button></div>
-        </form>
+          </form>
+        </details>
       </aside>
       <section class="workspace">
         <div id="empty" class="panel card">
