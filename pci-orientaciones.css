@@ -1140,3 +1140,8 @@ h3 {letter-spacing:-.01em;}
 .layout .pci-v2-content-results{display:grid;gap:7px}
 .layout .pci-v2-content-selected button{font-size:.68rem;white-space:nowrap}
 @media(max-width:650px){.layout .pci-v2-content-option{grid-template-columns:1fr}.layout .pci-v2-subject-row{flex-wrap:wrap}}
+
+.layout .pci-v2-own-form{display:grid;gap:8px;padding:12px;background:#f6fafb;border:1px solid var(--line);border-radius:12px}
+.layout .pci-v2-own-form input,.layout .pci-v2-own-form textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit}
+.layout .pci-v2-own-form textarea{min-height:88px}
+.layout .pci-v2-own-form button{justify-self:start}
