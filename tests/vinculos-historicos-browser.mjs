@@ -74,7 +74,7 @@ try{
  assert.deepEqual(saved.assignments.find(a=>a.id==='t1').pci_ids,[ids[2]]);
  assert.equal(JSON.stringify(historical),original,'El histórico nunca se modifica');
  await page.screenshot({path:'test-artifacts/multipci-portal/asignacion-fg-a-varios-y-especificas.png',fullPage:true});
- await page.locator('.school-offer-card').filter({hasText:'Comunicación Mañana'}).getByRole('button',{name:/1 · Constructor/}).click();
+ await page.locator('.school-offer-card').filter({hasText:'Comunicación Mañana'}).locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
  await page.locator('#offerPane:not([hidden])').waitFor({timeout:20000});
  const preview=page.locator('#pciHistoricLinks');
  assert.match(await preview.textContent(),/3 contenidos y 2 planes|3 contenidos y 2 planes/);
@@ -84,7 +84,7 @@ try{
  assert.match(await preview.textContent(),/Trabajo de comprensión lectora|Lengua trabajada/);
  await page.locator('#editor [data-back-to-school]').click();
  await page.locator('#empty:not([hidden])').waitFor();
- await page.locator('.school-offer-card').filter({hasText:'Economía Tarde'}).getByRole('button',{name:/1 · Constructor/}).click();
+ await page.locator('.school-offer-card').filter({hasText:'Economía Tarde'}).locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
  await page.locator('#offerPane:not([hidden])').waitFor({timeout:20000});
  const econ=await page.locator('#pciHistoricLinks').textContent();
  assert.match(econ,/Lengua trabajada|2 contenidos y 1 planes/);
