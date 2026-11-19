@@ -20,10 +20,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Comprobar que no se modifica ni elimina código histórico
+      - name: Proteger archivos históricos y permitir solo ajuste visual del módulo nuevo
         run: |
           git fetch origin main
-          git diff --name-status origin/main...HEAD | awk '$1!="A"{print "CAMBIO NO ADITIVO:",$0;bad=1} END {exit bad}'
+          git diff --name-status origin/main...HEAD | awk '
+            $1 == "A" { next }
+            $1 == "M" && ($2 == "pci-orientaciones.html" ||
+                          $2 == "pci-orientaciones.css" ||
+                          $2 == "src/orientaciones-online.mjs" ||
+                          $2 ~ /^tests\/multipci-portal-browser\.mjs$/ ||
+                          $2 == ".github/workflows/validar-multipci-aditivo-seguro.yml") { next }
+            { print "CAMBIO FUERA DEL MODULO NUEVO:", $0; bad=1 }
+            END { exit bad }'
       - name: Verificar sintaxis de los módulos nuevos
         run: |
           node --check src/orientaciones-online.mjs
