@@ -24,8 +24,6 @@ export function montarConstructorBa15(host,identity){
                button('Panel de control',()=>{view='control';render()},view==='control'?'btn primary':'btn'),
                button('Exportar borrador JSON',()=>download(draft)));
   host.append(tools,status);
-  const clarification=element('p','El CCC es una instancia independiente de reconocimiento de saberes previos. No constituye Nivel V, no ocupa cuatrimestres C1–C8 y no suma cobertura del mapa.','muted');
-  host.append(clarification);
   if(view==='control'){
    const total=draft.niveles.reduce((n,l)=>n+l.espacios.length,0);
    const panel=element('div','','workCard');panel.append(element('h3','Control de construcción curricular'),element('p',total+' espacios creados · '+draft.niveles.length+' niveles · 8 cuatrimestres.'));
