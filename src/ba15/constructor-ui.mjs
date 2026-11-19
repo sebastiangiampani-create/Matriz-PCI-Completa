@@ -9,12 +9,31 @@ const download=(draft)=>{const blob=new Blob([JSON.stringify(draft,null,2)],{typ
 export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyDemo=false,saveRemote=null,canEditRemote=false}={}){
  const key=['pci-ba15-borrador-local-v1',identity.schoolId,identity.pciId].join(':');
  let draft=initialDraft?structuredClone(initialDraft):crearBorradorBa15(identity),term=1,selected=null,planIndex=0,view='mapa';
- let nesContents=[],nesLoading=true,nesError='',dirty=false,remoteBusy=false;
+ let nesContents=[],nesLoading=true,nesError='',dirty=false,remoteBusy=false,recoveryDraft=null;
+ const matchesIdentity=saved=>saved?.schema===draft.schema&&
+  Number(saved?.schoolId)===Number(draft.schoolId)&&saved?.pciId===draft.pciId&&
+  saved?.orientationId===draft.orientationId&&saved?.shiftId===draft.shiftId;
  try{
-  const saved=initialDraft?null:JSON.parse(sessionStorage.getItem(key)||'null');
-  if(saved?.schema===draft.schema&&saved?.schoolId===draft.schoolId&&saved?.pciId===draft.pciId&&saved?.orientationId===draft.orientationId&&saved?.shiftId===draft.shiftId){draft=saved;}
+  const previous=JSON.parse(sessionStorage.getItem(key+'.recovery')||'null');
+  if(matchesIdentity(previous))recoveryDraft=previous;
+  const saved=readOnlyDemo?null:JSON.parse(sessionStorage.getItem(key)||'null');
+  if(matchesIdentity(saved)){
+   if(initialDraft&&JSON.stringify(saved)!==JSON.stringify(initialDraft)){
+    if(confirm('Hay un borrador BA +15 local distinto del servidor. ¿Recuperarlo para revisar y guardar sin perder lo trabajado?')){
+     draft=saved;dirty=true;
+    }else{
+     recoveryDraft=saved;
+     try{sessionStorage.setItem(key+'.recovery',JSON.stringify(saved));}catch{}
+    }
+   }else if(!initialDraft){
+    draft=saved;dirty=true;
+   }
+  }
  }catch{}
- const status=element('p',readOnlyDemo?'Escuela ficticia de demostración · los cambios permanecen únicamente en esta pestaña.':'Borrador local: no conectado al guardado de producción. Exportá una copia JSON para conservar el trabajo.','muted');
+ const status=element('p',readOnlyDemo?'Escuela ficticia de demostración · los cambios permanecen únicamente en esta pestaña.':
+  recoveryDraft?'Hay un borrador anterior reservado. Descargalo antes de reemplazarlo.':
+  dirty?'Borrador local recuperado. Verificá y guardá online sin reemplazar otro PCI.':
+  'Borrador BA +15 independiente. Exportá una copia JSON como resguardo.','muted');
  const save=()=>{if(readOnlyDemo){status.textContent='Demostración: cambios solo en memoria, sin conexión con datos institucionales.';return;}dirty=true;try{sessionStorage.setItem(key,JSON.stringify(draft));status.textContent='Cambios solo en esta pestaña. Usá «Guardar BA +15 online» para confirmarlos en el servidor.';}catch{status.textContent='No se pudo guardar localmente. Exportá el JSON antes de salir.';}};
  const persistRemote=async()=>{if(!saveRemote||!canEditRemote||!dirty||remoteBusy||readOnlyDemo)return;remoteBusy=true;status.textContent='Verificando revisión y guardando BA +15…';const payload=structuredClone(draft);try{await saveRemote(payload);const unchanged=JSON.stringify(payload)===JSON.stringify(draft);dirty=!unchanged;if(unchanged){try{sessionStorage.removeItem(key);}catch{}status.textContent='BA +15 guardado online: revisión confirmada por lectura posterior.';}else{status.textContent='Se guardó una revisión anterior. Hay cambios posteriores sin guardar: conservá el borrador y volvé a guardar.';}}catch(error){status.textContent='NO se guardó online: '+(error?.message||error)+'. Conservá el JSON de resguardo.';}finally{remoteBusy=false;render();}};
  function change(fn){try{draft=fn();save();render();}catch(e){status.textContent='No se modificó: '+e.message;}}
@@ -27,6 +46,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
                button('Panel de control',()=>{view='control';render()},view==='control'?'btn primary':'btn'),
                button('Exportar borrador JSON',()=>download(draft)));
   if(saveRemote&&canEditRemote&&!readOnlyDemo){const online=button(remoteBusy?'Guardando…':'Guardar BA +15 online',persistRemote,'btn primary');online.disabled=!dirty||remoteBusy;tools.append(online);}
+  if(recoveryDraft&&!readOnlyDemo)tools.append(button('Descargar borrador anterior protegido',()=>download(recoveryDraft)));
   host.append(tools,status);
   if(view==='planes'&&term<=2){host.append(element('p',nesLoading?'Cargando contenidos FG oficiales NES de 1.º y 2.º…':nesError?'No se pudo cargar la base NES: '+nesError:'Base NES 1.º + 2.º disponible para Nivel I: '+nesContents.length+' contenidos con año de origen identificado.','muted'));}
   if(view==='control'){
