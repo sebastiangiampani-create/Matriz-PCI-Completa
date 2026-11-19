@@ -4,6 +4,13 @@ on:
     branches: [main]
     paths:
       - 'src/constructor-v2-ui.mjs'
+      - 'src/orientaciones-online.mjs'
+      - 'src/ba15/**'
+      - 'src/tecnica/**'
+      - 'src/pci-flujo-fases.mjs'
+      - 'tests/flujo-constructor-tres-modalidades.test.mjs'
+      - 'tests/ba15-constructor.test.mjs'
+      - 'tests/tecnica-integrada-v2.test.mjs'
       - 'src/integracion-curricular/constructor-mapa-unificado.mjs'
       - 'tests/constructor-mapa-unificado.test.mjs'
       - 'pci-orientaciones.css'
@@ -31,8 +38,12 @@ jobs:
           node --check src/normativa/adaptador-mapa-media-20261117.mjs
           node --check src/pci-fase-desarrollo-fg.mjs
           node --check src/orientaciones-online.mjs
+          node --check src/ba15/constructor-ui.mjs
+          node --check src/tecnica/interfaz-integrada-v2.mjs
+          node --check src/tecnica/espacio-trabajo-v2.mjs
+          node --check tests/flujo-constructor-tres-modalidades.test.mjs
       - name: Reglas PCI V2 - obligatoriedad, duplicados, replica y resguardo
-        run: node --test tests/constructor-mapa-unificado.test.mjs tests/rescate-constructor-v2-integracion.test.mjs tests/pci-fase-desarrollo-fg.test.mjs tests/adaptador-media-final-20261117.test.mjs
+        run: node --test tests/constructor-mapa-unificado.test.mjs tests/rescate-constructor-v2-integracion.test.mjs tests/pci-fase-desarrollo-fg.test.mjs tests/adaptador-media-final-20261117.test.mjs tests/flujo-constructor-tres-modalidades.test.mjs tests/ba15-constructor.test.mjs tests/tecnica-integrada-v2.test.mjs
       - name: Conservar originales escolares fuera del diff
         run: |
           git fetch origin main
