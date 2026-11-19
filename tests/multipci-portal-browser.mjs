@@ -237,19 +237,19 @@ try{
  const baDropped=await page.evaluate(()=>{
   const source=[...document.querySelectorAll('#ba15Builder .ba15Subject[draggable="true"]')]
    .find(x=>x.textContent.includes('Matemática'));
-  const target=document.querySelector('#ba15Builder .mapTable tbody tr:first-child td:first-child .ba15EmptySlot');
+  const target=document.querySelector('#ba15Builder .mapTable tbody tr:first-child td:first-of-type .ba15EmptySlot');
   if(!source||!target)return {ok:false,reason:'falta origen o destino',
    sourcePresent:!!source,targetPresent:!!target,
    cards:[...document.querySelectorAll('#ba15Builder .ba15Subject')].map(x=>({
     name:x.textContent.slice(0,60),draggable:x.draggable})).slice(0,5),
-   slots:[...document.querySelectorAll('#ba15Builder .mapTable tbody tr:first-child td:first-child button')]
+   slots:[...document.querySelectorAll('#ba15Builder .mapTable tbody tr:first-child td:first-of-type button')]
     .map(x=>({text:x.textContent,className:x.className})).slice(0,5),
    visibleText:document.querySelector('#ba15Builder')?.textContent?.slice(0,450)};
   const transfer=new DataTransfer();
   source.dispatchEvent(new DragEvent('dragstart',{bubbles:true,cancelable:true,dataTransfer:transfer}));
   target.dispatchEvent(new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:transfer}));
   target.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:transfer}));
-  return {ok:[...document.querySelectorAll('#ba15Builder .mapTable tbody tr:first-child td:first-child .slot')]
+  return {ok:[...document.querySelectorAll('#ba15Builder .mapTable tbody tr:first-child td:first-of-type .slot')]
    .some(x=>x.textContent.includes('Matemática'))};
  });
  assert.equal(baDropped.ok,true,'BA +15 debe aceptar el drop de Matemática en Troncal C1: '+JSON.stringify(baDropped));
