@@ -288,10 +288,13 @@ async function init(){
     document.querySelectorAll('[data-back-to-school]').forEach(btn=>btn.addEventListener('click',()=>returnToSchool('push')));
     for(const id of ['schoolHomeLink','brandHomeLink'])$(id).addEventListener('click',goHome);
     window.addEventListener('popstate',onHistoryChange);
-    $('btnAddPci').onclick=()=>show('formCreatePci',true);
+    $('btnAddPci').onclick=()=>openPciForm();
     $('cancelPci').onclick=()=>show('formCreatePci',false);
     const o=$('orientation');
     ORIENTATIONS.forEach(x=>{const opt=elem('option',x.name);opt.value=x.id;o.appendChild(opt);});
+    for(const id of ['orientation','specialtyName','pciShift']){
+      $(id).addEventListener('change',suggestPciTitle);
+    }
     populateSpecialties();
     $('pciModel').addEventListener('change',updatePciModelFields);
     updatePciModelFields();
@@ -317,6 +320,8 @@ async function init(){
     window.addEventListener('beforeunload',e=>{if(hasUnsaved()){e.preventDefault();e.returnValue='';}});
     show('app');
     await reloadSchool();
+    if(!pcis.length&&canEdit()&&new URLSearchParams(location.search).get('nuevo')==='1')
+      openPciForm();
     routeDepth=Number(history.state?.scope==='pci-v2-route'?history.state.depth:0)||0;
     if(requestedRoute.pciId){
       // No se crea una revisión ni se reemplaza ningún dato: solo se
@@ -431,9 +436,20 @@ function renderSchoolHome(){
     const chip=elem('span',value+' '+label,'school-count-chip');summary.append(chip);
   }
   if(!pcis.length){
-    const box=elem('div',undefined,'school-no-pcis');
-    note('h3','La Formación General anterior está disponible',box);
-    note('p','Para sumar orientaciones, especialidades o BA +15, elegí «+ Agregar PCI». El trabajo histórico se conserva.',box,'muted');
+    const box=elem('div',undefined,'school-no-pcis school-start-card');
+    note('span','PRIMER INGRESO · CONSTRUCCIÓN CURRICULAR','eyebrow',box);
+    note('h3','Esta escuela todavía no tiene un PCI',box);
+    note('p','El primer paso es crear su PCI: seleccioná la modalidad (Media, Técnica o BA +15), la orientación o especialidad y el turno. Después vas a construir el mapa con materias FG y FO; finalmente podrás entrar al Desarrollo Curricular de ese PCI.',box,'muted');
+    const steps=elem('p','1 · Elegir modalidad y turno   →   2 · Constructor curricular   →   3 · Desarrollo curricular','school-start-steps');
+    box.append(steps);
+    if(canEdit()){
+      const start=elem('button','Crear primer PCI y comenzar','btn primary');
+      start.id='startFirstPci';start.type='button';
+      start.onclick=openPciForm;box.append(start);
+    }else note('p','Solicitá a administración o a la conducción con permisos de edición la creación del primer PCI.','muted',box);
+    const preservation=elem('p',undefined,'muted');
+    preservation.textContent='Si la institución tiene una Formación General anterior, se conserva por separado y no se borra al crear el nuevo PCI.';
+    box.append(preservation);
     host.append(box);return;
   }
   if(!displayed.length){
@@ -503,6 +519,25 @@ function populateSpecialties(){
     select.appendChild(group);
   }
 }
+let lastSuggestedPciTitle='';
+function suggestPciTitle(){
+  const input=$('pciTitleInput');
+  if(input.value.trim()&&input.value.trim()!==lastSuggestedPciTitle)return;
+  const model=$('pciModel').value;
+  const shift=$('pciShift').selectedOptions?.[0]?.textContent?.trim()||$('pciShift').value;
+  const focus=model==='tecnica'?$('specialtyName').value:
+    ($('orientation').selectedOptions?.[0]?.textContent?.trim()||'Orientación');
+  const label=(model==='tecnica'?'Técnica':model==='ba15'?'BA +15':'Media');
+  const suggestion=focus?label+' · '+focus+' · Turno '+shift:'';
+  input.value=suggestion;
+  lastSuggestedPciTitle=suggestion;
+}
+function openPciForm(){
+  if(!canEdit())return;
+  show('formCreatePci',true);
+  suggestPciTitle();
+  $('formCreatePci').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 function updatePciModelFields(){
   const technical=$('pciModel').value==='tecnica';
   show('technicalSpecialtyGroup',technical);
@@ -511,6 +546,7 @@ function updatePciModelFields(){
   $('orientation').required=!technical;
   $('specialtyName').disabled=!technical;
   $('specialtyName').required=technical;
+  suggestPciTitle();
 }
 async function createPci(e){
   e.preventDefault();if(!canEdit())return;
@@ -537,6 +573,7 @@ async function createPci(e){
     });
     show('formCreatePci',false);
     $('pciTitleInput').value='';
+    lastSuggestedPciTitle='';
     $('specialtyName').value='';
     $('pciModel').value='comun';
     updatePciModelFields();
