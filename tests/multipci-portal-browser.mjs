@@ -77,7 +77,9 @@ try{
  });
  await page.goto('http://127.0.0.1:'+port+'/pci-orientaciones.html',{waitUntil:'domcontentloaded'});
  await page.locator('#app:not([hidden])').waitFor({timeout:35000});
- await page.locator('#pciCounts').getByText(/1 PCI/).waitFor();
+ await page.waitForFunction(()=>document.getElementById('pciCounts')?.textContent?.includes('1 PCI'));
+ const historic=await page.locator('#historicalPciLink').getAttribute('href');
+ assert.match(historic||'',/escuela-online\.html\?school=1001/,'La escuela debe poder abrir su FG original');
  await page.locator('#pciList').getByText('Comunicación · Turno mañana').waitFor();
  await page.locator('#btnAddPci').click();
  await page.locator('#formCreatePci:not([hidden])').waitFor();
