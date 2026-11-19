@@ -168,12 +168,14 @@ async function init(){
     sel.value=String(schoolId);
     sel.addEventListener('change',async()=>{if(!canLeave()){sel.value=String(schoolId);return;}schoolId=Number(sel.value);await reloadSchool().catch(err=>message(err.message,'error'));});
     $('showNewSchool').hidden=!canCreateSchool();
+    $('schoolAdminTools').hidden=!canCreateSchool();
     $('btnAddPci').disabled=!canEdit();
     $('turnFilter').addEventListener('change',renderPcis);
     document.querySelectorAll('[data-back-to-school]').forEach(btn=>btn.addEventListener('click',returnToSchool));
     $('showNewSchool').onclick=()=>show('formNewSchool',true);
     // Acceso directo desde Panel general; requiere sesión administrativa real.
     if(new URL(location.href).searchParams.get('accion')==='alta-escuela'&&canCreateSchool()){
+      $('schoolAdminTools').open=true;
       show('formNewSchool',true);
       $('schoolNameInput').focus();
     }
