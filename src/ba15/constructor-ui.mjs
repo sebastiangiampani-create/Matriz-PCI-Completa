@@ -1,6 +1,7 @@
 import {BA15_NIVELES,BA15_CCC} from './reglas-curriculares.mjs';
 import {loadV2Fg} from '../integracion-curricular/catalogos.js';
 import {phaseGate,phaseText} from '../pci-flujo-fases.mjs';
+import {updateBa15Plan,readStageDescription} from './desarrollo-plan-seguro.mjs';
 import {BA15_TERMS,crearBorradorBa15,crearEspacioBa15,asignarMateriaBa15,quitarMateriaBa15,actualizarEspacioBa15,eliminarEspacioBa15,validarBorradorBa15} from './constructor.mjs';
 const element=(tag,value,klass)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;if(klass)x.className=klass;return x;};
 const button=(label,callback,klass='btn')=>{const x=element('button',label,klass);x.type='button';x.addEventListener('click',callback);return x;};
@@ -122,6 +123,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   const available=level.espacios.filter(e=>e.term===term);
   const layout=element('div','','ba15DevelopmentGrid');
   const side=element('section','','content-bag card constructor-side'),editor=element('section','','workCard');
+  editor.classList.add('ba15-plan-editor');
   side.append(element('h3','Espacios curriculares · C'+term));
   if(!available.length)side.append(element('p','No hay agrupamientos en este cuatrimestre. Volvé al Constructor.','muted'));
   for(const e of available){
@@ -141,13 +143,16 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    for(let i=0;i<4;i++)tabs.append(button('Plan '+(i+1),()=>{planIndex=i;render()},'tab'+(i===planIndex?' active':''));
    editor.append(tabs);
    const p=space.planes[planIndex];
-   const update=fn=>change(()=>{
-    const next=structuredClone(draft),plan=next.niveles[levelNum-1].espacios.find(e=>e.id===space.id).planes[planIndex];
-    fn(plan);return next;
-   },'desarrollo');
-   editor.append(field('Nombre del plan',p.nombre,v=>update(t=>{t.nombre=v;})));
-   editor.append(field('Sinopsis / descripción del plan',p.sinopsis||'',v=>update(t=>{t.sinopsis=v;}),true));
-   editor.append(field('Objetivos de aprendizaje',p.objetivos||'',v=>update(t=>{t.objetivos=v;}),true));
+   const update=patch=>{
+    if(!mayCompose()){status.textContent='Este PCI está en modo lectura. No se modificó el desarrollo.';return;}
+    change(()=>updateBa15Plan(draft,{
+     schoolId:identity.schoolId,pciId:identity.pciId,nivel:levelNum,
+     espacioId:space.id,planIndex,patch
+    }),'desarrollo');
+   };
+   editor.append(field('Nombre del plan',p.nombre,v=>update({nombre:v})));
+   editor.append(field('Sinopsis / descripción del plan',p.sinopsis||'',v=>update({sinopsis:v}),true));
+   editor.append(field('Objetivos de aprendizaje',p.objetivos||'',v=>update({objetivos:v}),true));
    const contentBox=element('section','','formCard');
    contentBox.append(element('h4','Contenidos curriculares'));
    const chosen=Array.isArray(p.contenidos)?p.contenidos:[];
@@ -155,7 +160,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    for(const id of chosen){
     const item=nesContents.find(x=>x.id===id),line=element('div','','ba15Member');
     line.append(element('span',item?'NES '+item.year+'.º · '+item.subject+' · '+item.text:String(id)));
-    line.append(button('Quitar',()=>update(t=>{t.contenidos=(t.contenidos||[]).filter(x=>x!==id)}),'btn'));
+    line.append(button('Quitar',()=>update({contenidos:chosen.filter(x=>x!==id)}),'btn'));
     contentBox.append(line);
    }
    if(levelNum===1&&!nesLoading&&!nesError){
@@ -169,23 +174,16 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
      for(const item of matches){
       const line=element('div','','ba15Subject');
       line.append(element('small','NES '+item.year+'.º · '+item.subject+' · '+item.axis),element('span',item.text));
-      line.append(button('Agregar al plan',()=>update(t=>{
-       t.contenidos=Array.isArray(t.contenidos)?t.contenidos:[];
-       if(!t.contenidos.includes(item.id))t.contenidos.push(item.id);
-      }),'btn'));results.append(line);
+      line.append(button('Agregar al plan',()=>update({contenidos:[...chosen,item.id]}),'btn'));results.append(line);
      }
     });
     contentBox.append(query,results);
    }
-   contentBox.append(field('Otros contenidos / adecuaciones curriculares',p.contenidosPropios||'',v=>update(t=>{t.contenidosPropios=v;}),true));
+   contentBox.append(field('Otros contenidos / adecuaciones curriculares',p.contenidosPropios||'',v=>update({contenidosPropios:v}),true));
    editor.append(contentBox);
    editor.append(element('h4','Secuencia didáctica · cuatro momentos'));
    for(const [key,label] of [['punto_partida','Punto de partida'],['indagacion','Indagación'],['produccion','Producción'],['evaluacion','Evaluación']]){
-    editor.append(field(label,typeof p.etapas?.[key]==='string'?p.etapas[key]:p.etapas?.[key]?.description||'',v=>update(t=>{
-     t.etapas=t.etapas||{};
-     if(typeof t.etapas[key]==='object'&&t.etapas[key]!==null)t.etapas[key]={...t.etapas[key],description:v};
-     else t.etapas[key]=v;
-    }),true));
+    editor.append(field(label,readStageDescription(p,key),v=>update({[key]:v}),true));
    }
   }
   layout.append(side,editor);panel.append(layout);
