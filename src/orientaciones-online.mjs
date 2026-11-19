@@ -18,7 +18,7 @@ import {SPECIALTIES,findSpecialty} from './tecnica/pautas-pci-20261005.mjs';
 import {createIntegratedTechnicalUI} from './tecnica/interfaz-integrada-v2.mjs';
 import {requireSchoolPci,newFgUnit,guardFgUnit,newOfferUnit,restoreOfferUnit,newFoUnit,guardFoUnit,inventory,editStageDescription} from './orientaciones-release-core.mjs';
 
-const API='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-access';
+const API='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-multipci';
 const $=id=>document.getElementById(id);
 const copy=v=>JSON.parse(JSON.stringify(v));
 const show=(id,yes=true)=>$(id).hidden=!yes;
