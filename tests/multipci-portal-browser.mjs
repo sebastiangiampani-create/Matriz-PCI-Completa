@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { resolve, extname, relative, sep } from 'node:path';
 import { chromium } from 'playwright';
+import {crearBorradorBa15,crearEspacioBa15,asignarMateriaBa15,actualizarEspacioBa15,validarBorradorBa15} from '../src/ba15/constructor.mjs';
 
 const root = process.cwd();
 const types = {'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.txt':'text/plain; charset=utf-8','.svg':'image/svg+xml'};
@@ -255,6 +256,53 @@ try{
  assert.match(await page.locator('#ba15Builder .pci-phase-state').textContent(),/Fase 1 pendiente/);
  assert.equal(state.pcis.length,2,'La navegación no debe borrar ningún PCI');
  assert.equal(state.units.get(unitKey)?.revision,1,'La navegación no modifica el guardado online');
+
+ // Escenario V2 de Fase 2: simular un mapa completo en la API de prueba
+ // para comprobar tarjetas, cuatro planes y reapertura sin afectar Supabase real.
+ let complete=crearBorradorBa15({pciId:newId,schoolId:1001,
+  orientationId:'economia_administracion',shiftId:'noche'});
+ for(let nivel=1;nivel<=4;nivel++){
+  for(const term of [nivel*2-1,nivel*2]){
+   complete=crearEspacioBa15(complete,{nivel,term,nombre:'Espacio Nivel '+nivel+' C'+term,formato:'troncal'});
+   const space=complete.niveles[nivel-1].espacios.at(-1);
+   for(const subject of complete.niveles[nivel-1].asignaturas){
+    complete=asignarMateriaBa15(complete,{nivel,espacioId:space.id,materiaId:subject.id});
+   }
+   complete=actualizarEspacioBa15(complete,{nivel,espacioId:space.id,
+    changes:{articulacion:'Articulación entre materias del nivel'}});
+  }
+ }
+ const fullCheck=validarBorradorBa15(complete);
+ assert.equal(fullCheck.valido,true,'La prueba exige un mapa BA +15 completo: '+[...fullCheck.errores,...fullCheck.advertencias].join(' | '));
+ state.units.set(unitKey,{exists:true,revision:2,base_version:'oferta-ba15-constructor-v1',document:complete});
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#app:not([hidden])').waitFor({timeout:25000});
+ const enterDevelopment=page.locator('#ba15Builder').getByRole('button',{name:'2 · Desarrollo curricular',exact:true});
+ await enterDevelopment.waitFor({timeout:25000});
+ assert.equal(await enterDevelopment.isEnabled(),true,'El mapa completo y guardado habilita la Fase 2');
+ await enterDevelopment.click();
+ await page.locator('#ba15Development:not([hidden])').waitFor();
+ assert.equal(await page.locator('#ba15Development .pci-development-card').count(),8,'Fase 2 presenta los ocho espacios por nivel/cuatrimestre');
+ await page.locator('#ba15Development .pci-development-card').first().click();
+ const planEditor=page.locator('#ba15Development .ba15-plan-editor');
+ await planEditor.getByText('Secuencia didáctica · cuatro momentos').waitFor();
+ await planEditor.getByLabel('Objetivos de aprendizaje').fill('Construir argumentos sustentados');
+ await planEditor.getByLabel('Objetivos de aprendizaje').press('Tab');
+ const persistPlan=page.locator('#ba15Development').getByRole('button',{name:'Guardar Desarrollo BA +15 online'});
+ await persistPlan.click();
+ await page.waitForFunction(()=>document.querySelector('#ba15Development')?.textContent?.includes('guardado online'),null,{timeout:15000});
+ assert.equal(state.units.get(unitKey)?.revision,3,'Guardar Plan 1 crea nueva revisión aislada');
+ assert.equal(state.units.get(unitKey)?.document.niveles[0].espacios[0].planes[0].objetivos,'Construir argumentos sustentados');
+ assert.equal(state.units.get(unitKey)?.document.niveles.length,4,'Desarrollar un plan no cambia los niveles');
+ assert.equal(state.units.get(unitKey)?.document.niveles[0].espacios[0].planes.length,4,'Los cuatro planes permanecen');
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#ba15Development:not([hidden])').waitFor({timeout:25000});
+ await page.locator('#ba15Development .pci-development-card').first().click();
+ assert.equal(await page.locator('#ba15Development .ba15-plan-editor').getByLabel('Objetivos de aprendizaje').inputValue(),
+  'Construir argumentos sustentados','Reabrir PCI recupera objetivos sin perder el desarrollo');
+ assert.equal(new URL(page.url()).searchParams.get('view'),'desarrollo');
+ console.log('E2E BA+15 FASE 2 OK: ocho espacios, cuatro planes, guardado de objetivos y recuperación por URL');
+
  assert.equal(pageConsole.length,0,'La nueva navegación no debe generar errores JavaScript: '+pageConsole.join(' | '));
  console.log('E2E OK: escuela Media+BA15, mapa y desarrollo desde tarjetas, retorno, filtros, guardado rev1 por PCI y sin errores JS.');
 
