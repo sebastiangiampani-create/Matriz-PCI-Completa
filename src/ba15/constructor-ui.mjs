@@ -174,7 +174,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    editor.append(element('h3',space.nombre));
    editor.append(element('p',space.formato+' · '+space.miembros.map(id=>level.asignaturas.find(s=>s.id===id)?.nombre||id).join(', '),'muted'));
    const tabs=element('div','','actions');
-   for(let i=0;i<4;i++)tabs.append(button('Plan '+(i+1),()=>{planIndex=i;render()},'tab'+(i===planIndex?' active':''));
+   for(let i=0;i<4;i++)tabs.append(button('Plan '+(i+1),()=>{planIndex=i;render()},'tab'+(i===planIndex?' active':'')));
    editor.append(tabs);
    const p=space.planes[planIndex];
    const update=patch=>{
