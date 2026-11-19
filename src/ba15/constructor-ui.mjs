@@ -121,9 +121,9 @@ export function montarConstructorBa15(host,identity){
       const results=element('div','','ba15ContentResults');
       const showMatches=()=>{
        results.replaceChildren();
-       const search=query.value.trim().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase();
+       const search=query.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
        if(search.length<2){results.append(element('p','Escribí al menos dos caracteres para buscar.','muted'));return;}
-       const matches=nesContents.filter(x=>!chosen.includes(x.id)&&[x.subject,x.area,x.axis,x.subaxis,x.text].some(v=>String(v||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().includes(search))).slice(0,35);
+       const matches=nesContents.filter(x=>!chosen.includes(x.id)&&[x.subject,x.area,x.axis,x.subaxis,x.text].some(v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(search))).slice(0,35);
        for(const item of matches){
         const line=element('div','','ba15Subject');
         line.append(element('small','NES '+item.year+'.º · '+item.subject+' · '+item.axis));
