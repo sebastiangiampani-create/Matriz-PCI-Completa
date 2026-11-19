@@ -245,7 +245,7 @@ export function arrangementWarnings(data){
     if(!g.members.length)warnings.push(g.name+' (C'+g.term+'): sin materias');
     if(['laboratorio','integrado'].includes(g.kind)&&g.members.length===1&&
       !approvedSingleGroup(g))
-      warnings.push(g.name+' (C'+g.term+'): requiere al menos dos materias, salvo excepción normativa V2.');
+      warnings.push(g.name+' (C'+g.term+'): no alcanza el mínimo de dos materias, salvo excepción normativa V2.');
     if(['laboratorio','integrado'].includes(g.kind)&&groupHours(g)>9)
       warnings.push(g.name+' (C'+g.term+'): supera las 9 horas cátedra.');
     if(g.kind==='troncal'&&g.members.length!==1)
