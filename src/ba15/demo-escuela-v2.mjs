@@ -1,6 +1,6 @@
-import {mostrarMapaBa15} from './ba15/mapa-ui.mjs';
-import {montarConstructorBa15} from './ba15/constructor-ui.mjs';
-import {crearBorradorBa15} from './ba15/constructor.mjs';
+import {mostrarMapaBa15} from './mapa-ui.mjs';
+import {montarConstructorBa15} from './constructor-ui.mjs';
+import {crearBorradorBa15} from './constructor.mjs';
 
 // Datos sinteticos; nunca conecta a la API, Supabase ni a escuelas reales.
 const identity={schoolId:999999,pciId:'demo-ba15-economia',orientationId:'economia_administracion',shiftId:'noche'};
