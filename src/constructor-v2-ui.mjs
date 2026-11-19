@@ -1,6 +1,6 @@
 import {
   ROWS,fgSubjectsByYear,historicGroups,compositionFor,createGrouping,
-  placeSubject,removeSubject,removeGrouping,arrangementWarnings,quarterYear,
+  placeSubject,promoteHistoricGroup,removeSubject,removeGrouping,arrangementWarnings,quarterYear,
   mapRow,subjectArea
 } from './integracion-curricular/constructor-mapa-unificado.mjs';
 import {foSubjectBank} from './integracion-curricular/mapa-oferta.js';
@@ -141,6 +141,16 @@ export function renderUnifiedConstructor({
       onChange(next);onNotice(s.name+' incorporada a la propuesta de C'+group.term+'. Falta guardar.');
     }catch(error){onError(error.message)}
   }
+  function assignToHistorical(group,evt){
+    if(!edit)return;
+    try{
+      const s=selectedSubject(evt);
+      const promoted=promoteHistoricGroup(composition,group);
+      const next=placeSubject(promoted,{groupId:group.id,subject:s});
+      onChange(next);
+      onNotice('Composición del espacio histórico revisada en una copia del PCI. Los contenidos y planes originales siguen intactos.');
+    }catch(error){onError(error.message)}
+  }
   function assignToFo(space,evt){
     if(!edit)return;
     try{
@@ -216,7 +226,8 @@ export function renderUnifiedConstructor({
     const row=el('tr');const title=el('th',rowName);row.append(title);
     for(let term=1;term<=10;term++){
       const cell=el('td',undefined,'constructor-cell');const items=[];
-      for(const g of groups.filter(x=>x.row===rowName&&x.startTerm<=term&&x.endTerm>=term)){
+      for(const g of groups.filter(x=>x.row===rowName&&x.startTerm<=term&&x.endTerm>=term&&
+        !proposed.some(p=>p.legacyGroupId===x.id&&p.area===x.area))){
         items.push({source:'legacy',name:g.name,model:g});
       }
       for(const g of proposed.filter(x=>x.row===rowName&&x.term<=term&&x.endTerm>=term)){
@@ -229,7 +240,10 @@ export function renderUnifiedConstructor({
       for(const item of items){
         const b=el('div',undefined,'constructor-group '+sourceColors[item.source]);
         const activate=()=>{
-          if(item.source==='legacy')onOpenHistoricalArea(item.model.area);
+          if(item.source==='legacy'){
+            if(selectedId)assignToHistorical(item.model);
+            else onOpenHistoricalArea(item.model.area);
+          }
           else if(item.source==='fo')assignToFo(item.model);
           else assignToProposal(item.model);
         };
@@ -241,13 +255,17 @@ export function renderUnifiedConstructor({
         });
         b.append(el('strong',item.name,'constructor-group-title'));
         const description=item.source==='legacy'
-          ?'FG conservada · '+item.model.contents+' contenidos · '+item.model.plans+' planes'
+          ?'FG conservada · '+item.model.contents+' contenidos · '+item.model.plans+' planes'+
+            (item.model.hasWork?' · trabajo protegido':' · plantilla revisable')
           :item.source==='fo'
             ?(item.model.members?.length||0)+' materias FO · '+item.model.kind
             :(item.model.members?.length||0)+' materias propuestas';
         b.append(smallNote(description));b.title=item.source==='legacy'
-          ?'Abrir FG histórica copiada, sin modificar el origen'
+          ?item.model.hasWork?'FG con contenidos o planes: conservada y protegida. Revisar equivalencias antes de cambiar materias.':
+            'Podés asignar materias a una copia de esta plantilla FG. El original se conserva.'
           :'Seleccioná una materia de la bolsa o arrastrala aquí';
+        if(item.source==='legacy'&&!item.model.hasWork)
+          droppable(b,event=>assignToHistorical(item.model,event));
         if(item.source==='propuesta'){
           droppable(b,event=>assignToProposal(item.model,event));
           const memberList=el('div',undefined,'constructor-members');
