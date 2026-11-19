@@ -148,7 +148,15 @@ async function loadReferences(){
   Object.assign(refs,{matrix,fg,fo,...rules});
 }
 function readSession(){
-  for(const key of ['pci_access_session','pci_admin_monitor_session','pci_school_admin_session']){
+  // La entrada desde cada panel prioriza su sesión vigente. No se transmite
+  // ningún token por URL y la API vuelve a validar permisos por escuela.
+  const source=new URLSearchParams(location.search).get('from');
+  const keys=source==='panel-general'
+    ? ['pci_admin_monitor_session','pci_access_session','pci_school_admin_session']
+    : source==='panel-escuela'
+      ? ['pci_school_admin_session','pci_access_session','pci_admin_monitor_session']
+      : ['pci_access_session','pci_admin_monitor_session','pci_school_admin_session'];
+  for(const key of keys){
     try{const s=JSON.parse(sessionStorage.getItem(key)||'null');if(s?.token)return s;}catch{}
   }
   return null;
