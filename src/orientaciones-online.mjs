@@ -437,7 +437,7 @@ function renderSchoolHome(){
   }
   if(!pcis.length){
     const box=elem('div',undefined,'school-no-pcis school-start-card');
-    note('span','PRIMER INGRESO · CONSTRUCCIÓN CURRICULAR','eyebrow',box);
+    note('span','PRIMER INGRESO · CONSTRUCCIÓN CURRICULAR',box,'eyebrow');
     note('h3','Esta escuela todavía no tiene un PCI',box);
     note('p','El primer paso es crear su PCI: seleccioná la modalidad (Media, Técnica o BA +15), la orientación o especialidad y el turno. Después vas a construir el mapa con materias FG y FO; finalmente podrás entrar al Desarrollo Curricular de ese PCI.',box,'muted');
     const steps=elem('p','1 · Elegir modalidad y turno   →   2 · Constructor curricular   →   3 · Desarrollo curricular','school-start-steps');
