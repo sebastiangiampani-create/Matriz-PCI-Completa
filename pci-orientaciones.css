@@ -396,3 +396,289 @@ h3 {letter-spacing:-.01em;}
   .layout .metric strong{font-size:1.3rem}
   .site-footer{padding:22px 16px}
 }
+
+
+/* Inicio institucional compacto, inspirado en el flujo de PCI V2:
+   escuela → orientación / especialidad → mapa / desarrollo.
+   No afecta los editores ni las reglas de las modalidades. */
+.layout.school-home{
+  grid-template-columns:minmax(0,1fr);
+  gap:16px;
+}
+.layout.school-home>.sidebar.content-bag.card{
+  position:static;
+  max-height:none;
+  overflow:visible;
+  padding:18px 22px;
+}
+.school-toolbar{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr);
+  gap:9px;
+  align-items:end;
+}
+.school-toolbar .school-chooser label,.school-toolbar .school-shift{
+  display:block;
+  margin:0 0 6px;
+  font-size:.76rem;
+  color:var(--ink-soft);
+  font-weight:850;
+}
+.school-toolbar .school-chooser p{
+  margin:4px 0 0;
+  font-size:.71rem;
+  color:var(--muted);
+}
+.school-toolbar .school-top-actions{
+  display:grid;
+  gap:8px;
+}
+.school-toolbar .school-top-actions .btn,
+.school-toolbar .school-top-actions .button{
+  width:100%;
+  text-align:center;
+  white-space:normal;
+}
+.layout .sidebar>.pci-side-list{
+  display:block;
+  margin-top:20px;
+  border-top:1px solid var(--line);
+  padding-top:15px;
+}
+.layout .sidebar>.pci-side-list>h2{
+  font-size:1rem;
+  font-weight:900;
+  margin-bottom:12px;
+}
+.layout.school-home>.sidebar>.pci-side-list{display:none}
+.layout.school-home>.sidebar>.school-toolbar{
+  grid-template-columns:minmax(230px,1fr) minmax(160px,210px) auto;
+  gap:16px;
+  align-items:end;
+}
+.layout.school-home>.sidebar>.school-toolbar .school-top-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px;
+  justify-content:flex-end;
+  align-self:center;
+}
+.layout.school-home>.sidebar>.school-toolbar .school-top-actions .btn,
+.layout.school-home>.sidebar>.school-toolbar .school-top-actions .button{
+  width:auto;
+  min-height:42px;
+}
+.layout.school-home .sidebar>#pciCounts{
+  font-size:.74rem;
+  margin:12px 0 0;
+}
+.layout.school-home>.workspace{
+  width:100%;
+}
+.layout.school-home #empty{
+  padding:25px 26px 30px;
+}
+.school-home-intro{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  gap:16px;
+  padding-bottom:13px;
+  border-bottom:1px solid var(--line);
+}
+.school-home-intro h2{
+  font-size:clamp(1.25rem,2vw,1.75rem);
+  margin:5px 0 6px;
+}
+.school-home-intro .muted{
+  font-size:.85rem;
+  max-width:680px;
+}
+.schoolSummary{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  justify-content:flex-end;
+  max-width:420px;
+}
+.school-count-chip{
+  display:inline-block;
+  font-size:.72rem;
+  font-weight:800;
+  color:var(--ink);
+  background:#f5f8fa;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:7px 11px;
+  white-space:nowrap;
+}
+.school-history-link{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
+  margin:17px 0 14px;
+  padding:16px 18px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--band);
+}
+.school-history-link strong{
+  font-size:.92rem;
+  font-weight:900;
+  color:var(--ink);
+}
+.school-history-link p{
+  color:var(--muted);
+  font-size:.77rem;
+  margin:4px 0 0;
+}
+.school-history-link .button{white-space:normal}
+.schoolPciCards{
+  display:grid;
+  gap:16px;
+}
+.school-no-pcis{
+  padding:21px 18px;
+  border:1px dashed var(--line);
+  border-radius:17px;
+  background:#fff;
+  color:var(--ink);
+}
+.school-no-pcis h3{
+  font-size:1rem;
+  margin-bottom:5px;
+}
+.school-no-pcis .muted{margin:0}
+.school-turn-section{display:grid;gap:10px}
+.school-turn-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:4px 1px 1px;
+}
+.school-turn-heading h3{
+  font-size:1rem;
+  font-weight:900;
+  margin:0;
+}
+.school-turn-count{
+  color:var(--mint-dark);
+  font-size:.72rem;
+  font-weight:850;
+  background:var(--mint-soft);
+  border-radius:999px;
+  padding:5px 9px;
+}
+.school-offer-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:13px;
+}
+.layout .school-offer-card.area-card{
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  align-content:start;
+  min-width:0;
+  min-height:190px;
+  gap:14px;
+  margin:0;
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:#fff;
+  box-shadow:var(--shadow);
+  text-align:left;
+}
+.layout .school-offer-card.area-card::after{
+  width:120px;
+  height:120px;
+  right:-40px;
+  bottom:-55px;
+  background:var(--mint-soft);
+  opacity:.72;
+}
+.school-offer-card .school-offer-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.school-offer-top .pill{
+  background:var(--mint-soft);
+  color:var(--mint-dark);
+  font-size:.69rem;
+  font-weight:900;
+}
+.school-state{
+  font-size:.7rem;
+  font-weight:750;
+  color:var(--muted);
+}
+.layout .school-offer-body h3{
+  margin:0 0 5px;
+  font-size:1.08rem;
+  font-weight:900;
+  line-height:1.24;
+}
+.school-offer-body p{
+  margin:0;
+  line-height:1.4;
+  font-size:.73rem;
+}
+.school-offer-actions{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  align-items:stretch;
+}
+.layout .school-offer-actions .btn{
+  min-height:39px;
+  font-size:.72rem;
+  flex:1 1 auto;
+  padding:9px 11px;
+  text-align:center;
+}
+.backToSchool{
+  display:inline-flex;
+  margin:0 0 13px;
+  padding:4px 0;
+  color:var(--ink);
+  text-decoration:none;
+  cursor:pointer;
+  font-weight:850;
+  font-size:.81rem;
+}
+.backToSchool:hover{color:var(--blue)}
+@media(max-width:1050px){
+  .layout.school-home>.sidebar>.school-toolbar{
+    grid-template-columns:minmax(220px,1fr) minmax(150px,200px);
+  }
+  .layout.school-home>.sidebar>.school-toolbar .school-top-actions{
+    grid-column:1/-1;
+    justify-content:flex-start;
+  }
+  .schoolSummary{justify-content:flex-start;max-width:100%}
+}
+@media(max-width:700px){
+  .layout.school-home>.sidebar>.school-toolbar{grid-template-columns:1fr}
+  .layout.school-home>.sidebar>.school-toolbar .school-top-actions{
+    grid-column:1;
+    display:grid;
+    grid-template-columns:1fr;
+    width:100%;
+  }
+  .layout.school-home>.sidebar>.school-toolbar .school-top-actions .btn,
+  .layout.school-home>.sidebar>.school-toolbar .school-top-actions .button{width:100%}
+  .layout.school-home #empty{padding:18px 15px 22px}
+  .school-history-link{padding:14px}
+  .school-history-link .button{width:100%}
+  .school-offer-grid{grid-template-columns:minmax(0,1fr)}
+  .school-offer-actions{display:grid;grid-template-columns:1fr 1fr}
+  .layout .school-offer-actions .btn{padding:8px}
+}
