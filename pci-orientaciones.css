@@ -1004,3 +1004,47 @@ h3 {letter-spacing:-.01em;}
  .legacy-group-head{align-items:flex-start}
  .historic-assign-toolbar{align-items:flex-start;flex-direction:column}
 }
+
+/* BA +15 comparte la misma gramática visual de la construcción curricular FG/FO. */
+.layout #ba15Builder .ba15BuilderGrid>section:first-child{
+  background:#fff;border:1px solid var(--line);
+  border-radius:17px;box-shadow:0 9px 27px rgba(21,55,74,.07);
+}
+.layout #ba15Builder .constructor-subject-list{max-height:390px;margin-top:10px}
+.layout #ba15Builder .constructor-bank-subject{
+  display:block;height:auto;min-height:49px;white-space:normal;
+  background:#fff;border:1px solid #d8e1e8;color:#12395c;cursor:grab;
+}
+.layout #ba15Builder .constructor-bank-subject.active{background:#e7f8f5;border:2px solid #126e65}
+.layout #ba15Builder .constructor-bank-subject[hidden]{display:none}
+.layout #ba15Builder .constructor-bank-subject:disabled{cursor:default}
+.layout #ba15Builder .ba15SubjectSearch{
+  box-sizing:border-box;width:100%;min-height:38px;margin-top:8px;
+  padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;
+}
+.layout #ba15Builder .ba15Space.constructor-group{
+  display:block;text-align:initial;padding:13px 15px;
+  border:1px solid #9bd2c9;background:#f7fbfa;
+  box-shadow:0 8px 25px rgba(21,55,74,.055);
+}
+.layout #ba15Builder .ba15Space.constructor-group>.pciItem{
+  width:100%;white-space:normal;text-align:left;
+}
+.layout #ba15Builder .drop-zone{transition:background-color .12s,border-color .12s}
+.layout #ba15Builder .drop-zone.drop-over,
+.layout #ba15Builder .ba15Space.drop-over{
+  outline:3px solid #126e65;outline-offset:2px;
+  background:#c9f3e9;border-color:#126e65;
+}
+.layout #ba15Builder .ba15DropTile{
+  min-height:40px;white-space:normal;text-align:left;
+}
+.layout #ba15Builder .ba15DropTile:focus-visible,
+.layout #ba15Builder .constructor-bank-subject:focus-visible{
+  outline:3px solid #126e65;outline-offset:2px;
+}
+@media(max-width:850px){
+  .layout #ba15Builder .ba15BuilderGrid{grid-template-columns:1fr}
+  .layout #ba15Builder .ba15BuilderGrid>section:first-child{position:static;max-height:none}
+  .layout #ba15Builder .constructor-subject-list{max-height:260px}
+}
