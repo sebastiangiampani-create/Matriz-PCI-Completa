@@ -1022,3 +1022,26 @@ h3 {letter-spacing:-.01em;}
 .layout .constructor-empty-drop:disabled{
   cursor:default;opacity:.55;background:#f7fafb;
 }
+
+/* PCI V2: bolsa arrastrable en las tres modalidades, misma identidad visual. */
+.ba15Subject[draggable="true"]{cursor:grab;border:1px solid #c6d9e3;border-radius:10px;
+  margin-bottom:6px;padding:9px;background:#fff;touch-action:pan-y;}
+.ba15Subject.active,.ba15Subject:focus-visible{outline:2px solid #126e65;
+  border-color:#126e65;background:#e7f8f5;}
+#ba15Builder .mapTable .slot.drop-zone,#ba15Builder .mapTable .ba15EmptySlot.drop-zone,
+#mapBody .slot.drop-zone{border:1px dashed #9fbdce;min-height:40px;cursor:copy;}
+#ba15Builder .mapTable .drop-over,
+#mapBody .drop-over,.tech-offer-view .drop-over{
+  background:#c9f3e9!important;border-color:#126e65!important;
+  outline:2px solid #126e65;outline-offset:-1px;
+}
+.tech-subject-bank{margin:10px 0;max-width:100%;}
+.tech-subject-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:7px;max-height:215px;overflow:auto;margin-top:8px;}
+.tech-subject-cards .constructor-bank-subject{font-size:.73rem;
+  white-space:normal;text-align:left;overflow-wrap:anywhere;cursor:grab;}
+.tech-subject-cards .constructor-bank-subject.active{
+  background:#e7f8f5;border:2px solid #126e65;
+}
+@media(max-width:780px){.tech-subject-cards{grid-template-columns:1fr 1fr;max-height:250px;}}
+@media(max-width:480px){.tech-subject-cards{grid-template-columns:1fr;}}
