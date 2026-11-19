@@ -11,7 +11,7 @@ import {mostrarMapaBa15} from './ba15/mapa-ui.mjs';
 import {montarConstructorBa15} from './ba15/constructor-ui.mjs';
 import {loadMatrixContents,loadV2Fg,loadV2Fo,loadV2Rules,selectFoByOrientation} from './integracion-curricular/catalogos.js';
 import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integracion-curricular/auto-validacion-importacion.js';
-import {seedOfferStructure,foSubjectBank,assignFoSubject,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
+import {seedOfferStructure,foSubjectBank,assignFoSubject,moveFoSpace,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
 import {withComposition,compositionFor,arrangementWarnings} from './integracion-curricular/constructor-mapa-unificado.mjs';
 import {phaseGate,phaseText} from './pci-flujo-fases.mjs';
 import {proposedFgAreas,emptyFgAreaUnit,inheritFgComposition} from './pci-fase-desarrollo-fg.mjs';
@@ -941,6 +941,13 @@ function renderOffer(){
         workspace=assignFoSubject(workspace,{orientationId:pci.orientation_id,spaceId:space.id,subjectId,refs});
         markDirty('oferta');renderOffer();
         message('Materia FO incluida en la oferta de esta orientación. Falta guardar.','warn');
+      }catch(error){message(error.message,'error');}
+    },
+    onFoMove:(spaceId,targetTerm)=>{
+      try{
+        workspace=moveFoSpace(workspace,{orientationId:pci.orientation_id,spaceId,targetTerm});
+        markDirty('oferta');renderOffer();
+        message('Formato FO reubicado en C'+targetTerm+' dentro del mismo nivel. Falta guardar.','warn');
       }catch(error){message(error.message,'error');}
     },
     onOpenHistoricalArea:area=>{
