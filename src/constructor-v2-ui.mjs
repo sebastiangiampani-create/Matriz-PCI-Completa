@@ -185,11 +185,19 @@ export function renderUnifiedConstructor({
         items.push({source:'fo',name:f.name,model:f});
       }
       for(const item of items){
-        const b=createAction(item.name,()=>{
+        const b=el('div',undefined,'constructor-group '+sourceColors[item.source]);
+        const activate=()=>{
           if(item.source==='legacy')onOpenHistoricalArea(item.model.area);
           else if(item.source==='fo')assignToFo(item.model);
           else assignToProposal(item.model);
-        },'constructor-group '+sourceColors[item.source]);
+        };
+        b.setAttribute('role','button');b.tabIndex=0;
+        b.addEventListener('click',activate);
+        b.addEventListener('keydown',event=>{
+          if(event.target!==b)return;
+          if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}
+        });
+        b.append(el('strong',item.name,'constructor-group-title'));
         const description=item.source==='legacy'
           ?'FG conservada · '+item.model.contents+' contenidos · '+item.model.plans+' planes'
           :item.source==='fo'
