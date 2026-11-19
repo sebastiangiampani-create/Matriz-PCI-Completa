@@ -1,0 +1,638 @@
+{
+  "schema": "pci-tecnica-priorizados-caba/2",
+  "portal": "https://buenosaires.gob.ar/gcaba_historico/proyecto-curricular-institucional-pci/contenidos-priorizados",
+  "fuentes": "data/tecnica/fuentes-priorizadas-caba-2026.json",
+  "estado": "extraido_pendiente_validacion_pedagogica",
+  "esquema_escolar_modificado": false,
+  "debe_aplicarse_a_pci_existentes": false,
+  "requiere_validacion_pedagogica": true,
+  "observaciones": [
+    "No es un plan de estudio ni una asignacion oficial de horas.",
+    "Las referencias exactas y los PDF originales prevalecen ante errores de extraccion.",
+    "No mezclar con planes docentes, matrices antiguas o contenidos V2 de Media."
+  ],
+  "documentos": [
+    {
+      "id": "computacion",
+      "nombre": "Computación",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Computacion.pdf",
+      "sha256_pdf": "85b890f7ff1ffbbfba0a7321bd592663255e644b31045321688dc55ee12e2f52",
+      "paginas_pdf": 98,
+      "asignaturas_indexadas": 35,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 9,
+        "formacion_tecnica_especifica": 13,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "automotores",
+      "nombre": "Automotores",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Automotores.pdf",
+      "sha256_pdf": "e77e54fb05569f278f364c19df39e0cb17ae9c9c78205eb993f78c7b8ba4878a",
+      "paginas_pdf": 109,
+      "asignaturas_indexadas": 41,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 9,
+        "formacion_tecnica_especifica": 19,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "administracion_empresas",
+      "nombre": "Administración de Empresas",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Admin_empresas.pdf",
+      "sha256_pdf": "6156191c59cd348f454991081bd99ec8eca3f425435b659521eb1750ed3d59c6",
+      "paginas_pdf": 102,
+      "asignaturas_indexadas": 45,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 9,
+        "formacion_tecnica_especifica": 23,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "mecanica",
+      "nombre": "Mecánica",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Mecanica.pdf",
+      "sha256_pdf": "66fb5468922faea6f725369d45d3befb80c3abd6bbb2c41432c75361c98a1737",
+      "paginas_pdf": 116,
+      "asignaturas_indexadas": 43,
+      "campos_estimados": {
+        "formacion_general": 13,
+        "formacion_cientifico_tecnologica": 8,
+        "formacion_tecnica_especifica": 21,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "electronica",
+      "nombre": "Electrónica",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Electronica.pdf",
+      "sha256_pdf": "fa1c1132a5424b9ef311fe161a6dd6437bcf38ff8188dd606e7bbfb79ebf5498",
+      "paginas_pdf": 99,
+      "asignaturas_indexadas": 37,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 8,
+        "formacion_tecnica_especifica": 16,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "electromecanica",
+      "nombre": "Electromecánica",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Electromecanica.pdf",
+      "sha256_pdf": "b100e9a8d7b7c3d1e044b0d5c18fa9960a4df8adb089c1d828b2ecb12a63710c",
+      "paginas_pdf": 117,
+      "asignaturas_indexadas": 43,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 8,
+        "formacion_tecnica_especifica": 22,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "electricidad",
+      "nombre": "Electricidad",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Electricidad.pdf",
+      "sha256_pdf": "aed37f7155a2893a8d973fe64b350d4779dd89c80dddcd0b6381ae0363d70136",
+      "paginas_pdf": 102,
+      "asignaturas_indexadas": 41,
+      "campos_estimados": {
+        "formacion_general": 13,
+        "formacion_cientifico_tecnologica": 8,
+        "formacion_tecnica_especifica": 19,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "diseno_artesanias",
+      "nombre": "Diseño de Artesanías Aplicadas a la Industria",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Artesanias.pdf",
+      "sha256_pdf": "dbc1ccedb3056ded78cfd66cd400c1e0c5268b3b519c14002ea74e8438fb020e",
+      "paginas_pdf": 113,
+      "asignaturas_indexadas": 41,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 9,
+        "formacion_tecnica_especifica": 19,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "construcciones",
+      "nombre": "Construcciones",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Construcciones.pdf",
+      "sha256_pdf": "fb0ee3a6efb8ecd635fc314ff82b281aa48813e83afa3f046cfe317baf6f5832",
+      "paginas_pdf": 118,
+      "asignaturas_indexadas": 45,
+      "campos_estimados": {
+        "formacion_general": 13,
+        "formacion_cientifico_tecnologica": 9,
+        "formacion_tecnica_especifica": 22,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "diseno_comunicacion_publicitaria",
+      "nombre": "Diseño y Comunicación Publicitaria",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Dise%C3%B1o_Comunic_Publicitaria.pdf",
+      "sha256_pdf": "826fb929f6ea75e5add3635f5be9351a222a12da1ce17210554e371c5b8851eb",
+      "paginas_pdf": 131,
+      "asignaturas_indexadas": 44,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 8,
+        "formacion_tecnica_especifica": 23,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "diseno_interiores",
+      "nombre": "Diseño de Interiores",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Dise%C3%B1o_interiores.pdf",
+      "sha256_pdf": "1decba76e9d3b41a9b04dee0d7610c6d6fba15595195625bb377c056c6774656",
+      "paginas_pdf": 111,
+      "asignaturas_indexadas": 43,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 10,
+        "formacion_tecnica_especifica": 20,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "diseno_produccion_grafica",
+      "nombre": "Diseño y Producción Gráfica",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Dise%C3%B1o_Produccion_Grafica.pdf",
+      "sha256_pdf": "17a6420c5e73a87c7c460836b4166f4ebf9293a9d09f817ec91550922b57f4d9",
+      "paginas_pdf": 101,
+      "asignaturas_indexadas": 45,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 10,
+        "formacion_tecnica_especifica": 22,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "geografo_matematico",
+      "nombre": "Geógrafo Matemático",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Geografo_Matematico.pdf",
+      "sha256_pdf": "bcaaea4a8c7386c281d15704924038e08205b83eb131cc149b04b25fee887d67",
+      "paginas_pdf": 114,
+      "asignaturas_indexadas": 48,
+      "campos_estimados": {
+        "formacion_general": 14,
+        "formacion_cientifico_tecnologica": 12,
+        "formacion_tecnica_especifica": 21,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "industria_alimentos",
+      "nombre": "Industria de los Alimentos",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Industria_alimentos.pdf",
+      "sha256_pdf": "e96f7e6fe719fe3cfe66b0ed4801a69f566383641faa01368a801b31b7f6d296",
+      "paginas_pdf": 93,
+      "asignaturas_indexadas": 42,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 14,
+        "formacion_tecnica_especifica": 15,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "industria_indumentaria",
+      "nombre": "Industria de la Indumentaria",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Industria_Indumentaria.pdf",
+      "sha256_pdf": "8a9dab9d444d14f9436185be48bdefc32e6f46e2d2bb9fa3e9f4d419ac62bde4",
+      "paginas_pdf": 110,
+      "asignaturas_indexadas": 46,
+      "campos_estimados": {
+        "formacion_general": 13,
+        "formacion_cientifico_tecnologica": 9,
+        "formacion_tecnica_especifica": 23,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "industria_madera_mueble",
+      "nombre": "Industrialización de la Madera y el Mueble",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Industrializacion_Madera.pdf",
+      "sha256_pdf": "192e8a6fbe7f7c26493574a3359a227837b133c646f062d02e472d4aae201c62",
+      "paginas_pdf": 99,
+      "asignaturas_indexadas": 43,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 10,
+        "formacion_tecnica_especifica": 20,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "jardineria_paisajismo_produccion_vegetal",
+      "nombre": "Jardinería, Paisajismo y Producción Vegetal",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Jardineria.pdf",
+      "sha256_pdf": "be0247ecb1fdb28cb5a2afbc4edfbeb0cea6dee2c2ac03c08b9334ede06d93dc",
+      "paginas_pdf": 107,
+      "asignaturas_indexadas": 49,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 12,
+        "formacion_tecnica_especifica": 24,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "metalurgia",
+      "nombre": "Metalurgia",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Metalurgia.pdf",
+      "sha256_pdf": "944230353398ce335e61952417d7d1ab6c58280febe745be916b74a085b60468",
+      "paginas_pdf": 118,
+      "asignaturas_indexadas": 41,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 10,
+        "formacion_tecnica_especifica": 18,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "optica",
+      "nombre": "Óptica",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Optica.pdf",
+      "sha256_pdf": "28eb01a2caa837eaeac50d7c9586f73330273ee1c075105656a1951bad0f1c25",
+      "paginas_pdf": 115,
+      "asignaturas_indexadas": 44,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 9,
+        "formacion_tecnica_especifica": 22,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "industria_orfebreria",
+      "nombre": "Orfebrería",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Orfebreria.pdf",
+      "sha256_pdf": "bed1aa1b124de4cbc0caa0b4c7b98f963ee7f3d6b1bda55230f0b0d2b2053816",
+      "paginas_pdf": 100,
+      "asignaturas_indexadas": 41,
+      "campos_estimados": {
+        "formacion_general": 13,
+        "formacion_cientifico_tecnologica": 9,
+        "formacion_tecnica_especifica": 18,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "ortesis_protesis",
+      "nombre": "Órtesis y Prótesis",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Ortesis.pdf",
+      "sha256_pdf": "25dfea19d495a4461a8f07f4e1a9e6ddb58745d86d1d44a7ac2d32a090f62fef",
+      "paginas_pdf": 108,
+      "asignaturas_indexadas": 44,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 8,
+        "formacion_tecnica_especifica": 23,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "procesos_productivos_inteligentes",
+      "nombre": "Procesos Productivos Inteligentes",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Procesos_Inteligentes.pdf",
+      "sha256_pdf": "b05d16a6d258f02321af06f7b6ea3a34ce4394cd1126fdb9442ea3a56cd21e8e",
+      "paginas_pdf": 110,
+      "asignaturas_indexadas": 42,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 10,
+        "formacion_tecnica_especifica": 19,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "produccion_multimedial",
+      "nombre": "Producción Multimedial",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Produccion_multimedial.pdf",
+      "sha256_pdf": "438faaa9b99985f88e31493630a4e59820317f910c6850ebe25b9f88f6ff760b",
+      "paginas_pdf": 106,
+      "asignaturas_indexadas": 40,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 9,
+        "formacion_tecnica_especifica": 18,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "quimica",
+      "nombre": "Química",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Quimica.pdf",
+      "sha256_pdf": "9f53ad906f899c0a1eef0a3b5c2b8fa48998df8aa535a130aa7f16837d1cca67",
+      "paginas_pdf": 110,
+      "asignaturas_indexadas": 45,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 8,
+        "formacion_tecnica_especifica": 24,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "refrigeracion_ventilacion_calefaccion_aire",
+      "nombre": "Refrigeración, Ventilación, Calefacción y Aire Acondicionado",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Refrigeracion.pdf",
+      "sha256_pdf": "bf1b9b671edc8aa05f87ecd92a1d6db6e8679988cbfaed71a81df56d9b419c83",
+      "paginas_pdf": 115,
+      "asignaturas_indexadas": 46,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 9,
+        "formacion_tecnica_especifica": 24,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "tic",
+      "nombre": "Tecnologías de la Información y la Comunicación (TIC)",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_TIC.pdf",
+      "sha256_pdf": "ab37f365f3b8df6c8dc39d7b8d1066eac2c9ec2a4e64a2b003481e8b675870e8",
+      "paginas_pdf": 91,
+      "asignaturas_indexadas": 37,
+      "campos_estimados": {
+        "formacion_general": 12,
+        "formacion_cientifico_tecnologica": 8,
+        "formacion_tecnica_especifica": 16,
+        "practicas_profesionalizantes": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    },
+    {
+      "id": "tecnologia_representacion",
+      "nombre": "Tecnología de la Representación (UC)",
+      "fuente_url": "https://static.buenosaires.gob.ar/sites/default/files/2025-08/2025_NS_CPO_Tec-Rep.pdf",
+      "sha256_pdf": "dc331abe635a714e90135d80edefe083d843fc829a19a0b755d52ce9c460fe54",
+      "paginas_pdf": 9,
+      "asignaturas_indexadas": 1,
+      "campos_estimados": {
+        "formacion_tecnica_especifica": 1
+      },
+      "anios_detectados": [
+        1,
+        2,
+        3
+      ],
+      "estado": "pendiente_validacion_pedagogica"
+    }
+  ],
+  "errores": [],
+  "totales": {
+    "especialidades_documentadas": 26,
+    "documentos_documentados": 27,
+    "asignaturas_indexadas": 1112,
+    "paginas_pdf": 2822
+  }
+}

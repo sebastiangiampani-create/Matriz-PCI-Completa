@@ -1,0 +1,255 @@
+{
+  "schema": "pci-tecnica-fuentes-priorizados/1",
+  "fuente": "Gobierno de la Ciudad Autónoma de Buenos Aires / Ministerio de Educación",
+  "portal": "https://buenosaires.gob.ar/gcaba_historico/proyecto-curricular-institucional-pci/contenidos-priorizados",
+  "fecha_relevamiento": "2026-11-11",
+  "finalidad": "Referencia curricular independiente para validar; no modifica ni reemplaza documentos históricos escolares.",
+  "estado": "fuentes_identificadas_pendientes_de_extraccion_y_validacion",
+  "derechos": "Material para fines educativos/no comerciales con mención de fuente; verificar los términos de cada PDF antes de reproducir textos.",
+  "especialidades": [
+    {
+      "id": "computacion",
+      "nombre": "Computación",
+      "archivo": "2026_NS_CPO_Computacion.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Computacion.pdf",
+      "paginas_verificadas_en_portal": null,
+      "verificacion_pdf": "enlace_publicado; lectura_remota_no_completada",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "automotores",
+      "nombre": "Automotores",
+      "archivo": "2026_NS_CPO_Automotores.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Automotores.pdf",
+      "paginas_verificadas_en_portal": 109,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "administracion_empresas",
+      "nombre": "Administración de Empresas",
+      "archivo": "2026_NS_CPO_Admin_empresas.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Admin_empresas.pdf",
+      "paginas_verificadas_en_portal": 102,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "mecanica",
+      "nombre": "Mecánica",
+      "archivo": "2026_NS_CPO_Mecanica.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Mecanica.pdf",
+      "paginas_verificadas_en_portal": 116,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "electronica",
+      "nombre": "Electrónica",
+      "archivo": "2026_NS_CPO_Electronica.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Electronica.pdf",
+      "paginas_verificadas_en_portal": 99,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "electromecanica",
+      "nombre": "Electromecánica",
+      "archivo": "2026_NS_CPO_Electromecanica.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Electromecanica.pdf",
+      "paginas_verificadas_en_portal": 117,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "electricidad",
+      "nombre": "Electricidad",
+      "archivo": "2026_NS_CPO_Electricidad.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Electricidad.pdf",
+      "paginas_verificadas_en_portal": null,
+      "verificacion_pdf": "enlace_publicado; lectura_remota_no_completada",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "diseno_artesanias",
+      "nombre": "Diseño de Artesanías Aplicadas a la Industria",
+      "archivo": "2026_NS_CPO_Artesanias.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Artesanias.pdf",
+      "paginas_verificadas_en_portal": 113,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "construcciones",
+      "nombre": "Construcciones",
+      "archivo": "2026_NS_CPO_Construcciones.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Construcciones.pdf",
+      "paginas_verificadas_en_portal": 118,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "diseno_comunicacion_publicitaria",
+      "nombre": "Diseño y Comunicación Publicitaria",
+      "archivo": "2026_NS_CPO_Diseño_Comunic_Publicitaria.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Dise%C3%B1o_Comunic_Publicitaria.pdf",
+      "paginas_verificadas_en_portal": 131,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "diseno_interiores",
+      "nombre": "Diseño de Interiores",
+      "archivo": "2026_NS_CPO_Diseño_interiores.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Dise%C3%B1o_interiores.pdf",
+      "paginas_verificadas_en_portal": 111,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "diseno_produccion_grafica",
+      "nombre": "Diseño y Producción Gráfica",
+      "archivo": "2026_NS_CPO_Diseño_Produccion_Grafica.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Dise%C3%B1o_Produccion_Grafica.pdf",
+      "paginas_verificadas_en_portal": 101,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "geografo_matematico",
+      "nombre": "Geógrafo Matemático",
+      "archivo": "2026_NS_CPO_Geografo_Matematico.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Geografo_Matematico.pdf",
+      "paginas_verificadas_en_portal": 114,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "industria_alimentos",
+      "nombre": "Industria de los Alimentos",
+      "archivo": "2026_NS_CPO_Industria_alimentos.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Industria_alimentos.pdf",
+      "paginas_verificadas_en_portal": null,
+      "verificacion_pdf": "enlace_publicado; lectura_remota_no_completada",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "industria_indumentaria",
+      "nombre": "Industria de la Indumentaria",
+      "archivo": "2026_NS_CPO_Industria_Indumentaria.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Industria_Indumentaria.pdf",
+      "paginas_verificadas_en_portal": 110,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "industria_madera_mueble",
+      "nombre": "Industrialización de la Madera y el Mueble",
+      "archivo": "2026_NS_CPO_Industrializacion_Madera.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Industrializacion_Madera.pdf",
+      "paginas_verificadas_en_portal": 99,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "jardineria_paisajismo_produccion_vegetal",
+      "nombre": "Jardinería, Paisajismo y Producción Vegetal",
+      "archivo": "2026_NS_CPO_Jardineria.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Jardineria.pdf",
+      "paginas_verificadas_en_portal": 107,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "metalurgia",
+      "nombre": "Metalurgia",
+      "archivo": "2026_NS_CPO_Metalurgia.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Metalurgia.pdf",
+      "paginas_verificadas_en_portal": 118,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "optica",
+      "nombre": "Óptica",
+      "archivo": "2026_NS_CPO_Optica.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Optica.pdf",
+      "paginas_verificadas_en_portal": 115,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "industria_orfebreria",
+      "nombre": "Orfebrería",
+      "archivo": "2026_NS_CPO_Orfebreria.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Orfebreria.pdf",
+      "paginas_verificadas_en_portal": 100,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "ortesis_protesis",
+      "nombre": "Órtesis y Prótesis",
+      "archivo": "2026_NS_CPO_Ortesis.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Ortesis.pdf",
+      "paginas_verificadas_en_portal": 108,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "procesos_productivos_inteligentes",
+      "nombre": "Procesos Productivos Inteligentes",
+      "archivo": "2026_NS_CPO_Procesos_Inteligentes.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Procesos_Inteligentes.pdf",
+      "paginas_verificadas_en_portal": 110,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "produccion_multimedial",
+      "nombre": "Producción Multimedial",
+      "archivo": "2026_NS_CPO_Produccion_multimedial.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Produccion_multimedial.pdf",
+      "paginas_verificadas_en_portal": 106,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "quimica",
+      "nombre": "Química",
+      "archivo": "2026_NS_CPO_Quimica.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Quimica.pdf",
+      "paginas_verificadas_en_portal": null,
+      "verificacion_pdf": "enlace_publicado; lectura_remota_no_completada",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "refrigeracion_ventilacion_calefaccion_aire",
+      "nombre": "Refrigeración, Ventilación, Calefacción y Aire Acondicionado",
+      "archivo": "2026_NS_CPO_Refrigeracion.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_Refrigeracion.pdf",
+      "paginas_verificadas_en_portal": 115,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    },
+    {
+      "id": "tic",
+      "nombre": "Tecnologías de la Información y la Comunicación (TIC)",
+      "archivo": "2026_NS_CPO_TIC.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2026-10/2026_NS_CPO_TIC.pdf",
+      "paginas_verificadas_en_portal": 91,
+      "verificacion_pdf": "lectura_web_disponible",
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    }
+  ],
+  "transversal": [
+    {
+      "id": "tecnologia_representacion",
+      "nombre": "Tecnología de la Representación (UC)",
+      "archivo": "2025_NS_CPO_Tec-Rep.pdf",
+      "url": "https://static.buenosaires.gob.ar/sites/default/files/2025-08/2025_NS_CPO_Tec-Rep.pdf",
+      "paginas_verificadas_en_portal": 9,
+      "estado_contenidos": "pendiente_extraccion_y_revision"
+    }
+  ]
+}

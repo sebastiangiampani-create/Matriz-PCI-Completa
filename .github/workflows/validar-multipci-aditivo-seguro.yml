@@ -1,0 +1,68 @@
+name: Validar integración multi-PCI sin sobrescrituras
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [release/multipci-aditivo-seguro-20261118]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  motor-curricular-y-resguardo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Comprobar que no se modifica ni elimina código histórico
+        run: |
+          git fetch origin main
+          git diff --name-status origin/main...HEAD | awk '$1!="A"{print "CAMBIO NO ADITIVO:",$0;bad=1} END {exit bad}'
+      - name: Verificar sintaxis de los módulos nuevos
+        run: |
+          node --check src/orientaciones-online.mjs
+          node --check src/orientaciones-release-core.mjs
+          node --check src/pci-turnos-organizacion.mjs
+          node --check src/ba15/constructor-ui.mjs
+          node --check src/ba15/constructor.mjs
+          node --check src/tecnica/interfaz-integrada-v2.mjs
+          node --check src/tecnica/espacio-trabajo-v2.mjs
+          node --check tests/multipci-portal-browser.mjs
+      - name: Probar currícula y guardado aislado por PCI
+        run: |
+          node --test tests/ba15-reglas.test.mjs tests/ba15-constructor.test.mjs tests/turnos-modalidades.test.mjs tests/orientaciones-release.test.mjs tests/tecnica-integrada-v2.test.mjs tests/adaptador-media-final-20261117.test.mjs tests/integracion-catalogos.test.js
+  navegador-multi-pci:
+    runs-on: ubuntu-24.04
+    needs: motor-curricular-y-resguardo
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preparar navegador de prueba
+        run: |
+          npm install --no-save playwright@1.55.0
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install chromium
+          fi
+      - name: Simular escuela con Media y agregar BA +15 sin sobrescribir
+        run: |
+          mkdir -p test-artifacts/multipci-portal
+          node tests/multipci-portal-browser.mjs
+      - name: Conservar captura del recorrido
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vista-real-pci-multipci
+          path: test-artifacts/multipci-portal/
+          if-no-files-found: ignore
+          retention-days: 7
