@@ -49,6 +49,27 @@ function status(text,tone='error'){
  const area=$('schoolCreateStatus');area.textContent=text;area.dataset.tone=tone;
 }
 let catalog=[];
+function renderCatalog(){
+ const host=$('schoolDbCatalog');if(!host)return;
+ const query=String($('schoolDbSearch')?.value||'').trim().toLocaleLowerCase('es');
+ const missingOnly=!!$('schoolDbOnlyMissingCue')?.checked;
+ const filtered=catalog.filter(s=>{
+  if(missingOnly&&normalizeCue(s.cue))return false;
+  return !query||[s.name,s.cue,s.school_id].some(x=>String(x??'').toLocaleLowerCase('es').includes(query));
+ }).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'es'));
+ $('schoolDbCatalogCount').textContent=filtered.length+' de '+catalog.length+' escuelas · Se muestran hasta 100 resultados';
+ host.replaceChildren();
+ for(const s of filtered.slice(0,100)){
+  const item=document.createElement('div');item.className='admin-school-catalog-item';
+  item.style.cssText='padding:8px 0;border-bottom:1px solid var(--line,#dce5ee)';
+  const name=document.createElement('strong');name.textContent=s.name||'Escuela '+s.school_id;
+  const info=document.createElement('small');info.className='muted';
+  info.style.display='block';
+  info.textContent='ID '+s.school_id+' · '+(normalizeCue(s.cue)||'SIN CUE: verificar antes de crear otra ficha');
+  item.append(name,info);host.append(item);
+ }
+ if(!filtered.length){const p=document.createElement('p');p.className='muted';p.textContent='No hay coincidencias.';host.append(p)}
+}
 async function refresh(){
  const node=$('schoolDbStatus');
  node.textContent='Consultando instituciones…';
@@ -56,6 +77,7 @@ async function refresh(){
  const result=await post({action:'list-schools',token});
  if(!Array.isArray(result.schools))throw Error('Supabase no devolvió el catálogo de escuelas.');
  catalog=result.schools;
+ renderCatalog();
  const missingCue=catalog.filter(s=>!normalizeCue(s.cue)).length;
  node.textContent='Supabase conectado · '+catalog.length+' escuelas · '+missingCue+' sin CUE registrado';
  return catalog;
@@ -119,6 +141,8 @@ export function mount(){
   try{await refresh();status('Listado actualizado desde Supabase.','success')}
   catch(error){status(error.message)}
  };
+ $('schoolDbSearch').addEventListener('input',renderCatalog);
+ $('schoolDbOnlyMissingCue').addEventListener('change',renderCatalog);
  $('schoolDbForm').addEventListener('submit',createSchool);
  dialog.addEventListener('click',async event=>{
   const btn=event.target.closest('[data-copy-school-key]');
