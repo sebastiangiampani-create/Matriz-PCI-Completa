@@ -77,6 +77,7 @@ export function createIntegratedTechnicalUI({
    planRevision=0,planDirty=false,tab='fg',loading=0;
  let search='',yearFilter=0,spaceYear=0,spaceArea='';
  let sourceWarnings=[];
+ let historicalForDisplay=null;
  function writable(){
   return !!pci&&canEdit()&&['borrador','en_revision'].includes(pci.status);
  }
@@ -186,7 +187,7 @@ export function createIntegratedTechnicalUI({
    ' referencias documentales distribuidas · '+(areaCoverage.percent??'—')+
    '% de revisión documental provisional. No equivale a validación curricular.');
   // La FG histórica no se transforma ni se borra en una importación automática.
-  const history=pci.legacy_state?.areas?.[activeArea];
+  const history=(historicalForDisplay||pci.legacy_state)?.areas?.[activeArea];
   if(history){
    const historyBox=el('details',body,undefined,'workCard');
    el('summary',historyBox,'Resguardo de agrupamientos históricos · lectura, sin reemplazo');
@@ -553,7 +554,7 @@ export function createIntegratedTechnicalUI({
   for(const kind of ['fg','offer','fo'])$(kind+'Pane').hidden=tab!==(kind==='offer'?'oferta':kind);
   renderTab(tab);
  }
- async function open(next){
+ async function open(next,assignedHistorical=null){
   const token=++loading;
   const specialty=findSpecialty(next?.specialty_name);
   if(!specialty)throw Error('La especialidad técnica no existe en el catálogo oficial.');
@@ -571,7 +572,7 @@ export function createIntegratedTechnicalUI({
   const restored=recallDraft('oferta-tecnica','mapa-oferta-tecnica-v1',revision,next,
     value=>guardTechnicalOffer(value,next,file));
   const prepared=prepareTechnicalOfferFinal(restored||initial);
-  pci=next;source=file;bank=technicalSubjectBank(file);offer=prepared.document;
+  pci=next;historicalForDisplay=assignedHistorical||next.legacy_state;source=file;bank=technicalSubjectBank(file);offer=prepared.document;
   offerRevision=revision;offerDirty=!!restored||prepared.needsReview;plan=null;
   if(prepared.needsReview)
    rememberDraft('oferta-tecnica','mapa-oferta-tecnica-v1',offer,offerRevision);
@@ -588,7 +589,7 @@ export function createIntegratedTechnicalUI({
  }
  function close(){
   if(!pci)return;
-  ++loading;pci=null;offer=null;source=null;bank=[];plan=null;
+  ++loading;pci=null;offer=null;source=null;bank=[];plan=null;historicalForDisplay=null;
   offerDirty=false;planDirty=false;setLabels(false);
  }
  function isDirty(){return !!(offerDirty||planDirty);}
