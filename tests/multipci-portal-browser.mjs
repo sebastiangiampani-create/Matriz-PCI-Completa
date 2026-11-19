@@ -105,6 +105,20 @@ try{
  await page.locator('#schoolPciCards').getByText('Comunicación').first().waitFor();
  await page.locator('.school-offer-card button[aria-label^="Abrir Mapa de la Oferta"]').click();
  await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
+ // Atrás y Adelante no deben salir a una escuela diferente ni recargar el PCI.
+ await page.waitForFunction(()=>new URL(location.href).searchParams.get('pci')==='00000000-0000-4000-8000-000000000001');
+ await page.evaluate(()=>history.back());
+ await page.locator('#empty:not([hidden])').waitFor({timeout:15000});
+ assert.equal(await page.locator('#school').inputValue(),'1001');
+ assert.equal(await page.evaluate(()=>new URL(location.href).searchParams.has('pci')),false);
+ await page.evaluate(()=>history.forward());
+ await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
+ assert.equal(await page.evaluate(()=>new URL(location.href).searchParams.get('pci')),'00000000-0000-4000-8000-000000000001');
+ await page.locator('#schoolHomeLink').click();
+ await page.locator('#empty:not([hidden])').waitFor({timeout:15000});
+ assert.equal(await page.evaluate(()=>new URL(location.href).searchParams.has('pci')),false,'Inicio debe volver a la escuela, no reiniciar sesión');
+ await page.evaluate(()=>history.back());
+ await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
  assert.equal(await page.locator('#fgPane').isHidden(),true,'El PCI inicia en Fase 1, no en el desarrollo FG');
  assert.equal(await page.locator('#continueDevelopment').isDisabled(),true,'La Fase 2 no puede iniciar sin mapa completo y guardado');
  assert.equal(await page.locator('[data-tab="fo"]').isDisabled(),true,'El botón Desarrollo FO debe estar deshabilitado por la Fase 1');
@@ -139,6 +153,17 @@ try{
  await page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Historia'}).first().click();
  await page.locator('#mapBody .constructor-group.propuesta').first().click();
  await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Historia').waitFor();
+ // Un borrador pendiente no se descarta con la flecha Atrás si se cancela.
+ const beforeCancel=page.url();
+ const rejectedBack=new Promise(resolve=>page.once('dialog',async dialog=>{
+   assert.match(dialog.message(),/cambios sin guardar/);
+   await dialog.dismiss();resolve();
+ }));
+ await page.evaluate(()=>history.back());
+ await rejectedBack;
+ await page.waitForTimeout(350);
+ assert.equal(page.url(),beforeCancel,'Cancelar Atrás debe conservar el mismo PCI y fase');
+ assert.equal(await page.locator('#mapBody .constructor-group.propuesta').count(),2,'El agrupamiento pendiente permanece');
  await page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Geografía'}).first()
    .dragTo(page.locator('#mapBody .constructor-group.propuesta').first());
  await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Geografía').waitFor();
@@ -162,6 +187,11 @@ try{
  await page.locator('.school-offer-card button[aria-label^="Abrir Mapa de la Oferta"]').click();
  await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Geografía').waitFor({timeout:12000});
  assert.equal(state.units.get(mediaKey)?.revision,1,'La reapertura no crea una revisión ni altera el historial');
+ await page.locator('#brandHomeLink').click();
+ await page.locator('#empty:not([hidden])').waitFor({timeout:15000});
+ assert.equal(await page.locator('#school').inputValue(),'1001','El logo conserva la escuela seleccionada');
+ await page.evaluate(()=>history.back());
+ await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
  await page.screenshot({path:'test-artifacts/multipci-portal/constructor-media-fg-fo-mapa.png',fullPage:false});
  assert.equal(state.pcis.length,1,'Abrir el mapa no crea ni sobrescribe PCI');
  await page.locator('#editor [data-back-to-school]').click();
