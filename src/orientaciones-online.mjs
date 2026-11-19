@@ -36,7 +36,7 @@ const refs={};
 let session=null,schools=[],schoolId=null,pcis=[],pci=null,workspace=null,auto=null,fgSourceState=null;
 let selectedFgArea=null,fgDoc=null,fgRevision=0,fgDirty=false;
 let offerRevision=0,offerDirty=false,selectedFoSpace=null,foDoc=null,foRevision=0,foDirty=false;
-let tab='fg',busy=false;
+let tab='fg',busy=false,ba15Controller=null;
 const technical=createIntegratedTechnicalUI({canEdit,getUnit,saveUnit,saveSafe:safeSave,download,rememberDraft,forgetDraft,recallDraft,message,status});
 
 async function call(action,data={}){
@@ -51,7 +51,7 @@ function fatal(str){$('fatal').textContent=str;show('fatal');status('No disponib
 function canEdit(){return !!session && (session.role==='admin'||session.role==='editor'||session.role==='user'&&(session.permissions||[]).includes('pci.edit'));}
 function canCreateSchool(){return session?.role==='admin';}
 function canLeave(){
-  if(!(fgDirty||foDirty||offerDirty||technical.isDirty()))return true;
+  if(!(fgDirty||foDirty||offerDirty||technical.isDirty()||ba15Controller?.isDirty()))return true;
   return confirm('Tenés cambios sin guardar. ¿Querés salir sin guardarlos? Podés descargarlos antes de continuar.');
 }
 function safeSave(task){
@@ -354,7 +354,27 @@ async function openPci(id){
       show('ba15Pending',true);
       $('ba15Name').textContent=pcis.find(x=>x.pci_id===id)?.title||'PCI BA +15';
       mostrarMapaBa15({metrics:$('ba15Metrics'),navigation:$('ba15Navigation'),map:$('ba15Map'),validation:$('ba15Validation')});
-      montarConstructorBa15($('ba15Builder'),{pciId:b.pci_id,schoolId:b.school_id,orientationId:b.orientation_id,shiftId:b.shift_id});
+      const identity={pciId:b.pci_id,schoolId:b.school_id,orientationId:b.orientation_id,shiftId:b.shift_id};
+      const unitId='mapa-ba15-v1',baseVersion='oferta-ba15-constructor-v1';
+      const saved=await getUnit(b,'oferta','map',unitId,baseVersion);
+      const remoteDraft=saved.exists?saved.document:null;
+      if(remoteDraft && (remoteDraft.schema!=='ba15-constructor-v1'||
+         Number(remoteDraft.schoolId)!==Number(b.school_id)||
+         remoteDraft.pciId!==b.pci_id||
+         remoteDraft.orientationId!==b.orientation_id||
+         remoteDraft.shiftId!==b.shift_id))
+        throw Error('El borrador BA +15 online no pertenece a este PCI. No se cargó.');
+      let revision=Number(saved.revision)||0;
+      ba15Controller?.destroy();
+      ba15Controller=montarConstructorBa15($('ba15Builder'),identity,{
+        initialDraft:remoteDraft,
+        canEditRemote:canEdit()&&['borrador','en_revision'].includes(b.status),
+        saveRemote:async document=>{
+          if(pci?.pci_id!==b.pci_id)throw Error('Se cambió de PCI: no se permite guardar en otro.');
+          const result=await saveUnit('oferta','map',unitId,baseVersion,document,revision);
+          revision=Number(result.revision);
+        }
+      });
       $('ba15Info').textContent='Turno '+({manana:'mañana',tarde:'tarde',vespertino:'vespertino',noche:'noche'}[b.shift_id]||b.shift_id)+
         ' · Orientación '+(ORIENTATIONS.find(x=>x.id===b.orientation_id)?.name||b.orientation_id)+
         ' · Documento histórico protegido';
