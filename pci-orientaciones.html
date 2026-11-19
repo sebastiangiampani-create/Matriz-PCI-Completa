@@ -2,31 +2,40 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#15374a">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
   <title>Mis PCI de Media, Técnica y BA +15 · Matriz PCI</title>
-  <link rel="stylesheet" href="pci-orientaciones.css?v=20261111">
+  <link rel="stylesheet" href="app.css?v=20260902-1">
+  <link rel="stylesheet" href="pci-orientaciones.css?v=20261119-paridad-1">
 </head>
 <body>
-  <header class="banner">
-    <div class="brand"><img class="school-logo" src="assets/em-logo-header.svg" alt="Escuela de Maestros">
-      <div><strong>Matriz PCI Completa</strong><small>Secundaria Aprende · Media, Técnica y BA +15</small></div>
+  <header class="site-top no-print">
+    <a class="brand" href="index.html" aria-label="Escuela de Maestros · Inicio">
+      <img src="assets/em-logo-header.svg?v=20260902" alt="Escuela de Maestros">
+    </a>
+    <div class="top-right">
+      <a class="pill-btn" href="index.html">← Inicio</a>
+      <a class="text-button pci-upper-link" href="panel-general.html">Administración</a>
+      <a class="text-button pci-upper-link" href="panel-escuela.html">Panel institucional</a>
+      <img class="ba" src="assets/ba-logo.png?v=20260827" alt="Buenos Aires Ciudad">
     </div>
-    <nav aria-label="Navegación principal"><a href="index.html">Inicio</a><a href="panel-general.html">Administración</a><a href="panel-escuela.html">Panel institucional</a></nav>
   </header>
   <main>
-    <section class="intro">
+    <section class="section-heading hero-band pci-hero">
       <div><span class="eyebrow">Gestión institucional</span><h1>Proyectos curriculares por orientación y especialidad</h1>
       <p><strong>Para las escuelas que ya están registradas:</strong> seleccioná la institución de siempre y agregale PCI de Media, Técnica o BA +15. No hay que darla de alta de nuevo ni modificar las claves de acceso; los contenidos y planes históricos se conservan.</p></div>
       <span id="status" role="status" aria-live="polite" class="status">Comprobando conexión…</span>
     </section>
     <div id="fatal" class="warning" hidden></div>
     <div class="layout" id="app" hidden>
-      <aside class="panel sidebar">
-        <div class="sectionTitle"><h2>Escuela existente</h2></div>
+      <aside class="content-bag card sidebar">
+        <div class="sectionTitle bag-heading"><h2>Escuela existente</h2></div>
         <select id="school" aria-label="Elegir escuela"></select>
         <p class="muted">Se utiliza el mismo registro, ID y acceso institucional. Los modelos son de cada PCI, no de la escuela completa.</p>
         <p id="schoolLabel" class="muted"></p>
-        <a id="historicalPciLink" class="btn" href="escuela-online.html">Abrir FG / matriz histórica</a>
+        <a id="historicalPciLink" class="button secondary" href="escuela-online.html">Abrir FG / matriz histórica</a>
         <hr>
         <div class="sectionTitle"><h2>Sus PCI</h2><button type="button" id="btnAddPci" class="btn primary">+ Agregar modelo / PCI</button></div>
         <p id="pciCounts" class="muted" aria-live="polite">Cargando proyectos…</p>
@@ -65,8 +74,8 @@
         </form>
       </aside>
       <section class="workspace">
-        <div id="empty" class="panel"><h2>Elegí un PCI</h2><p class="muted">Seleccioná un proyecto de esta escuela para trabajar con su rama curricular independiente.</p></div>
-        <section id="ba15Pending" class="panel" hidden>
+        <div id="empty" class="panel card"><h2>Elegí un PCI</h2><p class="muted">Seleccioná un proyecto de esta escuela para trabajar con su rama curricular independiente.</p></div>
+        <section id="ba15Pending" class="panel card" hidden>
           <span class="eyebrow">Secundaria BA +15 · Régimen propio</span>
           <h2 id="ba15Name">PCI BA +15</h2>
           <p id="ba15Info" class="muted"></p>
@@ -84,7 +93,7 @@
 
           <p class="muted">Norma: <a href="https://documentosboletinoficial.buenosaires.gob.ar/publico/PE-RES-MEDGC-MEDGC-1375-25-ANX-2.pdf" target="_blank" rel="noopener noreferrer">Anexo I IF-2025-44785236-GCABA-SSPIE</a>. Los componentes propios de cada orientación deben contrastarse con su plan oficial.</p>
         </section>
-        <section id="technicalPending" class="panel" hidden>
+        <section id="technicalPending" class="panel card" hidden>
           <span class="eyebrow">Educación Técnica · Especialidad</span>
           <h2 id="technicalName">PCI técnico</h2>
           <p id="technicalInfo" class="muted"></p>
@@ -93,7 +102,7 @@
           <iframe id="technicalRulesFrame" title="Mapa técnico C1–C12 y reglas de composición" referrerpolicy="no-referrer" loading="lazy" style="width:100%;min-height:950px;border:1px solid #d5e2e8;border-radius:12px;margin-top:14px" src="about:blank"></iframe>
         </section>
         <section id="editor" hidden>
-          <div class="panel">
+          <div class="panel card">
             <div class="topline"><div><span class="eyebrow" id="pciTag">Orientación</span><h2 id="pciName"></h2><p id="pciInfo" class="muted"></p></div>
               <button type="button" id="downloadOriginal" class="btn">Descargar FG original</button></div>
             <div class="metrics" id="metrics"></div>
@@ -104,10 +113,10 @@
             </div>
             <div id="message" class="message" role="status" aria-live="polite"></div>
           </div>
-          <div class="panel pane" id="fgPane">
+          <div class="panel card pane" id="fgPane">
             <div class="topline"><div><span class="eyebrow">FG Matriz histórica → FG V2</span><h3>Formación General por área</h3><p class="muted">Los contenidos y las secuencias anteriores se importan sin cambiar el documento original. Las equivalencias V2 se identifican automáticamente.</p></div></div>
-            <div class="split">
-              <div id="areaList" class="areaList"></div>
+            <div class="split original-workspace">
+              <div id="areaList" class="areaList content-bag card"></div>
               <div id="areaEditor">
                 <p class="muted">Elegí un área para revisar sus agrupamientos y guardar la copia propia de esta orientación.</p>
               </div>
@@ -123,7 +132,7 @@
           <div class="panel pane" id="foPane" hidden>
             <div class="topline"><div><span class="eyebrow">FO · Desarrollo curricular</span><h3>Planes de aprendizaje</h3><p class="muted">Cada espacio FO guarda sus objetivos, sinopsis y las cuatro etapas de cada plan, con control de versiones.</p></div></div>
             <div class="split">
-              <div id="foSpaces" class="areaList"></div>
+              <div id="foSpaces" class="areaList content-bag card"></div>
               <div id="foEditor"><p class="muted">Elegí un espacio FO a la izquierda para desarrollar sus planes.</p></div>
             </div>
           </div>
@@ -131,7 +140,10 @@
       </section>
     </div>
   </main>
-  <footer>PCI V2 · Media, Técnica y BA +15 · Matriz histórica original protegida.</footer>
+  <footer class="site-footer no-print">
+    <img class="logo-blanco" src="assets/em-logo-footer.svg?v=20260902" alt="Escuela de Maestros">
+    <img class="ministerio" src="assets/ministerio-footer.svg?v=20260902" alt="Ministerio de Educación · Buenos Aires Ciudad">
+  </footer>
   <script type="module" src="src/orientaciones-online.mjs?v=20261111"></script>
 </body>
 </html>
