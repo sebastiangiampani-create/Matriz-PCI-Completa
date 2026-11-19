@@ -660,6 +660,7 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
         initialDraft:remoteDraft,
         canEditRemote:canEdit()&&['borrador','en_revision'].includes(b.status),
         savedRevision:revision,
+        developmentHost:$('ba15Development'),
         saveRemote:async document=>{
           if(pci?.pci_id!==b.pci_id)throw Error('Se cambió de PCI: no se permite guardar en otro.');
           const result=await saveUnit('oferta','map',unitId,baseVersion,document,revision);
