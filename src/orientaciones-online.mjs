@@ -942,8 +942,7 @@ function renderDevelopmentOverview(){
    foCoverage(foCatalog,{ids,orientationLabel:'Trayectoria de la orientación'}) :
    fgCoverage(refs.fg||[],{year:item.level,area:item.area,subjects,ids});
   let label;
-  if(item.component==='FG'&&item.historical&&item.legacyContents&&
-     !item.saved&&coverage.used===0){
+  if(item.component==='FG'&&item.historical&&item.legacyContents&&coverage.used===0){
    label=item.legacyContents+' contenidos históricos · equivalencia V2 a revisar';
   }else if(coverage.pending){
    label=ids.length+' contenidos seleccionados · cobertura sin referencia válida';
@@ -1015,7 +1014,7 @@ function renderDevelopmentOverview(){
    keys.get(key).push(item);
   }
   for(const [key,group] of keys){
-   const first=group[0],historicNeedsReview=group.some(x=>x.historical&&x.legacyContents&&!x.saved&&
+   const first=group[0],historicNeedsReview=group.some(x=>x.historical&&x.legacyContents&&
     !spaceContentIds(x.document).length);
    const p=elem('div',undefined,'pci-development-level-row');
    note('strong','Nivel '+first.level+' · '+first.area,p);
