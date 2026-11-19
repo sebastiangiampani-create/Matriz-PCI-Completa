@@ -210,6 +210,85 @@ try{
  assert.deepEqual(authErrors,[],'El flujo de autenticación no debe generar errores JS');
  console.log('E2E LOGIN OK: acceso sin sesión → login institucional → vuelta automática a la misma escuela y sus PCI.');
 
+ // Desde Panel de control, «Organización curricular» debe abrir el módulo
+ // nuevo de esa misma escuela. Conservar el enlace histórico «FG existente».
+ const panelPage=await browser.newPage({viewport:{width:1440,height:900}});
+ const panelErrors=[];
+ panelPage.on('pageerror',e=>panelErrors.push(e.message));
+ await panelPage.addInitScript(()=>{
+   sessionStorage.setItem('pci_admin_monitor_session',JSON.stringify({
+     role:'admin',token:'e2e-admin-panel',permissions:['pci.view','pci.edit','institutional.view','audit.view'],all_schools:true
+   }));
+   // Simula una pestaña con sesión previa de otra escuela: no puede prevalecer.
+   sessionStorage.setItem('pci_access_session',JSON.stringify({role:'editor',school_id:1002,token:'e2e-otro-editor'}));
+ });
+ await panelPage.route('https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-access',async route=>{
+   const body=JSON.parse(route.request().postData()||'{}');
+   if(body.token&&body.token!=='e2e-admin-panel')
+     throw Error('El panel usa un token no autorizado');
+   let value;
+   if(body.action==='session-info')value={role:'admin',permissions:['pci.view','pci.edit','institutional.view','audit.view'],all_schools:true,school_ids:[]};
+   else if(body.action==='list-schools')value={schools:[{
+     school_id:1001,name:'Escuela N.º 99 · Prueba automatizada',cue:'DEMO-001',
+     model:'comun',progress:{edited_spaces:3,total_spaces:10,assigned_contents:5},
+     audit:{participant_count:1,total_events:0}
+   }]};
+   else if(body.action==='get-school-dashboard')value={
+     school:{school_id:1001,name:'Escuela N.º 99 · Prueba automatizada',cue:'DEMO-001',model:'comun',
+       edit_code:'PCI-0000',primary_code:'DIR-DEMO'},progress:{edited_spaces:3,total_spaces:10,assigned_contents:5},
+     audit:{participant_count:1,total_events:0}};
+   else if(body.action==='get-audit')value={events:[]};
+   else if(body.action==='public-catalog')value={schools:[{school_id:1001,name:'Escuela N.º 99 · Prueba automatizada',cue:'DEMO-001'}]};
+   else throw Error('Acción no simulada para panel administrativo: '+body.action);
+   await route.fulfill({status:200,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(value)});
+ });
+ await panelPage.route('https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-multipci',async route=>{
+   const body=JSON.parse(route.request().postData()||'{}');
+   if(body.token!=='e2e-admin-panel'){
+     await route.fulfill({status:401,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},
+       body:JSON.stringify({error:'Sesión de otro editor, no permitida'})});
+     return;
+   }
+   let data;
+   if(body.action==='session-info')data={role:'admin',permissions:['pci.view','pci.edit'],all_schools:true,school_ids:[]};
+   else if(body.action==='list-schools')data={schools:[{school_id:1001,name:'Escuela N.º 99 · Prueba automatizada',cue:'DEMO-001'}]};
+   else if(body.action==='list-school-pcis')data={pcis:initialPcis};
+   else throw Error('Acción no simulada para portal desde panel: '+body.action);
+   await route.fulfill({status:200,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(data)});
+ });
+ await panelPage.goto('http://127.0.0.1:'+port+'/panel-general.html',{waitUntil:'domcontentloaded'});
+ const dashboardOrg=panelPage.locator('#rows a').filter({hasText:'Organización curricular'}).first();
+ await dashboardOrg.waitFor({timeout:20000});
+ assert.match(await dashboardOrg.getAttribute('href'),/pci-orientaciones\.html\?school=1001&from=panel-general/);
+ assert.match(await panelPage.locator('#rows a').filter({hasText:'FG existente'}).first().getAttribute('href'),
+   /escuela-online\.html\?school=1001/,'FG histórica debe permanecer accesible');
+ await dashboardOrg.click();
+ await panelPage.waitForURL('**/pci-orientaciones.html?school=1001&from=panel-general');
+ await panelPage.locator('#app:not([hidden])').waitFor({timeout:25000});
+ assert.equal(await panelPage.locator('.school-offer-card').count(),1,'El panel lleva a la orientación de su escuela');
+ assert.equal(await panelPage.locator('#school').inputValue(),'1001');
+
+ // El botón del Panel institucional también debe conducir al nuevo portal.
+ await panelPage.goto('http://127.0.0.1:'+port+'/panel-escuela.html?school=1001&admin=1',
+   {waitUntil:'domcontentloaded'});
+ const institutionalOrg=panelPage.locator('#openPci');
+ await institutionalOrg.waitFor({state:'visible',timeout:25000});
+ assert.match(await institutionalOrg.getAttribute('href'),/pci-orientaciones\.html\?school=1001&from=panel-general/);
+ assert.match(await panelPage.locator('#openLegacyPci').getAttribute('href'),/escuela-online\.html\?school=1001/);
+ await institutionalOrg.click();
+ await panelPage.waitForURL('**/pci-orientaciones.html?school=1001&from=panel-general');
+ await panelPage.locator('#app:not([hidden])').waitFor({timeout:25000});
+ assert.equal(await panelPage.locator('.school-offer-card').count(),1);
+ assert.deepEqual(panelErrors,[],'Los paneles no deben generar errores JS');
+ assert.equal(state.pcis[0].pci_id,initialPcis[0].pci_id,'Navegar desde paneles no modifica PCI');
+ console.log('E2E PANEL OK: Panel general y Panel institucional → Organización curricular; FG histórica disponible.');
+
+ // La consola histórica index.html también ofrece ambas rutas.
+ const originalIndex=await readFile(resolve(root,'index.html'),'utf8');
+ assert.match(originalIndex,/<a class="btn" href="\$\{organizationUrl\(s\)\}">Organización curricular<\/a>/);
+ assert.match(originalIndex,/<a class="btn" href="\$\{schoolUrl\(s\)\}">FG existente<\/a>/);
+
+
 } finally {
  await browser.close();
  await new Promise(resolveClose=>server.close(resolveClose));
