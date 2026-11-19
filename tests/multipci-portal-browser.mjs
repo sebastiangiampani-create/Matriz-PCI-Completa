@@ -286,6 +286,7 @@ try{
  await page.locator('#ba15Development .pci-development-card').first().click();
  const planEditor=page.locator('#ba15Development .ba15-plan-editor');
  await planEditor.getByText('Secuencia didáctica · cuatro momentos').waitFor();
+ await page.screenshot({path:'test-artifacts/multipci-portal/ba15-fase2-v2-tarjetas-planes.png',fullPage:false});
  await planEditor.getByLabel('Objetivos de aprendizaje').fill('Construir argumentos sustentados');
  await planEditor.getByLabel('Objetivos de aprendizaje').press('Tab');
  const persistPlan=page.locator('#ba15Development').getByRole('button',{name:'Guardar Desarrollo BA +15 online'});
