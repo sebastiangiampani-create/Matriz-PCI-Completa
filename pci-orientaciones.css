@@ -1092,3 +1092,31 @@ h3 {letter-spacing:-.01em;}
 .layout .pci-development-stage textarea{min-height:80px}
 @media(max-width:940px){.layout .pci-development-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.layout .pci-development-cards,.layout .pci-development-stats{grid-template-columns:1fr}}
+
+/* La Fase 2 de Media/Técnica reutiliza el mismo tablero de tarjetas V2. */
+.layout .navtabs .phase-detail-tab:not(.active){display:none}
+.layout .navtabs .phase-detail-tab.active{background:#edf8f5;color:#126e65}
+.layout .pci-development-filters{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.layout .pci-development-filters label{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:850;color:var(--ink)}
+.layout .pci-development-filters select{min-height:37px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.layout #pciDevelopmentCards{margin-top:10px}
+.layout .pci-development-card[hidden]{display:none}
+.layout .pci-development-levels{margin-top:18px;padding:15px;border-radius:13px;border:1px solid var(--line);background:#f7fafb}
+.layout .pci-development-levels h4{margin:0 0 11px;font-size:.9rem;color:var(--ink)}
+.layout .pci-development-level-row{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-top:1px solid var(--line);font-size:.76rem}
+.layout .pci-development-level-row strong{color:var(--ink)}
+.layout .pci-development-level-row span{color:#126e65;text-align:right;font-weight:800}
+.layout .school-structure-matrix{margin:10px 0 18px;overflow:auto}
+.layout .school-structure-matrix table{min-width:350px;width:100%;border-collapse:collapse;font-size:.74rem}
+.layout .school-structure-matrix caption{text-align:left;color:var(--ink);font-size:.85rem;font-weight:850;margin:0 0 8px}
+.layout .school-structure-matrix th,.layout .school-structure-matrix td{padding:9px 12px;border:1px solid var(--line);text-align:center}
+.layout .school-structure-matrix th{background:#f0f6f7;color:var(--ink)}
+.layout .school-structure-matrix th:first-child{text-align:left}
+.layout .school-structure-matrix td.present{color:#126e65;font-weight:900;background:#ebf8f5}
+.layout .school-structure-matrix td.absent{color:#8798a2}
+@media(max-width:650px){
+ .layout .pci-development-level-row{display:grid}
+ .layout .pci-development-level-row span{text-align:left}
+ .layout .pci-development-filters label{width:100%;justify-content:space-between}
+ .layout .pci-development-filters select{flex:1;max-width:230px}
+}
