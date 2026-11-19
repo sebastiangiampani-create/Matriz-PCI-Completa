@@ -903,3 +903,12 @@ h3 {letter-spacing:-.01em;}
   .constructor-subject-list{max-height:230px}
   .builder-map-heading{flex-direction:column}
 }
+
+/* Legibilidad de encabezados y navegación de agrupamientos */
+.layout .constructor-matrix thead th small{
+  display:block;color:#dcecf5;font-size:.64rem;font-weight:700;
+  line-height:1.25;margin-top:4px;white-space:normal;
+}
+.constructor-group-title{display:block;font-weight:900}
+.constructor-group:focus-visible{outline:3px solid #126e65;outline-offset:1px}
+.constructor-group:not(.historia){cursor:copy}
