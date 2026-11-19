@@ -132,7 +132,7 @@ Deno.serve(async req=>{
    const response=await db.from('pci_proposals').select('school_id,data').gte('school_id',1001).order('school_id');
    if(response.error)throw response.error;
    return json({schools:(response.data||[]).filter(row=>isScoped(s,Number(row.school_id)))
-    .map(row=>({school_id:row.school_id,name:row.data?.schoolName||'Escuela '+row.school_id,cue:row.data?._meta?.cue||''}))});
+    .map(row=>({school_id:row.school_id,name:row.data?.schoolName||'Escuela '+row.school_id,cue:row.data?._meta?.cue||'',model:row.data?.profile==='tecnica'?'tecnica':'comun'}))});
   }
   if(action==='create-school-v2'){
    if(s.role!=='admin')return err('Solo administración.',403);
