@@ -40,7 +40,7 @@ let session=null,schools=[],schoolId=null,pcis=[],pci=null,workspace=null,auto=n
 let selectedFgArea=null,fgDoc=null,fgRevision=0,fgDirty=false;
 let offerRevision=0,offerDirty=false,selectedFoSpace=null,foDoc=null,foRevision=0,foDirty=false;
 let tab='fg',busy=false,ba15Controller=null;
-const technical=createIntegratedTechnicalUI({canEdit,getUnit,saveUnit,saveSafe:safeSave,download,rememberDraft,forgetDraft,recallDraft,message,status});
+const technical=createIntegratedTechnicalUI({canEdit,getUnit,saveUnit,saveSafe:safeSave,download,rememberDraft,forgetDraft,recallDraft,message,status,onPhaseChange:()=>refreshPhaseState()});
 
 async function call(action,data={}){
   const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:session?.token,...data}),cache:'no-store'});
@@ -362,6 +362,7 @@ function returnToSchool(){
   if(!canLeave())return;
   technical.close();ba15Controller?.destroy();ba15Controller=null;
   pci=null;workspace=null;auto=null;
+  $('editor').classList.remove('technical-editor');
   selectedFgArea=null;selectedFoSpace=null;fgDoc=null;foDoc=null;
   fgDirty=false;foDirty=false;offerDirty=false;
   show('editor',false);show('technicalPending',false);show('ba15Pending',false);show('empty',true);
@@ -494,9 +495,10 @@ async function openPci(id,requestedTab='oferta'){
       await technical.open(tech);
       show('technicalPending',false);show('ba15Pending',false);
       show('empty',false);show('editor');
+      $('editor').classList.add('technical-editor');
       $('app').classList.remove('school-home');
       renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true);
-      status('PCI Técnico · mapa C1–C12 y planes de aprendizaje');
+      status('PCI Técnico · Fase 1 construcción C1–C12; Fase 2 solo tras mapa revisado y guardado');
       return;
     }
     technical.close();
@@ -538,6 +540,7 @@ async function openPci(id,requestedTab='oferta'){
       const item=elem('div',undefined,'metric');note('strong',num,item);note('small',label,item);host.appendChild(item);
     }
     show('empty',false);show('editor');
+    $('editor').classList.remove('technical-editor');
     $('app').classList.remove('school-home');
     renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true);renderAreas();
     message('PCI cargado. El guardado es siempre explícito y nunca reemplaza la matriz histórica.');
