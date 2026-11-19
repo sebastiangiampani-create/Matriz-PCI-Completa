@@ -34,6 +34,10 @@ jobs:
           };
           await check('index.html','Ingresar a una escuela');
           await check('pci-orientaciones.html','Organización curricular de la escuela');
+          await check('pci-orientaciones.html','constructorSubjectBank');
+          await check('src/orientaciones-online.mjs','renderUnifiedConstructor');
+          await check('src/constructor-v2-ui.mjs','renderUnifiedConstructor');
+          await check('src/integracion-curricular/constructor-mapa-unificado.mjs','COMPOSITION_VERSION');
           await check('panel-general.html','Organización curricular</a>');
           await check('panel-escuela.html','Organización curricular</a>');
           NODE
