@@ -1053,7 +1053,7 @@ function renderDevelopmentOverview(){
    const response=await getUnit(pci,'fo','space',item.id,'fo-sec-aprende-v2/1');
    if(!response.exists||developmentRequestSeq!==token||tab!=='desarrollo')return;
    item.document={...response.document,contentIds:uniqueIdsForSummary(
-    item.document?.contentIds,response.document?.items)};
+    item.document?.contentIds,response.document?.contentIds,response.document?.items)};
    item.saved=true;item.plansExpected=(response.document?.plansBimestrales||[]).length||4;
    update();
   });
