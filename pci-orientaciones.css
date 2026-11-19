@@ -682,3 +682,25 @@ h3 {letter-spacing:-.01em;}
   .school-offer-actions{display:grid;grid-template-columns:1fr 1fr}
   .layout .school-offer-actions .btn{padding:8px}
 }
+
+
+/* Reducir duplicaciones de la portada: la FG y los contadores
+   ya se muestran en el panel central de organización curricular. */
+.layout.school-home #historicalPciLink,
+.layout.school-home>.sidebar>#pciCounts{display:none}
+.layout.school-home #formCreatePci:not([hidden]){
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px 14px;
+  width:100%;
+  margin-top:18px;
+}
+.layout.school-home #formCreatePci>h3,
+.layout.school-home #formCreatePci>.note,
+.layout.school-home #formCreatePci>.actions{
+  grid-column:1/-1;
+}
+.layout.school-home #formCreatePci>label{margin:0}
+@media(max-width:700px){
+  .layout.school-home #formCreatePci:not([hidden]){grid-template-columns:1fr}
+}
