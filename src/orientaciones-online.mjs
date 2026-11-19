@@ -1211,23 +1211,39 @@ function renderFgEditor(){
   note('p','Copia independiente · Revisión '+fgRevision+' · '+(fgRevision?'Guardada':'Sin guardar aún'),host,'muted');
   for(const [gi,g] of fgDoc.groups.entries()){
     const card=elem('div',undefined,'workCard');
-    note('strong',(g.name||'Espacio '+(gi+1))+' · '+(g.level||'nivel s/d'),card);
-    note('p',(g.items||[]).length+' contenidos · '+(g.plansBimestrales||[]).length+' planes · C'+(g.startTerm||'?'),card);
+    card.dataset.fgGroupId=String(g.id);
+    const fgYear=Number(g.level||g.year)||0;
+    const subjects=(g.curricularSubjects||g.members||[])
+      .map(x=>typeof x==='string'?x:x.name||x.subject||'').filter(Boolean);
+    const officialRows=fgUniverse(refs.fg||[],{year:fgYear,area:selectedFgArea,subjects});
+    const canWrite=canEdit()&&['borrador','en_revision'].includes(pci.status);
+    note('strong',(g.name||'Espacio '+(gi+1))+' · Nivel '+(fgYear||'sin definir'),card);
+    note('p',(g.items||[]).length+' contenidos históricos · '+
+      (g.plansBimestrales||[]).length+' planes · C'+(g.startTerm||'?'),card,'muted');
+    const groupMetric=fgCoverage(refs.fg||[],{year:fgYear,area:selectedFgArea,subjects,
+      ids:spaceContentIds(g)});
+    renderV2Metric(card,'Cobertura V2 del agrupamiento',groupMetric,{historic:(g.items||[]).length});
+    renderV2ContentPicker(card,{title:'Contenidos del espacio (V2)',rows:officialRows,
+      ids:g.contentIds||[],canWrite,onChange:ids=>{
+       g.contentIds=ids;markDirty('fg');renderFgEditor();
+      }});
     card.appendChild(field('Sinopsis / descripción del espacio',g.summary??g.synopsis??'',v=>{
       g.summary=v;markDirty('fg');message('Cambios de FG pendientes de guardar.','warn');
     }));
     (g.plansBimestrales||[]).forEach((plan,pi)=>{
       const details=elem('details');const summary=elem('summary',plan.name||'Plan '+(pi+1));details.appendChild(summary);
+      details.appendChild(field('Nombre del plan',plan.name||'Plan '+(pi+1),v=>{plan.name=v;markDirty('fg');}));
       details.appendChild(field('Sinopsis',plan.synopsis||'',v=>{plan.synopsis=v;markDirty('fg');}));
-      details.appendChild(field('Objetivos',plan.objectives||'',v=>{plan.objectives=v;markDirty('fg');}));
-      for(const stage of stages){
-        const val=plan.stages?.[stage];
-        const label=stageLabel[stage];
-        details.appendChild(field(label,typeof val==='string'?val:val?.description||'',v=>{
-          const edited=editStageDescription(plan,stage,v);
-          plan.stages=edited.stages;markDirty('fg');
-        }));
-      }
+      details.appendChild(field('Objetivos de aprendizaje',plan.objectives||'',v=>{plan.objectives=v;markDirty('fg');}));
+      const planMetric=fgCoverage(refs.fg||[],{year:fgYear,area:selectedFgArea,subjects,
+        ids:planContentIds(plan)});
+      const dual=['laboratorio','taller'].includes(String(g.kind||g.type||'').toLowerCase());
+      renderV2Metric(details,'Contenidos del plan · Nivel '+fgYear,planMetric,{dual,groupMetric});
+      renderV2ContentPicker(details,{title:'Contenidos del plan '+(pi+1),rows:officialRows,
+        ids:plan.contentIds||[],canWrite,onChange:ids=>{
+         plan.contentIds=ids;markDirty('fg');renderFgEditor();
+        }});
+      appendV2Stages(details,plan,()=>markDirty('fg'));
       card.appendChild(details);
     });
     host.appendChild(card);
