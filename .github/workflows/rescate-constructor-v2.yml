@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -29,4 +31,5 @@ jobs:
         run: node --test tests/constructor-mapa-unificado.test.mjs
       - name: Conservar originales escolares fuera del diff
         run: |
+          git fetch origin main
           git diff --quiet origin/main...HEAD -- app.js app.html app.css pci-model.js escuela-online.html tecnica/app.html supabase/functions/pci-multipci/index.ts
