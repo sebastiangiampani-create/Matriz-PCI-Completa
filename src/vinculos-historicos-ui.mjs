@@ -265,11 +265,11 @@ export function createHistoricAssignmentUI({call,canManage,notify=()=>{},onChang
       (Array.isArray(source.plansBimestrales)?source.plansBimestrales.length:0)+' planes anteriores · solo lectura.','muted'));
     for(const [i,plan] of list(source.plansBimestrales).entries()){
      const body=el('div',null,'legacy-preview-plan');
-     body.append(el('strong',plan.name||'Plan '+(i+1)));
-     for(const field of [plan.synopsis,plan.objectives]){
+     body.append(el('strong',plan?.name||'Plan '+(i+1)));
+     for(const field of [plan?.synopsis,plan?.objectives]){
       if(typeof field==='string'&&field.trim())body.append(el('p',field.trim()));
      }
-     for(const stage of Object.values(plan.stages||{})){
+     for(const stage of Object.values(plan?.stages||{})){
       const text=typeof stage==='string'?stage:stage?.description;
       if(typeof text==='string'&&text.trim())body.append(el('p',text.trim()));
      }
