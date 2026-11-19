@@ -8,7 +8,7 @@
   <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
   <title>Organización curricular de la escuela · PCI Secundaria Aprende</title>
   <link rel="stylesheet" href="app.css?v=20260902-1">
-  <link rel="stylesheet" href="pci-orientaciones.css?v=20261119-primer-pci-1">
+  <link rel="stylesheet" href="pci-orientaciones.css?v=20261119-legacy-links-1">
 </head>
 <body>
   <header class="site-top no-print">
@@ -93,13 +93,37 @@
             <div><strong>Formación General anterior, si existe</strong><p>Las escuelas que ya trabajaron su Formación General conservan sus contenidos y planes. Una institución nueva empieza creando su primer PCI.</p></div>
             <a id="homeHistoricalPciLink" class="button secondary" href="escuela-online.html">Consultar FG anterior</a>
           </div>
-          <div id="schoolPciCards" class="schoolPciCards" aria-live="polite"></div>
+          <section id="historicAssignmentSection" class="historic-assign-card" hidden aria-labelledby="historicAssignmentTitle">
+            <div class="historic-assign-head">
+              <div>
+                <span class="eyebrow">VINCULACIÓN · TRABAJO ANTERIOR</span>
+                <h3 id="historicAssignmentTitle">¿A qué PCI corresponde lo que ya trabajamos?</h3>
+                <p id="historicAssignmentSummary" class="muted">La FG común puede asignarse a uno, varios o todos los PCI. Los desarrollos de una orientación o especialidad solo a los PCI de esa opción. El original permanece intacto.</p>
+              </div>
+              <button id="editHistoricLinks" type="button" class="btn secondary">Asignar trabajo anterior</button>
+            </div>
+            <div id="historicAssignmentEditor" hidden>
+              <p class="muted">Elegí los agrupamientos históricos y sus destinatarios. Los cambios se aplican únicamente al presionar <strong>Guardar asignaciones</strong>; no se borran contenidos ni planes previos.</p>
+              <div class="historic-assign-toolbar">
+                <label><input type="checkbox" id="historicShowEmpty"/> Mostrar también agrupamientos vacíos de plantilla</label>
+                <span id="historicAssignmentRevision" class="muted"></span>
+              </div>
+              <div id="historicAssignmentRows" aria-live="polite"></div>
+              <div class="actions">
+                <button type="button" id="saveHistoricLinks" class="btn primary">Guardar asignaciones</button>
+                <button type="button" id="cancelHistoricLinks" class="btn">Cancelar</button>
+              </div>
+              <p id="historicAssignmentMessage" class="note" role="status" aria-live="polite"></p>
+            </div>
+          </section>
+                    <div id="schoolPciCards" class="schoolPciCards" aria-live="polite"></div>
         </div>
         <section id="ba15Pending" class="panel card" hidden>
           <button type="button" class="text-button backToSchool" data-back-to-school>← Volver a orientaciones</button>
           <span class="eyebrow">Secundaria BA +15 · Régimen propio</span>
           <h2 id="ba15Name">PCI BA +15</h2>
           <p id="ba15Info" class="muted"></p>
+          <div id="ba15HistoricLinks" class="historic-pci-preview" hidden></div>
           <div class="note"><strong>Mapa oficial BA +15 · Resolución 1375/MEDGC/25, Anexo I.</strong>
             Cuatro niveles, ocho cuatrimestres (C1–C8), 38 horas cátedra semanales por nivel, formación general y orientada y talleres articulados.
             Constructor curricular de borrador habilitado por PCI: podés organizar espacios, seleccionar contenidos NES y guardar el desarrollo sin alterar la Formación General histórica. La aprobación normativa final requiere revisión.</div>
@@ -139,6 +163,7 @@
               <button type="button" class="tab" data-tab="fg">2 · Desarrollo FG</button>
               <button type="button" class="tab" data-tab="fo">2 · Desarrollo FO</button>
             </div>
+            <div id="pciHistoricLinks" class="historic-pci-preview" hidden></div>
             <p id="pciPhaseState" class="pci-phase-state" role="status" aria-live="polite"></p>
             <div id="message" class="message" role="status" aria-live="polite"></div>
           </div>
@@ -230,6 +255,6 @@
     <img class="logo-blanco" src="assets/em-logo-footer.svg?v=20260902" alt="Escuela de Maestros">
     <img class="ministerio" src="assets/ministerio-footer.svg?v=20260902" alt="Ministerio de Educación · Buenos Aires Ciudad">
   </footer>
-  <script type="module" src="src/orientaciones-online.mjs?v=20261119-primer-pci-1"></script>
+  <script type="module" src="src/orientaciones-online.mjs?v=20261119-legacy-links-1"></script>
 </body>
 </html>
