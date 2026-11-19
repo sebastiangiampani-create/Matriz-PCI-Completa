@@ -174,7 +174,11 @@ try{
  await page.locator('#formCreatePci button[type=submit]').click();
  await page.locator('#ba15Pending:not([hidden])').waitFor({timeout:20000});
  await page.locator('#ba15Builder').getByRole('button',{name:'Mapa C1–C8'}).waitFor();
- const mapHeader=await page.locator('#ba15Builder .mapTable thead th').first().evaluate(e=>getComputedStyle(e).backgroundColor);
+ await page.waitForFunction(()=>{
+   const e=document.querySelector('#ba15Builder .mapTable thead th');
+   return e&&getComputedStyle(e).backgroundColor==='rgb(18, 57, 92)';
+ },null,{timeout:12000});
+ const mapHeader=await page.evaluate(()=>getComputedStyle(document.querySelector('#ba15Builder .mapTable thead th')).backgroundColor);
  assert.equal(mapHeader,'rgb(18, 57, 92)','Encabezado de matriz debe usar azul oscuro como el original');
  await page.locator('#pciList').getByText('Comunicación · Turno mañana').waitFor();
  await page.locator('#pciList').getByText('Economía y Administración · Turno noche').waitFor();
