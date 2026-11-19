@@ -1,6 +1,6 @@
 /** URL de navegación del PCI: escuela → orientación → fase. No almacena tokens. */
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const views=new Set(['oferta','fg','fo']);
+const views=new Set(['oferta','desarrollo','fg','fo']);
 export function parsePciRoute(href){
   const url=new URL(href,'https://pci.example.invalid');
   const raw=Number(url.searchParams.get('school'));
