@@ -11,6 +11,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
  const key=['pci-ba15-borrador-local-v1',identity.schoolId,identity.pciId].join(':');
  let draft=initialDraft?structuredClone(initialDraft):crearBorradorBa15(identity),term=1,selected=null,planIndex=0,view='mapa';
  let nesContents=[],nesLoading=true,nesError='',dirty=false,remoteBusy=false,recoveryDraft=null;
+ let pickedSubject=null,dragSubject=null;
  let remoteRevision=Number(savedRevision)||0,developmentUnlocked=false;
  const matchesIdentity=saved=>saved?.schema===draft.schema&&
   Number(saved?.schoolId)===Number(draft.schoolId)&&saved?.pciId===draft.pciId&&
@@ -45,6 +46,48 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
     save();render();
   }catch(e){status.textContent='No se modificó: '+e.message;}
  }
+ const mayCompose=()=>readOnlyDemo||canEditRemote;
+ const levelForTerm=t=>Math.floor((Number(t)-1)/2)+1;
+ function assignToSpace(subjectId,targetLevel,spaceId){
+  if(!mayCompose()){status.textContent='Este PCI está en modo lectura. No se modificó el mapa.';return;}
+  if(!subjectId)return;
+  const sourceLevel=Number(String(subjectId).match(/^n(\\d+)s/)?.[1]);
+  if(sourceLevel!==targetLevel){status.textContent='Cada materia se ubica solo en los cuatrimestres de su nivel BA +15.';return;}
+  if(draft.niveles[targetLevel-1]?.espacios.find(x=>x.id===spaceId)?.miembros.includes(subjectId))return;
+  change(()=>asignarMateriaBa15(draft,{nivel:targetLevel,espacioId:spaceId,materiaId:subjectId}));
+  pickedSubject=null;dragSubject=null;
+ }
+ function newSpaceWithSubject(subjectId,targetTerm,format){
+  if(!mayCompose()){status.textContent='Este PCI está en modo lectura. No se modificó el mapa.';return;}
+  const targetLevel=levelForTerm(targetTerm),sourceLevel=Number(String(subjectId).match(/^n(\\d+)s/)?.[1]);
+  if(!subjectId||sourceLevel!==targetLevel){
+   status.textContent='La materia debe permanecer en el nivel que le corresponde.';return;
+  }
+  const subject=draft.niveles[targetLevel-1]?.asignaturas.find(x=>x.id===subjectId);
+  if(!subject)return;
+  change(()=>{
+   const created=crearEspacioBa15(draft,{nivel:targetLevel,term:targetTerm,nombre:subject.nombre,formato:format});
+   const space=created.niveles[targetLevel-1].espacios.at(-1);
+   const updated=asignarMateriaBa15(created,{nivel:targetLevel,espacioId:space.id,materiaId:subjectId});
+   term=targetTerm;selected=space.id;return updated;
+  });
+  pickedSubject=null;dragSubject=null;
+ }
+ function makeDropTarget(node,onSubject){
+  if(!mayCompose())return;
+  node.classList.add('drop-zone');
+  node.addEventListener('dragover',event=>{
+   if(!dragSubject)return;
+   event.preventDefault();if(event.dataTransfer)event.dataTransfer.dropEffect='copy';
+   node.classList.add('drop-over');
+  });
+  node.addEventListener('dragleave',event=>{if(!node.contains(event.relatedTarget))node.classList.remove('drop-over')});
+  node.addEventListener('drop',event=>{
+   event.preventDefault();event.stopPropagation();node.classList.remove('drop-over');
+   const subjectId=dragSubject||event.dataTransfer?.getData('text/plain');
+   if(subjectId)onSubject(subjectId);
+  });
+ }
  function getPhaseStatus(){
   const check=validarBorradorBa15(draft);
   return phaseGate({revision:remoteRevision,dirty:dirty&&!developmentUnlocked,
@@ -77,7 +120,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    const ul=element('ul');for(const m of issues){ul.append(element('li',m));}panel.append(ul);host.append(panel);return;
   }
   if(view==='mapa'){
-   const matrix=element('div','','mapScroll'),tbl=element('table','','mapTable');
+   const matrix=element('div','','mapScroll'),tbl=element('table','','mapTable ba15ConstructorMap');
    const head=element('thead'),top=element('tr');top.append(element('th','Formato'));
    for(const t of BA15_TERMS)top.append(element('th','C'+t.numero+' · Nivel '+['I','II','III','IV'][t.nivel-1]));
    head.append(top);tbl.append(head);
@@ -87,9 +130,23 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
     for(const t of BA15_TERMS){
      const td=element('td'),spaces=draft.niveles[t.nivel-1].espacios.filter(e=>e.term===t.numero&&e.formato===format);
      for(const e of spaces){
-      td.append(button(e.nombre,()=>{term=t.numero;selected=e.id;render()},'slot'));
+      const tile=button(e.nombre+' · '+e.miembros.length+' materias',()=>{
+       if(pickedSubject){assignToSpace(pickedSubject,t.nivel,e.id);return;}
+       term=t.numero;selected=e.id;render();
+      },'slot ba15DropTile'+(selected===e.id?' active':''));
+      tile.title='Abrir agrupamiento o soltar una materia de Nivel '+t.nivel;
+      makeDropTarget(tile,id=>assignToSpace(id,t.nivel,e.id));
+      td.append(tile);
      }
-     if(!spaces.length)td.append(button('＋',()=>{term=t.numero;selected=null;render()},'ba15EmptySlot'));
+     if(!spaces.length){
+      const empty=button(pickedSubject?'Soltar materia aquí':'＋ Crear espacio',()=>{
+       if(pickedSubject){newSpaceWithSubject(pickedSubject,t.numero,format);return;}
+       term=t.numero;selected=null;render();
+      },'ba15EmptySlot ba15DropTile');
+      empty.title='Soltá una materia del mismo nivel para crear un agrupamiento';
+      makeDropTarget(empty,id=>newSpaceWithSubject(id,t.numero,format));
+      td.append(empty);
+     }
      row.append(td);
     }
     body.append(row);
@@ -103,17 +160,35 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   const summary=element('p','Nivel '+['I','II','III','IV'][levelNum-1]+' · C'+term+' · '+level.asignaturas.reduce((a,s)=>a+s.horas,0)+' horas semanales oficiales del nivel · '+level.espacios.filter(e=>e.term===term).length+' espacios del cuatrimestre','muted');host.append(summary);
   const layout=element('div','','ba15BuilderGrid');
   const aside=element('section','','workCard'),main=element('section','','workCard');
+  aside.classList.add('content-bag','constructor-side');main.classList.add('constructor-board');
   aside.append(element('h3','Bolsa curricular · Nivel '+['I','II','III','IV'][levelNum-1]));
-  aside.append(element('p','Asigná materias a uno o más formatos, sin duplicarlas dentro del mismo cuatrimestre.','muted'));
+  aside.append(element('p','Arrastrá una materia al mapa o a un agrupamiento. También podés seleccionarla y tocar el destino.','muted'));
+  const search=element('input');search.type='search';search.placeholder='Buscar materia o área…';search.className='ba15SubjectSearch';search.setAttribute('aria-label','Buscar materias BA +15');
+  aside.append(search);
+  const subjectList=element('div','','constructor-subject-list');aside.append(subjectList);
   const assigned=new Set(level.espacios.filter(e=>e.term===term).flatMap(e=>e.miembros));
   for(const s of level.asignaturas){
-   const row=element('div','','ba15Subject');
-   const name=element('strong',s.nombre),small=element('small',s.area+' · '+s.horas+' h · '+(assigned.has(s.id)?'Asignada':'Pendiente'));
-   row.append(name,small);
-   if(selected&&!assigned.has(s.id))row.append(button('Asignar',()=>change(()=>asignarMateriaBa15(draft,{nivel:levelNum,espacioId:selected,materiaId:s.id})),'btn'));
-   aside.append(row);
+   const row=button(s.nombre+' · '+s.horas+' h',()=>{
+    if(!mayCompose())return;
+    pickedSubject=pickedSubject===s.id?null:s.id;render();
+   },'constructor-bank-subject ba15Subject'+(pickedSubject===s.id?' active':''));
+   row.disabled=!mayCompose();
+   row.draggable=mayCompose();row.dataset.subjectId=s.id;
+   row.title='Arrastrá al mapa o seleccioná para ubicar';
+   const small=element('small',s.area+' · '+(assigned.has(s.id)?'Ya asignada en C'+term:'Pendiente en C'+term));
+   row.append(small);
+   row.addEventListener('dragstart',event=>{
+    dragSubject=s.id;pickedSubject=s.id;
+    if(event.dataTransfer){event.dataTransfer.effectAllowed='copy';event.dataTransfer.setData('text/plain',s.id);}
+   });
+   row.addEventListener('dragend',()=>{dragSubject=null;});
+   subjectList.append(row);
   }
-  const form=element('div','','formCard');
+  search.addEventListener('input',()=>{
+   const q=search.value.trim().toLocaleLowerCase('es');
+   for(const item of subjectList.children)item.hidden=!!q&&!item.textContent.toLocaleLowerCase('es').includes(q);
+  });
+  const form=element('div','','formCard constructor-add-card');
   form.append(element('h3','Crear agrupamiento en C'+term));
   const name=field('Nombre del espacio','',()=>{});const format=select('Formato',[['laboratorio','Laboratorio'],['taller','Taller'],['troncal','Troncal'],['orientado','Formación Orientada'],['otro','Otro formato']],()=>{});
   form.append(name,format.wrap);
@@ -123,9 +198,14 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    selected=updated.niveles[levelNum-1].espacios.at(-1).id;return updated;
   }),'btn primary'));main.append(form);
   for(const e of level.espacios.filter(e=>e.term===term)){
-   const card=element('article','','ba15Space');
-   card.append(button((selected===e.id?'▼ ':'▶ ')+e.nombre+' · '+e.formato,()=>{selected=selected===e.id?null:e.id;render()},'pciItem'+(selected===e.id?' active':'')));
+   const card=element('article','','ba15Space constructor-group propuesta');
+   makeDropTarget(card,id=>assignToSpace(id,levelNum,e.id));
+   card.append(button((selected===e.id?'▼ ':'▶ ')+e.nombre+' · '+e.formato+' · '+e.miembros.length+' materias',()=>{
+    if(pickedSubject){assignToSpace(pickedSubject,levelNum,e.id);return;}
+    selected=selected===e.id?null:e.id;render();
+   },'pciItem'+(selected===e.id?' active':'')));
    if(selected===e.id){
+    if(mayCompose())card.append(element('p','Soltá aquí una materia de la bolsa o seleccionala para asignarla.','muted'));
     const members=element('div','','ba15Members');
     for(const member of e.miembros){
      const subject=level.asignaturas.find(s=>s.id===member);
@@ -133,7 +213,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
      wrap.append(element('span',subject?.nombre||member),button('Quitar',()=>change(()=>quitarMateriaBa15(draft,{nivel:levelNum,espacioId:e.id,materiaId:member})),'btn'));
      members.append(wrap);
     }
-    if(!members.childNodes.length)members.append(element('p','Sin materias asignadas. Elegí alguna en la bolsa.','muted'));
+    if(!members.childNodes.length)members.append(element('p','Sin materias. Arrastrá una desde la bolsa.','muted'));
     card.append(members);
     card.append(field('Articulación pedagógica y espacios vinculados',e.articulacion,value=>change(()=>actualizarEspacioBa15(draft,{nivel:levelNum,espacioId:e.id,changes:{articulacion:value}})),true));
     if(view==='planes'){
@@ -180,7 +260,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
      for(const [key,label] of [['punto_partida','Punto de partida'],['indagacion','Indagación'],['produccion','Producción'],['evaluacion','Evaluación']])
       card.append(field(label,p.etapas[key],v=>update(t=>{t.etapas[key]=v;}),true));
     }
-    card.append(button('Eliminar agrupamiento',()=>{if(confirm('¿Eliminar este espacio del borrador local?'))change(()=>{selected=null;return eliminarEspacioBa15(draft,{nivel:levelNum,espacioId:e.id});});},'btn'));
+    if(mayCompose())card.append(button('Eliminar agrupamiento',()=>{if(confirm('¿Eliminar este espacio del borrador local?'))change(()=>{selected=null;return eliminarEspacioBa15(draft,{nivel:levelNum,espacioId:e.id});});},'btn'));
    }
    main.append(card);
   }
