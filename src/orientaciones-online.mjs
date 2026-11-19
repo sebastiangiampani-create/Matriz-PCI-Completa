@@ -48,6 +48,13 @@ async function call(action,data={}){
 function message(str,kind=''){const p=$('message');p.textContent=str;p.className='message '+kind;}
 function status(str,kind=''){const p=$('status');p.textContent=str;p.className='status '+kind;}
 function fatal(str){$('fatal').textContent=str;show('fatal');status('No disponible','error');}
+function showAuthRequired(reason='Ingresá con las credenciales habituales de la plataforma.'){
+  $('authHelp').textContent=reason;
+  show('authRequired',true);
+  show('fatal',false);
+  show('app',false);
+  status('Ingresá para continuar');
+}
 function canEdit(){return !!session && (session.role==='admin'||session.role==='editor'||session.role==='user'&&(session.permissions||[]).includes('pci.edit'));}
 function canCreateSchool(){return session?.role==='admin';}
 function canLeave(){
@@ -149,7 +156,10 @@ function readSession(){
 async function init(){
   try{
     session=readSession();
-    if(!session?.token){fatal('Iniciá sesión desde la página principal y volvé a ingresar a este módulo.');return;}
+    if(!session?.token){
+      showAuthRequired('Usá el mismo usuario o clave institucional de siempre. Después de ingresar, volverás automáticamente a esta pantalla.');
+      return;
+    }
     const verified=await call('session-info');session={...session,...verified};
     await loadReferences();
     const requested=Number(new URL(location.href).searchParams.get('school'));
@@ -211,6 +221,10 @@ async function init(){
     await reloadSchool();
     status('Conectado');
   }catch(error){
+    if(error?.status===401){
+      showAuthRequired('La sesión venció o no pudo validarse. Ingresá nuevamente con tu acceso habitual; tus proyectos no se modifican.');
+      return;
+    }
     fatal(error?.status===503?'La API de orientaciones todavía no fue desplegada por el programador. Los PCI existentes siguen funcionando.':error.message);
   }
 }
