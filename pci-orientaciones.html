@@ -8,7 +8,7 @@
   <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
   <title>Organización curricular de la escuela · PCI Secundaria Aprende</title>
   <link rel="stylesheet" href="app.css?v=20260902-1">
-  <link rel="stylesheet" href="pci-orientaciones.css?v=20261119-simple-1">
+  <link rel="stylesheet" href="pci-orientaciones.css?v=20261119-constructor-1">
 </head>
 <body>
   <header class="site-top no-print">
@@ -80,19 +80,6 @@
           <p class="note">Media y Técnica comparten la misma interfaz de planificación. Cada PCI conserva su modalidad, su especialidad u orientación, sus planes y un guardado independiente. Los contenidos técnicos requieren contrastar el plan de estudios particular antes de homologarse.</p>
           <div class="actions"><button type="submit" class="btn primary">Crear PCI</button><button type="button" class="btn" id="cancelPci">Cancelar</button></div>
         </form>
-        <hr>
-        <details id="schoolAdminTools" class="school-admin-tools" hidden>
-          <summary>Administrar escuelas</summary>
-          <button id="showNewSchool" class="btn" type="button" hidden>+ Dar de alta una escuela nueva</button>
-          <form id="formNewSchool" class="formCard" hidden>
-          <h3>Nueva institución</h3>
-          <label>Nombre oficial<input id="schoolNameInput" required maxlength="150"></label>
-          <label>CUE o código<input id="schoolCueInput" required maxlength="35"></label>
-          <label>Correo institucional<input id="schoolEmailInput" type="email" maxlength="180"></label>
-          <label>Año de incorporación<input id="schoolYearInput" type="number" min="2020" max="2100" value="2026"></label>
-          <div class="actions"><button type="submit" class="btn primary">Dar de alta</button><button type="button" class="btn" id="cancelSchool">Cancelar</button></div>
-          </form>
-        </details>
       </aside>
       <section class="workspace">
         <div id="empty" class="panel card">
@@ -159,9 +146,62 @@
           </div>
           <div class="panel pane" id="offerPane" hidden>
             <div class="topline"><div><span class="eyebrow">Formación General + Formación Orientada</span><h3>Mapa de la Oferta · C1 a C10</h3><p class="muted">Distribución de laboratorios, talleres y Proyecto de Vinculación. Las materias de FO se seleccionan según la orientación y su carga horaria.</p></div><div class="actions"><label>Alternativa FO <select id="foAlternative"><option value="A">Alternativa A</option><option value="B">Alternativa B</option></select></label><button type="button" id="confirmFoContents" class="btn">Validar y confirmar contenidos</button><button type="button" id="saveOffer" class="btn primary">Guardar mapa</button></div></div>
-            <div class="mapScroll"><table class="mapTable"><thead id="mapHead"></thead><tbody id="mapBody"></tbody></table></div>
-            <h4>Espacios de Formación Orientada</h4>
-            <div class="offerGrid" id="offerGrid"></div>
+            <div class="constructor-v2-intro">
+              <strong>Constructor curricular completo · una copia por PCI y orientación</strong>
+              <p>Bolsa de materias FG y FO, agrupamientos por nivel y cuatrimestre, troncales, laboratorios y talleres. La FG histórica aparece en el mapa y conserva sus contenidos y planes. Las reorganizaciones nuevas quedan como propuesta independiente; no reemplazan lo ya trabajado.</p>
+            </div>
+            <div class="constructor-shell">
+              <aside id="constructorBag" class="content-bag card constructor-side" aria-label="Bolsa curricular de materias">
+                <div class="builder-head"><h4>Bolsa de materias</h4><span id="constructorBankCount" class="pill"></span></div>
+                <div class="builder-filters">
+                  <label> Nivel
+                    <select id="constructorLevel"><option value="1">1.º</option><option value="2">2.º</option><option value="3">3.º</option><option value="4">4.º</option><option value="5">5.º</option></select>
+                  </label>
+                  <label>Formación
+                    <select id="constructorBankType"><option value="FG">Formación General</option><option value="FO">Formación Orientada</option></select>
+                  </label>
+                  <label class="builder-search">Buscar materia
+                    <input id="constructorSearch" type="search" placeholder="Materia, área, orientación…">
+                  </label>
+                </div>
+                <div id="constructorSubjectBank" class="constructor-subject-list" aria-live="polite"></div>
+                <div class="constructor-add-card">
+                  <h4>Armar agrupamiento</h4>
+                  <label>Área
+                    <select id="constructorArea"></select>
+                  </label>
+                  <label>Formato
+                    <select id="constructorKind">
+                      <option value="laboratorio">Laboratorio FG</option>
+                      <option value="taller">Taller FG</option>
+                      <option value="troncal">Troncal anual</option>
+                      <option value="integrado">Laboratorio integrado FG–FO</option>
+                      <option value="otro">Otros formatos</option>
+                    </select>
+                  </label>
+                  <label>Cuatrimestre
+                    <select id="constructorTerm"></select>
+                  </label>
+                  <label>Nombre del agrupamiento
+                    <input id="constructorName" maxlength="120" placeholder="Ej.: Laboratorio de Ciencias Sociales">
+                  </label>
+                  <label class="constructor-pair"><input id="constructorMirror" type="checkbox" checked> Replicar materias en el cuatrimestre par</label>
+                  <button id="constructorCreate" type="button" class="btn primary">+ Crear agrupamiento en este PCI</button>
+                  <p class="muted">Para editar, elegí una materia de la bolsa o arrastrala a un agrupamiento. La propuesta se guarda solo al pulsar «Guardar mapa».</p>
+                </div>
+              </aside>
+              <div class="constructor-board">
+                <div class="builder-map-heading">
+                  <div><h4>Mapa completo de la oferta · C1–C10</h4><p class="muted">Materia por año. Las troncales anuales ocupan dos cuatrimestres; los laboratorios y talleres conservan sus espacios cuatrimestrales.</p></div>
+                  <span id="constructorSelectedSubject" class="builder-selected-subject">Seleccioná una materia de la bolsa</span>
+                </div>
+                <div class="mapScroll"><table class="mapTable constructor-matrix"><thead id="mapHead"></thead><tbody id="mapBody"></tbody></table></div>
+                <p id="constructorWarnings" class="note" aria-live="polite"></p>
+                <details class="builder-fo-details"><summary>Materias FO y contenidos por espacio · detalle</summary>
+                  <div class="offerGrid" id="offerGrid"></div>
+                </details>
+              </div>
+            </div>
             <p id="offerValidation" class="note"></p>
           </div>
           <div class="panel pane" id="foPane" hidden>
@@ -179,6 +219,6 @@
     <img class="logo-blanco" src="assets/em-logo-footer.svg?v=20260902" alt="Escuela de Maestros">
     <img class="ministerio" src="assets/ministerio-footer.svg?v=20260902" alt="Ministerio de Educación · Buenos Aires Ciudad">
   </footer>
-  <script type="module" src="src/orientaciones-online.mjs?v=20261119-panel-1"></script>
+  <script type="module" src="src/orientaciones-online.mjs?v=20261119-constructor-1"></script>
 </body>
 </html>
