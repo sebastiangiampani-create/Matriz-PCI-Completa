@@ -73,7 +73,7 @@ export function renderUnifiedConstructor({
   let composition;
   try{composition=compositionFor(workspace,pci);}catch(error){onError(error.message);return}
   const edit=Boolean(canEdit)&&['borrador','en_revision'].includes(pci.status);
-  const bag=$('constructorSubjectBank'),mapHead=$('mapHead'),mapBody=$('mapBody');
+  const bank=$('constructorSubjectBank'),mapHead=$('mapHead'),mapBody=$('mapBody');
   const warningBox=$('constructorWarnings');
   const termSelect=$('constructorTerm'),levelSelect=$('constructorLevel'),typeSelect=$('constructorBankType');
   const search=$('constructorSearch'),areaSelect=$('constructorArea'),kindSelect=$('constructorKind');
