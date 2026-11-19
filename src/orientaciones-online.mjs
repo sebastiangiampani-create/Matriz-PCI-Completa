@@ -1416,21 +1416,38 @@ function renderFoEditor(){
   note('h3',getCurrentOffer().spaces.find(s=>s.id===selectedFoSpace)?.name||selectedFoSpace,host);
   note('p','Revisión '+foRevision+' · '+(foRevision?'Guardado':'Borrador no guardado'),host,'muted');
   const card=elem('div',undefined,'workCard');
+  const space=getCurrentOffer().spaces.find(s=>s.id===selectedFoSpace);
+  const foCatalog=selectFoByOrientation(refs.fo,pci.orientation_id,ORIENTATIONS);
+  const canWrite=canEdit()&&['borrador','en_revision'].includes(pci.status);
+  const aggregateIds=spaceContentIds({...foDoc,
+   contentIds:uniqueIds([...(space?.contentIds||[]),...(foDoc.contentIds||[])])});
+  const groupMetric=foCoverage(foCatalog,{year:Number(space?.year),ids:aggregateIds,
+    orientationLabel:'Trayectoria · '+(ORIENTATIONS.find(x=>x.id===pci.orientation_id)?.name||pci.orientation_id)});
+  renderV2Metric(card,'Cobertura FO · trayectoria de la orientación',groupMetric);
+  renderV2ContentPicker(card,{title:'Contenidos FO del espacio',rows:foCatalog,
+    ids:foDoc.contentIds||[],canWrite,onChange:ids=>{
+     foDoc.contentIds=ids;markDirty('fo');renderFoEditor();
+    }});
   for(const [name,key] of [['Objetivo general','objective'],['Sinopsis general','synopsis'],['Contexto problematizador','context'],['Práctica / producto / eje','practiceAxis']]){
     card.appendChild(field(name,foDoc[key],v=>{foDoc[key]=v;markDirty('fo');}));
   }
   for(const [pi,plan] of (foDoc.plansBimestrales||[]).entries()){
     const details=elem('details');if(pi===0)details.open=true;
     details.appendChild(elem('summary',plan.name||'Plan bimestral '+(pi+1)));
+    details.appendChild(field('Nombre del plan',plan.name||'Plan '+(pi+1),v=>{plan.name=v;markDirty('fo');}));
     for(const [label,key] of [['Sinopsis','synopsis'],['Objetivos de aprendizaje','objectives']]){
       details.appendChild(field(label,plan[key],v=>{plan[key]=v;markDirty('fo');}));
     }
-    for(const id of stages){
-      details.appendChild(field(stageLabel[id],plan.stages?.[id]?.description||'',v=>{
-        plan.stages={...plan.stages,[id]:{...(plan.stages?.[id]||{}),description:v}};
-        markDirty('fo');
-      }));
-    }
+    const planMetric=foCoverage(foCatalog,{year:Number(space?.year),ids:planContentIds(plan),
+      orientationLabel:'Trayectoria de la orientación'});
+    renderV2Metric(details,'Contenidos del plan · FO',planMetric,{
+      dual:/laborator|taller/i.test(String(space?.kind||'')),groupMetric
+    });
+    renderV2ContentPicker(details,{title:'Contenidos del plan '+(pi+1),rows:foCatalog,
+      ids:plan.contentIds||[],canWrite,onChange:ids=>{
+       plan.contentIds=ids;markDirty('fo');renderFoEditor();
+      }});
+    appendV2Stages(details,plan,()=>markDirty('fo'));
     card.appendChild(details);
   }
   host.appendChild(card);
