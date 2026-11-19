@@ -9,6 +9,7 @@ on:
       - 'src/tecnica/**'
       - 'src/pci-flujo-fases.mjs'
       - 'tests/flujo-constructor-tres-modalidades.test.mjs'
+      - 'tests/multipci-portal-browser.mjs'
       - 'tests/ba15-constructor.test.mjs'
       - 'tests/tecnica-integrada-v2.test.mjs'
       - 'src/integracion-curricular/constructor-mapa-unificado.mjs'
