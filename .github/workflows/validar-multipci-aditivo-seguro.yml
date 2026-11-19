@@ -33,6 +33,32 @@ jobs:
           node --check src/ba15/constructor.mjs
           node --check src/tecnica/interfaz-integrada-v2.mjs
           node --check src/tecnica/espacio-trabajo-v2.mjs
+          node --check tests/multipci-portal-browser.mjs
       - name: Probar currícula y guardado aislado por PCI
         run: |
           node --test tests/ba15-reglas.test.mjs tests/ba15-constructor.test.mjs tests/turnos-modalidades.test.mjs tests/orientaciones-release.test.mjs tests/tecnica-integrada-v2.test.mjs tests/adaptador-media-final-20261117.test.mjs tests/integracion-catalogos.test.js
+  navegador-multi-pci:
+    runs-on: ubuntu-24.04
+    needs: motor-curricular-y-resguardo
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar Chromium para navegador de prueba
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Simular escuela con Media y agregar BA +15 sin sobrescribir
+        run: |
+          mkdir -p test-artifacts/multipci-portal
+          node tests/multipci-portal-browser.mjs
+      - name: Conservar captura del recorrido
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vista-real-pci-multipci
+          path: test-artifacts/multipci-portal/
+          if-no-files-found: ignore
+          retention-days: 7
