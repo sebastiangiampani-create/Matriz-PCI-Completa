@@ -115,6 +115,96 @@ function documentIsScoped(p,body){
    &&d.orientation_id===p.orientation_id&&d.original_sha256===p.legacy_sha256
    &&(p.model!=='tecnica'||(d.model==='tecnica'&&d.process_id===p.process_id));
 }
+
+/**
+ * Asignación de trabajo histórico por escuela, usando la unidad de articulación
+ * V1 ya soportada por Supabase. Una sola revisión transaccional relaciona
+ * TODOS los PCI de la escuela. No modifica el documento FG histórico.
+ */
+const LEGACY_LINK_UNIT={
+ p_orientation_id:'_general',p_process_id:'vinculos-historicos-v1',
+ p_component:'articulacion',p_unit_kind:'link',p_unit_id:'asignacion-trabajo-anterior'
+};
+const LEGACY_LINK_SCHEMA='pci-vinculos-historicos-v1';
+function historicalGroupRows(original){
+ const out=[],seen=new Set();
+ const areas=original?.areas;
+ if(!object(areas))return out;
+ for(const [area,section] of Object.entries(areas)){
+  for(const group of Array.isArray(section?.groups)?section.groups:[]){
+   const id=String(group?.id??'').trim();
+   if(!area||!id||id.length>160||area.length>160)continue;
+   const key=JSON.stringify([area,id]);
+   if(seen.has(key))continue;
+   seen.add(key);
+   const items=Array.isArray(group.items)?group.items:[];
+   const plans=Array.isArray(group.plansBimestrales)?group.plansBimestrales:[];
+   const hasText=['synopsis','summary','objective','objectives','context','practiceAxis']
+     .some(k=>String(group?.[k]||'').trim().length>0)||
+     plans.some(p=>String(p?.synopsis||p?.objectives||'').trim().length>0||
+       Array.isArray(p?.contentIds)&&p.contentIds.length>0||
+       Object.values(p?.stages||{}).some(st=>String(typeof st==='string'?st:st?.description||'').trim()));
+   out.push({area,id,name:clean(group.name||group.label||id,160),
+    contents:items.length,plans:plans.length,hasWork:items.length>0||hasText});
+  }
+ }
+ return out;
+}
+async function schoolLegacySource(sid){
+ const {data,error}=await db.from('pci_proposals')
+  .select('data,updated_at').eq('school_id',sid).maybeSingle();
+ if(error)throw error;
+ if(!data||!object(data.data))throw Error('La fuente histórica de esta escuela no está disponible.');
+ return data;
+}
+async function fetchLegacyLinks(sid){
+ return rpc('pci_collab_get_unit_v1',{p_school_id:sid,...LEGACY_LINK_UNIT});
+}
+async function listPcisForLinks(sid){
+ const result=await rpc('pci_workspace_list_pcis_v1',{p_school_id:sid});
+ return Array.isArray(result)?result:[];
+}
+function validateLegacyAssignment(input,sourceRows,pcis,sid,updated){
+ if(!object(input)||input.schema!==LEGACY_LINK_SCHEMA||
+    Number(input.school_id)!==sid||String(input.source_updated_at||'')!==String(updated)||
+    !Array.isArray(input.assignments)||input.assignments.length>4000)
+   throw Error('Versión o origen de asignación histórica incompatibles. Actualizá antes de guardar.');
+ const valid=new Set(sourceRows.map(r=>JSON.stringify([r.area,r.id])));
+ const pciMap=new Map(pcis.map(p=>[p.pci_id,p]));
+ const seen=new Set(),entries=[];
+ for(const item of input.assignments){
+  if(!object(item))throw Error('Vínculo inválido.');
+  const area=clean(item.area,161),id=clean(item.id,161);
+  if(!area||!id||area.length>160||id.length>160)throw Error('Área o agrupamiento inválido.');
+  const key=JSON.stringify([area,id]);
+  if(seen.has(key)||!valid.has(key))throw Error('Agrupamiento duplicado o inexistente en el documento original.');
+  seen.add(key);
+  const kind=String(item.kind||''),mode=String(item.mode||'');
+  if(!['general','orientada','tecnica'].includes(kind)||!['all','selected'].includes(mode))
+    throw Error('Tipo de vínculo histórico inválido.');
+  const ids=item.pci_ids;
+  if(!Array.isArray(ids)||ids.length>pcis.length||
+     ids.some(id=>typeof id!=='string'||!validUuid(id))||
+     new Set(ids).size!==ids.length||ids.some(id=>!pciMap.has(id)))
+    throw Error('Existe un PCI ajeno a la escuela o repetido.');
+  if(mode==='all'&&(kind!=='general'||ids.length))
+    throw Error('Solo la FG compartida puede asignarse a todos los PCI.');
+  const targets=ids.map(id=>pciMap.get(id));
+  if(kind==='orientada'){
+   if(targets.some(p=>!['comun','ba15'].includes(p.model))||
+      new Set(targets.map(p=>p.model+':'+p.orientation_id)).size>1)
+     throw Error('El trabajo orientado debe pertenecer a una misma orientación y modelo, aunque tenga varios turnos.');
+  }
+  if(kind==='tecnica'){
+   if(targets.some(p=>p.model!=='tecnica')||
+      new Set(targets.map(p=>p.orientation_id)).size>1)
+     throw Error('El trabajo técnico debe pertenecer a una misma especialidad, aunque tenga varios turnos.');
+  }
+  entries.push({area,id,kind,mode,pci_ids:ids});
+ }
+ return {schema:LEGACY_LINK_SCHEMA,school_id:sid,source_updated_at:String(updated),assignments:entries};
+}
+
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
  if(req.method!=='POST')return err('Solo POST.',405);
@@ -155,6 +245,36 @@ Deno.serve(async req=>{
   }
   const sid=Number(body.school_id);
   if(!validSchool(sid)||!isScoped(s,sid)||!canRead(s))return err('Escuela fuera del alcance autorizado.',403);
+  if(action==='get-school-legacy-links'){
+   const [source,saved]=await Promise.all([schoolLegacySource(sid),fetchLegacyLinks(sid)]);
+   if(saved?.exists&&
+      (saved?.document?.schema!==LEGACY_LINK_SCHEMA||Number(saved.document.school_id)!==sid))
+     return err('Existe una asignación histórica incompatible; revisión manual necesaria.',409);
+   return json({source_updated_at:source.updated_at,
+     source_model:source.data?.profile==='tecnica'?'tecnica':'comun',
+     rows:historicalGroupRows(source.data),
+     revision:Number(saved?.revision)||0,
+     document:saved?.exists?saved.document:null,
+     exists:!!saved?.exists
+   });
+  }
+  if(action==='save-school-legacy-links'){
+   if(!canDeclareOrientations(s))return err('Sin permiso para asignar trabajo anterior a los PCI.',403);
+   const source=await schoolLegacySource(sid);
+   const pcis=await listPcisForLinks(sid);
+   const document=validateLegacyAssignment(body.document,historicalGroupRows(source.data),pcis,sid,source.updated_at);
+   if(encoder.encode(JSON.stringify(document)).byteLength>300000)return err('Asignación demasiado extensa.',413);
+   const expected=Number(body.expected_revision);
+   if(!Number.isSafeInteger(expected)||expected<0)return err('Revisión esperada inválida.');
+   const result=await rpc('pci_collab_save_unit_v1',{
+     p_school_id:sid,...LEGACY_LINK_UNIT,
+     p_base_version:'pci-articulacion-fg-fo/1',
+     p_expected_revision:expected,p_document:document,p_actor:actor(s)
+   });
+   if(result?.code==='stale_revision'||result?.status===409)return json(result,409);
+   if(result?.ok!==true)return err('Supabase no confirmó el vínculo histórico.',409);
+   return json({...result,linked_groups:document.assignments.length});
+  }
   if(action==='list-school-pcis'){
    const list=await rpc('pci_workspace_list_pcis_v1',{p_school_id:sid});
    return json({pcis:Array.isArray(list)?list:[]});
