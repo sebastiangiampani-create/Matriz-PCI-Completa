@@ -107,7 +107,8 @@ try{
  await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
  assert.equal(await page.locator('#fgPane').isHidden(),true,'El PCI inicia en Fase 1, no en el desarrollo FG');
  assert.equal(await page.locator('#continueDevelopment').isDisabled(),true,'La Fase 2 no puede iniciar sin mapa completo y guardado');
- await page.locator('[data-tab="fo"]').click();
+ assert.equal(await page.locator('[data-tab="fo"]').isDisabled(),true,'El botón Desarrollo FO debe estar deshabilitado por la Fase 1');
+ await page.locator('[data-tab="fo"]').evaluate(button=>button.click());
  assert.equal(await page.locator('#offerPane').isVisible(),true,'La ruta directa a FO debe regresar al constructor incompleto');
  assert.equal(await page.locator('#foPane').isHidden(),true,'No se abre desarrollo FO sin Fase 1');
  try{
