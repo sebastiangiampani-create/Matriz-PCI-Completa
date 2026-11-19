@@ -44,7 +44,7 @@ const normalized=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,''
 const labels={punto_partida:'Punto de partida',indagacion:'Indagación',
  produccion:'Producción',evaluacion:'Evaluación'};
 const defaultText={
- tab3:'Formación Orientada',heading3:'Planes de aprendizaje',heading1:'Formación General por área',
+ tab3:'2 · Desarrollo FO',heading3:'Planes de aprendizaje',heading1:'Formación General por área',
  heading2:'Mapa de la Oferta · C1 a C10'
 };
 function choiceLabel(s){return s.character==='electivo'?'Electivo':'Obligatorio';}
