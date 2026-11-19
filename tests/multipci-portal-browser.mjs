@@ -166,6 +166,14 @@ try{
  assert.equal(await page.locator('#mapBody .constructor-group.propuesta').count(),2,'El agrupamiento pendiente permanece');
  await page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Geografía'}).first()
    .dragTo(page.locator('#mapBody .constructor-group.propuesta').first());
+ console.log('DRAG DEBUG',JSON.stringify(await page.evaluate(()=>({
+   message:document.getElementById('message')?.textContent,
+   status:document.getElementById('status')?.textContent,
+   phase:document.getElementById('pciPhaseState')?.textContent,
+   groupTexts:[...document.querySelectorAll('#mapBody .constructor-group.propuesta')].slice(0,3).map(x=>x.textContent),
+   selected:document.getElementById('constructorSelectedSubject')?.textContent,
+   bank:[...document.querySelectorAll('#constructorSubjectBank .constructor-bank-subject')].filter(x=>/Historia|Geografía/.test(x.textContent)).map(x=>({text:x.textContent,draggable:x.draggable}))
+ }))));
  await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Geografía').waitFor();
  await page.selectOption('#constructorBankType','FO');
  await page.locator('#constructorSubjectBank .constructor-bank-subject').first().waitFor({timeout:15000});
