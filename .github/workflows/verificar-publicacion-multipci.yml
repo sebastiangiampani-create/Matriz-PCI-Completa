@@ -1,0 +1,37 @@
+name: Comprobar publicacion multi-PCI en GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pages-get:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Comprobar inicio original y nueva ruta sin escribir datos
+        run: |
+          node --input-type=module <<'NODE'
+          const base='https://sebastiangiampani-create.github.io/Matriz-PCI-Completa/';
+          const check=async(path,needle)=>{
+            let last='';
+            for(let i=0;i<15;i++){
+             try{
+              const res=await fetch(base+path+'?check='+Date.now(),{signal:AbortSignal.timeout(8000)});
+              const html=await res.text();
+              if(res.status===200&&html.includes(needle)){
+               console.log('URL OK: '+base+path);return;
+              }
+              last='HTTP '+res.status+' '+path;
+             }catch(error){last=String(error)}
+             if(i<14)await new Promise(resolve=>setTimeout(resolve,5000));
+            }
+            throw Error('La ruta no está disponible: '+last);
+          };
+          await check('index.html','Ingresar a una escuela');
+          await check('pci-orientaciones.html','Proyectos curriculares por orientación y especialidad');
+          NODE
