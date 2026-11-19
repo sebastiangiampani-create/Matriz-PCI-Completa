@@ -65,7 +65,7 @@ function showCreated(result,data){
  $('schoolDbCreatedInfo').textContent=data.name+' · CUE '+data.cue+' · ID '+result.school_id;
  $('schoolDbEditCode').textContent=result.edit_code||'No informado';
  $('schoolDbPrimaryCode').textContent=result.primary_code||'No informado';
- $('schoolDbOpenPci').href='pci-orientaciones.html?school='+encodeURIComponent(result.school_id)+'&from=panel-general';
+ $('schoolDbOpenPci').href='pci-orientaciones.html?school='+encodeURIComponent(result.school_id)+'&from=panel-general&nuevo=1';
  $('schoolDbOpenPanel').href='panel-escuela.html?school='+encodeURIComponent(result.school_id)+'&admin=1';
  target.classList.remove('hidden');
 }
@@ -96,7 +96,7 @@ async function createSchool(event){
   const created=catalog.find(s=>Number(s.school_id)===Number(result.school_id)&&normalizeCue(s.cue)===info.cue);
   if(!created)throw Error('Se recibió respuesta de alta, pero aún no aparece en el catálogo. NO vuelvas a crearla: actualizá y verificá el CUE.');
   showCreated(result,info);
-  status('Alta verificada. Ahora podés abrir Organización curricular y agregar los PCI de esta escuela.','success');
+  status('Escuela creada. Ahora configurá su primer PCI y construí el mapa curricular antes del Desarrollo.','success');
   dialog.querySelector('#schoolDbForm').reset();
   window.dispatchEvent(new CustomEvent('pci:schools-updated'));
  }catch(error){
