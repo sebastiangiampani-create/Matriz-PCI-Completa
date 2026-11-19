@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {agruparPcis} from '../src/pci-turnos-organizacion.mjs';
 const make=(id,shift_id,model,field)=>({
  pci_id:id,school_id:1001,shift_id,model,title:'PCI '+id,status:'borrador',
- orientation_id:model==='comun'?field:'tecnica_'+id,
+ orientation_id:model!=='tecnica'?field:'tecnica_'+id,
  specialty_name:model==='tecnica'?field:null
 });
 const source=[
