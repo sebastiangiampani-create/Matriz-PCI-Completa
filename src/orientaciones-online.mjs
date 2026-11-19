@@ -452,6 +452,30 @@ function renderSchoolHome(){
   host.replaceChildren();
   const selectedSchool=schools.find(s=>Number(s.school_id)===schoolId);
   $('schoolOverviewName').textContent=selectedSchool?.name||'Oferta curricular de la escuela';
+  const matrix=$('schoolStructureMatrix');
+  if(matrix){
+    matrix.replaceChildren();
+    const table=elem('table'),caption=elem('caption','Modalidades por turno · PCI definidos');
+    table.append(caption);
+    const head=elem('tr');
+    for(const label of ['Turno','Media','Técnica','BA +15'])head.append(elem('th',label));
+    table.append(head);
+    const models=['comun','tecnica','ba15'];
+    const shifts=TURNOS.filter(([shift])=>pcis.some(p=>p.shift_id===shift));
+    for(const [shift,label] of shifts){
+      const row=elem('tr');row.append(elem('th',label));
+      for(const model of models){
+        const existing=pcis.filter(p=>p.shift_id===shift&&p.model===model);
+        const cell=elem('td',existing.length?('✓ '+existing.length):'—',
+          existing.length?'present':'absent');
+        cell.title=existing.length?existing.map(p=>p.title).join(' · '):
+          'No hay PCI de esta modalidad en este turno';
+        row.append(cell);
+      }
+      table.append(row);
+    }
+    if(shifts.length)matrix.append(table);
+  }
   const all=agruparPcis(pcis);
   const selectedShift=$('turnFilter').value;
   const displayed=all.filter(g=>selectedShift==='todos'||g.id===selectedShift);
