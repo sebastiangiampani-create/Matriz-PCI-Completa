@@ -410,9 +410,11 @@ export function createIntegratedTechnicalUI({
   });add.disabled=!writable()||s.included===false;
   createWarning(curric,related.length+' referencias de páginas disponibles. Año/campo inferidos: '+
    'la selección no constituye homologación automática.');
-  const planBtn=btn(panel,'Abrir planes del espacio',()=>{
+  const planBtn=btn(panel,'2 · Abrir desarrollo del espacio',()=>{
+   const gate=phaseGate();
+   if(!gate.ready){message('Primero completá el constructor técnico de este PCI. '+gate.detail,'warn');return;}
    tab='fo';activateTab();openPlan(s.id);
-  });planBtn.disabled=!pci||(s.included===false&&!s.archivedLegacy);
+  });planBtn.disabled=!pci||(s.included===false&&!s.archivedLegacy)||!phaseGate().ready;
   summarizeMap();buildHeader();
  }
  function renderPlanList(){
@@ -429,6 +431,7 @@ export function createIntegratedTechnicalUI({
   }
  }
  async function openPlan(id){
+  if(!phaseGate().ready){message('Primero completá y guardá el mapa técnico. '+phaseGate().detail,'warn');return;}
   if(planDirty&&activePlanId!==id&&!confirm('Este plan tiene cambios sin guardar. ¿Descartar la edición al abrir otro espacio?'))return;
   const s=offer?.spaces.find(x=>x.id===id);if(!s)return;
   const token=++loading;
@@ -521,6 +524,7 @@ export function createIntegratedTechnicalUI({
   }catch(error){message('No se guardó el mapa técnico: '+error.message,'error');}
  }
  async function savePlan(){
+  if(!phaseGate().ready){message('El mapa técnico ya no está confirmado. '+phaseGate().detail,'warn');return;}
   if(!pci||!plan||!writable()||offer.spaces.find(s=>s.id===plan.space_id)?.archivedLegacy)return;
   const space=offer.spaces.find(x=>x.id===plan.space_id);
   if(!space)return;
@@ -535,6 +539,10 @@ export function createIntegratedTechnicalUI({
   }catch(error){message('No se guardaron los planes: '+error.message,'error');}
  }
  function renderTab(next){
+  if(next!=='oferta'&&!phaseGate().ready){
+   message('Fase 1 pendiente: completá y guardá el constructor técnico. '+phaseGate().detail,'warn');
+   next='oferta';
+  }
   tab=next;
   if(next==='fg')renderFg();
   else if(next==='oferta')renderOffer();
