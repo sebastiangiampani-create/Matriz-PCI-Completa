@@ -184,7 +184,8 @@ try{
  assert.ok(mediaSaved.document.fo.spaces.some(s=>(s.members||[]).length>0),'Materia oficial FO asignada a espacio de orientación sin reemplazar FG');
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#app:not([hidden])').waitFor({timeout:25000});
- await page.locator('.school-offer-card button[aria-label^="Abrir Mapa de la Oferta"]').click();
+ await page.locator('#offerPane:not([hidden])').waitFor({timeout:25000});
+ assert.equal(await page.evaluate(()=>new URL(location.href).searchParams.get('pci')),'00000000-0000-4000-8000-000000000001','Recargar reabre el mismo PCI, no la portada');
  await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Geografía').waitFor({timeout:12000});
  assert.equal(state.units.get(mediaKey)?.revision,1,'La reapertura no crea una revisión ni altera el historial');
  await page.locator('#brandHomeLink').click();
