@@ -214,6 +214,11 @@ async function init(){
 async function reloadSchool(){
   const school=schools.find(s=>Number(s.school_id)===schoolId);
   $('schoolLabel').textContent=(school?.cue||'Sin CUE')+' · ID '+schoolId;
+  const legacyName=school?.name||session?.name||'Escuela '+schoolId;
+  const originalTechnical=school?.model==='tecnica'||session?.model==='tecnica'||
+    (school?.model==null && /(?:t[eé]cnica|politecnica)/i.test(legacyName));
+  $('historicalPciLink').href='escuela-online.html?school='+schoolId+
+    '&name='+encodeURIComponent(legacyName)+(originalTechnical?'&model=tecnica':'');
   const data=await call('list-school-pcis',{school_id:schoolId});
   pcis=Array.isArray(data.pcis)?data.pcis:[];
   technical.close();
