@@ -91,8 +91,8 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   });
  }
  function setPhase(next,{silent=false}={}){
-  if(next!=='oferta'&&next!=='fo')return false;
-  if(next==='fo'){
+  if(next!=='oferta'&&next!=='fo'&&next!=='desarrollo')return false;
+  if(next==='fo'||next==='desarrollo'){
    if(!getPhaseStatus().ready)return false;
    developmentUnlocked=true;view='planes';selected=null;
   }else{view='mapa';}
@@ -261,7 +261,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   const develop=button('2 · Desarrollo curricular',()=>{
     const check=getPhaseStatus();
     if(!check.ready){status.textContent='Primero completá y guardá el mapa BA +15. '+check.detail;view='mapa';render();return;}
-    setPhase('fo');
+    setPhase('desarrollo');
   },view==='planes'?'btn primary':'btn');
   develop.disabled=!gate.ready;
   develop.title=gate.ready?'Abrir planes heredados de este PCI':'Completá todas las materias de C1–C8 y guardá el mapa antes de desarrollar.';
