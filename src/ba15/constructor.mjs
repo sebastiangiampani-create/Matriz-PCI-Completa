@@ -64,7 +64,14 @@ export function crearEspacioBa15(draft,{nivel,term,nombre,formato}){
 }
 export function asignarMateriaBa15(draft,{nivel,espacioId,materiaId}){
  const next=copy(draft),level=next.niveles[nivel-1],space=level?.espacios.find(x=>x.id===espacioId);
- if(!space||!level.asignaturas.some(s=>s.id===materiaId))throw Error('Materia o espacio de otro nivel.');
+ const subject=level?.asignaturas.find(s=>s.id===materiaId);
+ if(!space||!subject)throw Error('Materia o espacio de otro nivel.');
+ // Formatos expresamente prescriptos por el plan BA +15: una troncal
+ // no puede arrastrarse a un taller ni viceversa.
+ if(['troncal','taller'].includes(subject.formatoOriginal)&&
+    space.formato!==subject.formatoOriginal)
+   throw Error('Acción no permitida: '+subject.nombre+' corresponde a un espacio '+
+     subject.formatoOriginal+'. Revisá la fila del mapa antes de asignarla.');
  if(level.espacios.some(e=>e.term===space.term&&e.miembros.includes(materiaId)))throw Error('La materia ya está asignada en este cuatrimestre.');
  space.miembros.push(materiaId);return next;
 }
