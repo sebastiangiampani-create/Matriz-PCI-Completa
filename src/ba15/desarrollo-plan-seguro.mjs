@@ -10,6 +10,13 @@ export function readStageDescription(plan,stage){
  const value=plan?.etapas?.[stage]??plan?.stages?.[stage];
  return typeof value==='string'?value:String(value?.description??'');
 }
+export const STAGE_FIELDS=Object.freeze(['description','duration','resources','activities','evidence']);
+export function readStageField(plan,stage,field='description'){
+ if(!PLAN_STAGES.includes(stage)||!STAGE_FIELDS.includes(field))throw Error('Campo de etapa inválido.');
+ const current=plan?.etapas?.[stage]??plan?.stages?.[stage];
+ if(typeof current==='string')return field==='description'?current:'';
+ return String(current?.[field]??'');
+}
 export function updateBa15Plan(draft,{schoolId,pciId,nivel,espacioId,planIndex,patch}){
  if(!draft||draft.schema!=='ba15-constructor-v1'||
   Number(draft.schoolId)!==Number(schoolId)||draft.pciId!==pciId)
@@ -30,6 +37,16 @@ export function updateBa15Plan(draft,{schoolId,pciId,nivel,espacioId,planIndex,p
    if(!Array.isArray(value)||value.some(x=>typeof x!=='string'&&typeof x!=='number'))
     throw Error('Contenidos curriculares inválidos.');
    plan.contenidos=[...new Set(value)];
+  }else if(key==='stagePatch'){
+   const stage=String(value?.stage||''),field=String(value?.field||'');
+   if(!PLAN_STAGES.includes(stage)||!STAGE_FIELDS.includes(field)||typeof value?.value!=='string')
+    throw Error('Campo de etapa inválido.');
+   const container=plan.etapas&&typeof plan.etapas==='object'?'etapas':'stages';
+   plan[container]??={};
+   const prior=plan[container][stage];
+   const base=prior&&typeof prior==='object'?prior:
+    typeof prior==='string'?{description:prior,originalText:prior}:{};
+   plan[container][stage]={...base,[field]:value.value};
   }else if(PLAN_STAGES.includes(key)){
    const container=plan.etapas&&typeof plan.etapas==='object'?'etapas':'stages';
    if(typeof value!=='string')throw Error('Descripción de etapa inválida.');
