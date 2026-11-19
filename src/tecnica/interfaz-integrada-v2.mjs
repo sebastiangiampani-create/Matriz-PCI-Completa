@@ -4,6 +4,7 @@
  * No hay segunda aplicación ni sesión nueva. No llama a Supabase directamente.
  */
 import {findSpecialty,TECNICA,validateRelation} from './pautas-pci-20261005.mjs';
+import {phaseGate as evaluatePhaseGate} from '../pci-flujo-fases.mjs';
 import {
  TECH_FIELDS,TECH_FG_AREAS,TECH_SPECIFIC_AREAS,TECH_OFFER_VERSION,TECH_PLAN_VERSION,
  technicalSubjectBank,technicalOfferSeed,guardTechnicalOffer,guardTechnicalPlan,
@@ -69,7 +70,7 @@ const createWarning=(host,message)=>el('p',host,message,'muted');
 export function createIntegratedTechnicalUI({
  canEdit=()=>false,getUnit,saveUnit,saveSafe,
  download,rememberDraft,forgetDraft,recallDraft,
- message=()=>{},status=()=>{}
+ message=()=>{},status=()=>{},onPhaseChange=()=>{}
 }){
  let pci=null,source=null,bank=[],offer=null,offerRevision=0,offerDirty=false;
  let activeArea='Ciencias Sociales',activeSpace=null,activePlanId=null,plan=null,
@@ -79,10 +80,21 @@ export function createIntegratedTechnicalUI({
  function writable(){
   return !!pci&&canEdit()&&['borrador','en_revision'].includes(pci.status);
  }
+ function phaseGate(){
+   if(!pci||!offer)return evaluatePhaseGate({issues:['El mapa técnico no está disponible.']});
+   const audit=validateTechnicalDraft(offer,bank);
+   const issues=(audit.issues||[]).map(x=>x.message);
+   if(offer.needsNormativeReview&&!offer.normativeReviewAcknowledged)
+     issues.push('Revisá los espacios históricos y las Prácticas Profesionalizantes antes de continuar.');
+   return evaluatePhaseGate({
+     revision:offerRevision,dirty:offerDirty,issues,warnings:(audit.warnings||[]).map(x=>x.message),
+     label:'Constructor de Educación Técnica'
+   });
+ }
  function changedOffer(){
   offerDirty=true;
   rememberDraft('oferta-tecnica','mapa-oferta-tecnica-v1',offer,offerRevision);
-  renderOffer();
+  renderOffer();onPhaseChange();
   message('Mapa técnico modificado. Guardá el borrador; el PCI histórico permanece intacto.','warn');
  }
  function changedPlan(){
@@ -92,7 +104,7 @@ export function createIntegratedTechnicalUI({
  function setLabels(tech){
   $('downloadOriginal').textContent=tech?'Descargar PCI histórico':'Descargar FG original';
   const n=document.querySelector('[data-tab="fo"]');
-  if(n)n.textContent=tech?'Formación Técnico-Específica':defaultText.tab3;
+  if(n)n.textContent=tech?'2 · Desarrollo técnico-específico':'2 · Desarrollo FO';
   const fgDescription=$('fgPane')?.querySelector('.topline .muted');
   if(fgDescription)fgDescription.textContent=tech?
     'Formación General y Científico-Tecnológica: materias y páginas oficiales por nivel. Los agrupamientos y planes históricos siguen disponibles como resguardo; no se eliminan.':
@@ -503,7 +515,7 @@ export function createIntegratedTechnicalUI({
    if(!result)return;
    offerRevision=Number(result.revision);offerDirty=false;
    forgetDraft('oferta-tecnica','mapa-oferta-tecnica-v1');
-   buildHeader();renderOffer();
+   buildHeader();renderOffer();onPhaseChange();
    message('Mapa de la Oferta Técnica guardado por PCI con revisión '+offerRevision+
      '. Sigue pendiente la validación del plan de estudios.','');
   }catch(error){message('No se guardó el mapa técnico: '+error.message,'error');}
@@ -557,7 +569,7 @@ export function createIntegratedTechnicalUI({
    rememberDraft('oferta-tecnica','mapa-oferta-tecnica-v1',offer,offerRevision);
   planRevision=0;planDirty=false;activePlanId=null;activeSpace=null;
   activeArea='Ciencias Sociales';spaceYear=0;spaceArea='';
-  setLabels(true);buildHeader();renderTab('fg');
+  setLabels(true);buildHeader();renderTab('oferta');
   message((prepared.needsReview?
     'Anexo II del 17/11/2026: borrador anterior adaptado SOLO en memoria, sin borrar espacios ni planes. '+
     'Revisá Prácticas Profesionalizantes antes de guardar. ':
@@ -573,7 +585,7 @@ export function createIntegratedTechnicalUI({
  }
  function isDirty(){return !!(offerDirty||planDirty);}
  return {
-  open,close,renderTab,saveOffer,isDirty,
+  open,close,renderTab,saveOffer,isDirty,phaseGate,
   get active(){return !!pci;},
   get offer(){return offer?copy(offer):null;},
   get source(){return source;}
