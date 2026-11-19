@@ -105,7 +105,22 @@ try{
  await page.locator('#schoolPciCards').getByText('Comunicación').first().waitFor();
  await page.locator('.school-offer-card button[aria-label^="Abrir Mapa de la Oferta"]').click();
  await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
- await page.locator('#mapBody tr').first().waitFor({timeout:25000});
+ try{
+   await page.locator('#mapBody tr').first().waitFor({timeout:12000});
+ }catch(error){
+   console.log('MAPA DEBUG',JSON.stringify(await page.evaluate(()=>({
+     status:document.querySelector('#status')?.textContent,
+     message:document.querySelector('#message')?.textContent,
+     offerVisible:!document.querySelector('#offerPane')?.hidden,
+     bankExists:!!document.querySelector('#constructorSubjectBank'),
+     bankChildren:document.querySelector('#constructorSubjectBank')?.children.length,
+     mapRows:document.querySelector('#mapBody')?.children.length,
+     loadedScripts:[...document.scripts].map(x=>x.src),
+     errorText:document.body.textContent.slice(-1600)
+   }))));
+   console.log('PAGE ERRORS',JSON.stringify(pageConsole));
+   throw error;
+ }
  assert.equal(await page.locator('#mapBody tr').count(),14,'El mapa V2 completo debe mostrar FG, FO e integración por formato');
  assert.equal(await page.locator('#schoolAdminTools').count(),0,'El editor escolar no debe permitir altas institucionales');
  await page.selectOption('#constructorLevel','3');
