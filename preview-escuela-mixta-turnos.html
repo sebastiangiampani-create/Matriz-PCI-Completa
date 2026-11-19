@@ -16,6 +16,7 @@
 </div></main><script type="module">
 import {agruparPcis} from './src/pci-turnos-organizacion.mjs';
 import {BA15_NIVELES,BA15_CCC,validarBa15} from './src/ba15/reglas-curriculares.mjs';
+import {montarConstructorBa15} from './src/ba15/constructor-ui.mjs';
 const records=[
 {pci_id:'m1',school_id:1001,model:'comun',shift_id:'manana',orientation_id:'economia_administracion',title:'Economía y Administración',status:'borrador'},
 {pci_id:'m2',school_id:1001,model:'comun',shift_id:'manana',orientation_id:'ciencias_sociales',title:'Ciencias Sociales y Humanidades',status:'borrador'},
@@ -24,7 +25,7 @@ const records=[
 {pci_id:'t2',school_id:1001,model:'tecnica',shift_id:'noche',orientation_id:'tecnica_electronica',specialty_name:'Electrónica',title:'Técnico en Electrónica',status:'borrador'},
 {pci_id:'b1',school_id:1001,model:'ba15',shift_id:'noche',orientation_id:'turismo',title:'BA +15 · Turismo',status:'borrador'}
 ];const groups=agruparPcis(records);
-const $=id=>document.getElementById(id);let current=records[0],view='map';
+const $=id=>document.getElementById(id);let current=records[0],view='map';let builder=null;
 const shiftName=id=>({manana:'Mañana',tarde:'Tarde',vespertino:'Vespertino',noche:'Noche'}[id]||id);
 function renderList(){
  $('items').replaceChildren();$('counts').textContent=records.length+' PCI · '+groups.length+' turnos · 3 Media · 2 Técnica · 1 BA +15';
@@ -43,9 +44,11 @@ function renderView(){
  $('title').textContent=p.title;
  $('info').textContent=ba15?'PCI '+p.pci_id.toUpperCase()+' · Régimen propio · Mapa pendiente de homologación normativa':'PCI '+p.pci_id.toUpperCase()+' · '+n+' años · '+(2*n)+' cuatrimestres · Mapa independiente';
  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
- const visual=$('visual');visual.replaceChildren();
+ const visual=$('visual');if(builder){builder.destroy();builder=null;}visual.replaceChildren();
  if(ba15){
   const heading=document.createElement('h3');heading.textContent=view==='map'?'BA +15 · 4 niveles / 38 horas':view==='development'?'CCC · Complementación curricular':'Validación normativa BA +15';visual.append(heading);
+  const editor=document.createElement('div');editor.className='ba15DemoEditor';visual.append(editor);
+  builder=montarConstructorBa15(editor,{schoolId:p.school_id,pciId:p.pci_id,orientationId:p.orientation_id,shiftId:p.shift_id});
   if(view==='control'){
     const card=document.createElement('div');card.className='workCard';
     const result=validarBa15();const msg=document.createElement('p');msg.textContent=(result.valido?'Estructura oficial: cuatro niveles de 38 horas. ':'Revisar cargas curriculares. ')+result.advertencias.length+' articulaciones a documentar en el PCI. No se usan reglas de Media o Técnica.';
