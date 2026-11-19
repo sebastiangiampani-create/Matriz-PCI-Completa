@@ -127,7 +127,15 @@ try{
  assert.equal(unit.document.pciId,newId);
  assert.equal(unit.document.niveles.length,4);
  assert.equal(pageConsole.length,0,'No deben ocurrir errores JavaScript sin controlar: '+pageConsole.join(' | '));
+ await page.evaluate(()=>{
+   document.documentElement.style.scrollBehavior='auto';
+   window.scrollTo(0,0);
+   const sidebar=document.querySelector('.layout .sidebar');
+   if(sidebar)sidebar.scrollTop=0;
+ });
+ await page.waitForTimeout(250);
  await page.screenshot({path:'test-artifacts/multipci-portal/escuela-muestra-pci-v2.png',fullPage:true});
+ await page.screenshot({path:'test-artifacts/multipci-portal/ba15-vista-superior.png',fullPage:false});
  console.log('E2E OK: escuela existente, BA+15 agregado, Media conservada, mapa C1-C8, guardado rev1 por PCI y sin errores JS.');
 } finally {
  await browser.close();
