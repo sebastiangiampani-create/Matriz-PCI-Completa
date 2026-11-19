@@ -28,6 +28,7 @@ jobs:
             $1 == "M" && ($2 == "index.html" ||
                           $2 == "escuela-online.html" ||
                           $2 == "supabase/functions/pci-multipci/index.ts" ||
+                          $2 == "src/admin-escuelas-panel.mjs" ||
                           $2 == "panel-general.html" ||
                           $2 == "panel-escuela.html" ||
                           $2 == "pci-orientaciones.html" ||
