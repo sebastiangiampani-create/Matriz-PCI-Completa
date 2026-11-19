@@ -233,6 +233,21 @@ try{
  assert.equal(state.pcis.length,2,'Crear BA +15 debe agregar un PCI sin borrar Media');
  assert.equal(state.pcis[0].pci_id,initialPcis[0].pci_id,'La orientación histórica debe conservar su ID');
  const constructor=page.locator('#ba15Builder');
+ // Fase 1 BA +15: verificar arrastre HTML5 de materia a casillero vacío.
+ const baDropped=await page.evaluate(()=>{
+  const source=[...document.querySelectorAll('#ba15Builder .ba15Subject[draggable="true"]')]
+   .find(x=>x.textContent.includes('Matemática'));
+  const target=document.querySelector('#ba15Builder .mapTable tbody tr:first-child td:first-child .ba15EmptySlot');
+  if(!source||!target)return {ok:false,reason:'falta origen o destino'};
+  const transfer=new DataTransfer();
+  source.dispatchEvent(new DragEvent('dragstart',{bubbles:true,cancelable:true,dataTransfer:transfer}));
+  target.dispatchEvent(new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:transfer}));
+  target.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:transfer}));
+  return {ok:[...document.querySelectorAll('#ba15Builder .mapTable tbody tr:first-child td:first-child .slot')]
+   .some(x=>x.textContent.includes('Matemática'))};
+ });
+ assert.equal(baDropped.ok,true,'BA +15 debe aceptar el drop de Matemática en Troncal C1: '+JSON.stringify(baDropped));
+ assert.equal(state.pcis.length,2,'Arrastrar en BA +15 no puede crear ni borrar otros PCI');
  await constructor.locator('.formCard input').first().fill('Laboratorio interdisciplinario · C1');
  await constructor.getByRole('button',{name:'Crear espacio'}).first().click();
  await constructor.getByRole('button',{name:/Guardar BA \+15 online/}).click();
@@ -309,6 +324,7 @@ try{
  await authPage.locator('#schoolSubmit').click();
  await authPage.waitForURL('**/pci-orientaciones.html?school=1001&nuevo=1');
  await authPage.locator('#app:not([hidden])').waitFor({timeout:25000});
+ await authPage.locator('.school-offer-card').first().waitFor({timeout:15000});
  assert.equal(await authPage.locator('.school-offer-card').count(),1,'Login debe regresar a la escuela sin borrar los PCI');
  assert.equal(await authPage.evaluate(()=>JSON.parse(sessionStorage.getItem('pci_access_session')||'{}').role),'editor');
  await authPage.screenshot({path:'test-artifacts/multipci-portal/ingreso-escuela-recuperado.png',fullPage:true});
