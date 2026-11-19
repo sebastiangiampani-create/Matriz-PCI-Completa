@@ -326,11 +326,13 @@ async function init(){
       try{workspace=setFoAlternative(workspace,pci.orientation_id,$('foAlternative').value);markDirty('oferta');renderOffer();message('Alternativa FO cambiada, todavía sin guardar.','warn');}
       catch(error){message(error.message,'error');renderOffer();}
     });
-    $('confirmFoContents').onclick=()=>{
-      if(!pci||!workspace)return;
-      try{workspace=confirmFoContentAfterOffer(workspace,{orientationId:pci.orientation_id,refs,foRows:refs.fo});markDirty('oferta');renderOffer();message('Contenidos FO confirmados por la regla curricular. Falta guardar.','warn');}
-      catch(error){message(error.message,'error');}
-    };
+    // Los contenidos corresponden exclusivamente a la Fase 2.
+    // El control anterior queda en el DOM por compatibilidad, sin
+    // modificar borradores ni versiones previas de la escuela.
+    $('confirmFoContents').hidden=true;
+    $('confirmFoContents').disabled=true;
+    $('confirmFoContents').onclick=()=>message(
+      'Los contenidos se eligen en 2 · Desarrollo curricular, no en el constructor.','warn');
     window.addEventListener('beforeunload',e=>{if(hasUnsaved()){e.preventDefault();e.returnValue='';}});
     show('app');
     await reloadSchool();
@@ -926,7 +928,8 @@ function renderOffer(){
   const current=getCurrentOffer(),alternative=current.subjectAlternative||'A';
   $('foAlternative').value=alternative;
   $('foAlternative').disabled=!canEdit()||current.spaces.some(s=>s.kind!=='proyecto'&&(s.members||[]).length>0);
-  $('confirmFoContents').disabled=!canEdit();
+  $('confirmFoContents').disabled=true;
+  $('confirmFoContents').hidden=true;
   renderUnifiedConstructor({
     pci,workspace,refs,
     canEdit:canEdit()&&['borrador','en_revision'].includes(pci.status),
@@ -1007,20 +1010,10 @@ function renderOffer(){
         catch(error){message(error.message,'error');}
       };card.appendChild(add);
     }
-    const foSelect=elem('select');foSelect.setAttribute('aria-label','Contenido FO para '+space.name);
-    const foList=selectFoByOrientation(refs.fo,pci.orientation_id,ORIENTATIONS);
-    for(const item of foList){
-      const option=elem('option',((item.block||'')+' · '+item.text).slice(0,150));option.value=item.id;foSelect.appendChild(option);
-    }
-    card.appendChild(foSelect);
-    const addContent=elem('button','Incorporar contenido para revisión','btn');addContent.type='button';
-    addContent.disabled=!canEdit()||!foList.length;
-    addContent.onclick=()=>{
-      try{workspace=stageFoContent(workspace,{orientationId:pci.orientation_id,spaceId:space.id,contentId:foSelect.value,foRows:foList});markDirty('oferta');renderOffer();message('Contenido FO registrado como provisional; no cuenta hasta validar la oferta.','warn');}
-      catch(error){message(error.message,'error');}
-    };
-    card.appendChild(addContent);
-    note('p',(space.provisionalContentIds?.length||0)+' contenidos en revisión · '+(space.contentIds?.length||0)+' confirmados',card,'muted');
+    // Fase 1: solo materias y agrupamientos; los contenidos previos
+    // siguen resguardados pero se trabajan en el módulo Desarrollo.
+    if((space.contentIds||[]).length||(space.provisionalContentIds||[]).length)
+      note('p','Este espacio conserva contenidos previos. Editalos desde Desarrollo Curricular, no desde el mapa.',card,'muted');
     grid.appendChild(card);
   }
   try{
@@ -1089,6 +1082,40 @@ function renderFoEditor(){
     for(const [label,key] of [['Sinopsis','synopsis'],['Objetivos de aprendizaje','objectives']]){
       details.appendChild(field(label,plan[key],v=>{plan[key]=v;markDirty('fo');}));
     }
+    // Fase 2: seleccionar contenidos por plan, sin editar la Fase 1.
+    const contents=selectFoByOrientation(refs.fo,pci.orientation_id,ORIENTATIONS);
+    const selection=elem('div',undefined,'workCard');
+    selection.appendChild(elem('strong','Contenidos priorizados del plan'));
+    const chosen=Array.isArray(plan.contentIds)?plan.contentIds:[];
+    for(const id of chosen){
+      const item=contents.find(x=>x.id===id);
+      const line=elem('div',undefined,'ba15Member');
+      line.appendChild(elem('span',item?(item.block||'')+' · '+item.text:'Contenido '+id+' · revisar origen'));
+      const remove=elem('button','Quitar','btn');remove.type='button';
+      remove.disabled=!canEdit()||!['borrador','en_revision'].includes(pci.status);
+      remove.onclick=()=>{
+        plan.contentIds=(plan.contentIds||[]).filter(x=>x!==id);
+        markDirty('fo');renderFoEditor();
+      };
+      line.appendChild(remove);selection.appendChild(line);
+    }
+    const select=elem('select');
+    select.setAttribute('aria-label','Contenidos de la orientación para este plan');
+    const initial=elem('option','Seleccionar contenido priorizado');initial.value='';
+    select.appendChild(initial);
+    for(const item of contents.filter(x=>!chosen.includes(x.id))){
+      const option=elem('option',((item.block||'')+' · '+item.text).slice(0,170));
+      option.value=item.id;select.appendChild(option);
+    }
+    selection.appendChild(select);
+    const add=elem('button','Incorporar contenido al plan','btn');
+    add.type='button';add.disabled=!canEdit()||!['borrador','en_revision'].includes(pci.status);
+    add.onclick=()=>{
+      if(!select.value)return;
+      plan.contentIds=[...new Set([...(plan.contentIds||[]),select.value])];
+      markDirty('fo');renderFoEditor();
+    };
+    selection.appendChild(add);details.appendChild(selection);
     for(const id of stages){
       details.appendChild(field(stageLabel[id],plan.stages?.[id]?.description||'',v=>{
         plan.stages={...plan.stages,[id]:{...(plan.stages?.[id]||{}),description:v}};
