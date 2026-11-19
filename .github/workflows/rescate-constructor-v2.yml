@@ -27,8 +27,12 @@ jobs:
           node --check src/constructor-v2-ui.mjs
           node --check src/integracion-curricular/constructor-mapa-unificado.mjs
           node --check tests/constructor-mapa-unificado.test.mjs
+          node --check tests/rescate-constructor-v2-integracion.test.mjs
+          node --check src/normativa/adaptador-mapa-media-20261117.mjs
+          node --check src/pci-fase-desarrollo-fg.mjs
+          node --check src/orientaciones-online.mjs
       - name: Reglas PCI V2 - obligatoriedad, duplicados, replica y resguardo
-        run: node --test tests/constructor-mapa-unificado.test.mjs
+        run: node --test tests/constructor-mapa-unificado.test.mjs tests/rescate-constructor-v2-integracion.test.mjs tests/pci-fase-desarrollo-fg.test.mjs tests/adaptador-media-final-20261117.test.mjs
       - name: Conservar originales escolares fuera del diff
         run: |
           git fetch origin main
