@@ -5,6 +5,7 @@ import {historicGroups,blankComposition,promoteHistoricGroup,placeSubject}
 import {projectMediaWorkspaceForFinalValidation}
  from '../src/normativa/adaptador-mapa-media-20261117.mjs';
 import {emptyFgAreaUnit,inheritFgComposition} from '../src/pci-fase-desarrollo-fg.mjs';
+import {moveFoSpace} from '../src/integracion-curricular/mapa-oferta.js';
 const schoolId=1017,pciId='pci-rescate-v2',orientationId='comunicacion';
 const pci={school_id:schoolId,pci_id:pciId,orientation_id:orientationId,
  legacy_sha256:'a'.repeat(64)};
@@ -83,4 +84,20 @@ test('La Fase 2 no reescribe un contenido ni un plan histórico al conciliar',()
  assert.ok(result.conflicts.length>0);
  assert.deepEqual(result.unit,original);
  assert.deepEqual(unit,original);
+});
+
+test('V2: los formatos FO cambian de cuatrimestre por drag sin salir del nivel ni modificar FG',()=>{
+ const original=workspace();
+ original.orientations[orientationId].fo.spaces=[
+  {id:'fo-lab-3',kind:'laboratorio',year:3,term:5,startTerm:5,endTerm:5},
+  {id:'fo-taller-3',kind:'taller',year:3,term:6,startTerm:6,endTerm:6},
+  {id:'fo-pvf-5',kind:'proyecto',year:5,term:9,startTerm:9,endTerm:10}
+ ];
+ const snapshot=structuredClone(original);
+ const moved=moveFoSpace(original,{orientationId,spaceId:'fo-lab-3',targetTerm:6});
+ assert.equal(moved.orientations[orientationId].fo.spaces[0].term,6);
+ assert.deepEqual(original,snapshot);
+ assert.deepEqual(moved.orientations[orientationId].fg,original.orientations[orientationId].fg);
+ assert.throws(()=>moveFoSpace(original,{orientationId,spaceId:'fo-lab-3',targetTerm:7}),/mismo nivel/);
+ assert.throws(()=>moveFoSpace(original,{orientationId,spaceId:'fo-pvf-5',targetTerm:10}),/proyecto anual/);
 });
