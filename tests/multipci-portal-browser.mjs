@@ -391,6 +391,7 @@ try{
  await dashboardOrg.click();
  await panelPage.waitForURL('**/pci-orientaciones.html?school=1001&from=panel-general');
  await panelPage.locator('#app:not([hidden])').waitFor({timeout:25000});
+ await panelPage.locator('.school-offer-card').first().waitFor({timeout:20000});
  assert.equal(await panelPage.locator('.school-offer-card').count(),1,'El panel lleva a la orientación de su escuela');
  assert.equal(await panelPage.locator('#school').inputValue(),'1001');
 
@@ -404,6 +405,7 @@ try{
  await institutionalOrg.click();
  await panelPage.waitForURL('**/pci-orientaciones.html?school=1001&from=panel-general');
  await panelPage.locator('#app:not([hidden])').waitFor({timeout:25000});
+ await panelPage.locator('.school-offer-card').first().waitFor({timeout:20000});
  assert.equal(await panelPage.locator('.school-offer-card').count(),1);
  assert.deepEqual(panelErrors,[],'Los paneles no deben generar errores JS');
  assert.equal(state.pcis[0].pci_id,initialPcis[0].pci_id,'Navegar desde paneles no modifica PCI');
