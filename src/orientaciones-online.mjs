@@ -217,6 +217,7 @@ async function reloadSchool(){
   const data=await call('list-school-pcis',{school_id:schoolId});
   pcis=Array.isArray(data.pcis)?data.pcis:[];
   technical.close();
+  ba15Controller?.destroy();ba15Controller=null;
   pci=null;workspace=null;auto=null;selectedFgArea=null;selectedFoSpace=null;
   fgDirty=false;foDirty=false;offerDirty=false;
   show('editor',false);show('technicalPending',false);show('ba15Pending',false);show('empty');renderPcis();
@@ -383,6 +384,7 @@ async function openPci(id){
       return;
     }
     if(result.pci?.model==='tecnica'){
+      ba15Controller?.destroy();ba15Controller=null;
       // Mismo editor institucional FG → Oferta → Desarrollo curricular V2.
       // La especialidad y el PCI registrados identifican la fuente y el ámbito.
       const tech=result.pci;
@@ -400,6 +402,7 @@ async function openPci(id){
       return;
     }
     technical.close();
+    ba15Controller?.destroy();ba15Controller=null;
     show('technicalPending',false);show('ba15Pending',false);
     const p=requireSchoolPci(result.pci,schoolId);
     if(!ORIENTATIONS.some(o=>o.id===p.orientation_id))
