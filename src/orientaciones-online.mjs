@@ -21,6 +21,8 @@ import {pvfReference,validatePvfProject} from './integracion-curricular/proyecto
 import {validateMediaWorkspaceFinal} from './normativa/adaptador-mapa-media-20261117.mjs';
 import {SPECIALTIES,findSpecialty} from './tecnica/pautas-pci-20261005.mjs';
 import {createIntegratedTechnicalUI} from './tecnica/interfaz-integrada-v2.mjs';
+import {filteredHistoricForPci,historicCountsForPci} from './vinculos-historicos.mjs';
+import {createHistoricAssignmentUI} from './vinculos-historicos-ui.mjs';
 import {requireSchoolPci,newFgUnit,guardFgUnit,newOfferUnit,restoreOfferUnit,newFoUnit,guardFoUnit,inventory,editStageDescription} from './orientaciones-release-core.mjs';
 
 const API='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-multipci';
@@ -44,6 +46,13 @@ let offerRevision=0,offerDirty=false,selectedFoSpace=null,foDoc=null,foRevision=
 let tab='oferta',busy=false,ba15Controller=null;
 let routeDepth=0,undoingPop=false,handlingPop=false,routeInitialized=false;
 const technical=createIntegratedTechnicalUI({canEdit,getUnit,saveUnit,saveSafe:safeSave,download,rememberDraft,forgetDraft,recallDraft,message,status,onPhaseChange:()=>refreshPhaseState()});
+const historicLinksUI=createHistoricAssignmentUI({
+ call,canManage:canDeclareOrientations,notify:message,
+ onChanged:()=>{renderPcis();if(pci){
+   historicLinksUI.renderPreview($('pciHistoricLinks'),pci);
+   historicLinksUI.renderPreview($('ba15HistoricLinks'),pci);
+ }}
+});
 
 async function call(action,data={}){
   const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:session?.token,...data}),cache:'no-store'});
@@ -68,7 +77,7 @@ function canDeclareOrientations(){
   return canEdit()||session?.role==='school_admin';
 }
 function hasUnsaved(){
-  return !!(fgDirty||foDirty||offerDirty||technical.isDirty()||ba15Controller?.isDirty()||busy);
+  return !!(fgDirty||foDirty||offerDirty||historicLinksUI.isDirty||technical.isDirty()||ba15Controller?.isDirty()||busy);
 }
 function canLeave(){
   if(!hasUnsaved())return true;
@@ -360,6 +369,17 @@ async function reloadSchool(){
   $('homeHistoricalPciLink').href=$('historicalPciLink').href;
   const data=await call('list-school-pcis',{school_id:schoolId});
   pcis=Array.isArray(data.pcis)?data.pcis:[];
+  try{
+    const links=await call('get-school-legacy-links',{school_id:schoolId});
+    historicLinksUI.load({...links,school_id:schoolId},pcis);
+  }catch(error){
+    // Durante el despliegue gradual del backend se conserva la lectura V2
+    // y ninguna escuela queda bloqueada por una API de vínculos no disponible.
+    if(error.status===404){
+      historicLinksUI.load({school_id:schoolId,rows:[],revision:0,document:null},pcis);
+      message('Asignación de trabajo anterior pendiente de activación en Supabase. Ningún contenido fue modificado.','warn');
+    }else throw error;
+  }
   technical.close();
   ba15Controller?.destroy();ba15Controller=null;
   pci=null;workspace=null;auto=null;selectedFgArea=null;selectedFoSpace=null;
@@ -474,6 +494,10 @@ function renderSchoolHome(){
         const main=elem('div',undefined,'school-offer-body');
         note('h3',displayOrientation(p),main);
         note('p',p.title,main,'muted');
+        if(historicLinksUI.document){
+          const num=historicCountsForPci(historicLinksUI.rows,historicLinksUI.document,p);
+          note('small','Histórico vinculado: '+num.general+' FG · '+num.orientada+' orientación · '+num.tecnica+' Técnica · '+num.plans+' planes',main,'muted');
+        }else note('small','Trabajo histórico: asignación pendiente de definir',main,'muted');
         card.append(main);
         const bottom=elem('div',undefined,'school-offer-actions');
         const map=elem('button','1 · Constructor curricular','btn primary');
@@ -617,6 +641,7 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
       fgDirty=false;foDirty=false;offerDirty=false;
       show('editor',false);show('technicalPending',false);show('empty',false);
       show('ba15Pending',true);
+      historicLinksUI.renderPreview($('ba15HistoricLinks'),b);
       $('ba15Name').textContent=pcis.find(x=>x.pci_id===id)?.title||'PCI BA +15';
       mostrarMapaBa15({metrics:$('ba15Metrics'),navigation:$('ba15Navigation'),map:$('ba15Map'),validation:$('ba15Validation')});
       const identity={pciId:b.pci_id,schoolId:b.school_id,orientationId:b.orientation_id,shiftId:b.shift_id};
@@ -667,9 +692,11 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
       technical.close();
       pci=tech;workspace=null;auto=null;fgDirty=false;offerDirty=false;foDirty=false;
       selectedFgArea=null;selectedFoSpace=null;
-      await technical.open(tech);
+      const linked=filteredHistoricForPci(tech.legacy_state,historicLinksUI.document,tech);
+      await technical.open(tech,linked.state);
       show('technicalPending',false);show('ba15Pending',false);
       show('empty',false);show('editor');
+      historicLinksUI.renderPreview($('pciHistoricLinks'),tech);
       $('editor').classList.add('technical-editor');
       $('offerGrid').closest('details').open=true;
       $('app').classList.remove('school-home');
@@ -684,9 +711,10 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
     const p=requireSchoolPci(result.pci,schoolId);
     if(!ORIENTATIONS.some(o=>o.id===p.orientation_id))
       throw Error('La orientación no existe en el catálogo institucional.');
-    const hasHistoric=p.legacy_state.profile!=='tecnica'&&
-      Object.keys(p.legacy_state.areas).length>0;
-    const source=hasHistoric?p.legacy_state:{...migrateState({}),schoolName:p.legacy_state.schoolName||'Escuela '+schoolId};
+    const linked=filteredHistoricForPci(p.legacy_state,historicLinksUI.document,p);
+    const hasHistoric=Object.keys(linked.state.areas||{}).length>0&&
+      (p.legacy_state.profile!=='tecnica'||linked.legacyMode==='seleccion-explicita');
+    const source=hasHistoric?linked.state:{...migrateState({}),schoolName:p.legacy_state.schoolName||'Escuela '+schoolId};
     const generated=createOrientationPackage({legacyState:source,schoolId,orientationIds:[p.orientation_id]});
     const imported=automaticallyValidateImportedFg({
       legacyState:source,orientationId:p.orientation_id,
@@ -717,6 +745,9 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
       const item=elem('div',undefined,'metric');note('strong',num,item);note('small',label,item);host.appendChild(item);
     }
     show('empty',false);show('editor');
+    historicLinksUI.renderPreview($('pciHistoricLinks'),p);
+    if(linked.missing.length)
+      message(linked.missing.length+' grupos asignados no figuran en el resguardo original del PCI. Requieren conciliación manual; no se sobrescribió nada.','warn');
     $('editor').classList.remove('technical-editor');
     $('app').classList.remove('school-home');
     renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true,'none');renderAreas();
@@ -828,7 +859,7 @@ async function openFgArea(area){
       throw Error('El área no pertenece a la FG de este PCI.');
     const saved=await getUnit(pci,'fg','area',area,'fg-sec-aprende-v2/1');
     const serverDoc=saved.exists?guardFgUnit(saved.document,pci,area):
-      original?newFgUnit({pci,area,convertedAreas:auto.currentFg.areas}):
+      original?newFgUnit({pci:{...pci,legacy_state:fgSourceState},area,convertedAreas:auto.currentFg.areas}):
       emptyFgAreaUnit(pci,area);
     const currentRevision=Number(saved.revision)||0;
     const recovered=recallDraft('fg',area,currentRevision,pci,
