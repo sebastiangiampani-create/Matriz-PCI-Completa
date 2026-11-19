@@ -261,6 +261,8 @@ Deno.serve(async req=>{
   if(action==='save-school-legacy-links'){
    if(!canDeclareOrientations(s))return err('Sin permiso para asignar trabajo anterior a los PCI.',403);
    const source=await schoolLegacySource(sid);
+   if(String(body.document?.source_updated_at||'')!==String(source.updated_at))
+     return err('El documento histórico fue actualizado mientras asignabas. No se guardó nada: actualizá la escuela y conciliá los cambios.',409);
    const pcis=await listPcisForLinks(sid);
    const document=validateLegacyAssignment(body.document,historicalGroupRows(source.data),pcis,sid,source.updated_at);
    if(encoder.encode(JSON.stringify(document)).byteLength>300000)return err('Asignación demasiado extensa.',413);
