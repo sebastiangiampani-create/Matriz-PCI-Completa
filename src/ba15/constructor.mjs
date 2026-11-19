@@ -16,7 +16,8 @@ export function validarBorradorBa15(draft){
  if(!draft||draft.schema!=='ba15-constructor-v1'||!Array.isArray(draft.niveles)||draft.niveles.length!==4) return {valido:false,errores:['Borrador BA +15 inválido.'],advertencias:[]};
  const base=validarBa15();
  if(!base.valido)errors.push(...base.errores);
- if(!Array.isArray(draft.ccc)||draft.ccc.length!==10)errors.push('Deben conservarse los 10 espacios del CCC.');
+ // El CCC se conserva como metadato de reconocimiento, fuera de la cobertura C1-C8.
+ // No puede impedir validar el armado curricular de los cuatro niveles.
  const ids=new Set();
  for(let index=0;index<4;index++){
   const level=draft.niveles[index];
