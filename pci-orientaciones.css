@@ -1048,3 +1048,15 @@ h3 {letter-spacing:-.01em;}
   .layout #ba15Builder .ba15BuilderGrid>section:first-child{position:static;max-height:none}
   .layout #ba15Builder .constructor-subject-list{max-height:260px}
 }
+
+/* Segunda instancia del BA +15: planes y secuencias, fuera del mapa. */
+.layout .ba15-development-workspace{margin-top:18px}
+.layout .ba15DevelopmentGrid{display:grid;grid-template-columns:minmax(220px,290px) minmax(0,1fr);gap:16px;align-items:start;margin:16px 0}
+.layout .ba15DevelopmentGrid>.content-bag{min-width:0;padding:16px;border:1px solid var(--line);border-radius:18px;background:#fff}
+.layout .ba15DevelopmentGrid>.workCard{min-width:0;margin:0}
+.layout .ba15DevelopmentGrid>.content-bag .constructor-bank-subject{margin:7px 0;white-space:normal}
+.layout .ba15DevelopmentGrid>.workCard>label{display:block;margin:12px 0}
+.layout .ba15DevelopmentGrid>.workCard>label input,
+.layout .ba15DevelopmentGrid>.workCard>label textarea{display:block;box-sizing:border-box;width:100%;min-height:39px;margin-top:6px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
+.layout .ba15DevelopmentGrid>.workCard>label textarea{min-height:105px}
+@media(max-width:850px){.layout .ba15DevelopmentGrid{grid-template-columns:1fr}}
