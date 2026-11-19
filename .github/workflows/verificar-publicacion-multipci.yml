@@ -34,4 +34,6 @@ jobs:
           };
           await check('index.html','Ingresar a una escuela');
           await check('pci-orientaciones.html','Organización curricular de la escuela');
+          await check('panel-general.html','Organización curricular</a>');
+          await check('panel-escuela.html','Organización curricular</a>');
           NODE
