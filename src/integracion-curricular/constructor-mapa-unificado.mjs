@@ -17,13 +17,20 @@ const slug=s=>norm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const positive=i=>Number.isInteger(Number(i))&&Number(i)>0;
 export const quarterYear=term=>Math.ceil(Number(term)/2);
 export const pairedTerm=term=>Number(term)%2?Number(term)+1:Number(term)-1;
+function officialHours(refs,year,name){
+ const source=refs?.hours?.formacion_general?.[String(year)]||{};
+ const item=Object.entries(source).find(([subject])=>norm(subject)===norm(name));
+ const value=item?.[1];
+ return value===undefined||value===null||value===''?null:
+  Number.isFinite(Number(value))&&Number(value)>0?Number(value):null;
+}
 export function fgSubjectsByYear(refs,year){
   const subjects=array(refs?.subjects?.formacion_general?.[String(year)]);
   if(!Number.isInteger(Number(year))||year<1||year>5)
     throw Error('Nivel FG fuera de 1.º a 5.º.');
   return [...new Set(subjects.map(String).filter(Boolean))].map(name=>({
     id:'fg:'+year+':'+slug(name),name,year:Number(year),
-    component:'FG',area:subjectArea(name),hours:null
+    component:'FG',area:subjectArea(name),hours:officialHours(refs,year,name)
   }));
 }
 export function subjectArea(name){
@@ -115,6 +122,24 @@ export function withComposition(workspace,pci,data){
   result.orientations[pci.orientation_id].fo.composicionFgV2=guardComposition(data);
   return result;
 }
+function expectedFormat(area){
+ const name=norm(area);
+ if(['matematica','lengua y literatura','lenguas adicionales'].includes(name))return 'troncal';
+ if(['ciencias naturales','ciencias sociales'].includes(name))return 'laboratorio';
+ if(['artes','tecnologias','educacion fisica'].includes(name))return 'taller';
+ return null;
+}
+function approvedSingleGroup(group){
+ return group.kind==='laboratorio'&&(
+  (norm(group.area)==='ciencias naturales'&&[1,2,4,5].includes(Number(group.year)))||
+  (norm(group.area)==='ciencias sociales'&&Number(group.year)===5)
+ );
+}
+function groupHours(group){const parts=array(group.members);if(!parts.length)return 0;
+ if(parts.some(x=>x.hours===null||x.hours===undefined||
+  !Number.isFinite(Number(x.hours))))return null;
+ return parts.reduce((sum,x)=>sum+Number(x.hours),0);
+}
 function permittedArea(area,kind){
   if(kind==='integrado')return /sociales|naturales/i.test(area);
   return true;
@@ -127,6 +152,12 @@ export function createGrouping(data,{year,term,kind,area,name,replicate=true}){
     !String(name||'').trim())
     throw Error('Indicá formato, nombre, área y cuatrimestre del nivel.');
   if(!permittedArea(area,k))throw Error('La articulación FG–FO solo se ofrece en laboratorios de Naturales o Sociales.');
+  const expected=expectedFormat(area);
+  if(expected&&k!=='integrado'&&k!==expected)
+    throw Error('Acción no permitida: '+area+' se organiza como '+expected+
+      '. Elegí el formato prescripto por PCI V2 antes de crear el espacio.');
+  if(k==='integrado'&&expected!=='laboratorio')
+    throw Error('Acción no permitida: la integración FG–FO solo corresponde a Naturales o Sociales.');
   if(k==='integrado'&&level<3)
     throw Error('Las articulaciones FG–FO requieren Formación Orientada desde 3.º año.');
   const row=k==='integrado'?'Integración FG–FO':mapRow(area,k);
@@ -137,6 +168,12 @@ export function createGrouping(data,{year,term,kind,area,name,replicate=true}){
   if(k==='troncal'){
     main.term=level*2-1;main.endTerm=level*2;
   }
+  const equivalent=draft.groups.filter(g=>g.year===level&&g.area===area&&g.kind===k);
+  if(k==='troncal'&&equivalent.length)
+    throw Error('Acción no permitida: '+area+' ya tiene un espacio troncal anual en este nivel.');
+  if(area==='Ciencias Sociales'&&level===3&&k==='laboratorio'&&
+     equivalent.filter(g=>g.term===t).length>=2)
+    throw Error('Acción no permitida: Sociales de 3.º admite un laboratorio por cuatrimestre o dos agrupamientos de dos materias; no tres.');
   draft.groups.push(main);
   if(replicate&&['laboratorio','taller','integrado'].includes(k)){
     const twin={...clone(main),id:id+'-par',term:pairedTerm(t),endTerm:pairedTerm(t),pairedId:id};
@@ -162,12 +199,22 @@ export function placeSubject(data,{groupId,subject}){
   if(group.kind==='troncal'&&subject.component==='FG'&&group.members.length>0&&
     !group.members.some(s=>s.id===subject.id))
     throw Error('Un espacio troncal anual no debe mezclar materias diferentes.');
+  // PCI V2: una materia no se duplica en el MISMO cuatrimestre,
+  // aunque el agrupamiento destino tenga otro formato o área.
+  const targetTerms=group.kind==='troncal'?
+   [group.year*2-1,group.year*2]:
+   [group.term,...(group.pairedId?[pairedTerm(group.term)]:[])];
   for(const g of draft.groups.filter(g=>g.year===group.year)){
     if(g.id===group.id||g.id===group.pairedId)continue;
-    if(g.members.some(s=>s.id===subject.id)&&
-      (g.term===group.term||g.term===pairedTerm(group.term))&&
-      g.kind===group.kind&&g.area===group.area)
-      throw Error('La materia ya figura en otro agrupamiento equivalente de este nivel.');
+    if(g.members.some(s=>s.id===subject.id)&&targetTerms.some(term=>
+      Number(g.term)<=term&&Number(g.endTerm)>=term))
+      throw Error('Acción no permitida: '+subject.name+
+       ' ya figura en C'+g.term+'. Revisá su agrupamiento anterior antes de asignarla de nuevo.');
+  }
+  if(['laboratorio','integrado'].includes(group.kind)){
+    const hours=groupHours(group);
+    if(hours!==null&&subject.hours!=null&&hours+Number(subject.hours)>9)
+      throw Error('Acción no permitida: el laboratorio superaría las 9 horas cátedra semanales. Elegí otro agrupamiento válido.');
   }
   for(const id of [group.id,group.pairedId].filter(Boolean)){
     const target=draft.groups.find(g=>g.id===id);
@@ -197,9 +244,12 @@ export function arrangementWarnings(data){
   for(const g of draft.groups){
     if(!g.members.length)warnings.push(g.name+' (C'+g.term+'): sin materias');
     if(['laboratorio','integrado'].includes(g.kind)&&g.members.length===1&&
-      !(g.year===4&&g.row==='Laboratorios FG · Naturales')&&
-      !(g.year===5&&g.row==='Laboratorios FG · Sociales'))
-      warnings.push(g.name+' (C'+g.term+'): verificar mínimo de materias y excepciones');
+      !approvedSingleGroup(g))
+      warnings.push(g.name+' (C'+g.term+'): requiere al menos dos materias, salvo excepción normativa V2.');
+    if(['laboratorio','integrado'].includes(g.kind)&&groupHours(g)>9)
+      warnings.push(g.name+' (C'+g.term+'): supera las 9 horas cátedra.');
+    if(g.kind==='troncal'&&g.members.length!==1)
+      warnings.push(g.name+' (C'+g.term+'): troncal anual con una materia del nivel.');
     if(g.kind==='integrado'&&!g.members.some(m=>m.component==='FG'))
       warnings.push(g.name+': articulación sin Formación General');
     if(g.kind==='integrado'&&!g.members.some(m=>m.component==='FO'))
