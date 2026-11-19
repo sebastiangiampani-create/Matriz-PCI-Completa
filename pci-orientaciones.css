@@ -1060,3 +1060,35 @@ h3 {letter-spacing:-.01em;}
 .layout .ba15DevelopmentGrid>.workCard>label textarea{display:block;box-sizing:border-box;width:100%;min-height:39px;margin-top:6px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
 .layout .ba15DevelopmentGrid>.workCard>label textarea{min-height:105px}
 @media(max-width:850px){.layout .ba15DevelopmentGrid{grid-template-columns:1fr}}
+
+/* Fase 2 = los espacios construidos, en tarjetas como en PCI V2. */
+.layout .pci-development-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}
+.layout .pci-development-stat{border:1px solid var(--line);border-radius:14px;background:#fff;padding:13px 15px}
+.layout .pci-development-stat strong{display:block;font-size:1.45rem;font-weight:900;color:var(--ink)}
+.layout .pci-development-stat small{display:block;font-size:.73rem;color:#587180}
+.layout .pci-development-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0 16px}
+.layout .pci-development-card{
+  display:flex;flex-direction:column;gap:8px;min-height:126px;padding:15px;
+  border:1px solid var(--line);border-radius:17px;background:#fff;
+  box-shadow:0 5px 16px rgba(21,55,74,.045);color:var(--ink);
+  font:inherit;text-align:left;cursor:pointer;white-space:normal;
+}
+.layout .pci-development-card:hover,.layout .pci-development-card:focus-visible{
+  border-color:#126e65;outline:2px solid #126e65;outline-offset:0;
+}
+.layout .pci-development-card.active{background:#e7f8f5;border-color:#126e65}
+.layout .pci-development-card small{font-size:.69rem;color:#126e65;font-weight:900;text-transform:uppercase}
+.layout .pci-development-card strong{font-size:.94rem;line-height:1.26}
+.layout .pci-development-card>span{font-size:.75rem;color:#587180}
+.layout .pci-development-card-count{margin-top:auto;font-size:.74rem!important;color:#126e65!important;font-weight:800}
+.layout .pci-development-plan-count{font-size:.78rem;color:#126e65;background:#edf8f4;border-radius:9px;padding:10px}
+.layout .pci-development-stage{border:1px solid var(--line);border-radius:12px;margin:10px 0;overflow:hidden}
+.layout .pci-development-stage summary{padding:12px 14px;background:#eff8f6;color:var(--ink);font-weight:850;cursor:pointer}
+.layout .pci-development-stage>label{display:block;margin:10px 14px;font-size:.76rem;font-weight:750}
+.layout .pci-development-stage input,.layout .pci-development-stage textarea{
+  display:block;box-sizing:border-box;width:100%;padding:10px;margin-top:5px;
+  font:inherit;font-size:.81rem;border:1px solid var(--line);border-radius:9px
+}
+.layout .pci-development-stage textarea{min-height:80px}
+@media(max-width:940px){.layout .pci-development-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.layout .pci-development-cards,.layout .pci-development-stats{grid-template-columns:1fr}}
