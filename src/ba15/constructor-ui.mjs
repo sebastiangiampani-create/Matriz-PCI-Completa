@@ -11,7 +11,8 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
  const key=['pci-ba15-borrador-local-v1',identity.schoolId,identity.pciId].join(':');
  let draft=initialDraft?structuredClone(initialDraft):crearBorradorBa15(identity),term=1,selected=null,planIndex=0,view='mapa';
  let nesContents=[],nesLoading=true,nesError='',dirty=false,remoteBusy=false,recoveryDraft=null;
- let remoteRevision=Number(savedRevision)||0,developmentUnlocked=false;
+ let remoteRevision=Number(savedRevision)||0,developmentUnlocked=false,structureDirty=false;
+ let pickedSubject=null,dragSubject=null;
  const matchesIdentity=saved=>saved?.schema===draft.schema&&
   Number(saved?.schoolId)===Number(draft.schoolId)&&saved?.pciId===draft.pciId&&
   saved?.orientationId===draft.orientationId&&saved?.shiftId===draft.shiftId;
@@ -22,7 +23,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   if(matchesIdentity(saved)){
    if(initialDraft&&JSON.stringify(saved)!==JSON.stringify(initialDraft)){
     if(confirm('Hay un borrador BA +15 local distinto del servidor. ¿Recuperarlo para revisar y guardar sin perder lo trabajado?')){
-     draft=saved;dirty=true;
+     draft=saved;dirty=true;structureDirty=true;structureDirty=true;
     }else{
      recoveryDraft=saved;
      try{sessionStorage.setItem(key+'.recovery',JSON.stringify(saved));}catch{}
@@ -37,17 +38,66 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   dirty?'Borrador local recuperado. Verificá y guardá online sin reemplazar otro PCI.':
   'Borrador BA +15 independiente. Exportá una copia JSON como resguardo.','muted');
  const save=()=>{if(readOnlyDemo){status.textContent='Demostración: cambios solo en memoria, sin conexión con datos institucionales.';return;}dirty=true;try{sessionStorage.setItem(key,JSON.stringify(draft));status.textContent='Cambios solo en esta pestaña. Usá «Guardar BA +15 online» para confirmarlos en el servidor.';}catch{status.textContent='No se pudo guardar localmente. Exportá el JSON antes de salir.';}};
- const persistRemote=async()=>{if(!saveRemote||!canEditRemote||!dirty||remoteBusy||readOnlyDemo)return;remoteBusy=true;status.textContent='Verificando revisión y guardando BA +15…';const payload=structuredClone(draft);try{const revision=await saveRemote(payload);remoteRevision=Number(revision)||remoteRevision;const unchanged=JSON.stringify(payload)===JSON.stringify(draft);dirty=!unchanged;if(unchanged){try{sessionStorage.removeItem(key);}catch{}status.textContent='BA +15 guardado online: revisión confirmada por lectura posterior.';}else{status.textContent='Se guardó una revisión anterior. Hay cambios posteriores sin guardar: conservá el borrador y volvé a guardar.';}}catch(error){status.textContent='NO se guardó online: '+(error?.message||error)+'. Conservá el JSON de resguardo.';}finally{remoteBusy=false;render();}};
+ const persistRemote=async()=>{if(!saveRemote||!canEditRemote||!dirty||remoteBusy||readOnlyDemo)return;remoteBusy=true;status.textContent='Verificando revisión y guardando BA +15…';const payload=structuredClone(draft);try{const revision=await saveRemote(payload);remoteRevision=Number(revision)||remoteRevision;const unchanged=JSON.stringify(payload)===JSON.stringify(draft);dirty=!unchanged;if(unchanged){structureDirty=false;try{sessionStorage.removeItem(key);}catch{}status.textContent='BA +15 guardado online: revisión confirmada por lectura posterior.';}else{status.textContent='Se guardó una revisión anterior. Hay cambios posteriores sin guardar: conservá el borrador y volvé a guardar.';}}catch(error){status.textContent='NO se guardó online: '+(error?.message||error)+'. Conservá el JSON de resguardo.';}finally{remoteBusy=false;render();}};
  function change(fn,phase='constructor'){
   try{
     draft=fn();
-    if(phase==='constructor'){developmentUnlocked=false;view='mapa';}
+    if(phase==='constructor'){structureDirty=true;developmentUnlocked=false;view='mapa';}
     save();render();
   }catch(e){status.textContent='No se modificó: '+e.message;}
  }
+
+ const canCompose=()=>readOnlyDemo||canEditRemote;
+ function subjectLevel(id){
+  const result=String(id||'').match(/^n([1-4])s\d+$/);
+  return result?Number(result[1]):null;
+ }
+ function dropSubject(id,targetLevel,targetSpaceId){
+  if(!canCompose()){status.textContent='El PCI está en modo lectura.';return;}
+  if(subjectLevel(id)!==targetLevel){
+   status.textContent='Acción no permitida: las materias BA +15 no se mueven entre niveles.';return;
+  }
+  change(()=>asignarMateriaBa15(draft,{nivel:targetLevel,espacioId:targetSpaceId,materiaId:id}));
+  pickedSubject=null;dragSubject=null;
+ }
+ function createFromDrop(id,targetTerm,format){
+  if(!canCompose()){status.textContent='El PCI está en modo lectura.';return;}
+  const levelNum=Math.floor((Number(targetTerm)-1)/2)+1;
+  if(subjectLevel(id)!==levelNum){
+   status.textContent='Acción no permitida: la materia debe permanecer en su nivel.';return;
+  }
+  const subject=draft.niveles[levelNum-1].asignaturas.find(x=>x.id===id);
+  if(!subject)return;
+  change(()=>{
+   const created=crearEspacioBa15(draft,{nivel:levelNum,term:Number(targetTerm),
+    nombre:subject.nombre,formato:format});
+   const space=created.niveles[levelNum-1].espacios.at(-1);
+   const assigned=asignarMateriaBa15(created,{nivel:levelNum,espacioId:space.id,materiaId:id});
+   term=Number(targetTerm);selected=space.id;return assigned;
+  });
+  pickedSubject=null;dragSubject=null;
+ }
+ function makeDropTarget(node,assign){
+  if(!canCompose())return;
+  node.classList.add('drop-zone');
+  node.addEventListener('dragover',event=>{
+   const id=event.dataTransfer?.types?.includes('text/plain')?dragSubject||pickedSubject:null;
+   if(!id)return;
+   event.preventDefault();
+   if(event.dataTransfer)event.dataTransfer.dropEffect='move';
+   node.classList.add('drop-over');
+  });
+  node.addEventListener('dragleave',()=>node.classList.remove('drop-over'));
+  node.addEventListener('drop',event=>{
+   event.preventDefault();event.stopPropagation();
+   node.classList.remove('drop-over');
+   const id=event.dataTransfer?.getData('text/plain')||dragSubject||pickedSubject;
+   if(id)assign(id);
+  });
+ }
  function getPhaseStatus(){
   const check=validarBorradorBa15(draft);
-  return phaseGate({revision:remoteRevision,dirty:dirty&&!developmentUnlocked,
+  return phaseGate({revision:remoteRevision,dirty:structureDirty,
     issues:[...check.errores,...check.advertencias],label:'BA +15 C1–C8'});
  }
  function render(){
@@ -87,9 +137,23 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
     for(const t of BA15_TERMS){
      const td=element('td'),spaces=draft.niveles[t.nivel-1].espacios.filter(e=>e.term===t.numero&&e.formato===format);
      for(const e of spaces){
-      td.append(button(e.nombre,()=>{term=t.numero;selected=e.id;render()},'slot'));
+      const destination=button(e.nombre,()=>{
+       if(pickedSubject)dropSubject(pickedSubject,t.nivel,e.id);
+       else {term=t.numero;selected=e.id;render();}
+      },'slot');
+      destination.title='Soltá una materia del nivel o tocá para abrir este espacio.';
+      makeDropTarget(destination,id=>dropSubject(id,t.nivel,e.id));
+      td.append(destination);
      }
-     if(!spaces.length)td.append(button('＋',()=>{term=t.numero;selected=null;render()},'ba15EmptySlot'));
+     if(!spaces.length){
+      const destination=button('＋',()=>{
+       if(pickedSubject)createFromDrop(pickedSubject,t.numero,format);
+       else {term=t.numero;selected=null;render();}
+      },'ba15EmptySlot');
+      destination.title='Arrastrá una materia para crear su espacio en C'+t.numero+'.';
+      makeDropTarget(destination,id=>createFromDrop(id,t.numero,format));
+      td.append(destination);
+     }
      row.append(td);
     }
     body.append(row);
@@ -103,16 +167,42 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   const summary=element('p','Nivel '+['I','II','III','IV'][levelNum-1]+' · C'+term+' · '+level.asignaturas.reduce((a,s)=>a+s.horas,0)+' horas semanales oficiales del nivel · '+level.espacios.filter(e=>e.term===term).length+' espacios del cuatrimestre','muted');host.append(summary);
   const layout=element('div','','ba15BuilderGrid');
   const aside=element('section','','workCard'),main=element('section','','workCard');
-  aside.append(element('h3','Bolsa curricular · Nivel '+['I','II','III','IV'][levelNum-1]));
-  aside.append(element('p','Asigná materias a uno o más formatos, sin duplicarlas dentro del mismo cuatrimestre.','muted'));
-  const assigned=new Set(level.espacios.filter(e=>e.term===term).flatMap(e=>e.miembros));
-  for(const s of level.asignaturas){
-   const row=element('div','','ba15Subject');
-   const name=element('strong',s.nombre),small=element('small',s.area+' · '+s.horas+' h · '+(assigned.has(s.id)?'Asignada':'Pendiente'));
-   row.append(name,small);
-   if(selected&&!assigned.has(s.id))row.append(button('Asignar',()=>change(()=>asignarMateriaBa15(draft,{nivel:levelNum,espacioId:selected,materiaId:s.id})),'btn'));
-   aside.append(row);
+  if(view==='mapa'){
+   aside.append(element('h3','Bolsa de materias · Nivel '+['I','II','III','IV'][levelNum-1]));
+   aside.append(element('p','Arrastrá una materia al mapa de la oferta, o seleccionala para ubicarla tocando una celda.','muted'));
+   const assigned=new Set(level.espacios.filter(e=>e.term===term).flatMap(e=>e.miembros));
+   for(const s of level.asignaturas){
+    const row=element('div','','ba15Subject'+(pickedSubject===s.id?' active':''));
+    row.draggable=canCompose();row.tabIndex=0;row.setAttribute('role','button');
+    row.setAttribute('aria-label','Seleccionar materia '+s.nombre);
+    row.addEventListener('click',()=>{pickedSubject=s.id;render()});
+    row.addEventListener('keydown',event=>{
+     if(event.key==='Enter'||event.key===' '){event.preventDefault();pickedSubject=s.id;render();}
+    });
+    row.addEventListener('dragstart',event=>{
+     dragSubject=s.id;
+     event.dataTransfer?.setData('text/plain',s.id);
+     if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
+    });
+    row.addEventListener('dragend',()=>{dragSubject=null});
+    row.append(element('strong',s.nombre),
+     element('small',s.area+' · '+s.horas+' h · '+(assigned.has(s.id)?'Asignada en C'+term:'Pendiente en C'+term)));
+    if(selected&&!assigned.has(s.id)&&canCompose()){
+     const assign=button('Asignar al espacio seleccionado',event=>{
+      event.stopPropagation();dropSubject(s.id,levelNum,selected);
+     },'btn');
+     row.append(assign);
+    }
+    aside.append(row);
+   }
+  }else{
+   aside.append(element('h3','Espacios del mapa · Nivel '+['I','II','III','IV'][levelNum-1]));
+   aside.append(element('p','Desarrollá los planes de los espacios ya construidos. La composición se modifica solamente en Fase 1.','muted'));
+   for(const e of level.espacios.filter(x=>x.term===term))
+    aside.append(button(e.nombre,()=>{selected=e.id;planIndex=0;render()},
+     'areaItem'+(selected===e.id?' active':'')));
   }
+  if(view==='mapa'){
   const form=element('div','','formCard');
   form.append(element('h3','Crear agrupamiento en C'+term));
   const name=field('Nombre del espacio','',()=>{});const format=select('Formato',[['laboratorio','Laboratorio'],['taller','Taller'],['troncal','Troncal'],['orientado','Formación Orientada'],['otro','Otro formato']],()=>{});
@@ -122,6 +212,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    const updated=crearEspacioBa15(draft,{nivel:levelNum,term,nombre:title,formato:format.select.value});
    selected=updated.niveles[levelNum-1].espacios.at(-1).id;return updated;
   }),'btn primary'));main.append(form);
+  }
   for(const e of level.espacios.filter(e=>e.term===term)){
    const card=element('article','','ba15Space');
    card.append(button((selected===e.id?'▼ ':'▶ ')+e.nombre+' · '+e.formato,()=>{selected=selected===e.id?null:e.id;render()},'pciItem'+(selected===e.id?' active':'')));
@@ -130,12 +221,13 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
     for(const member of e.miembros){
      const subject=level.asignaturas.find(s=>s.id===member);
      const wrap=element('div','','ba15Member');
-     wrap.append(element('span',subject?.nombre||member),button('Quitar',()=>change(()=>quitarMateriaBa15(draft,{nivel:levelNum,espacioId:e.id,materiaId:member})),'btn'));
+     wrap.append(element('span',subject?.nombre||member));
+     if(view==='mapa'&&canCompose())wrap.append(button('Quitar',()=>change(()=>quitarMateriaBa15(draft,{nivel:levelNum,espacioId:e.id,materiaId:member})),'btn'));
      members.append(wrap);
     }
     if(!members.childNodes.length)members.append(element('p','Sin materias asignadas. Elegí alguna en la bolsa.','muted'));
     card.append(members);
-    card.append(field('Articulación pedagógica y espacios vinculados',e.articulacion,value=>change(()=>actualizarEspacioBa15(draft,{nivel:levelNum,espacioId:e.id,changes:{articulacion:value}})),true));
+    if(view==='mapa')card.append(field('Articulación pedagógica y espacios vinculados',e.articulacion,value=>change(()=>actualizarEspacioBa15(draft,{nivel:levelNum,espacioId:e.id,changes:{articulacion:value}})),true));
     if(view==='planes'){
      const tabs=element('div','','actions');
      for(let i=0;i<4;i++)tabs.append(button('Plan '+(i+1),()=>{planIndex=i;render()},'tab'+(i===planIndex?' active':'')));
@@ -180,7 +272,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
      for(const [key,label] of [['punto_partida','Punto de partida'],['indagacion','Indagación'],['produccion','Producción'],['evaluacion','Evaluación']])
       card.append(field(label,p.etapas[key],v=>update(t=>{t.etapas[key]=v;}),true));
     }
-    card.append(button('Eliminar agrupamiento',()=>{if(confirm('¿Eliminar este espacio del borrador local?'))change(()=>{selected=null;return eliminarEspacioBa15(draft,{nivel:levelNum,espacioId:e.id});});},'btn'));
+    if(view==='mapa'&&canCompose())card.append(button('Eliminar agrupamiento',()=>{if(confirm('¿Eliminar este espacio del borrador local?'))change(()=>{selected=null;return eliminarEspacioBa15(draft,{nivel:levelNum,espacioId:e.id});});},'btn'));
    }
    main.append(card);
   }
