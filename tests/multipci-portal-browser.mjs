@@ -25,7 +25,7 @@ const state={pcis:structuredClone(initialPcis),units:new Map(),actions:[]};
 const pageConsole=[];
 await listen();
 const port=server.address().port;
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch(process.env.CHROME_BIN ? {headless:true,executablePath:process.env.CHROME_BIN} : {headless:true});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:900}});
  page.on('pageerror',e=>pageConsole.push(e.message));
