@@ -1,0 +1,389 @@
+{
+  "schema": "pci-tecnica-plan-vigente-v1",
+  "especialidad_id": "computacion",
+  "especialidad": "Computación",
+  "titulo": "Técnico en Computación",
+  "fecha_aprobacion": "2026-01-21",
+  "vigencia_desde": 2026,
+  "norma": "Resolución 80/MEDGC/2026",
+  "fuente": {
+    "nombre": "Anexo II · Estructura y composición del Diseño Curricular",
+    "url": "https://documentosboletinoficial.buenosaires.gob.ar/publico/PE-RES-MEDGC-MEDGC-80-26-ANX-2.pdf",
+    "identificador": "IF-2025-53924204-GCABA-SSPIE",
+    "paginas_det": [
+      6,
+      7
+    ],
+    "paginas_dgegp": [
+      8,
+      9
+    ]
+  },
+  "alcance": "Segundo Ciclo (4 años) de Técnico Profesional; corresponden al 3.º, 4.º, 5.º y 6.º de la trayectoria completa. NO incluye las cargas de 1.º y 2.º.",
+  "implementaciones": [
+    "DET",
+    "DGEGP"
+  ],
+  "horas_semanales_por_anio": {
+    "DET": {
+      "3": 46,
+      "4": 46,
+      "5": 48,
+      "6": 46
+    },
+    "DGEGP": {
+      "3": 46,
+      "4": 46,
+      "5": 46,
+      "6": 46
+    }
+  },
+  "horas_reloj_segundo_ciclo": {
+    "DET": 4464,
+    "DGEGP": 4416
+  },
+  "unidades": [
+    {
+      "id": "historia",
+      "nombre": "Historia",
+      "campo": "formacion_general",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 3,
+        "4": 2
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "geografia",
+      "nombre": "Geografía",
+      "campo": "formacion_general",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 3,
+        "4": 2
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "educacion_fisica",
+      "nombre": "Educación Física",
+      "campo": "formacion_general",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 3,
+        "4": 3,
+        "5": 3,
+        "6": 3
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "educacion_ciudadana",
+      "nombre": "Educación Ciudadana",
+      "campo": "formacion_general",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 2
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "lengua_extranjera_adicional",
+      "nombre": "Lengua Extranjera / Adicional",
+      "campo": "formacion_general",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 3,
+        "4": 3,
+        "5": 3,
+        "6": 3
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "ciudadania_trabajo",
+      "nombre": "Ciudadanía y Trabajo",
+      "campo": "formacion_general",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "6": 2
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "lengua_literatura",
+      "nombre": "Lengua y Literatura",
+      "campo": "formacion_general",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 4,
+        "4": 3,
+        "5": 3
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "ciencia_tecnologia",
+      "nombre": "Ciencia y Tecnología",
+      "campo": "formacion_general",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "6": 2
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "matematica",
+      "nombre": "Matemática",
+      "campo": "formacion_cientifico_tecnologica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 5,
+        "4": 4,
+        "5": 4,
+        "6": 4
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "fisica",
+      "nombre": "Física",
+      "campo": "formacion_cientifico_tecnologica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 4
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "tecnologia_representacion",
+      "nombre": "Tecnología de la Representación",
+      "campo": "formacion_cientifico_tecnologica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 4
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "quimica",
+      "nombre": "Química",
+      "campo": "formacion_cientifico_tecnologica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 3
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "gestion_procesos",
+      "nombre": "Gestión de los Procesos Productivos",
+      "campo": "formacion_cientifico_tecnologica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "6": 4
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "economia_gestion",
+      "nombre": "Economía y Gestión de las Organizaciones",
+      "campo": "formacion_cientifico_tecnologica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "5": 3
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "taller",
+      "nombre": "Taller",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 8
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "taller_tecnologia_control",
+      "nombre": "Taller de Tecnología y del Control",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "3": 4
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "laboratorio_algoritmos",
+      "nombre": "Laboratorio de Algoritmos y Estructura de Datos",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "4": 9
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "base_datos",
+      "nombre": "Base de Datos",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "4": 6
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "logica_computacional",
+      "nombre": "Lógica Computacional",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "4": 3
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "admin_gestion_bd",
+      "nombre": "Administración y Gestión de Base de Datos",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "5": 6
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "analisis_sistemas",
+      "nombre": "Análisis de Sistemas",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "5": 4
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "laboratorio_poo",
+      "nombre": "Laboratorio de Programación Orientada a Objetos",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "5": 9
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "desarrollo_sistemas",
+      "nombre": "Desarrollo de Sistemas",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "6": 6
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "programacion_redes",
+      "nombre": "Programación sobre Redes",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "6": 6
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "organizacion_computadoras",
+      "nombre": "Organización de Computadoras",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "4": 7
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "redes",
+      "nombre": "Redes",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "5": 7
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "admin_sistemas_redes",
+      "nombre": "Administración de Sistemas y Redes",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "6": 7
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "proyecto_informatico_1",
+      "nombre": "Proyecto Informático I / Proyecto Informático",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DET+DGEGP",
+      "horas_catedra_semanales": {
+        "4": 4
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "proyecto_informatico_2",
+      "nombre": "Proyecto Informático II",
+      "campo": "formacion_tecnica_especifica",
+      "criterio": "DGEGP",
+      "horas_catedra_semanales": {
+        "5": 4
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "pp_1",
+      "nombre": "Prácticas Profesionalizantes I",
+      "campo": "practicas_profesionalizantes",
+      "criterio": "DET",
+      "horas_catedra_semanales": {
+        "5": 6
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "pp_2",
+      "nombre": "Prácticas Profesionalizantes II",
+      "campo": "practicas_profesionalizantes",
+      "criterio": "DET",
+      "horas_catedra_semanales": {
+        "6": 9
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    },
+    {
+      "id": "pp_dgegp",
+      "nombre": "Prácticas Profesionalizantes",
+      "campo": "practicas_profesionalizantes",
+      "criterio": "DGEGP",
+      "horas_catedra_semanales": {
+        "6": 9
+      },
+      "verificacion": "cuadro_oficial_anexo_ii"
+    }
+  ],
+  "advertencias": [
+    "Las horas indicadas son horas cátedra semanales para el año del Segundo Ciclo, no horas por cuatrimestre.",
+    "El cuadro oficial de DET distingue Prácticas Profesionalizantes I y II; DGEGP tiene otra composición.",
+    "Los Talleres de 3.º tienen una unidad de calificación y promoción conjunta según nota del cuadro.",
+    "No extrapolar esta caja curricular a otras especialidades ni a los años 1.º y 2.º.",
+    "Los contenidos priorizados 2026 son otra fuente, independiente del plan y sus cargas.",
+    "Esta referencia no se aplica automáticamente a los PCI escolares existentes."
+  ],
+  "estado": "extraido_cuadro_oficial_requiere_contraste_por_establecimiento"
+}
