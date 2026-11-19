@@ -40,6 +40,26 @@ export function montarConstructorBa15(host,identity){
    }
    host.append(panel);return;
   }
+  if(view==='mapa'){
+   const matrix=element('div','','mapScroll'),tbl=element('table','','mapTable');
+   const head=element('thead'),top=element('tr');top.append(element('th','Formato'));
+   for(const t of BA15_TERMS)top.append(element('th','C'+t.numero+' · Nivel '+['I','II','III','IV'][t.nivel-1]));
+   head.append(top);tbl.append(head);
+   const body=element('tbody');
+   for(const [format,label] of [['troncal','Troncales'],['laboratorio','Laboratorios'],['taller','Talleres'],['orientado','Formación Orientada'],['otro','Otros formatos']]){
+    const row=element('tr');row.append(element('th',label));
+    for(const t of BA15_TERMS){
+     const td=element('td'),spaces=draft.niveles[t.nivel-1].espacios.filter(e=>e.term===t.numero&&e.formato===format);
+     for(const e of spaces){
+      td.append(button(e.nombre,()=>{term=t.numero;selected=e.id;render()},'slot'));
+     }
+     if(!spaces.length)td.append(button('＋',()=>{term=t.numero;selected=null;render()},'ba15EmptySlot'));
+     row.append(td);
+    }
+    body.append(row);
+   }
+   tbl.append(body);matrix.append(tbl);host.append(matrix);
+  }
   const nav=element('div','','demoTermNav');
   for(const t of BA15_TERMS)nav.append(button('C'+t.numero+' · Nivel '+['I','II','III','IV'][t.nivel-1],()=>{term=t.numero;selected=null;planIndex=0;render()},'tab'+(t.numero===term?' active':'')));
   host.append(nav);
