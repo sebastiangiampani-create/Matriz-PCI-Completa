@@ -13,6 +13,7 @@ import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integraci
 import {seedOfferStructure,foSubjectBank,assignFoSubject,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
 import {withComposition,compositionFor,arrangementWarnings} from './integracion-curricular/constructor-mapa-unificado.mjs';
 import {phaseGate,phaseText} from './pci-flujo-fases.mjs';
+import {proposedFgAreas,emptyFgAreaUnit,inheritFgComposition} from './pci-fase-desarrollo-fg.mjs';
 import {renderUnifiedConstructor} from './constructor-v2-ui.mjs';
 import {newFoDevelopment,FO_STAGES} from './integracion-curricular/desarrollo-fo-modelo.js';
 import {pvfReference,validatePvfProject} from './integracion-curricular/proyecto-vinculacion-2026.mjs';
@@ -625,26 +626,42 @@ function setTab(next,force=false){
 }
 function renderAreas(){
   const host=$('areaList');host.replaceChildren();
-  const areas=Object.keys(fgSourceState?.areas||{});
-  if(!areas.length)note('p','Esta escuela aún no tiene agrupamientos FG; se podrán construir dentro del proceso.',host,'muted');
+  const staged=workspace&&pci?compositionFor(workspace,pci):null;
+  const areas=[...new Set([...Object.keys(fgSourceState?.areas||{}),...proposedFgAreas(staged)])];
+  if(!areas.length)note('p','No hay agrupamientos FG. Completá primero el constructor del PCI.',host,'muted');
   areas.forEach(area=>{
-    const groups=fgSourceState.areas[area]?.groups||[];
+    const original=fgSourceState?.areas?.[area]?.groups||[];
+    const proposed=(staged?.groups||[]).filter(g=>g.area===area&&
+      (g.members||[]).some(m=>m.component==='FG'));
     const button=elem('button',undefined,'areaItem'+(area===selectedFgArea?' active':''));button.type='button';
-    note('strong',area,button);note('small',groups.length+' agrupamientos de origen',button);
+    note('strong',area,button);
+    note('small',original.length+' históricos · '+proposed.length+' propuestos',button);
     button.onclick=()=>openFgArea(area);host.appendChild(button);
   });
 }
 async function openFgArea(area){
   if(fgDirty&&!confirm('Hay cambios de FG sin guardar. ¿Abrir otra área sin guardar?'))return;
   try{
+    const original=Object.hasOwn(fgSourceState?.areas||{},area);
+    const composition=compositionFor(workspace,pci);
+    if(!original&&!proposedFgAreas(composition).includes(area))
+      throw Error('El área no pertenece a la FG de este PCI.');
     const saved=await getUnit(pci,'fg','area',area,'fg-sec-aprende-v2/1');
     const serverDoc=saved.exists?guardFgUnit(saved.document,pci,area):
-      newFgUnit({pci,area,convertedAreas:auto.currentFg.areas});
+      original?newFgUnit({pci,area,convertedAreas:auto.currentFg.areas}):
+      emptyFgAreaUnit(pci,area);
     const currentRevision=Number(saved.revision)||0;
     const recovered=recallDraft('fg',area,currentRevision,pci,
       value=>guardFgUnit(value,pci,area));
-    selectedFgArea=area;fgDoc=recovered||serverDoc;fgRevision=currentRevision;fgDirty=!!recovered;
+    const inherited=inheritFgComposition({unit:recovered||serverDoc,composition,pci,area});
+    selectedFgArea=area;fgDoc=inherited.unit;fgRevision=currentRevision;
+    fgDirty=!!recovered||inherited.changed;
+    if(inherited.changed)markDirty('fg');
     renderAreas();renderFgEditor();
+    if(inherited.conflicts.length)
+      message('Se conservaron desarrollos anteriores: revisar manualmente materias de '+inherited.conflicts.join(', ')+'.','warn');
+    else if(inherited.changed)
+      message(inherited.added.length+' agrupamientos de la Fase 1 heredados en el Desarrollo FG. Guardá el área para confirmar sus planes.','warn');
   }catch(error){message(error.message,'error');}
 }
 function renderFgEditor(){
