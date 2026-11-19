@@ -10,7 +10,9 @@ import {mostrarMapaBa15} from './ba15/mapa-ui.mjs';
 import {montarConstructorBa15} from './ba15/constructor-ui.mjs';
 import {loadMatrixContents,loadV2Fg,loadV2Fo,loadV2Rules,selectFoByOrientation} from './integracion-curricular/catalogos.js';
 import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integracion-curricular/auto-validacion-importacion.js';
-import {seedOfferStructure,foSubjectBank,assignFoSubject,offerMapRows,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
+import {seedOfferStructure,foSubjectBank,assignFoSubject,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
+import {withComposition} from './integracion-curricular/constructor-mapa-unificado.mjs';
+import {renderUnifiedConstructor} from './constructor-v2-ui.mjs';
 import {newFoDevelopment,FO_STAGES} from './integracion-curricular/desarrollo-fo-modelo.js';
 import {pvfReference,validatePvfProject} from './integracion-curricular/proyecto-vinculacion-2026.mjs';
 import {validateMediaWorkspaceFinal} from './normativa/adaptador-mapa-media-20261117.mjs';
@@ -56,7 +58,6 @@ function showAuthRequired(reason='Ingresá con las credenciales habituales de la
   status('Ingresá para continuar');
 }
 function canEdit(){return !!session && (session.role==='admin'||session.role==='editor'||session.role==='user'&&(session.permissions||[]).includes('pci.edit'));}
-function canCreateSchool(){return session?.role==='admin';}
 function canLeave(){
   if(!(fgDirty||foDirty||offerDirty||technical.isDirty()||ba15Controller?.isDirty()))return true;
   return confirm('Tenés cambios sin guardar. ¿Querés salir sin guardarlos? Podés descargarlos antes de continuar.');
@@ -185,19 +186,9 @@ async function init(){
     schools.forEach(s=>{const option=elem('option',s.name||'Escuela '+s.school_id);option.value=String(s.school_id);sel.appendChild(option);});
     sel.value=String(schoolId);
     sel.addEventListener('change',async()=>{if(!canLeave()){sel.value=String(schoolId);return;}schoolId=Number(sel.value);await reloadSchool().catch(err=>message(err.message,'error'));});
-    $('showNewSchool').hidden=!canCreateSchool();
-    $('schoolAdminTools').hidden=!canCreateSchool();
     $('btnAddPci').disabled=!canEdit();
     $('turnFilter').addEventListener('change',renderPcis);
     document.querySelectorAll('[data-back-to-school]').forEach(btn=>btn.addEventListener('click',returnToSchool));
-    $('showNewSchool').onclick=()=>show('formNewSchool',true);
-    // Acceso directo desde Panel general; requiere sesión administrativa real.
-    if(new URL(location.href).searchParams.get('accion')==='alta-escuela'&&canCreateSchool()){
-      $('schoolAdminTools').open=true;
-      show('formNewSchool',true);
-      $('schoolNameInput').focus();
-    }
-    $('cancelSchool').onclick=()=>show('formNewSchool',false);
     $('btnAddPci').onclick=()=>show('formCreatePci',true);
     $('cancelPci').onclick=()=>show('formCreatePci',false);
     const o=$('orientation');
@@ -206,7 +197,6 @@ async function init(){
     $('pciModel').addEventListener('change',updatePciModelFields);
     updatePciModelFields();
     $('formCreatePci').addEventListener('submit',createPci);
-    $('formNewSchool').addEventListener('submit',createSchool);
     $('downloadOriginal').onclick=()=>{
       if(pci)download('pci-fg-original-escuela-'+schoolId+'-'+pci.orientation_id+'.json',{
         source_sha256:pci.legacy_sha256,school_id:schoolId,pci_id:pci.pci_id,original_state:pci.legacy_state
@@ -440,18 +430,6 @@ async function createPci(e){
       'PCI de Media creado sin modificar la matriz histórica.');
   }catch(error){status('No se creó','error');message(error.message,'error');}
 }
-async function createSchool(e){
-  e.preventDefault();if(!canCreateSchool())return;
-  const body={name:$('schoolNameInput').value.trim(),cue:$('schoolCueInput').value.trim().toUpperCase(),
-    email:$('schoolEmailInput').value.trim(),year:Number($('schoolYearInput').value)};
-  try{
-    const result=await call('create-school-v2',body);
-    // Mostrar claves solo al superadministrador que realizó la operación.
-    alert('Escuela creada: ID '+result.school_id+'\nClave PCI: '+result.edit_code+'\nClave institucional: '+result.primary_code+
-      '\nGuardá las claves en un lugar seguro.');
-    show('formNewSchool',false);window.location.reload();
-  }catch(error){message(error.message,'error');}
-}
 async function openPci(id,requestedTab='fg'){
   if(!canLeave())return;
   try{
@@ -661,24 +639,38 @@ function renderFgEditor(){
 function getCurrentOffer(){return workspace?.orientations?.[pci.orientation_id]?.fo;}
 function renderOffer(){
   if(!pci||!workspace)return;
-  const head=$('mapHead'),body=$('mapBody');head.replaceChildren();body.replaceChildren();
-  const rows=offerMapRows(workspace,pci.orientation_id);
-  const tr=elem('tr');note('th','Área / Nivel',tr);
-  rows.forEach(r=>note('th','C'+r.term+'\n'+r.year+'º',tr));head.appendChild(tr);
-  for(const kind of ['fg','fo']){
-    const row=elem('tr');note('th',kind==='fg'?'FG (conservada)':'FO (por orientación)',row);
-    rows.forEach(r=>{
-      const td=elem('td');(r[kind]||[]).forEach(x=>{
-        const label=kind==='fg'?x.name||x.area:x.name||x.kind;
-        note('span',label,td,'slot');
-      });row.appendChild(td);
-    });body.appendChild(row);
-  }
   const grid=$('offerGrid');grid.replaceChildren();
   const current=getCurrentOffer(),alternative=current.subjectAlternative||'A';
   $('foAlternative').value=alternative;
   $('foAlternative').disabled=!canEdit()||current.spaces.some(s=>s.kind!=='proyecto'&&(s.members||[]).length>0);
   $('confirmFoContents').disabled=!canEdit();
+  renderUnifiedConstructor({
+    pci,workspace,refs,
+    canEdit:canEdit()&&['borrador','en_revision'].includes(pci.status),
+    onCompositionChange:next=>{
+      try{
+        workspace=withComposition(workspace,pci,next);
+        markDirty('oferta');renderOffer();
+      }catch(error){message('No se modificó el borrador: '+error.message,'error');}
+    },
+    onFoAssign:(space,subjectId)=>{
+      try{
+        workspace=assignFoSubject(workspace,{orientationId:pci.orientation_id,spaceId:space.id,subjectId,refs});
+        markDirty('oferta');renderOffer();
+        message('Materia FO incluida en la oferta de esta orientación. Falta guardar.','warn');
+      }catch(error){message(error.message,'error');}
+    },
+    onOpenHistoricalArea:area=>{
+      setTab('fg',true);
+      openFgArea(area).catch(error=>message(error.message,'error'));
+    },
+    onOpenFoSpace:id=>{
+      setTab('fo',true);
+      openFoSpace(id).catch(error=>message(error.message,'error'));
+    },
+    onError:text=>message(text,'error'),
+    onNotice:text=>message(text,'warn')
+  });
   let bank;
   try{bank=foSubjectBank({orientationId:pci.orientation_id,refs,alternative});}
   catch(error){note('p',error.message,grid,'muted');return;}
