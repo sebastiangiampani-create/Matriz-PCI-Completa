@@ -463,10 +463,12 @@ async function openPci(id,requestedTab='oferta'){
       ba15Controller=montarConstructorBa15($('ba15Builder'),identity,{
         initialDraft:remoteDraft,
         canEditRemote:canEdit()&&['borrador','en_revision'].includes(b.status),
+        savedRevision:revision,
         saveRemote:async document=>{
           if(pci?.pci_id!==b.pci_id)throw Error('Se cambió de PCI: no se permite guardar en otro.');
           const result=await saveUnit('oferta','map',unitId,baseVersion,document,revision);
           revision=Number(result.revision);
+          return revision;
         }
       });
       $('ba15Info').textContent='Turno '+({manana:'mañana',tarde:'tarde',vespertino:'vespertino',noche:'noche'}[b.shift_id]||b.shift_id)+
@@ -496,6 +498,7 @@ async function openPci(id,requestedTab='oferta'){
       show('technicalPending',false);show('ba15Pending',false);
       show('empty',false);show('editor');
       $('editor').classList.add('technical-editor');
+      $('offerGrid').closest('details').open=true;
       $('app').classList.remove('school-home');
       renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true);
       status('PCI Técnico · Fase 1 construcción C1–C12; Fase 2 solo tras mapa revisado y guardado');
