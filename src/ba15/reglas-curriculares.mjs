@@ -49,7 +49,7 @@ export const BA15_CCC=Object.freeze([
  'Matemática','Lengua y Literatura','Lengua Adicional (Inglés)','Educación Física',
  'Biología','Historia','Geografía','Formación Ética y Ciudadana','Educación Tecnológica','Artes'
 ]);
-export function validarBa15({niveles=BA15_NIVELES,articulaciones={},ccc=[]}={}){
+export function validarBa15({niveles=BA15_NIVELES,articulaciones={},ccc=[],exigirArticulaciones=false}={}){
  const errores=[],advertencias=[];
  if(!Array.isArray(niveles)||niveles.length!==4)return {valido:false,errores:['BA +15 requiere 4 niveles.'],advertencias:[]};
  for(let i=0;i<4;i++){
@@ -70,7 +70,10 @@ export function validarBa15({niveles=BA15_NIVELES,articulaciones={},ccc=[]}={}){
  // La articulación se exige para EDI, Artes, Educación Física y TI cuando corresponde.
  for(let i=0;i<4;i++)for(const e of BA15_NIVELES[i].filter(e=>e.formato==='taller')){
   const key=(i+1)+':'+e.nombre;
-  if(!articulaciones[key])advertencias.push('Nivel '+(i+1)+': falta documentar articulación de '+e.nombre);
+  if(!articulaciones[key]){
+   const msg='Nivel '+(i+1)+': falta documentar articulación de '+e.nombre;
+   (exigirArticulaciones?errores:advertencias).push(msg);
+  }
  }
  for(const e of ccc)if(!BA15_CCC.includes(e))advertencias.push('CCC: espacio no homologado en la lista base: '+e);
  return {valido:errores.length===0,errores,advertencias};
