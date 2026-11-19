@@ -105,6 +105,11 @@ try{
  await page.locator('#schoolPciCards').getByText('Comunicación').first().waitFor();
  await page.locator('.school-offer-card button[aria-label^="Abrir Mapa de la Oferta"]').click();
  await page.locator('#offerPane:not([hidden])').waitFor({timeout:15000});
+ assert.equal(await page.locator('#fgPane').isHidden(),true,'El PCI inicia en Fase 1, no en el desarrollo FG');
+ assert.equal(await page.locator('#continueDevelopment').isDisabled(),true,'La Fase 2 no puede iniciar sin mapa completo y guardado');
+ await page.locator('[data-tab="fo"]').click();
+ assert.equal(await page.locator('#offerPane').isVisible(),true,'La ruta directa a FO debe regresar al constructor incompleto');
+ assert.equal(await page.locator('#foPane').isHidden(),true,'No se abre desarrollo FO sin Fase 1');
  try{
    await page.locator('#mapBody tr').first().waitFor({timeout:12000});
  }catch(error){
@@ -147,6 +152,7 @@ try{
  const mediaSaved=state.units.get(mediaKey);
  assert.equal(mediaSaved?.revision,1,'El constructor Media debe guardar en el PCI de su orientación');
  assert.equal(mediaSaved.document.fo.composicionFgV2.groups.length,2,'Los dos espacios cuatrimestrales deben persistirse');
+ assert.equal(await page.locator('#continueDevelopment').isDisabled(),true,'Guardar una composición incompleta no habilita el desarrollo');
  assert.deepEqual(state.pcis[0].legacy_state,initialPcis[0].legacy_state,'FG histórica no debe sobrescribirse');
  assert.equal(mediaSaved.document.fo.composicionFgV2.groups[0].members.length,2,'La copia guarda Historia y Geografía');
  assert.ok(mediaSaved.document.fo.spaces.some(s=>(s.members||[]).length>0),'Materia oficial FO asignada a espacio de orientación sin reemplazar FG');
@@ -173,7 +179,7 @@ try{
  await page.fill('#pciTitleInput','Economía y Administración · Turno noche');
  await page.locator('#formCreatePci button[type=submit]').click();
  await page.locator('#ba15Pending:not([hidden])').waitFor({timeout:20000});
- await page.locator('#ba15Builder').getByRole('button',{name:'Mapa C1–C8'}).waitFor();
+ await page.locator('#ba15Builder').getByRole('button',{name:'1 · Constructor C1–C8'}).waitFor();
  await page.waitForFunction(()=>{
    const e=document.querySelector('#ba15Builder .mapTable thead th');
    return e&&getComputedStyle(e).backgroundColor==='rgb(18, 57, 92)';
@@ -210,9 +216,11 @@ try{
  await page.screenshot({path:'test-artifacts/multipci-portal/escuela-media-y-ba15.png',fullPage:true});
  const baCard=page.locator('.school-offer-card').filter({hasText:'Economía y Administración'});
  await baCard.getByRole('button',{name:/Abrir Desarrollo Curricular/}).click();
- const baPlanButton=page.locator('#ba15Builder').getByRole('button',{name:'Desarrollo curricular',exact:true});
+ const baPlanButton=page.locator('#ba15Builder').getByRole('button',{name:'2 · Desarrollo curricular',exact:true});
  await baPlanButton.waitFor();
- assert.equal(await baPlanButton.evaluate(e=>e.classList.contains('primary')),true,'El acceso de BA+15 debe abrir la vista de desarrollo, no el mapa');
+ assert.equal(await baPlanButton.isDisabled(),true,'BA +15 no puede abrir planes con materias sin asignar');
+ assert.equal(await page.locator('#ba15Builder').getByRole('button',{name:'1 · Constructor C1–C8'}).isEnabled(),true);
+ assert.match(await page.locator('#ba15Builder .pci-phase-state').textContent(),/Fase 1 pendiente/);
  assert.equal(state.pcis.length,2,'La navegación no debe borrar ningún PCI');
  assert.equal(state.units.get(unitKey)?.revision,1,'La navegación no modifica el guardado online');
  assert.equal(pageConsole.length,0,'La nueva navegación no debe generar errores JavaScript: '+pageConsole.join(' | '));
