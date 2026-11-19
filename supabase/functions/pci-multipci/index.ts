@@ -3,8 +3,11 @@ import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.117.3';
 // API multi-PCI independiente de pci-access. Solamente crea registros nuevos y
 // guarda unidades curriculares aisladas; NUNCA actualiza pci_proposals.data.
 // Reutiliza la misma firma de sesion institucional ya verificada en pci-access.
+const allowedOrigin=(Deno.env.get('PCI_ALLOWED_ORIGIN')||'').trim();
+if(!/^https:\/\/[^/]+$/.test(allowedOrigin))throw Error('Configure PCI_ALLOWED_ORIGIN institucional.');
 const cors={
- 'Access-Control-Allow-Origin':'*',
+ 'Access-Control-Allow-Origin':allowedOrigin,
+ 'Vary':'Origin',
  'Access-Control-Allow-Headers':'authorization,x-client-info,apikey,content-type',
  'Access-Control-Allow-Methods':'POST,OPTIONS',
  'Content-Type':'application/json',
@@ -12,7 +15,9 @@ const cors={
 };
 const endpoint=Deno.env.get('SUPABASE_URL');
 const secret=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const signingSecret=Deno.env.get('PCI_SESSION_SIGNING_KEY')||'';
 if(!endpoint||!secret)throw Error('Faltan credenciales de servicio del proyecto.');
+if(signingSecret.length<32)throw Error('Configure PCI_SESSION_SIGNING_KEY con al menos 32 caracteres.');
 const db=createClient(endpoint,secret,{auth:{persistSession:false,autoRefreshToken:false}});
 const encoder=new TextEncoder(),decoder=new TextDecoder();
 const ALLOWED_MODELS=['comun','tecnica','ba15'];
@@ -34,7 +39,7 @@ async function verifySessionToken(token){
  const [body,signature,...rest]=token.split('.');
  if(!body||!signature||rest.length)return null;
  try{
-  if(!verificationKey)verificationKey=await crypto.subtle.importKey('raw',encoder.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['verify']);
+  if(!verificationKey)verificationKey=await crypto.subtle.importKey('raw',encoder.encode(signingSecret),{name:'HMAC',hash:'SHA-256'},false,['verify']);
   const good=await crypto.subtle.verify('HMAC',verificationKey,fromUrlBase64(signature),encoder.encode(body));
   if(!good)return null;
   const session=JSON.parse(decoder.decode(fromUrlBase64(body)));
@@ -206,6 +211,10 @@ function validateLegacyAssignment(input,sourceRows,pcis,sid,updated){
 }
 
 Deno.serve(async req=>{
+ const origin=req.headers.get('origin');
+ if(origin&&origin!==allowedOrigin)return new Response(JSON.stringify({error:'Origen no autorizado'}),{
+  status:403,headers:{'Content-Type':'application/json','Vary':'Origin'}
+ });
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
  if(req.method!=='POST')return err('Solo POST.',405);
  try{
@@ -231,6 +240,9 @@ Deno.serve(async req=>{
   }
   if(action==='create-school-v2'){
    if(s.role!=='admin')return err('Solo administración.',403);
+   // No se emiten códigos al navegador. El alta esperará el canal de
+   // aprovisionamiento institucional seguro.
+   return err('Alta suspendida hasta configurar la entrega institucional segura.',423);
    const name=clean(body.name,150),cue=clean(body.cue,35).toUpperCase(),email=clean(body.email,180),year=Number(body.year);
    if(name.length<3||!/^[A-Z0-9./_-]{3,35}$/.test(cue)||!Number.isSafeInteger(year)||year<2020||year>2100)return err('Datos de escuela incompletos.');
    for(let attempt=0;attempt<4;attempt++){
@@ -238,7 +250,7 @@ Deno.serve(async req=>{
     const primary='DIR-'+crypto.randomUUID().replace(/-/g,'').slice(0,8).toUpperCase();
     const {data,error}=await db.rpc('pci_workspace_create_school_v1',{
      p_name:name,p_cue:cue,p_email:email,p_year:year,p_edit_code:code,p_primary_code:primary,p_actor:actor(s)});
-    if(!error)return json({...data,edit_code:code,primary_code:primary});
+    if(!error)return json({school_id:data?.school_id,ok:true});
     if(error.code!=='23505')throw error;
    }
    return err('No se pudo asignar una clave única. No se creó ninguna escuela.',409);
