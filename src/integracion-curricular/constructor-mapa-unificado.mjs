@@ -82,11 +82,50 @@ export function historicGroups(pack,orientationId){
         startTerm:start,endTerm:Math.min(10,end),
         level:Number(g.level)||quarterYear(start),
         contents:array(g.items).length,plans:array(g.plansBimestrales).length,
+        // Solo las plantillas sin trabajo pedagógico se pueden revisar
+        // automáticamente en Fase 1. El original queda intacto.
+        hasWork:array(g.items).length>0||Boolean(g.objective||g.synopsis||g.context||
+          g.practiceAxis)||array(g.plansBimestrales).some(p=>
+            p?.objectives||p?.synopsis||array(p?.contentIds).length||
+            Object.values(p?.stages||{}).some(stage=>
+              typeof stage==='string'?stage.trim():Object.values(stage||{}).some(v=>
+                typeof v==='string'&&v.trim()))),
+        members:array(g.curricularSubjects).map(m=>({
+          id:String(m.id||''),name:String(m.name||''),component:'FG',
+          area,year:Number(g.level)||quarterYear(start),hours:m.hours??null
+        })),
         origin:'legacy'
       });
     }
   }
   return groups;
+}
+/**
+ * La FG previa no se modifica: se crea una sombra en la construcción del PCI,
+ * usando el ID histórico para reconciliar con su copia pedagógica en Fase 2.
+ */
+export function promoteHistoricGroup(data,source){
+ const draft=guardComposition(data);
+ if(!source||source.origin!=='legacy'||!source.id||!source.area)
+  throw Error('El agrupamiento histórico no pertenece a esta escuela.');
+ if(source.hasWork)
+  throw Error('Este espacio contiene contenidos o planes trabajados. Primero debe conciliarse con el original; no se modifica por arrastre.');
+ if(draft.groups.some(g=>String(g.id)===String(source.id)))return draft;
+ const kind={trunk:'troncal',laboratory:'laboratorio',workshop:'taller',
+  other:'otro'}[source.kind];
+ if(!kind)throw Error('El formato histórico requiere revisión antes de modificarlo.');
+ const promoted={
+  id:String(source.id),name:String(source.name),kind,
+  area:String(source.area),year:Number(source.level),
+  term:Number(source.startTerm),endTerm:Number(source.endTerm),
+  row:String(source.row),members:clone(array(source.members)),
+  source:'historical-copy',legacyGroupId:String(source.id),pairedId:null
+ };
+ if(promoted.year!==quarterYear(promoted.term)||
+    promoted.year!==quarterYear(promoted.endTerm))
+  throw Error('El agrupamiento histórico está fuera del nivel que corresponde.');
+ draft.groups.push(promoted);
+ return draft;
 }
 export function blankComposition(identity){
   return {
