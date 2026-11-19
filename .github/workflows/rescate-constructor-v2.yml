@@ -1,0 +1,32 @@
+name: Rescate constructor PCI V2 - reglas y mapa
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/constructor-v2-ui.mjs'
+      - 'src/integracion-curricular/constructor-mapa-unificado.mjs'
+      - 'tests/constructor-mapa-unificado.test.mjs'
+      - 'pci-orientaciones.css'
+      - '.github/workflows/rescate-constructor-v2.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar-reglas-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxis de constructor y motor
+        run: |
+          node --check src/constructor-v2-ui.mjs
+          node --check src/integracion-curricular/constructor-mapa-unificado.mjs
+          node --check tests/constructor-mapa-unificado.test.mjs
+      - name: Reglas PCI V2 - obligatoriedad, duplicados, replica y resguardo
+        run: node --test tests/constructor-mapa-unificado.test.mjs
+      - name: Conservar originales escolares fuera del diff
+        run: |
+          git diff --quiet origin/main...HEAD -- app.js app.html app.css pci-model.js escuela-online.html tecnica/app.html supabase/functions/pci-multipci/index.ts
