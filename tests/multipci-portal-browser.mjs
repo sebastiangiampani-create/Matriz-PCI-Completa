@@ -133,6 +133,9 @@ try{
  await page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Historia'}).first().click();
  await page.locator('#mapBody .constructor-group.propuesta').first().click();
  await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Historia').waitFor();
+ await page.locator('#constructorSubjectBank .constructor-bank-subject').filter({hasText:'Geografía'}).first()
+   .dragTo(page.locator('#mapBody .constructor-group.propuesta').first());
+ await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Geografía').waitFor();
  await page.locator('#saveOffer').click();
  await page.waitForFunction(()=>document.getElementById('offerValidation')?.textContent?.includes('Revisión 1'),null,{timeout:12000});
  const mediaKey=[initialPcis[0].pci_id,'oferta','map','mapa-oferta-v1'].join(':');
@@ -140,6 +143,12 @@ try{
  assert.equal(mediaSaved?.revision,1,'El constructor Media debe guardar en el PCI de su orientación');
  assert.equal(mediaSaved.document.fo.composicionFgV2.groups.length,2,'Los dos espacios cuatrimestrales deben persistirse');
  assert.deepEqual(state.pcis[0].legacy_state,initialPcis[0].legacy_state,'FG histórica no debe sobrescribirse');
+ assert.equal(mediaSaved.document.fo.composicionFgV2.groups[0].members.length,2,'La copia guarda Historia y Geografía');
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#app:not([hidden])').waitFor({timeout:25000});
+ await page.locator('.school-offer-card button[aria-label^="Abrir Mapa de la Oferta"]').click();
+ await page.locator('#mapBody .constructor-group.propuesta').first().getByText('Geografía').waitFor({timeout:12000});
+ assert.equal(state.units.get(mediaKey)?.revision,1,'La reapertura no crea una revisión ni altera el historial');
  await page.screenshot({path:'test-artifacts/multipci-portal/constructor-media-fg-fo-mapa.png',fullPage:false});
  assert.equal(state.pcis.length,1,'Abrir el mapa no crea ni sobrescribe PCI');
  await page.locator('#editor [data-back-to-school]').click();
