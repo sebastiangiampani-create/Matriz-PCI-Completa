@@ -315,18 +315,13 @@ function renderSchoolHome(){
     note('p','Este turno no tiene PCI. Podés seleccionar otro o agregar uno nuevo.',host,'school-no-pcis');
     return;
   }
+  const grid=elem('div',undefined,'school-offer-grid');
   for(const turno of displayed){
-    const group=elem('section',undefined,'school-turn-section');
-    const heading=elem('div',undefined,'school-turn-heading');
-    note('h3','Turno '+turno.nombre,heading);
-    note('span',turno.cantidad+' PCI',heading,'school-turn-count');
-    group.append(heading);
-    const grid=elem('div',undefined,'school-offer-grid');
     for(const modelo of turno.modelos){
       for(const p of modelo.pcis){
         const card=elem('article',undefined,'school-offer-card area-card');
         const eyebrow=elem('div',undefined,'school-offer-top');
-        const model=elem('span',modelLabelFor(p),'pill');
+        const model=elem('span',modelLabelFor(p)+' · Turno '+turno.nombre,'pill');
         const statusLabel=elem('span',p.status==='borrador'?'En desarrollo':p.status==='en_revision'?'En revisión':p.status||'PCI','school-state');
         eyebrow.replaceChildren(model,statusLabel);
         card.append(eyebrow);
@@ -346,8 +341,8 @@ function renderSchoolHome(){
         bottom.append(map,develop);card.append(bottom);grid.append(card);
       }
     }
-    group.append(grid);host.append(group);
   }
+  host.append(grid);
 }
 function returnToSchool(){
   if(!canLeave())return;
