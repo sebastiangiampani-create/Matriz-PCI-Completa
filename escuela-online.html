@@ -17,11 +17,18 @@ function isFreshMultiPciSchool(raw){
  // desarrollo FG histórico. Enviarlas a la matriz antigua les oculta
  // el constructor real y da una falsa impresión de falta de funciones.
  if(!raw||raw._meta?.origin!=='alta_admin_multipci')return false;
- const hasHistoricalGroups=raw.areas&&Object.values(raw.areas).some(area=>
-   (Array.isArray(area?.groups)&&area.groups.length>0)||
-   (area&&typeof area==='object'&&Object.keys(area).some(key=>key!=='groups'))
+ const hasAuthoredWork=raw.areas&&Object.values(raw.areas).some(area=>
+   Array.isArray(area?.groups)&&area.groups.some(g=>
+     (Array.isArray(g.items)&&g.items.length>0)||
+     (Array.isArray(g.plansBimestrales)&&g.plansBimestrales.some(p=>
+       p?.synopsis||p?.objectives||p?.contentIds?.length))||
+     ['synopsis','objective','context','practiceAxis'].some(k=>String(g[k]||'').trim())||
+     g.custom===true
+   )
  );
- return !hasHistoricalGroups&&!raw.current&&!raw.profile;
+ // El constructor antiguo trae 61 agrupamientos VACÍOS de plantilla.
+ // No constituyen un desarrollo FG trabajado; tampoco se eliminan.
+ return !hasAuthoredWork&&!raw.current&&!raw.profile;
 }
 async function start(){try{const d=await call({action:'get-state',token:session.token,school_id:SCHOOL_ID});
   if(isFreshMultiPciSchool(d.data)&&p.get('fg_anterior')!=='1'){
