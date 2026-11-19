@@ -1,0 +1,59 @@
+name: Publicar catalogo tecnico 2026 en rama borrador
+on:
+  push:
+    branches:
+      - release/pci-orientaciones-aditivo-20261111
+    paths:
+      - ".github/workflows/publicar-priorizados-tecnica-2026.yml"
+      - "scripts/tecnica/revisar_extraccion_2026.py"
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+jobs:
+  catalogo-borrador:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Abrir rama sin acceso a Supabase
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Recuperar artefacto de extraccion verificada
+        uses: actions/download-artifact@v4
+        with:
+          name: catalogo-priorizados-tecnica-2026-para-revision
+          run-id: 43117070717
+          repository: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: data/tecnica
+      - name: Validar fuente, 27 PDF, 1112 entradas y recortar redundancias
+        run: |
+          python scripts/tecnica/revisar_extraccion_2026.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('data/tecnica/catalogo-priorizados-2026.json')
+          d=json.loads(p.read_text(encoding='utf-8'))
+          assert d['totales']['especialidades_documentadas']==26
+          assert d['totales']['documentos_documentados']==27
+          assert d['totales']['asignaturas_indexadas']==1112
+          assert d['totales']['paginas_pdf']==2822
+          assert d['estado']=='extraido_pendiente_validacion_pedagogica'
+          assert not d['esquema_escolar_modificado']
+          assert not d['debe_aplicarse_a_pci_existentes']
+          assert len(list(Path('data/tecnica/priorizados').glob('*.json')))==27
+          print(d['totales'])
+          PY
+      - name: Publicar UNICAMENTE JSON de referencia en esta rama
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/tecnica/catalogo-priorizados-2026.json data/tecnica/priorizados/
+          if git diff --cached --quiet; then echo "Sin cambios"; exit 0; fi
+          git commit -m "data(tecnica): 27 documentos priorizados y 1112 entradas con paginas de origen [no prod]"
+          git push origin HEAD:release/pci-orientaciones-aditivo-20261111

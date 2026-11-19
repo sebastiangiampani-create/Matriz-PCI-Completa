@@ -1,0 +1,145 @@
+import { prepareReview, approveReview, assessPriorWork } from './src/integracion-curricular/revision-importacion-original.js';
+import { exportReviewXlsx, exportReviewDocx } from './src/integracion-curricular/exportacion-revision-office.js';
+const $ = id => document.getElementById(id);
+const clean = text => String(text ?? '').replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const dialog=$('pci-import-review');
+const open=$('pciImportOpen');
+let review=null, sourceSnapshot=null;
+if(dialog&&open){
+ const orientation=()=>$('pciDemoOrientationContext')?.textContent.trim()||'Orientación sin seleccionar';
+ const original=()=>window.PCIApp?.getOriginalState?.() || window.PCIApp?.getState?.();
+ function updateSavedStatus(){
+   const found=assessPriorWork(original());
+   const side=$('pciImportSavedStatus'), detail=$('pciImportSavedDetail');
+   if(window.PCIApp?.isOrientationReady?.(orientation())){
+     open.textContent='Consultar importación y respaldo';
+     if(side)side.textContent='Copia editable de '+orientation()+
+       ' habilitada. Elegí cualquier área para trabajar con contenidos y drag & drop. Los cambios permanecen solo en este navegador.';
+     if(detail)detail.textContent='El original permanece conservado. Podés seguir trabajando en la copia editable por orientación; los cambios no están publicados.';
+     if(side)side.dataset.priorWork='found';
+     if(detail)detail.dataset.priorWork='found';
+     return;
+   }
+   open.textContent='Importar Matriz original';
+   if(found.available){
+     const chunks=[
+       found.contentCount ? found.contentCount+(found.contentCount===1?' contenido ubicado':' contenidos ubicados') : '',
+       found.developedPlans ? found.developedPlans+' planes desarrollados' : '',
+       found.sequenceCount ? found.sequenceCount+' secuencias con etapas' : '',
+       found.describedGroups ? found.describedGroups+' agrupamientos con desarrollo' : ''
+     ].filter(Boolean);
+     const numbers=chunks.join(' · ');
+     if(side)side.textContent='Hay trabajo cargado en esta Matriz: '+numbers+'. Podés preparar una copia para revisarlo y reutilizarlo, sin perder el original.';
+     if(detail)detail.textContent='Se encontró información en la Matriz disponible en esta sesión: '+numbers+'. La copia conserva lo existente y permite revisarlo antes del OK.';
+   }else{
+     if(side)side.textContent='¿Ya trabajaste en la Matriz anterior? La información guardada se podrá reutilizar, sin empezar de cero. En esta sesión todavía no se detecta trabajo previo; ingresá desde el acceso de tu escuela para consultar los datos guardados.';
+     if(detail)detail.textContent='En la Matriz disponible en esta sesión todavía no se detectan contenidos, planes o secuencias cargados. Si tu escuela ya trabajó online, accedé con su usuario habitual para recuperar el estado guardado antes de preparar la copia.';
+   }
+   if(side)side.dataset.priorWork=found.available?'found':'unverified';
+   if(detail)detail.dataset.priorWork=found.available?'found':'unverified';
+ }
+ window.addEventListener('pci-state-change',updateSavedStatus);
+ window.addEventListener('pci-orientation-changed',updateSavedStatus);
+ updateSavedStatus();
+ function status(message){$('pciImportResult').textContent=message;}
+ function reset(){
+   review=null;sourceSnapshot=null;
+   $('pciImportReviewContent').hidden=true;$('pciImportReviewed').checked=false;
+   $('pciImportApprove').disabled=true;$('pciImportExport').disabled=true;$('pciImportExcel').disabled=true;$('pciImportWord').disabled=true;
+ }
+ open.addEventListener('click',()=>{reset();updateSavedStatus();$('pciImportOrientation').textContent=orientation();status('La Matriz original no se modifica con esta revisión.');dialog.showModal();});
+ $('pciImportClose').addEventListener('click',()=>dialog.close());
+ $('pciImportPrepare').addEventListener('click',()=>{
+   try{
+     const state=original();
+     if(!state) throw new Error('La Matriz original todavía no terminó de cargar.');
+     const selected=orientation();
+     const mapState=JSON.parse(localStorage.getItem('pci-matriz-fg-v2-original-preview-20261009')||'{}');
+     review=prepareReview(state,selected,mapState?.maps?.[selected]);
+     review.catalog=Array.isArray(window.PCIApp?.getData?.())?window.PCIApp.getData().map(({id,area,subject,axis,text})=>({id,area,subject,axis,text})):[];
+     sourceSnapshot=JSON.stringify(state);
+     const summary=review.summary;
+     $('pciImportMetrics').innerHTML=[
+       ['Áreas',summary.areaCount],['Agrupamientos',summary.groupCount],
+       ['Contenidos distintos',summary.contentCount],['Planes guardados',summary.plans],
+       ['Planes con información',summary.plansWithData],['Secuencias con etapas',summary.sequences]
+     ].map(([label,value])=>'<div><strong>'+Number(value)+'</strong><small>'+clean(label)+'</small></div>').join('');
+     $('pciImportAreas').innerHTML=summary.areas.map(area=>
+       '<div class="pci-import-area"><strong>'+clean(area.name)+'</strong><span>'+
+       area.groups+' agrupamientos · '+area.contents+' contenidos · '+area.plans+' planes · '+area.sequences+' secuencias con etapas</span></div>'
+     ).join('');
+     $('pciImportWarnings').innerHTML=review.warnings.length
+       ? review.warnings.map(w=>'<p><strong>'+clean(w.area)+':</strong> '+clean(w.message)+'</p>').join('')
+       : '<p>Sin diferencias estructurales detectadas por esta revisión preliminar. Todavía falta verificar la homologación de contenidos y la persistencia por orientación.</p>';
+     $('pciImportReviewContent').hidden=false;
+     $('pciImportExport').disabled=false;$('pciImportExcel').disabled=false;$('pciImportWord').disabled=false;
+     $('pciImportReviewed').checked=false;
+     $('pciImportApprove').disabled=true;
+     status('Copia de revisión preparada en memoria. Nada se importó ni se guardó online.');
+   }catch(e){reset();status(e.message);}
+ });
+ $('pciImportReviewed').addEventListener('change',event=>{
+   $('pciImportApprove').disabled=!event.target.checked||!review;
+ });
+ $('pciImportApprove').addEventListener('click',()=>{
+   try{
+     if(!review||!$('pciImportReviewed').checked)throw new Error('Primero revisá y confirmá la copia.');
+     if(orientation()!==review.orientation)throw new Error('Cambiaste de orientación. Prepará una nueva copia para revisarla.');
+     review=approveReview(review,original());
+     // Activar la copia para edición con el constructor histórico de Matriz,
+     // pero usando otra clave local por orientación. Nada se publica online.
+     const activated=window.PCIApp?.activateOrientationDraft?.(review.orientation,review.source);
+     if(!activated?.originalPreserved)throw new Error('No pudo verificarse la copia editable.');
+     $('pciImportApprove').disabled=true;$('pciImportReviewed').disabled=true;
+     status('Copia editable habilitada para '+review.orientation+
+       '. La bolsa, agrupamientos y drag & drop están disponibles. El original sigue intacto y el guardado online permanece bloqueado.');
+     $('pciImportOpen').textContent='Revisar copia importada';
+     const panel=$('pciImportSavedStatus');
+     if(panel)panel.textContent='Copia editable activa para '+review.orientation+
+       '. Abrí cualquier área curricular y continuá con el drag & drop. Los cambios de prueba se guardan solo en este navegador.';
+     // Mostrar la portada de las áreas; al elegir una se abre directamente
+     // el mismo editor de contenidos y agrupamientos que ya funcionaba.
+     window.PCIApp.openOverview();
+     dialog.close();
+   }catch(e){status(e.message);}
+ });
+
+ async function saveReviewOffice(kind){
+   if(!review) return;
+   const button=$(kind==='Excel'?'pciImportExcel':'pciImportWord');
+   const oldText=button.textContent;
+   button.disabled=true;
+   button.textContent='Preparando '+kind+'…';
+   try{
+     // Asegurar que el trabajo de la escuela no cambió después de preparar
+     // la copia. Si cambió, no exportar un documento desactualizado.
+     if(JSON.stringify(original())!==review.sourceSnapshot)
+       throw new Error('La Matriz cambió desde que preparaste la copia. Volvé a prepararla antes de descargar.');
+     const stamp=review.orientation.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/gi,'_');
+     const blob=kind==='Excel'?await exportReviewXlsx(review):await exportReviewDocx(review);
+     const href=URL.createObjectURL(blob);
+     const link=document.createElement('a');
+     link.href=href;
+     link.download='Revision_Matriz_'+stamp+(kind==='Excel'?'.xlsx':'.docx');
+     link.click();
+     setTimeout(()=>URL.revokeObjectURL(href),30000);
+     status(kind+' listo para descargar. Revisá el archivo antes de dar tu OK. Ningún dato escolar fue modificado.');
+   }catch(err){status('No se pudo exportar: '+err.message);}
+   finally{button.textContent=oldText;button.disabled=false;}
+ }
+ $('pciImportExcel').addEventListener('click',()=>saveReviewOffice('Excel'));
+ $('pciImportWord').addEventListener('click',()=>saveReviewOffice('Word'));
+
+ $('pciImportExport').addEventListener('click',()=>{
+   if(!review)return;
+   const payload={format:review.format,orientation:review.orientation,
+     summary:review.summary,warnings:review.warnings,reviewed:review.reviewed,
+     approved:review.approved,source:review.source,catalog:review.catalog||[]};
+   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+   const uri=URL.createObjectURL(blob);
+   const link=document.createElement('a');
+   link.href=uri;link.download='Revision_Matriz_'+review.orientation.replace(/[^a-z0-9]+/gi,'_')+'.json';
+   link.click();URL.revokeObjectURL(uri);
+ });
+ dialog.addEventListener('close',()=>{$('pciImportReviewed').disabled=false;});
+}

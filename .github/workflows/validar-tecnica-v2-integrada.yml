@@ -1,0 +1,65 @@
+name: Validar Técnica integrada al mismo PCI V2
+on:
+  push:
+    branches: [release/pci-orientaciones-aditivo-20261111]
+    paths:
+      - ".github/workflows/validar-tecnica-v2-integrada.yml"
+      - "src/tecnica/espacio-trabajo-v2.mjs"
+      - "src/tecnica/interfaz-integrada-v2.mjs"
+      - "src/orientaciones-online.mjs"
+      - "pci-orientaciones.html"
+      - "pci-orientaciones.css"
+      - "migration/concurrencia/003_supabase_scoped_units.sql"
+      - "src/multipci/pci-workspace-handlers.mjs"
+      - "supabase/functions/pci-access/pci-workspace-handlers.mjs"
+      - "tests/tecnica-integrada-v2.test.mjs"
+      - "tests/tecnica-integrada-browser.mjs"
+      - "tests/multipci/api.test.mjs"
+  workflow_dispatch:
+concurrency:
+  group: tecnica-integrada-v2-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  reglas-y-aislamiento:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Sintaxis sin cambiar producción
+        run: |
+          node --check src/tecnica/espacio-trabajo-v2.mjs
+          node --check src/tecnica/interfaz-integrada-v2.mjs
+          node --check src/orientaciones-online.mjs
+          node --check src/multipci/pci-workspace-handlers.mjs
+      - name: Pautas oficiales, motor técnico y aislamiento RPC
+        run: node --test tests/pautas-pci-20261005.test.mjs tests/tecnica-integrada-v2.test.mjs tests/multipci/api.test.mjs tests/orientaciones-release.test.mjs
+      - name: Comparar módulo de Edge con núcleo auditado
+        run: cmp src/multipci/pci-workspace-handlers.mjs supabase/functions/pci-access/pci-workspace-handlers.mjs
+  navegador:
+    runs-on: ubuntu-24.04
+    needs: reglas-y-aislamiento
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Instalar navegador
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Técnica y Media en el mismo editor V2 con datos ficticios
+        run: node tests/tecnica-integrada-browser.mjs
+      - name: Capturas PCI integrado para revisión estética
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tecnica-integrada-al-mismo-PCI-V2
+          path: test-artifacts/tecnica-integrada/
+          if-no-files-found: ignore
+          retention-days: 7

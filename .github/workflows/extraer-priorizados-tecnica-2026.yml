@@ -1,0 +1,53 @@
+name: Extraer priorizados Tecnica 2026 (aislado)
+on:
+  push:
+    branches:
+      - release/pci-orientaciones-aditivo-20261111
+    paths:
+      - ".github/workflows/extraer-priorizados-tecnica-2026.yml"
+      - "scripts/tecnica/importar_priorizados_2026.py"
+      - "data/tecnica/fuentes-priorizadas-caba-2026.json"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  catalogo-referencia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Clonar rama en modo lectura
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dependencias de lectura PDF
+        run: python -m pip install --disable-pip-version-check --no-cache-dir "pymupdf==1.26.7" "requests==2.32.5" "beautifulsoup4==4.14.3"
+      - name: Extraer documentos del portal oficial (sin Supabase)
+        run: python scripts/tecnica/importar_priorizados_2026.py
+      - name: Verificar que los 26 documentos fueron procesados
+        if: success()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('data/tecnica/catalogo-priorizados-2026.json').read_text(encoding='utf-8'))
+          totals=d['totales']
+          assert totals['especialidades_documentadas']==26,totals
+          assert totals['documentos_documentados']==27,totals
+          assert totals['asignaturas_indexadas']>100,totals
+          assert d['esquema_escolar_modificado'] is False
+          assert d['debe_aplicarse_a_pci_existentes'] is False
+          assert d['requiere_validacion_pedagogica'] is True
+          print(totals)
+          PY
+      - name: Exportar resultados SOLO como artefactos revisables
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalogo-priorizados-tecnica-2026-para-revision
+          path: |
+            data/tecnica/catalogo-priorizados-2026.json
+            data/tecnica/priorizados/*.json
+          if-no-files-found: warn
+          retention-days: 7

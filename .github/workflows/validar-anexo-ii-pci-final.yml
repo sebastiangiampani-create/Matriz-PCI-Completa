@@ -1,0 +1,43 @@
+name: Validar Anexo II final PCI Media y Tecnica 17-11-2026
+on:
+  push:
+    branches:
+      - release/pci-orientaciones-aditivo-20261111
+    paths:
+      - ".github/workflows/validar-anexo-ii-pci-final.yml"
+      - "src/normativa/composicion-pci-20261117.mjs"
+      - "src/tecnica/pautas-pci-20261005.mjs"
+      - "src/tecnica/espacio-trabajo-v2.mjs"
+      - "tests/normativa-final-pci-20261117.test.mjs"
+      - "tests/pautas-pci-20261005.test.mjs"
+      - "tests/tecnica-integrada-v2.test.mjs"
+      - "src/normativa/adaptador-mapa-media-20261117.mjs"
+      - "src/integracion-curricular/mapa-oferta.js"
+      - "src/integracion-curricular/reglas-composicion-fg.js"
+      - "src/orientaciones-online.mjs"
+      - "tests/adaptador-media-final-20261117.test.mjs"
+  workflow_dispatch:
+concurrency:
+  group: normativa-final-pci-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  contratos-composicion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Sintaxis normativa y motor
+        run: |
+          node --check src/normativa/composicion-pci-20261117.mjs
+          node --check src/tecnica/pautas-pci-20261005.mjs
+          node --check src/tecnica/espacio-trabajo-v2.mjs
+          node --check src/normativa/adaptador-mapa-media-20261117.mjs
+          node --check src/orientaciones-online.mjs
+      - name: Probar todas las reglas finales, 26 especialidades y retrocompatibilidad
+        run: |
+          node --test tests/normativa-final-pci-20261117.test.mjs tests/pautas-pci-20261005.test.mjs tests/tecnica-integrada-v2.test.mjs tests/adaptador-media-final-20261117.test.mjs

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vista previa · Escuelas y múltiples PCI</title>
+<style>
+:root{color-scheme:light;--blue:#12395c;--deep:#0f2e4c;--teal:#087e88;--line:#dbe5eb;--paper:#fff;--bg:#f4f8fa;--muted:#647786;--sky:#d9f1f3}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Archivo,Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--blue);background:var(--bg)}
+button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+header{background:var(--deep);color:#fff;padding:18px clamp(16px,3vw,48px);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header strong{font-size:1.2rem;letter-spacing:-.025em}header small{display:block;color:#cde3e7;margin-top:3px}
+.header-right{border:1px solid #75b7bc;border-radius:100px;padding:7px 12px;font-size:.78rem;color:#b9eef0;font-weight:800}
+main{max-width:1370px;margin:auto;padding:20px clamp(12px,3vw,40px) 64px}
+.notice{border:1px solid #94cbd0;background:#e6f7f7;border-radius:14px;padding:12px 16px;font-size:.87rem;line-height:1.5;margin:0 0 18px}
+.notice strong{display:block;margin-bottom:3px}
+.shell{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:20px;align-items:start}
+.panel{border-radius:19px;border:1px solid var(--line);background:var(--paper);box-shadow:0 7px 24px #102d490b;padding:20px}
+.panel h2{font-size:1.15rem;margin:0}.muted{color:var(--muted)}.small{font-size:.82rem}.eyebrow{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:var(--teal)}
+.topline{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+.actions{display:flex;gap:9px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:#eff4f6;color:var(--blue);padding:9px 13px;border-radius:11px;font-size:.86rem;font-weight:800}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:white}
+.btn.teal{background:var(--teal);border-color:var(--teal);color:white}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #44b1b9;outline-offset:1px}
+.search,select,input,textarea{border:1px solid #c9d7df;background:white;color:#173d5a;border-radius:10px;padding:11px;width:100%;min-width:0}
+.search{margin:8px 0 13px}
+.list{display:grid;gap:8px}
+.school{width:100%;text-align:left;border:1px solid var(--line);background:white;border-radius:12px;padding:12px}
+.school:hover{border-color:#63aeb4}.school.active{background:#e7f4f5;border:2px solid var(--teal);padding:11px}
+.school strong,.school small{display:block}.school small{font-size:.77rem;color:var(--muted);margin-top:5px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:15px 0 18px}
+.kpi{border-radius:13px;background:#f0f6f7;padding:12px}.kpi strong{display:block;font-size:1.2rem}.kpi span{font-size:.73rem;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:12px}
+.pci{border:1px solid var(--line);border-radius:15px;padding:17px;min-height:210px;display:flex;flex-direction:column;gap:9px}
+.pci h3{margin:0;font-size:1.02rem}.pci p{margin:0;font-size:.82rem;color:var(--muted)}.pci .btn{margin-top:auto;align-self:start}
+.tag{display:inline-flex;align-items:center;width:max-content;border:1px solid #bbd9dd;color:#096b75;border-radius:100px;padding:5px 9px;font-weight:800;font-size:.69rem;background:#eef9f8}
+.explain{padding:12px;background:#f7fafb;border:1px dashed #b7ced6;border-radius:12px;font-size:.85rem;margin-top:16px;line-height:1.55}
+.formbox{margin-top:17px;border-top:1px solid var(--line);padding-top:16px}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+label{display:grid;gap:5px;font-weight:800;font-size:.8rem}label.full{grid-column:1/-1}
+textarea{min-height:90px;resize:vertical}.formfoot{display:flex;gap:10px;flex-wrap:wrap;margin-top:13px}
+.msg{font-size:.82rem;color:#08715d;min-height:18px}.msg.error{color:#aa2d42}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+.detail{border:1px solid #b9dbe1;border-radius:14px;background:#f5fbfc;padding:17px;margin-top:17px}
+.detail h3{margin:0 0 7px}.detail dl{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:.83rem;line-height:1.4}
+.detail dt{color:var(--muted)}.detail dd{margin:0;word-break:break-word}
+.fine{font-size:.75rem;color:var(--muted)}
+[hidden]{display:none!important}
+@media(max-width:850px){.shell{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.formgrid{grid-template-columns:1fr}}
+@media(max-width:450px){.kpis{grid-template-columns:1fr 1fr}.panel{padding:15px}}
+</style></head>
+<body>
+<header><div><strong>Escuela de Maestros · Matriz PCI</strong><small>Gestión institucional · múltiples proyectos curriculares</small></div><span class="header-right">VISTA DE PRUEBA · NO PUBLICADA</span></header>
+<main>
+<div class="notice"><strong>Entorno aislado con datos ficticios.</strong> Podés probar el alta de instituciones, crear varios PCI para una misma escuela, editar un borrador y exportarlo. Esta maqueta no se conecta a Supabase, no contiene información de las escuelas reales y no altera producción.</div>
+<div class="shell">
+<aside class="panel">
+<div class="topline"><div><span class="eyebrow">Administración</span><h2>Instituciones</h2></div><button id="newSchoolBtn" class="btn primary" type="button">+ Escuela</button></div>
+<input class="search" id="search" type="search" placeholder="Buscar escuela o CUE" aria-label="Buscar escuelas">
+<div class="list" id="schools"></div>
+<div id="schoolForm" class="formbox" hidden>
+<div class="topline"><h2>Nueva institución</h2><button type="button" id="cancelSchoolBtn" class="btn">Cerrar</button></div>
+<form id="schoolCreate">
+<div class="formgrid">
+<label class="full">Nombre oficial<input required name="name" maxlength="150" placeholder="Instituto de ejemplo"></label>
+<label>CUE<input required name="cue" maxlength="35" placeholder="Ej. TEST-003"></label>
+<label>Año de ingreso<input name="year" type="number" min="2020" max="2100" value="2027"></label>
+<label class="full">Correo institucional<input name="email" type="email" placeholder="escuela@ejemplo.test"></label>
+</div><div class="formfoot"><button class="btn teal" type="submit">Crear escuela de prueba</button></div>
+</form></div>
+<div class="explain"><strong>En la futura versión:</strong> el administrador podrá agregar instituciones sin modificar el catálogo anterior. Cada nueva escuela tendrá su registro, accesos propios y varios PCI.</div>
+</aside>
+<section class="panel" aria-live="polite">
+<div class="topline"><div><span class="eyebrow">Espacio institucional</span><h2 id="schoolTitle">Escuela</h2><div class="muted small" id="schoolSubtitle"></div></div><div class="actions"><button class="btn" type="button" id="exportBtn">Exportar prueba</button><button class="btn primary" type="button" id="newPciBtn">+ Nuevo PCI</button></div></div>
+<div class="kpis"><div class="kpi"><strong id="kpiPcis">0</strong><span>PCI independientes</span></div><div class="kpi"><strong id="kpiHistory">—</strong><span>FG histórica conservada</span></div><div class="kpi"><strong id="kpiVersion">V2</strong><span>Catálogos FG y FO</span></div></div>
+<div class="cards" id="pcis"></div>
+<div id="pciForm" class="formbox" hidden>
+<div class="topline"><h2>Agregar PCI</h2><button class="btn" type="button" id="cancelPciBtn">Cerrar</button></div>
+<form id="pciCreate"><div class="formgrid">
+<label class="full">Orientación<select name="orientation" id="orientationSelect" required></select></label>
+<label class="full">Nombre del PCI<input name="title" required maxlength="120" placeholder="Ej. PCI Economía · Turno Mañana"></label>
+</div><div class="explain">El nuevo PCI recibe una copia independiente de la FG histórica disponible en esta escuela. No modifica el documento institucional de origen ni los demás PCI.</div>
+<div class="formfoot"><button class="btn teal" type="submit">Crear PCI independiente</button></div></form></div>
+<div id="detail" class="detail" hidden><div class="topline"><h3 id="detailTitle"></h3><button class="btn" id="closeDetailBtn" type="button">Cerrar</button></div><dl id="details"></dl>
+<label class="full">Sinopsis de prueba<textarea id="synopsis" placeholder="Probá agregar una sinopsis al PCI elegido"></textarea></label>
+<div class="formfoot"><button id="saveDetailBtn" type="button" class="btn teal">Guardar este PCI</button><button id="exportPciBtn" type="button" class="btn">Descargar este PCI</button></div>
+<p class="fine">Cada guardado en esta maqueta suma una revisión al PCI seleccionado, sin alterar los demás. La base real utilizará control de revisiones y registro de auditoría.</p></div>
+<div id="feedback" class="msg" role="status" aria-live="polite"></div>
+<div class="explain"><strong>Protección del trabajo existente:</strong> la integración futura debe mantener intacta la matriz histórica de cada escuela, registrar cada PCI como proceso separado y guardar sus contenidos y secuencias por unidad curricular con revisiones. Ningún alta de PCI tiene permiso para reemplazar la matriz original.</div>
+</section>
+</div>
+</main>
+<script>
+(function(){
+'use strict';
+var KEY='pci-multipci-ui-preview-ficticio-v1';
+var ORIENTATIONS=[
+['agro_ambiente','Agro y Ambiente'],['arte_artes_visuales','Arte - Artes Visuales'],['arte_musica','Arte - Música'],['arte_teatro','Arte - Teatro'],['ciencias_naturales','Ciencias Naturales'],['ciencias_sociales_humanidades','Ciencias Sociales y Humanidades'],['comunicacion','Comunicación'],['economia_administracion','Economía y Administración'],['educacion','Educación'],['educacion_fisica','Educación Física'],['energia_sustentabilidad','Energía y Sustentabilidad'],['informatica','Informática'],['lenguas','Lenguas'],['literatura','Literatura'],['matematica_fisica','Matemática y Física'],['turismo','Turismo']
+];
+var seed={
+ schools:[
+ {id:'demo-01',name:'Escuela Modelo A (ficticia)',cue:'TEST-001',email:'escuela-a@ejemplo.test',year:'2027',legacy:{schoolName:'Escuela Modelo A (ficticia)',schemaVersion:10,areas:{'Ciencias Sociales':{groups:[{id:'social-demo',name:'Laboratorio de Sociales',items:['simulado-1'],plansBimestrales:[{stages:{punto_partida:'Ejemplo',indagacion:'Ejemplo',produccion:'Ejemplo',evaluacion:'Ejemplo'}}]}]}}}},
+ {id:'demo-02',name:'Escuela Modelo B (ficticia)',cue:'TEST-002',email:'escuela-b@ejemplo.test',year:'2027',legacy:{schoolName:'Escuela Modelo B (ficticia)',schemaVersion:10,areas:{}}}
+ ],
+ pcis:[{id:'pci-demo-1',schoolId:'demo-01',orientationId:'economia_administracion',title:'PCI Economía · Ejemplo',revision:1,status:'borrador',synopsis:'Ejemplo para explorar la interfaz',sourceLegacy:{schoolName:'Escuela Modelo A (ficticia)',schemaVersion:10,areas:{'Ciencias Sociales':{groups:[{id:'social-demo',name:'Laboratorio de Sociales',items:['simulado-1'],plansBimestrales:[{stages:{punto_partida:'Ejemplo',indagacion:'Ejemplo',produccion:'Ejemplo',evaluacion:'Ejemplo'}}]}]}}},history:[]}]
+};
+function clone(x){return JSON.parse(JSON.stringify(x));}
+var state;try{state=JSON.parse(sessionStorage.getItem(KEY))||clone(seed);}catch(_){state=clone(seed);}
+if(!state||!Array.isArray(state.schools)||!Array.isArray(state.pcis)){state=clone(seed);}
+var selected=state.schools[0].id,selectedPci=null;
+var $=function(id){return document.getElementById(id);};
+function persist(){sessionStorage.setItem(KEY,JSON.stringify(state));}
+function node(tag,txt,cls){var e=document.createElement(tag);if(txt!==undefined)e.textContent=String(txt);if(cls)e.className=cls;return e;}
+function showMessage(message,isError){$('feedback').textContent=message;$('feedback').className='msg'+(isError?' error':'');}
+function currentSchool(){return state.schools.find(function(s){return s.id===selected;});}
+function orientName(id){var o=ORIENTATIONS.find(function(x){return x[0]===id;});return o?o[1]:id;}
+function countPci(schoolId){return state.pcis.filter(function(p){return p.schoolId===schoolId;}).length;}
+function renderSchools(){
+ var q=$('search').value.toLocaleLowerCase('es');var host=$('schools');host.replaceChildren();
+ state.schools.filter(function(s){return(s.name+' '+s.cue).toLocaleLowerCase('es').includes(q);}).forEach(function(s){
+ var b=node('button',undefined,'school'+(s.id===selected?' active':''));b.type='button';b.append(node('strong',s.name),node('small',s.cue+' · '+countPci(s.id)+' PCI'));b.onclick=function(){selected=s.id;selectedPci=null;$('detail').hidden=true;$('pciForm').hidden=true;render();};host.appendChild(b);});
+ if(!host.children.length)host.appendChild(node('p','No hay instituciones para este filtro.','muted small'));
+}
+function renderPcis(){
+ var school=currentSchool(),arr=state.pcis.filter(function(p){return p.schoolId===school.id;}),host=$('pcis');host.replaceChildren();
+ if(!arr.length){var empty=node('div','La escuela todavía no tiene PCI. Usá “+ Nuevo PCI” para agregar uno.','explain');host.appendChild(empty);}
+ arr.forEach(function(p){
+  var card=node('article',undefined,'pci');card.appendChild(node('span',p.status==='borrador'?'Borrador independiente':p.status,'tag'));card.appendChild(node('h3',p.title));card.appendChild(node('p',orientName(p.orientationId)));card.appendChild(node('p','Revisión '+p.revision+' · Formación General y Orientada separadas'));
+  var button=node('button','Abrir PCI de prueba','btn');button.type='button';button.onclick=function(){selectedPci=p.id;renderDetail();};card.appendChild(button);host.appendChild(card);
+ });
+}
+function renderDetail(){
+ var p=state.pcis.find(function(item){return item.id===selectedPci&&item.schoolId===selected;});
+ $('detail').hidden=!p;if(!p)return;
+ $('detailTitle').textContent=p.title;$('synopsis').value=p.synopsis||'';
+ var dl=$('details');dl.replaceChildren();
+ [['Orientación',orientName(p.orientationId)],['Identificador',p.id],['Revisión',p.revision],['Origen histórico','Copia propia, conservada'],['FG V2','Catálogo de referencia (simulado)'],['FO V2','Catálogo por orientación (simulado)']].forEach(function(kv){dl.appendChild(node('dt',kv[0]));dl.appendChild(node('dd',kv[1]));});
+}
+function render(){
+ var school=currentSchool();if(!school)return;
+ $('schoolTitle').textContent=school.name;$('schoolSubtitle').textContent='CUE '+school.cue+' · '+(school.email||'Sin correo');
+ $('kpiPcis').textContent=countPci(school.id);$('kpiHistory').textContent='Intacta';
+ renderSchools();renderPcis();renderDetail();showMessage('',false);
+}
+function downloadJson(file,data){var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file;a.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);}
+$('newSchoolBtn').onclick=function(){$('schoolForm').hidden=false;$('schoolForm').scrollIntoView({behavior:'smooth',block:'nearest'});};
+$('cancelSchoolBtn').onclick=function(){$('schoolForm').hidden=true;};
+$('search').oninput=renderSchools;
+$('schoolCreate').onsubmit=function(e){
+ e.preventDefault();var f=new FormData(e.currentTarget);var name=String(f.get('name')||'').trim(),cue=String(f.get('cue')||'').trim(),email=String(f.get('email')||'').trim(),year=String(f.get('year')||'');
+ if(!name||!cue){showMessage('Completá el nombre y el CUE.',true);return;}
+ if(state.schools.some(function(s){return s.cue.toLowerCase()===cue.toLowerCase();})){showMessage('Ese CUE ya está registrado en esta prueba.',true);return;}
+ var id='demo-'+String(Date.now())+'-'+String(Math.floor(Math.random()*1000));
+ state.schools.push({id:id,name:name,cue:cue,email:email,year:year,legacy:{schoolName:name,schemaVersion:10,areas:{},current:null}});selected=id;selectedPci=null;persist();$('schoolForm').hidden=true;e.currentTarget.reset();render();showMessage('Escuela de prueba creada; ninguna escuela real fue modificada.',false);
+};
+var select=$('orientationSelect');ORIENTATIONS.forEach(function(o){var opt=node('option',o[1]);opt.value=o[0];select.appendChild(opt);});
+$('newPciBtn').onclick=function(){$('pciForm').hidden=false;$('pciForm').scrollIntoView({behavior:'smooth',block:'nearest'});};
+$('cancelPciBtn').onclick=function(){$('pciForm').hidden=true;};
+$('pciCreate').onsubmit=function(e){
+ e.preventDefault();var f=new FormData(e.currentTarget),orientation=String(f.get('orientation')||''),title=String(f.get('title')||'').trim(),school=currentSchool();
+ if(!title||!ORIENTATIONS.some(function(o){return o[0]===orientation;})){showMessage('Indicá el nombre del PCI y la orientación.',true);return;}
+ var id='pci-'+(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2));
+ var copy=clone(school.legacy);
+ state.pcis.push({id:id,schoolId:school.id,orientationId:orientation,title:title,revision:1,status:'borrador',synopsis:'',sourceLegacy:copy,history:[]});
+ selectedPci=id;persist();$('pciForm').hidden=true;e.currentTarget.reset();render();showMessage('PCI creado: sus datos están separados de los demás proyectos de esta escuela.',false);
+};
+$('closeDetailBtn').onclick=function(){selectedPci=null;renderDetail();};
+$('saveDetailBtn').onclick=function(){
+ var p=state.pcis.find(function(item){return item.id===selectedPci&&item.schoolId===selected;});if(!p)return;
+ var before=clone(p);p.synopsis=$('synopsis').value;p.revision+=1;p.history.push({revision:before.revision,previousSynopsis:before.synopsis||'',savedAt:new Date().toISOString()});persist();renderPcis();renderDetail();showMessage('Revisión '+p.revision+' guardada solo en esta maqueta; el PCI original se conservó.',false);
+};
+$('exportBtn').onclick=function(){downloadJson('vista-previa-escuelas-multipci-FICTICIO.json',{warning:'DATOS FICTICIOS. NO ES RESPALDO DE SUPABASE.',school:currentSchool(),pcis:state.pcis.filter(function(p){return p.schoolId===selected;})});};
+$('exportPciBtn').onclick=function(){var p=state.pcis.find(function(item){return item.id===selectedPci;});if(p)downloadJson('pci-ficticio-'+p.id+'.json',p);};
+render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+name: Validar priorizados en mapa PCI Técnica existente
+on:
+  push:
+    branches: [release/pci-orientaciones-aditivo-20261111]
+    paths:
+      - ".github/workflows/validar-fuentes-en-mapa-tecnica.yml"
+      - "pci-tecnica-pautas.html"
+      - "src/tecnica/pautas-visor.mjs"
+      - "data/tecnica/priorizados/**"
+      - "tests/pautas-priorizados-en-mapa-browser.mjs"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sin-cambiar-mapa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verificar sintaxis, reglas y fuentes oficiales
+        run: |
+          node --check src/tecnica/pautas-visor.mjs
+          node --test tests/tecnica-priorizados-2026.test.mjs tests/pautas-pci-20261005.test.mjs
+      - name: Preparar navegador de prueba
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Validar que el mapa original sigue íntegro con el catálogo en la misma pantalla
+        run: node tests/pautas-priorizados-en-mapa-browser.mjs
+      - name: Captura para revisión visual
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapa-tecnica-pci-v2-referencias
+          path: test-artifacts/tecnica-priorizados-mapa/
+          retention-days: 7
+          if-no-files-found: ignore

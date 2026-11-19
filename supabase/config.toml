@@ -1,0 +1,4 @@
+# Matriz PCI - configuración existente de acceso por token institucional.
+# No cambiar verify_jwt: las sesiones PCI se validan dentro de pci-access.
+[functions.pci-access]
+verify_jwt = false

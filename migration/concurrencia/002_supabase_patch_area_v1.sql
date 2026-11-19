@@ -1,0 +1,4 @@
+-- ARCHIVO OBSOLETO. NO EJECUTAR.
+-- Borrador reemplazado: actualizar pci_proposals.data.areas no permite FG independiente por orientación y podría colisionar con guardados legados.
+-- ÚNICA PROPUESTA VIGENTE: migration/concurrencia/003_supabase_scoped_units.sql
+-- El contenido anterior queda disponible en el historial de Git, pero no se aplica.

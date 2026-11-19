@@ -1,0 +1,23 @@
+name: Verificar planes oficiales Técnica por vigencia
+on:
+  push:
+    branches:
+      - release/pci-orientaciones-aditivo-20261111
+    paths:
+      - "data/tecnica/planes-vigentes/**"
+      - "tests/tecnica-planes-vigentes-2026.test.mjs"
+      - ".github/workflows/validar-planes-vigentes-tecnica.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validacion-documental:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Contrastar estructura oficial, carga DET/DGEGP y estados de 26 especialidades
+        run: node --test tests/tecnica-planes-vigentes-2026.test.mjs

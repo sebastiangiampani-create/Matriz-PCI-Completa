@@ -1,0 +1,456 @@
+/*
+ * Paridad visual FG/FO - 19/10/2026.
+ * Referencia: app.css (Matriz FG). El contenido curricular, la cobertura y la
+ * persistencia permanecen en sus módulos originales.
+ * Se carga DESPUÉS de las hojas de integración para eliminar conflictos
+ * previos entre columnas automáticas, tarjetas y cabeceras.
+ */
+
+#pci-fo-development {
+  --pci-fo-content-width: 1120px;
+  background: var(--canvas);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Misma marca, tipografía y banda de contexto que la Matriz FG. */
+#pci-fo-development .pci-fo-dev-header {
+  display: block;
+  flex: 0 0 auto;
+  padding: 0;
+  background: var(--paper);
+  border-bottom: 0;
+}
+#pci-fo-development .pci-fo-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 77px;
+  padding: 11px clamp(16px, 4.6vw, 77px);
+  background: var(--paper);
+}
+#pci-fo-development .pci-fo-brand {
+  display: block;
+  width: auto;
+  height: 42px;
+  max-width: min(240px, 35vw);
+  object-fit: contain;
+  object-position: left center;
+}
+#pci-fo-development .pci-fo-brand-row .button {
+  flex: 0 1 auto;
+  width: auto;
+  min-height: 42px;
+  padding: 9px 16px;
+  font-size: .8rem;
+  white-space: normal;
+}
+#pci-fo-development .pci-fo-titleband {
+  background: var(--band);
+  border-top: 1px solid var(--line);
+  padding: 16px max(16px, calc((100% - 1120px) / 2)) 18px;
+}
+#pci-fo-development .pci-fo-titleband .eyebrow {
+  margin-bottom: 6px;
+  color: var(--mint-dark);
+  font-size: .7rem;
+  letter-spacing: .08em;
+}
+#pci-fo-development .pci-fo-titleband h2 {
+  margin: 0 0 5px;
+  font-size: clamp(1.45rem, 2.2vw, 2rem);
+  line-height: 1.13;
+  letter-spacing: -.025em;
+}
+#pci-fo-development .pci-fo-titleband #pciFoContext {
+  margin: 0;
+  font-size: .83rem;
+  color: var(--ink-soft);
+}
+
+/* Controles y panel oficial de cobertura ocupan el mismo ancho que FG. */
+#pci-fo-development .pci-fo-dev-toolbar,
+#pci-fo-development .pci-fo-overview,
+#pci-fo-development .pci-fo-dev-content {
+  width: min(var(--pci-fo-content-width), calc(100% - 32px));
+  margin-left: auto;
+  margin-right: auto;
+}
+#pci-fo-development .pci-fo-dev-toolbar {
+  flex: 0 0 auto;
+  gap: 9px 17px;
+  margin-top: 14px;
+  margin-bottom: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: none;
+}
+#pci-fo-development .pci-fo-dev-toolbar label {
+  font-size: .78rem;
+  color: var(--ink-soft);
+  font-weight: 850;
+}
+#pci-fo-development .pci-fo-dev-toolbar select {
+  min-height: 39px;
+  border-radius: 10px;
+  color: var(--ink);
+  background: var(--paper);
+}
+#pci-fo-development .pci-fo-dev-toolbar #pciFoYear {
+  min-width: 136px;
+}
+#pci-fo-development .pci-fo-dev-toolbar #pciFoSpace {
+  min-width: 215px;
+  max-width: min(420px, 42vw);
+}
+#pci-fo-development #pciFoSaved {
+  margin-left: auto;
+  max-width: 285px;
+  font-size: .73rem;
+  line-height: 1.45;
+  text-align: right;
+  color: var(--muted);
+}
+#pci-fo-development .pci-fo-overview {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  margin-bottom: 14px;
+}
+#pci-fo-development .pci-fo-overview .pci-native-coverage-entry {
+  margin: 0;
+  padding: 12px 14px;
+  background: #f8fbfd;
+  border-radius: 14px;
+}
+#pci-fo-development .pci-fo-overview .pci-fo-coverage {
+  margin: 0;
+}
+
+/* Como FG: bolsa de contenidos a la izquierda y dos tarjetas legibles.
+   Una sola barra vertical para la página; solo la bolsa tiene scroll interno. */
+#pci-fo-development .pci-fo-dev-content {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: minmax(285px, 320px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  min-height: 0;
+  overflow: visible;
+  padding: 0 0 44px;
+}
+#pci-fo-development .pci-fo-dev-bag {
+  position: sticky;
+  top: 14px;
+  min-width: 0;
+  min-height: 0;
+  max-height: calc(100dvh - 30px);
+  overflow: auto;
+  padding: 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+#pci-fo-development .pci-fo-dev-bag h3 {
+  margin-bottom: 3px;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+#pci-fo-development .pci-fo-dev-bag > p {
+  color: var(--muted);
+  font-size: .78rem;
+}
+#pci-fo-development .pci-fo-bag-controls {
+  margin-left: -16px;
+  margin-right: -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background: var(--paper);
+}
+#pci-fo-development .pci-fo-content-choice {
+  padding: 11px;
+  border-radius: 13px;
+}
+#pci-fo-development .pci-fo-dev-editor {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+#pci-fo-development .pci-fo-group-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 16px;
+  min-width: 0;
+}
+#pci-fo-development .pci-fo-group-grid > .group-card {
+  display: block;
+  min-width: 0;
+  height: auto;
+  margin: 0;
+  padding: 18px;
+  background: var(--paper);
+  border: 2px solid transparent;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+#pci-fo-development .pci-fo-group-grid > .group-card.selected {
+  border-color: var(--mint-dark);
+  box-shadow: 0 16px 38px rgba(18, 110, 101, .15);
+}
+#pci-fo-development .pci-fo-group-card .group-title-row input {
+  min-width: 0;
+  width: 100%;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+#pci-fo-development .pci-fo-group-card .group-meta {
+  gap: 6px;
+  margin-bottom: 12px;
+}
+#pci-fo-development .pci-fo-group-card .pci-fo-card-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+#pci-fo-development .pci-fo-group-card .pci-fo-card-fields .full {
+  grid-column: 1 / -1;
+}
+#pci-fo-development .pci-fo-group-card .field-label > span {
+  color: var(--ink-soft);
+  font-size: .79rem;
+  font-weight: 850;
+}
+#pci-fo-development .pci-fo-group-card .pci-fo-card-subjects {
+  overflow-wrap: anywhere;
+}
+#pci-fo-development .pci-fo-details,
+#pci-fo-development .pci-articulation-editor {
+  margin: 0 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  overflow: hidden;
+}
+#pci-fo-development .pci-fo-details > summary,
+#pci-fo-development .pci-articulation-editor > summary {
+  padding: 13px 16px;
+  color: var(--ink);
+  font-size: .83rem;
+  font-weight: 850;
+  background: #f7fafb;
+  cursor: pointer;
+}
+#pci-fo-development .pci-articulation-editor > p,
+#pci-fo-development .pci-articulation-grid,
+#pci-fo-development .pci-articulation-editor > button,
+#pci-fo-development .pci-articulation-editor > #pciArtStatus,
+#pci-fo-development .pci-articulation-editor > #pciArtList {
+  margin-left: 15px;
+  margin-right: 15px;
+}
+#pci-fo-development .pci-articulation-editor > p {
+  font-size: .79rem;
+  line-height: 1.5;
+  margin-top: 13px;
+}
+
+/* La cobertura original V91 se inserta como hijo directo del dialogo.
+   Su ancho debe coincidir con las barras y tarjetas de FG y FO. */
+#pci-fo-development > [data-pci-inline="area"] {
+  flex: 0 0 auto;
+  width: min(var(--pci-fo-content-width), calc(100% - 32px));
+  max-height: none;
+  margin: 10px auto 14px;
+  overflow: visible;
+}
+#pci-fo-development .pci-fo-dev-bag .pci-fo-bag-eyebrow {
+  margin: 0 0 5px;
+  color: var(--mint-dark);
+  font-size: .71rem;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+/* En pantallas medianas no comprimir cuatro laboratorios en tres columnas. */
+@media (max-width: 1060px) {
+  #pci-fo-development .pci-fo-dev-content {
+    grid-template-columns: minmax(270px, 300px) minmax(0, 1fr);
+  }
+  #pci-fo-development .pci-fo-group-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* En móvil, los espacios se apilan; ninguna tarjeta queda tapada. */
+@media (max-width: 860px) {
+  #pci-fo-development .pci-fo-brand-row {
+    min-height: 67px;
+    padding: 10px 16px;
+  }
+  #pci-fo-development .pci-fo-brand {
+    height: 34px;
+    max-width: min(220px, 37vw);
+  }
+  #pci-fo-development .pci-fo-titleband {
+    padding: 15px 16px 17px;
+  }
+  #pci-fo-development .pci-fo-dev-toolbar,
+  #pci-fo-development .pci-fo-overview,
+  #pci-fo-development .pci-fo-dev-content {
+    width: calc(100% - 24px);
+  }
+  #pci-fo-development > [data-pci-inline="area"] {
+    width: calc(100% - 24px);
+  }
+  #pci-fo-development .pci-fo-dev-content {
+    display: block;
+    padding: 0 0 30px;
+  }
+  #pci-fo-development .pci-fo-dev-bag {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    margin-bottom: 14px;
+    padding: 14px;
+  }
+  #pci-fo-development .pci-fo-dev-editor {
+    overflow: visible;
+  }
+  #pci-fo-development .pci-fo-bag-controls {
+    position: static;
+    margin: 0 0 12px;
+    padding: 8px 0;
+    box-shadow: none;
+  }
+  #pci-fo-development .pci-fo-group-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #pci-fo-development #pciFoSaved {
+    margin-left: 0;
+    max-width: none;
+    text-align: left;
+  }
+}
+@media (max-width: 700px) {
+  #pci-fo-development .pci-fo-group-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #pci-fo-development .pci-fo-group-card .pci-fo-card-fields {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  #pci-fo-development .pci-fo-brand-row {
+    flex-wrap: wrap;
+  }
+  #pci-fo-development .pci-fo-brand-row .button {
+    min-height: 38px;
+    max-width: 100%;
+    font-size: .75rem;
+  }
+  #pci-fo-development .pci-fo-dev-toolbar {
+    margin-top: 10px;
+    padding: 12px;
+  }
+  #pci-fo-development .pci-fo-dev-toolbar label {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    min-width: 0;
+  }
+  #pci-fo-development .pci-fo-dev-toolbar #pciFoYear,
+  #pci-fo-development .pci-fo-dev-toolbar #pciFoSpace {
+    flex: 0 1 70%;
+    min-width: 0;
+    max-width: 70%;
+  }
+  #pci-fo-development .pci-fo-group-card .pci-fo-card-fields .full {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 540px) {
+  #pci-fo-development .pci-fo-brand-row {
+    min-height: 64px;
+    padding: 10px 14px;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+  #pci-fo-development .pci-fo-brand {
+    height: 30px;
+    max-width: 30vw;
+  }
+  #pci-fo-development .pci-fo-brand-row .button {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: 62%;
+    min-height: 36px;
+    padding: 8px 10px;
+    font-size: .69rem;
+    line-height: 1.2;
+  }
+}
+@media (max-width: 430px) {
+  #pci-fo-development .pci-fo-dev-header h2 {
+    font-size: 1.35rem;
+  }
+  #pci-fo-development .pci-fo-group-card .pci-fo-card-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #pci-fo-development .pci-fo-group-card .pci-fo-card-fields .full {
+    grid-column: auto;
+  }
+}
+/* FG: selección por año recuperada sin mezclar bases de contenido. */
+#contentBag .pci-fg-year-controls {
+  grid-template-columns: minmax(0,1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+#contentBag .pci-fg-year-controls label,
+#contentBag .pci-fg-year-controls select {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+#contentBag .pci-fg-source-note {
+  margin: 3px 0 8px;
+  font-size: .73rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+#groups .pci-fg-official-assigned {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+#groups .pci-fg-official-assigned .assigned-heading h3 {
+  font-size: .94rem;
+}
+#contentBag [data-fg-source="vigente"] small strong {
+  color: var(--mint-dark);
+  font-weight: 900;
+}
+
+@media print {
+  #pci-fo-development .pci-fo-brand,
+  #pci-fo-development .pci-fo-overview {
+    display: none !important;
+  }
+  #pci-fo-development .pci-fo-dev-content {
+    width: 100%;
+    display: block;
+    padding: 0;
+  }
+}
