@@ -7,7 +7,7 @@ const button=(label,callback,klass='btn')=>{const x=element('button',label,klass
 const field=(label,value,callback,textarea=false)=>{const l=element('label');l.append(element('span',label));const x=element(textarea?'textarea':'input');x.value=value||'';x.addEventListener('change',()=>callback(x.value));l.append(x);return l;};
 const select=(label,options,change)=>{const l=element('label');l.append(element('span',label));const s=element('select');for(const [v,n] of options){const op=element('option',n);op.value=v;s.append(op)}s.addEventListener('change',()=>change(s.value));l.append(s);return {wrap:l,select:s};};
 const download=(draft)=>{const blob=new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='PCI-BA15-'+draft.schoolId+'-'+draft.pciId+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyDemo=false,saveRemote=null,canEditRemote=false,savedRevision=0,developmentHost=null}={}){
+export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyDemo=false,saveRemote=null,canEditRemote=false,savedRevision=0,developmentHost=null,onPhaseChange=null}={}){
  const key=['pci-ba15-borrador-local-v1',identity.schoolId,identity.pciId].join(':');
  let draft=initialDraft?structuredClone(initialDraft):crearBorradorBa15(identity),term=1,selected=null,planIndex=0,view='mapa';
  let nesContents=[],nesLoading=true,nesError='',dirty=false,remoteBusy=false,recoveryDraft=null;
@@ -88,6 +88,16 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    if(subjectId)onSubject(subjectId);
   });
  }
+ function setPhase(next,{silent=false}={}){
+  if(next!=='oferta'&&next!=='fo')return false;
+  if(next==='fo'){
+   if(!getPhaseStatus().ready&&!developmentUnlocked)return false;
+   developmentUnlocked=true;view='planes';selected=null;
+  }else{view='mapa';}
+  render();
+  if(!silent&&typeof onPhaseChange==='function')onPhaseChange(next);
+  return true;
+ }
  function renderDevelopment(){
   // Segunda instancia visual. No se ejecuta la composición curricular ni se
   // ofrecen acciones de modificación del mapa en el Desarrollo.
@@ -95,7 +105,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   const panel=developmentHost;
   const validation=getPhaseStatus();
   const top=element('div','','pci-phase-flow');
-  const previous=button('← Volver al Constructor curricular',()=>{view='mapa';render()},'btn');
+  const previous=button('← Volver al Constructor curricular',()=>setPhase('oferta'),'btn');
   top.append(previous,element('strong','2 · Desarrollo curricular · BA +15'));
   panel.append(top,element('p','Esta instancia desarrolla los espacios del mapa ya guardado. Mantiene cuatro planes por agrupamiento, contenidos, objetivos y secuencias.','muted'));
   if(!validation.ready&&!developmentUnlocked){
@@ -201,11 +211,11 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   }
   const tools=element('div','','actions');
   const validation=validarBorradorBa15(draft),gate=getPhaseStatus();
-  const builder=button('1 · Constructor C1–C8',()=>{view='mapa';render()},view==='mapa'?'btn primary':'btn');
+  const builder=button('1 · Constructor C1–C8',()=>setPhase('oferta'),view==='mapa'?'btn primary':'btn');
   const develop=button('2 · Desarrollo curricular',()=>{
     const check=getPhaseStatus();
     if(!check.ready){status.textContent='Primero completá y guardá el mapa BA +15. '+check.detail;view='mapa';render();return;}
-    developmentUnlocked=true;view='planes';selected=null;render();
+    setPhase('fo');
   },view==='planes'?'btn primary':'btn');
   develop.disabled=!gate.ready;
   develop.title=gate.ready?'Abrir planes heredados de este PCI':'Completá todas las materias de C1–C8 y guardá el mapa antes de desarrollar.';
@@ -328,5 +338,5 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
  }
  render();
  loadV2Fg().then(rows=>{nesContents=rows.filter(x=>x.year===1||x.year===2);nesLoading=false;render();}).catch(err=>{nesLoading=false;nesError=err.message||String(err);render();});
- return {destroy(){host.replaceChildren();if(developmentHost)developmentHost.replaceChildren();},getDraft(){return structuredClone(draft);},isDirty(){return dirty;}};
+ return {destroy(){host.replaceChildren();if(developmentHost)developmentHost.replaceChildren();},getDraft(){return structuredClone(draft);},isDirty(){return dirty;},setPhase};
 }
