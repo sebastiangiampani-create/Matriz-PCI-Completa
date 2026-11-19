@@ -329,7 +329,7 @@ async function createPci(e){
     if(result?.pci_id)await openPci(result.pci_id);
     status(model==='tecnica'?
       'Especialidad técnica registrada. Su mapa C1–C12 queda disponible para construcción y validación según el Anexo II final.':
-      model==='ba15'?'PCI BA +15 registrado. La edición curricular queda pendiente de homologación normativa.':
+      model==='ba15'?'PCI BA +15 creado. Podés construir y guardar su mapa C1–C8; la homologación final queda pendiente.':
       'PCI de Media creado sin modificar la matriz histórica.');
   }catch(error){status('No se creó','error');message(error.message,'error');}
 }
@@ -385,7 +385,7 @@ async function openPci(id){
         ' · Orientación '+(ORIENTATIONS.find(x=>x.id===b.orientation_id)?.name||b.orientation_id)+
         ' · Documento histórico protegido';
       renderPcis();
-      status('BA +15: PCI independiente registrado; mapa curricular a homologar');
+      status('BA +15: constructor C1–C8 habilitado como borrador por PCI; homologación final pendiente');
       return;
     }
     if(result.pci?.model==='tecnica'){
