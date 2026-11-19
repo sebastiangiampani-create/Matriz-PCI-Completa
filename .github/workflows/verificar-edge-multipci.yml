@@ -1,5 +1,7 @@
 name: Verificar acceso seguro a multi-PCI
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [release/multipci-aditivo-seguro-20261118]
   workflow_dispatch:
