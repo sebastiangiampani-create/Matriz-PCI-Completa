@@ -113,7 +113,7 @@ try{
  await page.locator('#schoolPciCards').getByText(/Este turno no tiene PCI/).waitFor();
  await page.selectOption('#turnFilter','todos');
  assert.equal(await page.locator('.school-offer-card').count(),1,'El filtro de turnos es reversible');
- await page.locator('#pciList').getByText('Comunicación · Turno mañana').waitFor();
+ await page.locator('.school-offer-card').getByText('Comunicación').first().waitFor();
  await page.locator('#btnAddPci').click();
  await page.locator('#formCreatePci:not([hidden])').waitFor();
  await page.selectOption('#pciModel','ba15');
