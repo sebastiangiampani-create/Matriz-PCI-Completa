@@ -96,9 +96,11 @@ async function onHistoryChange(event){
   const targetDepth=Number(event.state.depth)||0;
   const current={schoolId,pciId:pci?.pci_id||null,view:tab};
   if(samePciRoute(destination,current)){routeDepth=targetDepth;return;}
-  if(!canLeave()){
-    // Rollback the navigation rather than losing the selected PCI.
-    // The compensating popstate event is intentionally ignored.
+  const stayingInsidePci=destination.schoolId===schoolId&&
+    !!destination.pciId&&destination.pciId===pci?.pci_id;
+  if(!stayingInsidePci&&!canLeave()){
+    // Volver/Avanzar no descarta un borrador: cancelar restaura
+    // la entrada exacta del historial que tenía el usuario.
     undoingPop=true;
     history.go(targetDepth<routeDepth?1:-1);
     return;
@@ -115,11 +117,21 @@ async function onHistoryChange(event){
     if(destination.pciId){
       if(!pcis.some(x=>x.pci_id===destination.pciId))
         throw Error('El PCI indicado en el historial no pertenece a esta escuela.');
-      await openPci(destination.pciId,destination.view,'none',true);
+      if(stayingInsidePci){
+        // Cambiar de pestaña NO vuelve a descargar ni reemplazar el
+        // documento FG/FO que está abierto y quizá aún no fue guardado.
+        if(pci.model==='ba15'){
+          const text=destination.view==='fo'?'2 · Desarrollo curricular':'1 · Constructor C1–C8';
+          const button=[...$('ba15Builder').querySelectorAll('button')].find(b=>b.textContent.trim()===text);
+          if(button&&!button.disabled)button.click();
+          tab=button&&!button.disabled?destination.view:'oferta';
+        }else setTab(destination.view,true,'none');
+      }else await openPci(destination.pciId,destination.view,'none',true);
     }else if(pci){
       returnToSchool('none',true);
     }
     routeDepth=targetDepth;
+    if(destination.pciId&&tab!==destination.view)writeRoute('replace',pci?.pci_id,tab);
     updateNavigationLinks();
   }catch(error){
     message('No se pudo recuperar la navegación: '+error.message,'error');
