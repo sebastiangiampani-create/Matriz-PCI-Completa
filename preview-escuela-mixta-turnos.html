@@ -15,7 +15,6 @@
 <section class="panel workspace"><span class="eyebrow" id="type">Elegir PCI</span><h2 id="title">Seleccioná una orientación o especialidad</h2><p id="info" class="muted">El mapa conservará las vistas del PCI V2 original.</p><div class="demoTabs"><button class="active" data-view="map">Mapa de la oferta</button><button data-view="development">Desarrollo curricular</button><button data-view="control">Panel de control</button></div><div id="visual" class="mapScroll"></div><p class="note">Vista ilustrativa de navegación: los espacios son ejemplos, no cargas curriculares oficiales. El editor real se mantiene en la rama de trabajo del PR #34.</p></section>
 </div></main><script type="module">
 import {agruparPcis} from './src/pci-turnos-organizacion.mjs';
-import {BA15_NIVELES,BA15_CCC,validarBa15} from './src/ba15/reglas-curriculares.mjs';
 import {montarConstructorBa15} from './src/ba15/constructor-ui.mjs';
 const records=[
 {pci_id:'m1',school_id:1001,model:'comun',shift_id:'manana',orientation_id:'economia_administracion',title:'Economía y Administración',status:'borrador'},
@@ -43,38 +42,16 @@ function renderView(){
  $('type').textContent=(technical?'Educación Técnica':ba15?'Secundaria BA +15':'Bachillerato / Media')+' · Turno '+shiftName(p.shift_id);
  $('title').textContent=p.title;
  $('info').textContent=ba15?'PCI '+p.pci_id.toUpperCase()+' · Régimen propio · Mapa pendiente de homologación normativa':'PCI '+p.pci_id.toUpperCase()+' · '+n+' años · '+(2*n)+' cuatrimestres · Mapa independiente';
- document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+ document.querySelectorAll('[data-view]').forEach(b=>{b.hidden=ba15;b.classList.toggle('active',b.dataset.view===view);});
  const visual=$('visual');if(builder){builder.destroy();builder=null;}visual.replaceChildren();
  if(ba15){
-  const heading=document.createElement('h3');heading.textContent=view==='map'?'BA +15 · 4 niveles / 38 horas':view==='development'?'CCC · Complementación curricular':'Validación normativa BA +15';visual.append(heading);
+  const heading=document.createElement('h3');heading.textContent='BA +15 · Constructor curricular C1–C8';visual.append(heading);
+  const description=document.createElement('p');description.className='muted';
+  description.textContent='Nivel I a IV, dos cuatrimestres por nivel. Armá agrupamientos, asigná materias y editá planes. El CCC no se incluye en el mapa ni en el cálculo de cobertura.';
+  visual.append(description);
   const editor=document.createElement('div');editor.className='ba15DemoEditor';visual.append(editor);
   builder=montarConstructorBa15(editor,{schoolId:p.school_id,pciId:p.pci_id,orientationId:p.orientation_id,shiftId:p.shift_id});
-  if(view==='control'){
-    const card=document.createElement('div');card.className='workCard';
-    const result=validarBa15();const msg=document.createElement('p');msg.textContent=(result.valido?'Estructura oficial: cuatro niveles de 38 horas. ':'Revisar cargas curriculares. ')+result.advertencias.length+' articulaciones a documentar en el PCI. No se usan reglas de Media o Técnica.';
-    card.append(msg);visual.append(card);return;
-  }
-  const table=document.createElement('table');table.className='demoMap';
-  const h=document.createElement('thead'),head=document.createElement('tr');
-  for(const name of view==='development'?['CCC: espacios de 1.º NES','Acreditación']:['Área / formato','Nivel I','Nivel II','Nivel III','Nivel IV']){
-    const th=document.createElement('th');th.textContent=name;head.append(th);
-  }h.append(head);table.append(h);
-  const body=document.createElement('tbody');
-  if(view==='development'){
-    for(const space of BA15_CCC){const tr=document.createElement('tr');const th=document.createElement('th');th.textContent=space;const td=document.createElement('td');td.textContent='Equivalencia o acreditación de saberes previos';tr.append(th,td);body.append(tr);}
-  }else{
-    const areas=['Troncales','Ciencias Naturales','Ciencias Sociales','Formación Orientada','Talleres articulados','Formación General','Acompañamiento'];
-    for(const area of areas){
-      const tr=document.createElement('tr'),th=document.createElement('th');th.textContent=area;tr.append(th);
-      for(const level of BA15_NIVELES){const td=document.createElement('td');for(const entry of level.filter(x=>x.area===area)){const tag=document.createElement('span');tag.textContent=entry.nombre+' · '+entry.horas+' h';td.append(tag);}tr.append(td);}
-      body.append(tr);
-    }
-    const sum=document.createElement('tr'),th=document.createElement('th');th.textContent='Total semanal';sum.append(th);
-    for(const level of BA15_NIVELES){const td=document.createElement('td');td.textContent=level.reduce((v,x)=>v+x.horas,0)+' / 38 h';sum.append(td);}
-    body.append(sum);
-  }
-  table.append(body);visual.append(table);
-  const foot=document.createElement('p');foot.className='muted';foot.textContent='Fuente: Resolución 1375/MEDGC/25, Anexo I (IF-2025-44785236-GCABA-SSPIE). La matriz de consulta y el constructor de prueba se editan solamente en esta pestaña; no hay datos escolares reales ni guardado de servidor.';visual.append(foot);return;
+  return;
  }
 
  if(view!=='map'){
