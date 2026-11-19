@@ -168,11 +168,14 @@ async function init(){
     sel.value=String(schoolId);
     sel.addEventListener('change',async()=>{if(!canLeave()){sel.value=String(schoolId);return;}schoolId=Number(sel.value);await reloadSchool().catch(err=>message(err.message,'error'));});
     $('showNewSchool').hidden=!canCreateSchool();
+    $('schoolAdminTools').hidden=!canCreateSchool();
     $('btnAddPci').disabled=!canEdit();
     $('turnFilter').addEventListener('change',renderPcis);
+    document.querySelectorAll('[data-back-to-school]').forEach(btn=>btn.addEventListener('click',returnToSchool));
     $('showNewSchool').onclick=()=>show('formNewSchool',true);
     // Acceso directo desde Panel general; requiere sesión administrativa real.
     if(new URL(location.href).searchParams.get('accion')==='alta-escuela'&&canCreateSchool()){
+      $('schoolAdminTools').open=true;
       show('formNewSchool',true);
       $('schoolNameInput').focus();
     }
@@ -219,13 +222,16 @@ async function reloadSchool(){
     (school?.model==null && /(?:t[eé]cnica|politecnica)/i.test(legacyName));
   $('historicalPciLink').href='escuela-online.html?school='+schoolId+
     '&name='+encodeURIComponent(legacyName)+(originalTechnical?'&model=tecnica':'');
+  $('homeHistoricalPciLink').href=$('historicalPciLink').href;
   const data=await call('list-school-pcis',{school_id:schoolId});
   pcis=Array.isArray(data.pcis)?data.pcis:[];
   technical.close();
   ba15Controller?.destroy();ba15Controller=null;
   pci=null;workspace=null;auto=null;selectedFgArea=null;selectedFoSpace=null;
   fgDirty=false;foDirty=false;offerDirty=false;
-  show('editor',false);show('technicalPending',false);show('ba15Pending',false);show('empty');renderPcis();
+  show('editor',false);show('technicalPending',false);show('ba15Pending',false);show('empty');
+  $('app').classList.add('school-home');
+  renderPcis();
 }
 function renderPcis(){
   const host=$('pciList');host.replaceChildren();
@@ -243,7 +249,8 @@ function renderPcis(){
   const totalBa15=pcis.filter(p=>p.model==='ba15').length;
   counts.textContent=pcis.length+' PCI · '+turnos.length+' turnos · '+totalMedia+' Media · '+totalTecnica+' Técnica · '+totalBa15+' BA +15';
   if(!pcis.length){
-    note('p','Esta escuela todavía no tiene PCI nuevos. El PCI histórico se conserva.',host,'muted');
+    note('p','Todavía no hay orientaciones nuevas. La Formación General anterior permanece disponible.',host,'muted');
+    renderSchoolHome();
     return;
   }
   // El mismo school_id y la misma sesión contienen todos los turnos y
@@ -269,6 +276,84 @@ function renderPcis(){
     }
     host.appendChild(section);
   }
+  renderSchoolHome();
+}
+function modelLabelFor(p){
+  return p.model==='tecnica'?'Técnica':p.model==='ba15'?'BA +15':'Media';
+}
+function displayOrientation(p){
+  return p.model==='tecnica'?
+    p.specialty_name||p.title:
+    ORIENTATIONS.find(x=>x.id===p.orientation_id)?.name||p.title;
+}
+function renderSchoolHome(){
+  const host=$('schoolPciCards');
+  if(!host)return;
+  host.replaceChildren();
+  const selectedSchool=schools.find(s=>Number(s.school_id)===schoolId);
+  $('schoolOverviewName').textContent=selectedSchool?.name||'Oferta curricular de la escuela';
+  const all=agruparPcis(pcis);
+  const selectedShift=$('turnFilter').value;
+  const displayed=all.filter(g=>selectedShift==='todos'||g.id===selectedShift);
+  const summary=$('schoolSummary');summary.replaceChildren();
+  for(const [value,label] of [
+    [pcis.length,'PCI'],
+    [all.length,'turnos'],
+    [pcis.filter(p=>p.model==='comun').length,'Media'],
+    [pcis.filter(p=>p.model==='tecnica').length,'Técnica'],
+    [pcis.filter(p=>p.model==='ba15').length,'BA +15']
+  ]){
+    const chip=elem('span',value+' '+label,'school-count-chip');summary.append(chip);
+  }
+  if(!pcis.length){
+    const box=elem('div',undefined,'school-no-pcis');
+    note('h3','La Formación General anterior está disponible',box);
+    note('p','Para sumar orientaciones, especialidades o BA +15, elegí «+ Agregar PCI». El trabajo histórico se conserva.',box,'muted');
+    host.append(box);return;
+  }
+  if(!displayed.length){
+    note('p','Este turno no tiene PCI. Podés seleccionar otro o agregar uno nuevo.',host,'school-no-pcis');
+    return;
+  }
+  const grid=elem('div',undefined,'school-offer-grid');
+  for(const turno of displayed){
+    for(const modelo of turno.modelos){
+      for(const p of modelo.pcis){
+        const card=elem('article',undefined,'school-offer-card area-card');
+        const eyebrow=elem('div',undefined,'school-offer-top');
+        const model=elem('span',modelLabelFor(p)+' · Turno '+turno.nombre,'pill');
+        const statusLabel=elem('span',p.status==='borrador'?'En desarrollo':p.status==='en_revision'?'En revisión':p.status||'PCI','school-state');
+        eyebrow.replaceChildren(model,statusLabel);
+        card.append(eyebrow);
+        const main=elem('div',undefined,'school-offer-body');
+        note('h3',displayOrientation(p),main);
+        note('p',p.title,main,'muted');
+        card.append(main);
+        const bottom=elem('div',undefined,'school-offer-actions');
+        const map=elem('button','Mapa de la Oferta','btn primary');
+        map.type='button';
+        map.setAttribute('aria-label','Abrir Mapa de la Oferta de '+p.title);
+        map.onclick=()=>openPci(p.pci_id,'oferta');
+        const develop=elem('button','Desarrollo Curricular','btn secondary');
+        develop.type='button';
+        develop.setAttribute('aria-label','Abrir Desarrollo Curricular de '+p.title);
+        develop.onclick=()=>openPci(p.pci_id,p.model==='ba15'?'fo':'fg');
+        bottom.append(map,develop);card.append(bottom);grid.append(card);
+      }
+    }
+  }
+  host.append(grid);
+}
+function returnToSchool(){
+  if(!canLeave())return;
+  technical.close();ba15Controller?.destroy();ba15Controller=null;
+  pci=null;workspace=null;auto=null;
+  selectedFgArea=null;selectedFoSpace=null;fgDoc=null;foDoc=null;
+  fgDirty=false;foDirty=false;offerDirty=false;
+  show('editor',false);show('technicalPending',false);show('ba15Pending',false);show('empty',true);
+  $('app').classList.add('school-home');
+  renderPcis();
+  window.scrollTo(0,0);
 }
 function populateSpecialties(){
   const select=$('specialtyName');select.replaceChildren();
@@ -345,7 +430,7 @@ async function createSchool(e){
     show('formNewSchool',false);window.location.reload();
   }catch(error){message(error.message,'error');}
 }
-async function openPci(id){
+async function openPci(id,requestedTab='fg'){
   if(!canLeave())return;
   try{
     status('Cargando PCI y resguardo histórico…');
@@ -384,7 +469,12 @@ async function openPci(id){
       $('ba15Info').textContent='Turno '+({manana:'mañana',tarde:'tarde',vespertino:'vespertino',noche:'noche'}[b.shift_id]||b.shift_id)+
         ' · Orientación '+(ORIENTATIONS.find(x=>x.id===b.orientation_id)?.name||b.orientation_id)+
         ' · Documento histórico protegido';
+      $('app').classList.remove('school-home');
       renderPcis();
+      if(requestedTab==='fo'){
+        const go=[...$('ba15Builder').querySelectorAll('button')].find(b=>b.textContent.trim()==='Desarrollo curricular');
+        go?.click();
+      }
       status('BA +15: constructor C1–C8 habilitado como borrador por PCI; homologación final pendiente');
       return;
     }
@@ -402,7 +492,8 @@ async function openPci(id){
       await technical.open(tech);
       show('technicalPending',false);show('ba15Pending',false);
       show('empty',false);show('editor');
-      renderPcis();setTab('fg',true);
+      $('app').classList.remove('school-home');
+      renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'fg',true);
       status('PCI Técnico · mapa C1–C12 y planes de aprendizaje');
       return;
     }
@@ -444,7 +535,9 @@ async function openPci(id){
     for(const [num,label] of [[inv.areas,'Áreas FG'],[inv.groups,'Agrupamientos preservados'],[inv.plans,'Planes anteriores']]){
       const item=elem('div',undefined,'metric');note('strong',num,item);note('small',label,item);host.appendChild(item);
     }
-    show('empty',false);show('editor');renderPcis();setTab('fg',true);renderAreas();
+    show('empty',false);show('editor');
+    $('app').classList.remove('school-home');
+    renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'fg',true);renderAreas();
     message('PCI cargado. El guardado es siempre explícito y nunca reemplaza la matriz histórica.');
     status('Listo para editar');
   }catch(error){status('No se abrió el PCI','error');message(error.message,'error');}
