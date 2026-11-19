@@ -39,7 +39,7 @@ jobs:
           git diff --quiet origin/main...HEAD -- app.js app.html app.css pci-model.js escuela-online.html tecnica/app.html supabase/functions/pci-multipci/index.ts
 
   navegador-constructor-v2:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: validar-reglas-v2
     timeout-minutes: 18
     steps:
@@ -50,7 +50,11 @@ jobs:
       - name: Preparar Chrome para la revisión de V2
         run: |
           npm install --no-save playwright@1.55.0
-          npx playwright install chromium
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install chromium
+          fi
       - name: Probar constructor real, historial, arrastre y vuelta de fases
         run: |
           mkdir -p test-artifacts/multipci-portal
