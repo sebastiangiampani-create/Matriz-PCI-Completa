@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Escuela de muestra · Matriz PCI original</title>
+<link rel="stylesheet" href="app.css?v=20260902-1">
+<style>
+.demo-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:14px;min-height:calc(100vh - 110px);padding:16px;background:#f3f7f7}
+.demo-aside{background:#fff;border:1px solid #d8e1e8;border-radius:18px;padding:18px;align-self:start}
+.demo-view{background:#fff;border:1px solid #d8e1e8;border-radius:18px;overflow:hidden;min-width:0}
+.demo-frame{width:100%;height:calc(100vh - 170px);min-height:760px;border:0}
+.demo-entry{display:block;width:100%;padding:12px;margin:7px 0;text-align:left;border:1px solid #d8e1e8;border-radius:12px;background:#fff;color:#12395c;cursor:pointer;font:inherit;font-size:13px}
+.demo-entry.active{background:#e7f8f5;border-color:#2c5da6;font-weight:800}
+.demo-pill{display:inline-block;padding:5px 9px;border-radius:99px;background:#e7f8f5;color:#12395c;font-size:11px}
+.demo-new{display:grid;gap:8px;padding:10px;background:#edf3f8;border-radius:12px}
+.demo-new input,.demo-new select{min-height:38px;border:1px solid #d8e1e8;border-radius:8px;padding:7px;width:100%}
+.demo-help{color:#637888;font-size:12px;line-height:1.5}
+@media(max-width:800px){.demo-layout{grid-template-columns:1fr}.demo-frame{height:75vh;min-height:550px}}
+</style></head>
+<body>
+<header class="site-top no-print"><a class="brand" href="index.html"><img src="assets/em-logo-header.svg" alt="Escuela de Maestros"></a>
+<div class="top-right"><span class="demo-pill">Escuela ficticia · Sin Supabase</span></div></header>
+<div class="demo-layout">
+<aside class="demo-aside">
+<p class="eyebrow">Escuela existente</p><h2>Escuela N.º 99 · Muestra</h2>
+<p class="demo-help">Una sola escuela conserva sus PCI históricos y puede sumar orientaciones, especialidades o BA +15.</p>
+<div id="projects"></div><hr>
+<button class="button primary" id="showNew">+ Agregar modelo / PCI</button>
+<form class="demo-new" id="newProject" hidden>
+<label>Modalidad<select id="type"><option value="media">Media</option><option value="tecnica">Técnica</option><option value="ba15">BA +15</option></select></label>
+<label>Orientación / Especialidad<input id="orientation" required placeholder="Nombre oficial"></label>
+<label>Turno<select id="shift"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></label>
+<button class="button primary" type="submit">Crear PCI de prueba</button>
+</form>
+<hr><p class="demo-help">El área de trabajo de Media y Técnica carga las páginas originales <code>app.html</code> y <code>tecnica/app.html</code>, con su CSS y componentes existentes. No se utilizan maquetas del editor.</p>
+</aside>
+<div class="demo-view"><div id="notice" class="demo-help" style="padding:10px 16px;background:#edf3f8">Seleccioná un PCI para abrir su editor original.</div><iframe class="demo-frame" id="editor" title="Matriz curricular real"></iframe></div>
+</div>
+<script type="module">
+import {migrateState} from './pci-model.js';
+const $=id=>document.getElementById(id);
+const seeded=(name)=>{
+ const state=migrateState({schoolName:name,areas:{}});let n=0;
+ for(const area of ['Matemática','Lengua y Literatura','Lenguas Adicionales','Ciencias Sociales','Ciencias Naturales']){
+  for(const group of state.areas[area].groups.slice(0,area==='Matemática'?3:2)){
+   group.objective='Desarrollar capacidades de análisis, resolución de problemas y producción colaborativa.';
+   group.synopsis='Secuencia de trabajo interdisciplinaria del PCI de muestra.';
+   group.context='Escuela de prueba: planificación sintética para revisar la interfaz, sin datos reales.';
+   group.practiceAxis='Indagación, análisis y producción';
+   group.plansBimestrales=Array.from({length:4},(_,i)=>({number:i+1,name:'Plan '+(i+1),objectives:i===0?'Analizar problemas situados.':'',synopsis:'Plan ilustrativo',contentIds:[],stages:{punto_partida:{description:'Activación de conocimientos previos'},indagacion:{description:'Exploración de fuentes'},produccion:{description:'Producción colaborativa'},evaluacion:{description:'Retroalimentación y revisión'}}}));
+   n++;
+  }
+ }
+ return state;
+};
+let projects=[
+{id:'p-media-1',type:'media',name:'Comunicación',shift:'Mañana',historic:true},
+{id:'p-media-2',type:'media',name:'Economía y Administración',shift:'Tarde',historic:true},
+{id:'p-ba15-1',type:'ba15',name:'Economía y Administración',shift:'Noche',historic:true}
+];
+const memories=new Map(projects.filter(x=>x.type==='media').map(p=>[p.id,seeded('Escuela N.º 99 · '+p.name)]));
+let active=null;
+function render(){
+ const el=$('projects');el.replaceChildren();
+ for(const shift of ['Mañana','Tarde','Noche']){
+  const subset=projects.filter(p=>p.shift===shift);
+  if(!subset.length)continue;
+  const h=document.createElement('h3');h.style.fontSize='13px';h.textContent='Turno '+shift;el.append(h);
+  for(const p of subset){
+   const button=document.createElement('button');button.className='demo-entry'+(active===p.id?' active':'');
+   button.textContent=(p.type==='media'?'Media':p.type==='tecnica'?'Técnica':'BA +15')+' · '+p.name;
+   button.addEventListener('click',()=>openProject(p.id));el.append(button);
+  }
+ }
+}
+function snapshot(){
+ if(!active)return;
+ const current=projects.find(p=>p.id===active);
+ if(!current||current.type==='ba15')return;
+ try{
+  const key=current.type==='tecnica'?'pciTecnicaV2':'pciAppV2';
+  const json=localStorage.getItem(key);
+  if(json)memories.set(current.id,JSON.parse(json));
+ }catch{}
+}
+function openProject(id){
+ snapshot();const p=projects.find(x=>x.id===id);if(!p)return;
+ active=id;render();
+ if(p.type==='ba15'){
+  $('notice').textContent='BA +15 · 4 niveles / C1–C8. Su constructor específico todavía no forma parte del editor histórico. No se debe presentar la matriz C1–C10 como BA +15.';
+  $('editor').removeAttribute('src');
+  $('editor').src='pci-orientaciones-demo-ba15.html';
+  return;
+ }
+ const key=p.type==='tecnica'?'pciTecnicaV2':'pciAppV2';
+ const data=memories.get(p.id)|| (p.type==='media'?seeded('Escuela N.º 99 · '+p.name):{schemaVersion:2,profile:'tecnica',schoolName:'Escuela N.º 99 · '+p.name,areas:{},current:null});
+ localStorage.setItem(key,JSON.stringify(data));
+ $('notice').textContent='Editor ORIGINAL de '+(p.type==='media'?'Media':'Técnica')+' · '+p.name+' · '+p.shift+'. Cambios únicamente en el navegador de prueba.';
+ $('editor').src=(p.type==='tecnica'?'tecnica/app.html':'app.html')+'?demo='+encodeURIComponent(id)+'&v='+Date.now();
+}
+$('showNew').onclick=()=>{$('newProject').hidden=!$('newProject').hidden};
+$('newProject').onsubmit=e=>{
+ e.preventDefault();const type=$('type').value,name=$('orientation').value.trim(),shift=$('shift').value;if(!name)return;
+ const p={id:'demo-'+Date.now(),type,name,shift,historic:false};projects.push(p);$('newProject').hidden=true;$('orientation').value='';openProject(p.id);
+};
+window.addEventListener('beforeunload',snapshot);
+render();openProject('p-media-1');
+</script></body></html>
