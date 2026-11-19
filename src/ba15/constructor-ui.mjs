@@ -279,6 +279,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    panel.append(element('p',validation.valido?'Cobertura y articulaciones documentadas en la propuesta de prueba.':'Pendientes de revisión: '+issues.length));
    const ul=element('ul');for(const m of issues){ul.append(element('li',m));}panel.append(ul);host.append(panel);return;
   }
+  let boardMatrix=null;
   if(view==='mapa'){
    const matrix=element('div','','mapScroll'),tbl=element('table','','mapTable ba15ConstructorMap');
    const head=element('thead'),top=element('tr');top.append(element('th','Formato'));
@@ -311,7 +312,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
     }
     body.append(row);
    }
-   tbl.append(body);matrix.append(tbl);host.append(matrix);
+   tbl.append(body);matrix.append(tbl);boardMatrix=matrix;
   }
   const nav=element('div','','demoTermNav');
   for(const t of BA15_TERMS)nav.append(button('C'+t.numero+' · Nivel '+['I','II','III','IV'][t.nivel-1],()=>{term=t.numero;selected=null;planIndex=0;render()},'tab'+(t.numero===term?' active':'')));
@@ -321,6 +322,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   const layout=element('div','','ba15BuilderGrid');
   const aside=element('section','','workCard'),main=element('section','','workCard');
   aside.classList.add('content-bag','constructor-side');main.classList.add('constructor-board');
+  if(boardMatrix){main.append(element('h3','Mapa C1–C8 · Arrastrá las materias al espacio y cuatrimestre correspondiente'));main.append(boardMatrix);}
   aside.append(element('h3','Bolsa curricular · Nivel '+['I','II','III','IV'][levelNum-1]));
   aside.append(element('p','Arrastrá una materia al mapa o a un agrupamiento. También podés seleccionarla y tocar el destino.','muted'));
   const search=element('input');search.type='search';search.placeholder='Buscar materia o área…';search.className='ba15SubjectSearch';search.setAttribute('aria-label','Buscar materias BA +15');
