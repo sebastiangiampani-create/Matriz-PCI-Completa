@@ -27,7 +27,7 @@ test('Sociales: opción de 10 laboratorios descarta solo plantillas duplicadas v
 test('Sociales: una escuela con C7 histórico trabajado nunca pierde contenidos ni planes',()=>{
  const groups=original(),extra=groups.filter(x=>Number(x.startTerm)===7).at(-1);
  extra.items=['contenido-escolar-historico'];
- extra.plansBimestrales[0].objectives='Objetivos escritos';
+ extra.plansBimestrales=[{name:'Plan histórico',objectives:'Objetivos escritos'}];
  const snapshot=structuredClone(groups);
  for(const option of [10,12]){
   const projected=projectSocialGroupsForPci(groups,option);
