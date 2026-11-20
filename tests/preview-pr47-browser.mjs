@@ -111,6 +111,15 @@ try{
       tr.querySelector('th')?.textContent==='Laboratorios FG · Naturales'),null,{timeout:30000});
   const naturalsRow=page.locator('#mapBody tr').filter({has:page.locator('th:text-is("Laboratorios FG · Naturales")')});
   assert.equal(await naturalsRow.count(),1);
+  console.log('NATURALES MAP DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>({
+    pci:document.querySelector('#pciName')?.textContent,
+    orientation:document.querySelector('#pciTag')?.textContent,
+    row:[...document.querySelectorAll('#mapBody tr')].find(tr=>
+      tr.querySelector('th')?.textContent==='Laboratorios FG · Naturales')?.innerText,
+    cells:[...([...document.querySelectorAll('#mapBody tr')].find(tr=>
+      tr.querySelector('th')?.textContent==='Laboratorios FG · Naturales')?.querySelectorAll('td')||[])]
+      .map(td=>td.textContent).slice(-4)
+  }))));
   assert.equal(await naturalsRow.getByText('Sin laboratorio FG en este nivel').count(),2,
     'Naturales orientada: C9 y C10 sin laboratorio FG, pero se conservan los otros espacios.');
   assert.equal(await page.locator('#mapBody tr').filter({
