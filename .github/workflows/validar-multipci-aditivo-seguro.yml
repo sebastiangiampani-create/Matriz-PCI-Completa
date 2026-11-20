@@ -44,6 +44,7 @@ jobs:
                           $2 == "src/tecnica/espacio-trabajo-v2.mjs" ||
                           $2 == "tests/constructor-mapa-unificado.test.mjs" ||
                           $2 == "tests/pci-model.test.js" ||
+                          $2 == "tests/browser-smoke-v2.mjs" ||
                           $2 == "tests/pci-flujo-fases.test.mjs" ||
                           $2 == ".github/workflows/validar-ajustes.yml" ||
                           $2 == "src/tecnica/interfaz-integrada-v2.mjs" ||
