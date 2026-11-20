@@ -69,7 +69,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   change(()=>asignarMateriaBa15(draft,{nivel:targetLevel,espacioId:targetSpaceId,materiaId:id}));
   pickedSubject=null;dragSubject=null;
  }
- function createFromDrop(id,targetTerm,format){
+ function createFromDrop(id,targetTerm,format,rowSpec=null){
   if(!canCompose()){status.textContent='El PCI está en modo lectura.';return;}
   const levelNum=Math.floor((Number(targetTerm)-1)/2)+1;
   if(subjectLevel(id)!==levelNum){
@@ -77,6 +77,14 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   }
   const subject=draft.niveles[levelNum-1].asignaturas.find(x=>x.id===id);
   if(!subject)return;
+  if(rowSpec?.name&&subject.nombre!==rowSpec.name){
+   status.textContent='Esta fila anual corresponde a '+rowSpec.name+'.';
+   return;
+  }
+  if(rowSpec?.area&&subject.area!==rowSpec.area){
+   status.textContent='Esta materia corresponde a '+subject.area+', no a '+rowSpec.label+'.';
+   return;
+  }
   change(()=>{
    const created=crearEspacioBa15(draft,{nivel:levelNum,term:Number(targetTerm),
     nombre:subject.nombre,formato:format});
@@ -158,31 +166,72 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    const ul=element('ul');for(const m of issues){ul.append(element('li',m));}panel.append(ul);surface.append(panel);return;
   }
   if(view==='mapa'){
+   // Mismo criterio estructural del mapa V2: áreas reconocibles, niveles
+   // agrupados por pares de cuatrimestres y una sola celda por troncal anual.
    const matrix=element('div','','mapScroll'),tbl=element('table','','mapTable');
-   const head=element('thead'),top=element('tr');top.append(element('th','Formato'));
-   for(const t of BA15_TERMS)top.append(element('th','C'+t.numero+' · Nivel '+['I','II','III','IV'][t.nivel-1]));
-   head.append(top);tbl.append(head);
+   const head=element('thead'),levels=element('tr'),quarters=element('tr');
+   const corner=element('th','Área / formato');corner.rowSpan=2;levels.append(corner);
+   for(let n=1;n<=4;n++){
+    const h=element('th','Nivel '+n);h.colSpan=2;levels.append(h);
+   }
+   for(const t of BA15_TERMS)quarters.append(element('th','C'+t.numero));
+   head.append(levels,quarters);tbl.append(head);
    const body=element('tbody');
-   for(const [format,label] of [['troncal','Troncales'],['laboratorio','Laboratorios'],['taller','Talleres'],['orientado','Formación Orientada'],['otro','Otros formatos']]){
-    const row=element('tr');row.append(element('th',label));
+   const mapRows=[
+    {label:'Matemática',format:'troncal',name:'Matemática',annual:true},
+    {label:'Lengua y Literatura',format:'troncal',name:'Lengua y Literatura',annual:true},
+    {label:'Lengua Adicional',format:'troncal',name:'Lengua Adicional (Inglés)',annual:true},
+    {label:'Laboratorios FG · Naturales',format:'laboratorio',area:'Ciencias Naturales'},
+    {label:'Laboratorios FG · Sociales',format:'laboratorio',area:'Ciencias Sociales'},
+    {label:'Talleres FG · articulados',format:'taller'},
+    {label:'Formación Orientada',format:'orientado'},
+    {label:'Otros formatos / acompañamiento',format:'otro'}
+   ];
+   const subjectAreaFor=(level,e)=>{
+    const member=level.asignaturas.find(s=>e.miembros?.includes(s.id));
+    if(member)return member.area;
+    const name=String(e.nombre||'').toLocaleLowerCase('es');
+    if(/biolog|físic|químic|natural/.test(name))return 'Ciencias Naturales';
+    if(/historia|geograf|econom|filosof|social|ciudadan/.test(name))return 'Ciencias Sociales';
+    return '';
+   };
+   for(const rowSpec of mapRows){
+    const row=element('tr');row.append(element('th',rowSpec.label));
     for(const t of BA15_TERMS){
-     const td=element('td'),spaces=draft.niveles[t.nivel-1].espacios.filter(e=>e.term===t.numero&&e.formato===format);
+     if(rowSpec.annual&&t.numero%2===0)continue;
+     const td=element('td');
+     const level=draft.niveles[t.nivel-1];
+     const spaces=level.espacios.filter(e=>{
+      if(e.formato!==rowSpec.format)return false;
+      if(rowSpec.name){
+       const subject=level.asignaturas.find(s=>e.miembros?.includes(s.id));
+       return (subject?.nombre||e.nombre)===rowSpec.name;
+      }
+      return !rowSpec.area||subjectAreaFor(level,e)===rowSpec.area;
+     }).filter(e=>rowSpec.annual?
+       (e.term===t.numero||e.term===t.numero+1):
+       e.term===t.numero);
+     if(rowSpec.annual){
+      td.colSpan=2;
+      td.dataset.pciAnnual='true';
+      td.setAttribute('aria-label',rowSpec.label+' · Nivel '+t.nivel+' · C'+t.numero+'–C'+(t.numero+1));
+     }
      for(const e of spaces){
       const destination=button(e.nombre,()=>{
        if(pickedSubject)dropSubject(pickedSubject,t.nivel,e.id);
        else {term=t.numero;selected=e.id;render();}
       },'slot');
-      destination.title='Soltá una materia del nivel o tocá para abrir este espacio.';
+      destination.title='Materia del nivel '+t.nivel+' · '+(rowSpec.annual?'anual':'cuatrimestral');
       makeDropTarget(destination,id=>dropSubject(id,t.nivel,e.id));
       td.append(destination);
      }
      if(!spaces.length){
       const destination=button('＋',()=>{
-       if(pickedSubject)createFromDrop(pickedSubject,t.numero,format);
+       if(pickedSubject)createFromDrop(pickedSubject,t.numero,rowSpec.format,rowSpec);
        else {term=t.numero;selected=null;render();}
       },'ba15EmptySlot');
-      destination.title='Arrastrá una materia para crear su espacio en C'+t.numero+'.';
-      makeDropTarget(destination,id=>createFromDrop(id,t.numero,format));
+      destination.title='Arrastrá una materia del nivel '+t.nivel+' a '+rowSpec.label;
+      makeDropTarget(destination,id=>createFromDrop(id,t.numero,rowSpec.format,rowSpec));
       td.append(destination);
      }
      row.append(td);
