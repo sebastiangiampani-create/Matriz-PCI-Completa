@@ -47,6 +47,7 @@ let selectedFgArea=null,fgDoc=null,fgRevision=0,fgDirty=false;
 let offerRevision=0,offerDirty=false,selectedFoSpace=null,foDoc=null,foRevision=0,foDirty=false;
 let tab='oferta',busy=false,ba15Controller=null;
 let developmentSeq=0,selectedFgGroupId=null;
+let v2Original=null,v2LegacyVisible=false;
 let routeDepth=0,undoingPop=false,handlingPop=false,routeInitialized=false;
 const technical=createIntegratedTechnicalUI({canEdit,getUnit,saveUnit,saveSafe:safeSave,download,rememberDraft,forgetDraft,recallDraft,message,status,onPhaseChange:()=>refreshPhaseState()});
 const historicLinksUI=createHistoricAssignmentUI({
@@ -80,7 +81,7 @@ function canDeclareOrientations(){
   return canEdit()||session?.role==='school_admin';
 }
 function hasUnsaved(){
-  return !!(fgDirty||foDirty||offerDirty||historicLinksUI.isDirty||technical.isDirty()||ba15Controller?.isDirty()||busy);
+  return !!(fgDirty||foDirty||offerDirty||historicLinksUI.isDirty||technical.isDirty()||ba15Controller?.isDirty()||v2Original?.dirty||v2Original?.saving||busy);
 }
 function canLeave(){
   if(!hasUnsaved())return true;
@@ -326,6 +327,9 @@ async function init(){
     $('developmentLevel').addEventListener('change',filterDevelopmentCards);
     $('developmentFormation').addEventListener('change',filterDevelopmentCards);
     $('saveOffer').onclick=()=>technical.active?technical.saveOffer():saveOffer();
+    $('v2OriginalSave').onclick=()=>saveOriginalV2();
+    $('v2ShowLegacyMap').onclick=()=>{v2LegacyVisible=!v2LegacyVisible;updateV2Display();};
+    window.addEventListener('message',onOriginalV2Message);
     $('continueDevelopment').onclick=()=>setTab('desarrollo',true);
     $('socialOption').addEventListener('change',()=>{
       if(!pci||!workspace)return;
@@ -536,6 +540,7 @@ function returnToSchool(mode='push',skipGuard=false){
   developmentSeq++;selectedFgGroupId=null;
   if(!skipGuard&&!canLeave())return false;
   technical.close();ba15Controller?.destroy();ba15Controller=null;
+  closeOriginalV2();
   pci=null;workspace=null;auto=null;
   $('editor').classList.remove('technical-editor');
   selectedFgArea=null;selectedFoSpace=null;fgDoc=null;foDoc=null;
@@ -649,6 +654,7 @@ async function createPci(e){
 }
 async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false){
   if(!skipGuard&&!canLeave())return;
+  closeOriginalV2();
   try{
     status('Cargando PCI y resguardo histórico…');
     const result=await call('get-school-pci',{school_id:schoolId,pci_id:id});
@@ -775,6 +781,7 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
     $('editor').classList.remove('technical-editor');
     $('app').classList.remove('school-home');
     renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true,'none');renderAreas();
+    await openOriginalV2(p);
     writeRoute(routeMode,p.pci_id,tab);
     const gate=refreshPhaseState();
     if(requestedTab!=='oferta'&&!gate.ready)
@@ -783,6 +790,120 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
     status('PCI · Fase 1 Constructor curricular');
   }catch(error){status('No se abrió el PCI','error');message(error.message,'error');}
 }
+// The original V2 code is vendored unchanged in vendor/pci-sec-aprende-v2.
+// This parent adapter stores each school's PCI separately. Historical
+// mapa-oferta-v1 and development units remain completely untouched.
+const V2_UNIT_ID='mapa-original-v2-v1';
+const V2_BASE_VERSION='v2-original-embedded-v1';
+function updateV2Display(){
+  const enabled=!!(v2Original&&pci?.model==='comun'&&v2Original.pciId===pci.pci_id&&tab==='oferta');
+  show('v2OriginalPane',enabled);
+  if(!enabled)return;
+  show('offerPane',v2LegacyVisible);
+  $('v2OriginalFrame').hidden=v2LegacyVisible;
+  $('v2OriginalSave').disabled=!canEdit()||!!v2Original.saving||!v2Original.ready;
+  $('v2ShowLegacyMap').textContent=v2LegacyVisible?
+    'Volver al constructor V2 original':'Mostrar mapa anterior del PCI (consulta)';
+  if(v2LegacyVisible)$('offerPane').setAttribute('data-historical-readonly','true');
+  else $('offerPane').removeAttribute('data-historical-readonly');
+}
+function closeOriginalV2(){
+  v2Original=null;v2LegacyVisible=false;
+  const frame=$('v2OriginalFrame');
+  if(frame)frame.src='about:blank';
+  show('v2OriginalPane',false);
+  if($('offerPane'))$('offerPane').removeAttribute('data-historical-readonly');
+}
+async function openOriginalV2(p){
+  if(p?.model!=='comun')return;
+  const orientation=ORIENTATIONS.find(x=>x.id===p.orientation_id)?.name;
+  if(!orientation)throw Error('La orientación de Media no existe en el catálogo V2.');
+  const saved=await getUnit(p,'oferta','map',V2_UNIT_ID,V2_BASE_VERSION);
+  if(saved.exists){
+    const d=saved.document;
+    if(d?.schema!==V2_BASE_VERSION||d.pciId!==p.pci_id||
+       Number(d.schoolId)!==Number(p.school_id)||
+       d.orientationId!==p.orientation_id||d.shiftId!==p.shift_id||
+       !d.v2||typeof d.v2!=='object'||!d.v2.maps)
+      throw Error('El guardado original V2 no corresponde a la identidad de este PCI. No se abrió.');
+  }
+  v2Original={pciId:p.pci_id,schoolId:Number(p.school_id),orientationId:p.orientation_id,
+    shiftId:p.shift_id,revision:Number(saved.revision)||0,document:saved.exists?saved.document:null,
+    ready:false,dirty:false,saving:false};
+  v2LegacyVisible=false;
+  const school=schools.find(x=>Number(x.school_id)===schoolId);
+  $('v2OriginalTitle').textContent='Mapa de la Oferta V2 · '+orientation+
+    ' · Turno '+(p.shift_id||'');
+  $('v2OriginalStatus').textContent='Cargando el constructor original V2 de '+orientation+'…';
+  const params=new URLSearchParams({pci:p.pci_id,orientation,
+    school:school?.name||'Escuela '+schoolId});
+  $('v2OriginalFrame').src='revision-v2-embed.html?'+params;
+  updateV2Display();
+}
+function onOriginalV2Message(event){
+  const current=v2Original;
+  if(!current||event.origin!==location.origin||
+     event.source!==$('v2OriginalFrame').contentWindow)return;
+  const msg=event.data;
+  if(!msg||msg.pci!==current.pciId||pci?.pci_id!==current.pciId)return;
+  if(msg.type==='V2_ORIGINAL_READY'){
+    current.ready=true;
+    if(current.document?.v2){
+      $('v2OriginalFrame').contentWindow.postMessage({
+        type:'V2_IMPORT',pci:current.pciId,document:current.document.v2
+      },location.origin);
+    }
+    $('v2OriginalStatus').textContent=current.document?
+      'Constructor V2 original recuperado para este PCI. Guardá los cambios antes de salir.':
+      'Constructor V2 original listo. Nuevo borrador independiente por PCI.';
+    updateV2Display();
+  }
+  if(msg.type==='V2_ORIGINAL_SAVED'&&current.ready){
+    current.dirty=true;
+    $('v2OriginalStatus').textContent='Cambios locales V2 pendientes: pulsá «Guardar constructor V2 en este PCI».';
+  }
+  if(msg.type==='V2_ORIGINAL_EXPORTED'){
+    if(!current.saving||!msg.document?.maps)return;
+    void commitOriginalV2(current,msg.document);
+  }
+}
+function saveOriginalV2(){
+  const current=v2Original;
+  if(!current||!current.ready||current.saving)return;
+  if(!canEdit()||!pci||pci.pci_id!==current.pciId||
+     !['borrador','en_revision'].includes(pci.status)){
+    message('Tu sesión no permite guardar este PCI. No se modificó el documento online.','warn');
+    return;
+  }
+  current.saving=true;updateV2Display();
+  $('v2OriginalStatus').textContent='Guardando mapa V2 original del PCI seleccionado…';
+  $('v2OriginalFrame').contentWindow.postMessage({type:'V2_EXPORT',pci:current.pciId},location.origin);
+}
+async function commitOriginalV2(current,v2State){
+  const identity=pci;
+  try{
+    if(!identity||current!==v2Original||identity.pci_id!==current.pciId)
+      throw Error('Cambió el PCI mientras se preparaba el guardado.');
+    const document={schema:V2_BASE_VERSION,schoolId:current.schoolId,
+      pciId:current.pciId,orientationId:current.orientationId,shiftId:current.shiftId,
+      v2:v2State};
+    const result=await saveUnit('oferta','map',V2_UNIT_ID,V2_BASE_VERSION,document,current.revision);
+    if(current!==v2Original||pci?.pci_id!==current.pciId)return;
+    current.revision=Number(result.revision);
+    current.document=document;current.dirty=false;
+    $('v2OriginalStatus').textContent='Mapa V2 original guardado y leído nuevamente · revisión '+current.revision;
+    status('Guardado V2 confirmado');
+  }catch(error){
+    if(current!==v2Original)return;
+    current.dirty=true;
+    $('v2OriginalStatus').textContent='No se guardó el mapa V2: '+error.message;
+    message('El borrador se conserva en el navegador. '+error.message,'error');
+  }finally{
+    current.saving=false;
+    if(current===v2Original)updateV2Display();
+  }
+}
+
 async function getUnit(forPci,component,unitKind,unitId,baseVersion){
   return call('get-school-pci-unit',{
     school_id:schoolId,pci_id:forPci.pci_id,component,unit_kind:unitKind,unit_id:unitId,base_version:baseVersion
@@ -859,6 +980,7 @@ function setTab(next,force=false,routeMode='push'){
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===next));
   for(const name of ['fg','offer','fo','development'])
     show(name+'Pane',next===(name==='offer'?'oferta':name));
+  updateV2Display();
   if(next==='desarrollo'){
     if(technical.active)technical.renderTab('desarrollo');
     renderDevelopmentOverview();
