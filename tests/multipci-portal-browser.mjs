@@ -94,7 +94,7 @@ try{
  assert.equal(await v2.locator('#matrix .term').count(),11);
  const termSlot=v2.locator('#matrix .drop[data-slot="matematica-n1"]');
  const already=termSlot.locator('[data-rm="fg-1-matematica"]');
- if(await already.count())await already.first().click();
+ if(await already.count())await already.first().evaluate(el=>el.click());
  await v2.locator('body').evaluate(()=>{
    const from=document.querySelector('#bagContent [data-sub="fg-1-matematica"]');
    const to=document.querySelector('#matrix .drop[data-slot="matematica-n1"]');
