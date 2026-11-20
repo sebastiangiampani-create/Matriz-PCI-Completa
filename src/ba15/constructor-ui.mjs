@@ -1,5 +1,6 @@
 import {BA15_NIVELES,BA15_CCC} from './reglas-curriculares.mjs';
 import {loadV2Fg,loadV2Fo,selectFoByOrientation} from '../integracion-curricular/catalogos.js';
+import {buildBa15FgBase,BA15_FG_LEVELS} from './priorizados-base.mjs';
 import {ORIENTATIONS} from '../integracion-curricular/bridge.js';
 import {phaseGate,phaseText} from '../pci-flujo-fases.mjs';
 import {BA15_TERMS,crearBorradorBa15,crearEspacioBa15,asignarMateriaBa15,quitarMateriaBa15,actualizarEspacioBa15,eliminarEspacioBa15,validarBorradorBa15} from './constructor.mjs';
@@ -11,7 +12,7 @@ const download=(draft)=>{const blob=new Blob([JSON.stringify(draft,null,2)],{typ
 export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyDemo=false,saveRemote=null,canEditRemote=false,savedRevision=0,developmentHost=null,onPhaseChange=null}={}){
  const key=['pci-ba15-borrador-local-v1',identity.schoolId,identity.pciId].join(':');
  let draft=initialDraft?structuredClone(initialDraft):crearBorradorBa15(identity),term=1,selected=null,planIndex=0,view='mapa';
- let nesContents=[],foContents=[],nesLoading=true,foLoading=true,nesError='',foError='',dirty=false,remoteBusy=false,recoveryDraft=null;
+ let ba15FgContents=[],foContents=[],fgBaseLoading=true,foLoading=true,fgBaseError='',foError='',dirty=false,remoteBusy=false,recoveryDraft=null;
  let remoteRevision=Number(savedRevision)||0,developmentUnlocked=false,structureDirty=false;
  let pickedSubject=null,dragSubject=null;
  const matchesIdentity=saved=>saved?.schema===draft.schema&&
@@ -134,9 +135,10 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   surface.append(tools,status,element('p',phaseText(gate),'pci-phase-state'+(gate.ready?' ready':'')));
   if(view==='planes'){
     const levelNo=Math.floor((term-1)/2)+1;
+    const sourceLevel=BA15_FG_LEVELS[levelNo-1];
     surface.append(element('p','Nivel '+['I','II','III','IV'][levelNo-1]+
-     ' · catálogo FG (NES '+(levelNo===1?'1.º y 2.º':(levelNo+1)+'.º')+
-     ') · Formación Orientada según orientación. Los contenidos anteriores se conservan.',
+     ' · base FG propia BA +15 · priorizados de '+sourceLevel.sourceLabel+
+     ' · Formación Orientada según orientación. Se conservan los IDs y contenidos de origen.',
      'muted'));
   }
   if(view==='control'){
@@ -266,9 +268,8 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
      card.append(field('Producto / práctica de aprendizaje',p.producto||'',
        v=>update(t=>{t.producto=v;}),true));
      const isFo=e.formato==='orientado';
-     const available=isFo?foContents:nesContents.filter(x=>
-       levelNum===1?[1,2].includes(Number(x.year)):Number(x.year)===levelNum+1);
-     const loading=isFo?foLoading:nesLoading,problem=isFo?foError:nesError;
+     const available=isFo?foContents:ba15FgContents.filter(x=>Number(x.ba15Level)===levelNum);
+     const loading=isFo?foLoading:fgBaseLoading,problem=isFo?foError:fgBaseError;
      if(!loading&&!problem){
       const contentBox=element('section','','formCard');
       contentBox.append(element('h4',isFo?'Contenidos de Formación Orientada':'Contenidos FG · Nivel '+levelNum));
@@ -277,7 +278,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
       for(const id of chosen){
        const item=available.find(x=>x.id===id);
        const line=element('div','','ba15Member');
-       line.append(element('span',item?(isFo?'FO · ':'NES '+item.year+'.º · ')+(item.subject||item.block||'')+' · '+item.text:'Contenido '+id+' (revisar correspondencia)'));
+       line.append(element('span',item?(isFo?'FO · ':'NES '+item.sourceYear+'.º · ')+(item.subject||item.block||'')+' · '+item.text:'Contenido '+id+' (revisar correspondencia)'));
        line.append(button('Quitar',()=>update(t=>{t.contenidos=(t.contenidos||[]).filter(x=>x!==id);}),'btn'));
        contentBox.append(line);
       }
@@ -290,7 +291,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
        const matches=available.filter(x=>!chosen.includes(x.id)&&[x.subject,x.area,x.block,x.axis,x.subaxis,x.text].some(v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(search))).slice(0,35);
        for(const item of matches){
         const line=element('div','','ba15Subject');
-        line.append(element('small',isFo?'FO · '+(item.block||''): 'NES '+item.year+'.º · '+item.subject+' · '+item.axis));
+        line.append(element('small',isFo?'FO · '+(item.block||''): 'NES '+item.sourceYear+'.º · '+item.subject+' · '+item.axis));
         line.append(element('span',item.text));
         line.append(button('Agregar al plan',()=>update(t=>{t.contenidos=Array.isArray(t.contenidos)?t.contenidos:[];if(!t.contenidos.includes(item.id))t.contenidos.push(item.id);}),'btn'));
         results.append(line);
@@ -323,8 +324,8 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   layout.append(aside,main);surface.append(layout);
  }
  render();
- loadV2Fg().then(rows=>{nesContents=rows;nesLoading=false;render();})
-  .catch(err=>{nesLoading=false;nesError=err.message||String(err);render();});
+ loadV2Fg().then(rows=>{ba15FgContents=buildBa15FgBase(rows);fgBaseLoading=false;render();})
+  .catch(err=>{fgBaseLoading=false;fgBaseError=err.message||String(err);render();});
  loadV2Fo().then(rows=>{
    foContents=selectFoByOrientation(rows,identity.orientationId,ORIENTATIONS);
    foLoading=false;render();
