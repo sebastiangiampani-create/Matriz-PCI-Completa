@@ -80,6 +80,44 @@ try{
   assert.ok(phase2.fg>0,'La Fase 2 debe tener contenidos FG');
   assert.ok(phase2.fo>0,'La Fase 2 debe tener contenidos específicos de la modalidad');
   await page.screenshot({path:'test-artifacts/v2-modalidades/'+model+'-mapa.png',fullPage:true});
+  // Fase 2 V2 real: elegir un contenido desde la bolsa, asignarlo al
+  // agrupamiento derivado del mapa y completar un plan bimestral.
+  const probe=await page.evaluate(()=>{
+    const p=window.PCIPhase2V28;
+    const g=p.groups().find(g=>g.subjectIds.length&&p.getPool(g.area).length);
+    if(!g)throw Error('No hay agrupamiento con materias y bolsa de contenidos');
+    return {gid:g.id,area:g.area,year:g.year,term:g.term};
+  });
+  await page.evaluate(()=>window.screen('proposal'));
+  await page.locator('#v28home [data-area]').filter({hasText:probe.area}).first().click();
+  await page.locator('#v28board:not([hidden])').waitFor({timeout:20000});
+  const group=page.locator('#v28groups [data-g="'+probe.gid+'"]');
+  await group.waitFor({timeout:12000});
+  await group.evaluate(el=>el.click());
+  await page.locator('#v28list [data-c]').first().evaluate(el=>el.click());
+  await page.locator('#v28assign').evaluate(el=>el.click());
+  const selected=await page.evaluate(id=>{
+    const g=window.PCIPhase2V28.gb(id);
+    return {assigned:g.data.contents.length,count:window.PCIPhase2V28.getPool(g.area).length};
+  },probe.gid);
+  assert.ok(selected.assigned>0,'El selector de contenidos de Fase 2 V2 debe asignar un contenido');
+  await group.locator('.v38-actions [data-plans]').first().evaluate(el=>el.click());
+  await page.locator('#v38modal:not([hidden])').waitFor({timeout:12000});
+  const count=await page.locator('#v38shell [data-open]').count();
+  assert.equal(count,probe.term.includes('-')?4:2,'La Fase 2 V2 conserva 4 o 2 planes según duración');
+  await page.locator('#v38shell [data-open]').first().evaluate(el=>el.click());
+  await page.locator('#v38plan [data-pfield="objectives"]').fill('Objetivo de aprendizaje curricular V2 · '+model);
+  await page.locator('#v38plan [data-stage="punto_partida"][data-sfield="activities"]').fill('Consigna inicial: interpretar una situación de la especialidad');
+  await page.locator('#v38plan [data-stage="indagacion"][data-sfield="activities"]').fill('Consigna: investigar contenidos del campo curricular');
+  await page.locator('#v38plan [data-stage="produccion"][data-sfield="activities"]').fill('Consigna: producir una resolución fundamentada');
+  await page.locator('#v38plan [data-stage="evaluacion"][data-sfield="activities"]').fill('Consigna: revisar y evaluar los aprendizajes');
+  await page.locator('#v38plan button[type="submit"]').evaluate(el=>el.click());
+  const plan=await page.evaluate(id=>window.PCIPhase2V28.gb(id).data.plansBimestrales[0],probe.gid);
+  assert.equal(plan.objectives,'Objetivo de aprendizaje curricular V2 · '+model);
+  assert.match(plan.stages.punto_partida.activities,/Consigna inicial/);
+  assert.equal(Object.keys(plan.stages).length,4);
+  assert.ok(plan.updatedAt,'El plan guarda metadatos de actualización');
+  await page.screenshot({path:'test-artifacts/v2-modalidades/'+model+'-fase2-planes.png',fullPage:true});
   assert.deepEqual(errors,[],'Sin excepciones en motor V2 modal: '+model);
   assert.deepEqual(requests,[],'Sin recursos faltantes en motor V2 modal: '+model);
   console.log(JSON.stringify({model,track,levels,terms:levels*2,phase2}));
