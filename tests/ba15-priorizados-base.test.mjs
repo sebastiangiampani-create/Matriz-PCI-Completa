@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {loadV2Fg,FG_REFERENCE} from '../src/integracion-curricular/catalogos.js';
 import {
- buildBa15FgBase,summarizeBa15FgBase,BA15_FG_BASE_VERSION,
+ buildBa15FgBase,loadBa15FgBase,summarizeBa15FgBase,BA15_FG_BASE_VERSION,
  BA15_FG_SOURCE_VERSION,BA15_FG_LEVEL_MAP
 } from '../src/ba15/priorizados-base.mjs';
 import {crearBorradorBa15} from '../src/ba15/constructor.mjs';
@@ -83,4 +83,11 @@ test('Cada nuevo PCI BA +15 registra versión y tabla de equivalencias de su bas
  assert.deepEqual(draft.priorizadosFGBase.yearToBa15Level,{1:1,2:1,3:2,4:3,5:4});
  assert.deepEqual(draft.priorizadosFGBase.levels.map(x=>x.sourceYears),[[1,2],[3],[4],[5]]);
  assert.equal(draft.niveles.length,4);
+});
+
+test('El loader dedicado BA +15 devuelve la proyección reindexada desde FG v103',async()=>{
+ const rows=await loadBa15FgBase({fetchFn});
+ assert.equal(rows.length,1126);
+ assert.ok(rows.every(row=>row.baseVersion===BA15_FG_BASE_VERSION));
+ assert.deepEqual(summarizeBa15FgBase(rows).byLevel.map(x=>x.sourceYears),[[1,2],[3],[4],[5]]);
 });
