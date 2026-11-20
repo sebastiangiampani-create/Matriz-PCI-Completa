@@ -56,7 +56,7 @@ const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>\"]/g
 function toast(msg,bad=false){const t=$('toast');t.textContent=msg;t.style.background=bad?'var(--danger)':'var(--ink)';t.style.opacity=1;clearTimeout(window.__t);window.__t=setTimeout(()=>t.style.opacity=0,2600)}
 function ensure(o){if(!state.maps[o])state.maps[o]={alt:'A',mode:'one',placements:{},custom:[],valid:false};const m=state.maps[o];m.placements=m.placements||{};m.custom=m.custom||[];return m}
 function save(){state.school=$('schoolName')?.value||state.school;localStorage.setItem(STORAGE,JSON.stringify(state))}function load(){try{state={...state,...JSON.parse(localStorage.getItem(STORAGE)||'{}')}}catch{}}
-function screen(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='home')renderHome();if(id==='panel')renderPanel();if(id==='offer')renderOffer();if(id==='proposal')$('proposalTitle').textContent=state.school+' · '+state.active;window.scrollTo(0,0)}
+function screen(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='home')renderHome();if(id==='panel')renderPanel();if(id==='offer')renderOffer();if(id==='proposal'&&$('proposalTitle'))$('proposalTitle').textContent=state.school+' · '+state.active;window.scrollTo(0,0)}
 function fg(){return [...window.__V2_MODAL.subjects.filter(s=>s.origin==='FG'),...ensure(state.active).custom.map(s=>({...s,origin:'CUSTOM'}))]}
 function fo(){return window.__V2_MODAL.subjects.filter(s=>s.origin==='FO')}
 function subjects(){return[...fg(),...fo()]}function byId(id){return subjects().find(x=>x.id===id)}
