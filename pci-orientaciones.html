@@ -265,6 +265,21 @@
               <button id="continueDevelopment" type="button" class="btn primary" disabled>Continuar al Desarrollo Curricular</button>
             </div>
           </div>
+          <section id="v2OriginalPane" class="panel pane" hidden aria-label="Constructor V2 original integrado al PCI">
+            <div class="topline">
+              <div><span class="eyebrow">1 · CONSTRUCTOR CURRICULAR ORIGINAL V2</span>
+                <h3 id="v2OriginalTitle">Mapa de la Oferta · V2 original</h3>
+                <p class="muted">Se ejecuta el constructor auténtico de V2 copiado dentro de esta Matriz. Cada PCI y turno tiene un borrador independiente. No se sustituyen mapas ni desarrollos históricos.</p>
+              </div>
+              <div class="actions"><button type="button" id="v2OriginalSave" class="btn primary">Guardar constructor V2 en este PCI</button></div>
+            </div>
+            <p class="note" id="v2OriginalStatus" role="status" aria-live="polite">Cargando constructor original…</p>
+            <details class="note"><summary>Consultar mapa anterior y conciliación de contenidos</summary>
+              <p>El mapa anterior del PCI sigue disponible sin modificaciones. Las composiciones V2 originales no se convierten automáticamente en el formato del constructor anterior; antes de desarrollar o publicar se requiere conciliación.</p>
+              <button id="v2ShowLegacyMap" type="button" class="btn">Mostrar mapa anterior de este PCI (solo consulta)</button>
+            </details>
+            <iframe id="v2OriginalFrame" title="Constructor original de PCI Secundaria Aprende V2" referrerpolicy="same-origin" style="display:block;width:100%;height:1130px;border:1px solid #d8e1e8;border-radius:16px;margin-top:12px;background:#fff" src="about:blank"></iframe>
+          </section>
           <div class="panel pane" id="foPane" hidden>
             <button type="button" class="text-button backToDevelopment" data-back-to-development>← Volver a espacios curriculares</button>
             <div class="topline"><div><span class="eyebrow">FO · Desarrollo curricular</span><h3>Planes de aprendizaje</h3><p class="muted">Cada espacio FO guarda sus objetivos, sinopsis y las cuatro etapas de cada plan, con control de versiones.</p></div></div>
