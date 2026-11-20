@@ -1,5 +1,7 @@
 name: Rescate constructor PCI V2 - reglas y mapa
 on:
+  push:
+    branches: [fix/recuperar-mapas-v2-20261120]
   pull_request:
     branches: [main]
     paths:
