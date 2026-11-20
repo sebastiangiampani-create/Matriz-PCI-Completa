@@ -100,8 +100,21 @@ try{
   const source=v2.locator('#bagContent [data-sub="fg-1-matematica"]');
   const assigned=target.locator('[data-rm="fg-1-matematica"]');
   if(await assigned.count())await assigned.first().click();
-  await source.dragTo(target);
-  await target.locator('[data-map-id="fg-1-matematica"]').waitFor({timeout:15000});
+  // V2 mantiene el gesto de seleccionar la materia y pulsar el casillero;
+  // se prueba ese mismo flujo accesible dentro del portal escolar.
+  await source.click();
+  await target.click();
+  try{
+    await target.locator('[data-map-id="fg-1-matematica"]').waitFor({timeout:15000});
+  }catch(error){
+    console.log('V2 INTEGRATION DEBUG',JSON.stringify({
+      target:await target.textContent(),
+      source:await source.textContent(),
+      portalStatus:await page.locator('#v2OriginalStatus').textContent(),
+      pageErrors:pageConsole
+    }));
+    throw error;
+  }
   await page.locator('#v2OriginalSave').click();
   await page.waitForFunction(()=>document.querySelector('#v2OriginalStatus')?.textContent.includes('revisión 1'),null,{timeout:20000});
   const key=[initialPcis[0].pci_id,'oferta','map','mapa-original-v2-v1'].join(':');
