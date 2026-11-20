@@ -29,7 +29,7 @@
 
   try{
     const {loadV2ModalProfile}=await import('./src/v2-familia/catalogos-modalidad.mjs');
-    const config=await loadV2ModalProfile(new URLSearchParams(location.search));
+    const config=await loadV2ModalProfile(Object.fromEntries(new URLSearchParams(location.search)));
     const [htmlRaw,phase2Source,...moduleSources]=await Promise.all([
       fetchText('src/v2-familia/app-core-modalidad.html'),
       fetchText('src/v2-familia/v47-desarrollo-modalidad.js'),
