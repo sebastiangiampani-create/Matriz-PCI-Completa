@@ -92,7 +92,31 @@ try{
     await page.locator('#schoolHomeLink').click();
     await page.locator('.school-offer-card').first().waitFor();
   }
-  assert.deepEqual(network,[],'La revisión no debe enviar solicitudes a Supabase');
+  // Regresión específica: la orientación Naturales tiene 8 laboratorios
+  // FG (C1-C8), nunca un taller FG. Los talleres FO son otra fila.
+  const natural=await page.evaluate(async api=>{
+    const r=await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'create-school-pci',school_id:1001,
+        model:'comun',orientation_id:'ciencias_naturales',shift_id:'manana',
+        title:'Ciencias Naturales · Turno mañana'})});
+    return r.json();
+  },api);
+  assert.equal(natural.ok,true);
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('.school-offer-card').filter({hasText:'Ciencias Naturales'})
+    .locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
+  await page.locator('#offerPane:not([hidden])').waitFor({timeout:30000});
+  const naturalsRow=page.locator('#mapBody tr').filter({has:page.locator('th:text-is("Laboratorios FG · Naturales")')});
+  assert.equal(await naturalsRow.count(),1);
+  assert.equal(await naturalsRow.getByText('Sin laboratorio FG en este nivel').count(),2,
+    'Naturales orientada: C9 y C10 sin laboratorio FG, pero se conservan los otros espacios.');
+  assert.equal(await page.locator('#mapBody tr').filter({
+    has:page.locator('th:text-is("Talleres FO")')
+  }).locator('.constructor-group.orientada').count(),4,
+    'Los talleres FO son distintos de los laboratorios FG de Naturales.');
+  await page.screenshot({path:'test-artifacts/multipci-portal/pr47-naturales-8-laboratorios.png',fullPage:true});
+  await page.locator('#schoolHomeLink').click();
+    assert.deepEqual(network,[],'La revisión no debe enviar solicitudes a Supabase');
   assert.deepEqual(errors,[],'Errores JavaScript en la revisión: '+errors.join('; '));
   // Confirmar también que la URL pública de revisión sirve el archivo de ESTA rama.
   const external='https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/fix/recuperar-mapas-v2-20261120/revision-pr47.html';
