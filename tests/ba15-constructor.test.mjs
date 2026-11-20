@@ -54,3 +54,22 @@ test('CCC queda fuera del cálculo y de los cuatrimestres; el trabajo previo se 
  assert.deepEqual(draft,before);
  assert.equal(BA15_TERMS.length,8);
 });
+
+test('Mapa V2 BA +15: troncal anual ocupa ambos cuatrimestres con un único ID y cuatro planes',()=>{
+ const original=crearBorradorBa15(id);
+ let draft=crearEspacioBa15(original,{nivel:1,term:2,nombre:'Matemática',formato:'troncal'});
+ const annual=draft.niveles[0].espacios[0];
+ const math=draft.niveles[0].asignaturas.find(x=>x.nombre==='Matemática');
+ const language=draft.niveles[0].asignaturas.find(x=>x.nombre==='Lengua y Literatura');
+ assert.equal(annual.term,1);
+ assert.equal(annual.endTerm,2);
+ assert.equal(annual.duration,'anual');
+ assert.equal(annual.planes.length,4);
+ draft=asignarMateriaBa15(draft,{nivel:1,espacioId:annual.id,materiaId:math.id});
+ assert.deepEqual(draft.niveles[0].espacios[0].miembros,[math.id]);
+ assert.throws(()=>asignarMateriaBa15(draft,{nivel:1,espacioId:annual.id,materiaId:language.id}),/troncal anual/);
+ const validation=validarBorradorBa15(draft);
+ assert.ok(!validation.advertencias.some(x=>x.includes('falta ubicar Matemática')),
+  'Un único espacio anual cubre C1 y C2 sin duplicar el agrupamiento');
+ assert.equal(original.niveles[0].espacios.length,0,'No hay mutación del borrador anterior');
+});
