@@ -771,9 +771,12 @@ function closeOriginalV2(){
 }
 async function openOriginalV2(p){
   if(!['comun','tecnica','ba15'].includes(p?.model))throw Error('Modalidad curricular no reconocida');
-  const orientation=ORIENTATIONS.find(x=>x.id===p.orientation_id)?.name;
-  if(!orientation)throw Error('La orientación registrada no existe en el catálogo escolar.');
   const isMedia=p.model==='comun',isTechnical=p.model==='tecnica';
+  const orientation=isTechnical?p.specialty_name:
+    ORIENTATIONS.find(x=>x.id===p.orientation_id)?.name;
+  if(!orientation)throw Error(isTechnical?
+    'La especialidad técnica no está registrada en este PCI.':
+    'La orientación registrada no existe en el catálogo escolar.');
   const unitId=isMedia?V2_UNIT_ID:'mapa-v2-familia-'+p.model+'-v1';
   const baseVersion=isMedia?V2_BASE_VERSION:'v2-familia-'+p.model+'-20261120/1';
   const saved=await getUnit(p,'oferta','map',unitId,baseVersion);
