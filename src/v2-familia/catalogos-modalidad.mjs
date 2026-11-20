@@ -67,6 +67,22 @@ export async function loadBa15V2Profile(orientationId){
  return common('ba15',oriName,4,subjects,fgContents,foContents,
   'Base de Formación General: 1126 contenidos originales con NES 1+2→Nivel 1; NES 3→N2; NES 4→N3; NES 5→N4. Oferta FO orientada por verificar contra plan BA+15.');
 }
+// Área de un contenido técnico = área curricular de su materia en el mapa
+// (IF-2026-51169092: Física y Química integran Ciencias Naturales; Matemática
+// es troncal; el Taller de 3.º en adelante es Taller de la Especialidad).
+const TECH_MAP_AREAS=['Matemática','Lengua y Literatura','Lengua Adicional','Ciencias Naturales','Ciencias Sociales',
+ 'Educación Física','Educación Artística','Tecnología de la Representación','Taller del Primer Ciclo'];
+function technicalContentArea(section,field,year,subjects){
+ const name=text(section.asignatura);
+ const subject=subjects.find(x=>x.name===name&&(!year||x.year===year))||subjects.find(x=>x.name===name);
+ const area=text(subject?.area);
+ if(area==='Taller del Primer Ciclo'&&Number(subject?.year)>=3)return'Formación Técnico-Específica';
+ if(TECH_MAP_AREAS.includes(area))return area;
+ if(field==='formacion_cientifico_tecnologica')return'Formación Científico-Tecnológica';
+ if(field==='formacion_tecnica_especifica')return'Formación Técnico-Específica';
+ if(field==='practicas_profesionalizantes')return'Prácticas Profesionalizantes';
+ return area||'Formación General';
+}
 export async function loadTechnicalV2Profile(specialtyId){
  if(!safeId(specialtyId))throw Error('Identificador de especialidad técnica inválido');
  const specialty=findSpecialty(specialtyId);
@@ -102,10 +118,7 @@ export async function loadTechnicalV2Profile(specialtyId){
      const y=Number.isInteger(year)&&year>=1&&year<=6?year:null;
      const row={
        id:section.id+'@p'+Number(p.pagina_pdf),component,year:y,
-       area:field==='formacion_cientifico_tecnologica'?'Formación Científico-Tecnológica':
-         field==='formacion_tecnica_especifica'?'Formación Técnico-Específica':
-         field==='practicas_profesionalizantes'?'Prácticas Profesionalizantes':
-         subjects.find(x=>x.name===section.asignatura)?.area||'Formación General',
+       area:technicalContentArea(section,field,y,subjects),
        subject:text(section.asignatura),axis:text(section.asignatura),
        subaxis:'Página '+p.pagina_pdf+' · revisar selección curricular',
        text:text(p.texto_pagina),source:document.fuente_url,

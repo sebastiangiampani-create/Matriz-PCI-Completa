@@ -56,6 +56,12 @@
     const baseUrl=new URL('vendor/pci-sec-aprende-v2/',location.href).href;
     html=html.replace('<head>','<head><base href="'+baseUrl+'">');
     const shimScript=document.getElementById('v2LocalStorageAdapter').textContent;
+    if(config.model==='tecnica'){
+      const params=Object.fromEntries(new URLSearchParams(location.search));
+      config.specialtyId=params.specialty;
+      // Validador puro de IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026).
+      window.__PCI_NORMA=await import('./src/normativa/composicion-pci-20261117.mjs');
+    }
     window.__V2_MODAL=config; // Comparte datos ya verificados sin inyectar JSON masivo en HTML.
     html=html.replace('<script>',inline(shimScript)+'<script>');
     const closeScript='</scr'+'ipt>';

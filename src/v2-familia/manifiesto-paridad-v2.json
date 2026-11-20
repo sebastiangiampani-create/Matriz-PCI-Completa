@@ -45,14 +45,22 @@
       "original": "vendor/pci-sec-aprende-v2/src/v20-format-order.js",
       "sha256Original": "3be6891a78acbfae",
       "estado": "pendiente-normativa",
-      "motivo": "Orden Laboratorio/Taller de Formación Orientada en Nivel 4 y 5 de Media."
+      "motivo": "Orden Laboratorio/Taller de Formación Orientada en Nivel 4 y 5 de Media.",
+      "equivalentes": {
+        "tecnica": "No aplica: IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18 no define ese orden; los formatos de la Especialidad se ubican por nivel en v19-mapa-modalidad.",
+        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+      }
     },
     {
       "modulo": "v21-custom-social-ui",
       "original": "vendor/pci-sec-aprende-v2/src/v21-custom-social-ui.js",
       "sha256Original": "dc1e1eb24b2457f6",
       "estado": "pendiente-normativa",
-      "motivo": "Opción 10/12 laboratorios de Ciencias Sociales de Media."
+      "motivo": "Opción 10/12 laboratorios de Ciencias Sociales de Media.",
+      "equivalentes": {
+        "tecnica": "Reemplazado: Sociales 8 espacios (10 en Computación) y ubicación de Ciudadanía y Trabajo / Ciencia y Tecnología en 4.º–6.º, en v19-mapa-modalidad y validador IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18.",
+        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+      }
     },
     {
       "modulo": "v22-teachers",
@@ -69,14 +77,22 @@
       "original": "vendor/pci-sec-aprende-v2/src/v23-prearm.js",
       "sha256Original": "aa3265b39aadb086",
       "estado": "pendiente-normativa",
-      "motivo": "Prearmado de troncales y talleres según la estructura de Media."
+      "motivo": "Prearmado de troncales y talleres según la estructura de Media.",
+      "equivalentes": {
+        "tecnica": "No aplica: la norma no establece un prearmado; las troncales se ubican en celdas anuales por nivel.",
+        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+      }
     },
     {
       "modulo": "v24-social-interactions",
       "original": "vendor/pci-sec-aprende-v2/src/v24-social-interactions.js",
       "sha256Original": "147e956c58b8bc4e",
       "estado": "pendiente-normativa",
-      "motivo": "Intercambio de materias de Sociales Nivel 3 (C5/C6) de Media."
+      "motivo": "Intercambio de materias de Sociales Nivel 3 (C5/C6) de Media.",
+      "equivalentes": {
+        "tecnica": "Reemplazado: integración de Ciudadanía y Trabajo / Ciencia y Tecnología con la Formación Específica del mismo año (pág. 15), en v19-mapa-modalidad.",
+        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+      }
     },
     {
       "modulo": "v25-institutional-spaces",
@@ -133,7 +149,11 @@
       "original": "vendor/pci-sec-aprende-v2/src/v47-fo-content-atomicizer.js",
       "sha256Original": "7217abda754b75e8",
       "estado": "pendiente-normativa",
-      "motivo": "Atomización de contenidos FO de las orientaciones de Media."
+      "motivo": "Atomización de contenidos FO de las orientaciones de Media.",
+      "equivalentes": {
+        "tecnica": "No aplica: Técnica usa la base de contenidos de su especialidad.",
+        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+      }
     },
     {
       "modulo": "v47-phase2-matrix",
@@ -151,14 +171,22 @@
       "original": "vendor/pci-sec-aprende-v2/src/v29-fo-rules.js",
       "sha256Original": "1374915380cadbb7",
       "estado": "pendiente-normativa",
-      "motivo": "Reglas de Formación Orientada de Media."
+      "motivo": "Reglas de Formación Orientada de Media.",
+      "equivalentes": {
+        "tecnica": "Reemplazado: formatos de la Especialidad (Taller anual 3.º–6.º, Espacio anual 4.º–6.º, integraciones 4.º–6.º, Prácticas 5.º–6.º) según IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18.",
+        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+      }
     },
     {
       "modulo": "v30-fo-minimum-guard",
       "original": "vendor/pci-sec-aprende-v2/src/v30-fo-minimum-guard.js",
       "sha256Original": "c6c5be677035c592",
       "estado": "pendiente-normativa",
-      "motivo": "Mínimos de materias por espacio FO de Media (foN4, foLab5, foTaller5)."
+      "motivo": "Mínimos de materias por espacio FO de Media (foN4, foLab5, foTaller5).",
+      "equivalentes": {
+        "tecnica": "Reemplazado: mínimo de dos asignaturas, tope de 9 horas y cantidades por nivel con validateFinalComposition (IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18).",
+        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+      }
     },
     {
       "modulo": "v31-integration-hours-print",
@@ -438,7 +466,11 @@
       "original": "vendor/pci-sec-aprende-v2/src/v33-articulation-rules.js",
       "sha256Original": "6c0417898fe1ed2d",
       "estado": "pendiente-normativa",
-      "motivo": "Articulación FG → FO y tope de horas de Media."
+      "motivo": "Articulación FG → FO y tope de horas de Media.",
+      "equivalentes": {
+        "tecnica": "No aplica: la integración FG + FO en laboratorios es margen del Bachillerato (pág. 12).",
+        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+      }
     },
     {
       "modulo": "v71-simple-assignment-excel",

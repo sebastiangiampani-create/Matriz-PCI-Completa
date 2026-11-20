@@ -20,21 +20,27 @@ const byIdInMap=id=>allSubjects().find(s=>s.id===id);
 const isAssigned=(id,slot)=>!!cur().placements[slot]?.includes(id);
 const canSeeRow=(r,y)=>!r.allowedYears||r.allowedYears.includes(y);
 const matching=(text,values)=>values.some(v=>String(v).toLocaleLowerCase('es')===String(text).toLocaleLowerCase('es'));
+// Técnica: filas y ubicaciones según IF-2026-51169092-GCABA-SSPIE, págs. 13–18.
+// Se conservan las claves de slot existentes para no perder borradores.
+const SPECIALTY=String(CFG.specialtyId||'');
+const SIXTH_CORE=['computacion','administracion_empresas'].includes(SPECIALTY);
+const NORM=window.__PCI_NORMA||null;
+const techRepresentationYears=[1,2,...(CFG.model==='tecnica'&&(CFG.subjects||[]).some(x=>x.year===3&&/representaci/i.test(x.name))?[3]:[])];
 const profileRows=CFG.model==='tecnica'?[
- {k:'lengua',l:'Lengua y Literatura',area:'Lengua y Literatura',annual:true},
- {k:'matematica',l:'Matemática',area:'Matemática',annual:true},
- {k:'adicional',l:'Lengua Adicional',area:'Lengua Adicional',annual:true},
- {k:'naturales',l:'Espacios de integración · Ciencias Naturales',area:'Ciencias Naturales',format:'integracion',a:t=>true},
+ {k:'lengua',l:'Lengua y Literatura',area:'Lengua y Literatura',annual:true,allowedYears:[1,2,3,4,5]},
+ {k:'matematica',l:'Matemática',area:'Matemática',annual:true,allowedYears:SIXTH_CORE?[1,2,3,4,5,6]:[1,2,3,4,5]},
+ {k:'adicional',l:'Lengua Adicional',area:'Lengua Adicional',annual:true,allowedYears:SIXTH_CORE?[1,2,3,4,5,6]:[1,2,3,4,5]},
+ {k:'naturales',l:'Espacios de integración · Ciencias Naturales',area:'Ciencias Naturales',format:'integracion',a:t=>t<=6},
  {k:'socialA',l:'Espacios de integración · Ciencias Sociales',area:'Ciencias Sociales',format:'integracion',a:t=>true},
  {k:'artes',l:'Espacios formativos · Educación Artística',area:'Educación Artística',format:'formativo',a:t=>t<=2},
  {k:'ef',l:'Espacios formativos · Educación Física',area:'Educación Física',format:'formativo',a:t=>true},
- {k:'representacion',l:'Tecnología de la Representación',area:'Tecnología de la Representación',annual:true,allowedYears:[1,2]},
- {k:'taller1',l:'Espacio formativo · Taller primer ciclo',area:'Taller del Primer Ciclo',format:'formativo',annual:true,allowedYears:[1,2]},
- {k:'fct',l:'Espacios de integración · Científico-Tecnológica',area:'Formación Científico-Tecnológica',format:'integracion',a:t=>true},
- {k:'foN3',l:'Espacios de integración · Técnica Específica',area:'Formación Técnico-Específica',format:'integracion',a:t=>t>=5},
- {k:'foTaller5',l:'Espacios formativos · Taller especialidad',area:'Formación Técnico-Específica',format:'formativo',a:t=>t>=5},
+ {k:'representacion',l:'Tecnología de la Representación (anual)',area:'Tecnología de la Representación',annual:true,allowedYears:techRepresentationYears},
+ {k:'taller1',l:'Taller del 1.er ciclo (anual)',area:'Taller del Primer Ciclo',format:'formativo',annual:true,allowedYears:[1,2]},
+ {k:'foTaller5',l:'Taller de la Especialidad (anual)',area:'Formación Técnico-Específica',format:'formativo',annual:true,allowedYears:[3,4,5,6]},
  {k:'anualEsp',l:'Espacio anual de la especialidad',area:'Formación Técnico-Específica',annual:true,allowedYears:[4,5,6]},
- {k:'practicas',l:'Prácticas Profesionalizantes · según especialidad',area:'Prácticas Profesionalizantes',annual:true,allowedYears:[5,6]},
+ {k:'foN3',l:'Espacios de integración de la Especialidad',area:'Formación Técnico-Específica',format:'integracion',a:t=>t>=7},
+ {k:'fct',l:'Científico-Tecnológica · ubicación según plan de la especialidad',area:'Formación Científico-Tecnológica',format:'integracion',a:t=>true},
+ {k:'practicas',l:'Prácticas Profesionalizantes (Proyecto de Vinculación con el Futuro)',area:'Prácticas Profesionalizantes',annual:true,allowedYears:[5,6]},
  {k:'otros',l:'Otros formatos pedagógicos',area:'Otros formatos pedagógicos',format:'otros',a:t=>true}
 ]:[
  {k:'lengua',l:'Lengua y Literatura',area:'Lengua y Literatura',annual:true},
@@ -52,6 +58,8 @@ function profileRow(k){return profileRows.find(r=>r.k===k)}
 function mappedArea(s){
  const area=areaOf(s),n=String(s?.name||'').toLowerCase();
  if(CFG.model==='tecnica'){
+  if(['Matemática','Lengua y Literatura','Lengua Adicional','Ciencias Naturales','Ciencias Sociales','Educación Física','Educación Artística','Tecnología de la Representación','Taller del Primer Ciclo'].includes(area))return area;
+  if(/^tecnolog[ií]as? de la representaci/i.test(s.name))return'Tecnología de la Representación';
   if(fieldOf(s)==='formacion_cientifico_tecnologica')return'Formación Científico-Tecnológica';
   if(fieldOf(s)==='formacion_tecnica_especifica')return'Formación Técnico-Específica';
   if(fieldOf(s)==='practicas_profesionalizantes')return'Prácticas Profesionalizantes';
@@ -66,6 +74,36 @@ function mappedArea(s){
  if(/tutoría/i.test(s.name))return'Otros formatos pedagógicos';
  return area;
 }
+const FLEX_SOCIAL=/^(ciudadan[ií]a y trabajo|ciencia y tecnolog[ií]a)$/i;
+function techMember(r,s,level){
+ const area=mappedArea(s),name=String(s.name||''),fte=fieldOf(s)==='formacion_tecnica_especifica';
+ switch(r.k){
+  case 'lengua':case 'matematica':case 'adicional':case 'naturales':case 'artes':case 'ef':case 'representacion':
+   return area===r.area||(r.k==='adicional'&&/ingl[eé]s|lengua adicional/i.test(name))?[true,'']:[false,'Esta materia no pertenece a '+r.l+' del Nivel '+level];
+  case 'socialA':
+   if(area!=='Ciencias Sociales')return [false,'Esta materia no pertenece a Ciencias Sociales'];
+   if(level<=3||FLEX_SOCIAL.test(name))return [true,''];
+   if(SPECIALTY==='computacion'&&level===4&&/^(historia|geograf[ií]a)$/i.test(name))return [true,''];
+   return [false,'Desde Nivel 4 solo se ubican Ciudadanía y Trabajo / Ciencia y Tecnología (y, en Computación, Historia y Geografía en 4.º). IF-2026-51169092, pág. 13.'];
+  case 'taller1':
+   return level<=2&&area==='Taller del Primer Ciclo'?[true,'']:[false,'El Taller del 1.er ciclo es anual y corresponde a 1.º y 2.º año. Pág. 16.'];
+  case 'foTaller5':
+   return fte||(level>=3&&area==='Taller del Primer Ciclo')?[true,'']:[false,'El Taller de la Especialidad integra formación técnico-específica (3.º a 6.º). Pág. 17.'];
+  case 'anualEsp':
+   return fte?[true,'']:[false,'El Espacio anual corresponde a la formación técnico-específica de 4.º a 6.º. Pág. 17.'];
+  case 'foN3':
+   if(fte)return [true,''];
+   if(FLEX_SOCIAL.test(name))return [true,''];
+   return [false,'Los espacios de integración de la Especialidad reorganizan la formación técnico-específica de 4.º a 6.º. Pág. 18.'];
+  case 'fct':
+   return area==='Formación Científico-Tecnológica'?[true,'']:[false,'Esta materia no es de Formación Científico-Tecnológica'];
+  case 'practicas':
+   return fieldOf(s)==='practicas_profesionalizantes'?[true,'']:[false,'Solo Prácticas Profesionalizantes, en 5.º o 6.º. Pág. 13.'];
+  case 'otros':
+   return /Tutoría|EDI|Espacios de Definición/i.test(name)||s.origin==='CUSTOM'?[true,'']:[false,'Solo Tutoría, EDI y espacios agregados por la escuela'];
+ }
+ return [false,'Espacio curricular inexistente'];
+}
 function canAssign(slot,s){
  const level=slotYear(slot),term=slotTerm(slot),r=profileRow(String(slot).replace(/-(?:n|c)\d+$/,''));
  if(!s||!r||!level||level>LV||level<1)return [false,'Espacio curricular inexistente'];
@@ -74,6 +112,7 @@ function canAssign(slot,s){
  if(s.year!==level)return [false,'La materia de Nivel '+s.year+' no puede ubicarse en Nivel '+level];
  if(r.annual&&term)return [false,'El espacio anual debe ubicarse en una celda de nivel'];
  if(!r.annual&&!term)return [false,'Este formato requiere un cuatrimestre'];
+ if(CFG.model==='tecnica')return techMember(r,s,level);
  const area=mappedArea(s);
  if(r.k==='anualEsp'&&fieldOf(s)==='formacion_tecnica_especifica')return [true,''];
  if(r.k==='foN3'&&s.origin==='FO'&&fieldOf(s)!=='practicas_profesionalizantes')return [true,''];
@@ -138,6 +177,9 @@ const st=document.createElement('style');st.textContent=`
  .drag-ghost{position:fixed;z-index:10000;pointer-events:none;background:#fff;border:1px solid var(--ink);border-radius:9px;padding:7px 10px;max-width:240px;font:700 12px Archivo,Arial,sans-serif;box-shadow:0 8px 24px rgba(18,57,92,.18);transform:translate(10px,10px)}
  .rule-block{background:var(--danger-soft)!important;color:var(--danger)!important;border:1px solid #efb8c4}
  .modal-rule-note{padding:9px 0;line-height:1.45}
+ .legacy-out{outline:2px dashed var(--danger,#b42318);background:var(--danger-soft,#fdecee)}
+ .legacy-strip{margin:4px 0 8px;padding:8px;border:1px dashed var(--danger,#b42318);border-radius:9px;font-size:.78rem}
+ .norma-list{margin:6px 0 0 18px;padding:0}.norma-list li{margin:2px 0}
  `;document.head.appendChild(st);
 rowDefs=function(){return profileRows};
 label=function(k,t){const row=profileRow(k);return row?row.l+' · C'+t:'C'+t};
@@ -181,15 +223,25 @@ renderMatrix=function(){
      const slot=r.k+'-n'+year,defaultName=r.l+' · Nivel '+year;
      const name=cur().phase2V28?.groups?.[slot]?.name||defaultName;
      html+='<div class="cell annual"><div class="drop" data-slot="'+slot+'"><strong data-space-name="'+slot+'">'+esc(name)+'</strong>'+placed(slot)+'</div></div>';
+    }else if((cur().placements[r.k+'-n'+year]||[]).length){
+     const slot=r.k+'-n'+year;
+     html+='<div class="cell annual legacy-out"><div class="drop" data-slot="'+slot+'"><strong>Fuera de la norma · revisar</strong>'+placed(slot)+'</div></div>';
     }else html+='<div class="cell annual inactive">—</div>';
    }
   }else for(let t=1;t<=TERMS;t++){
    if(r.a(t)){
     const slot=r.k+'-c'+t,name=cur().phase2V28?.groups?.[slot]?.name||r.l+' · C'+t;
     html+='<div class="cell"><div class="drop" data-slot="'+slot+'"><strong data-space-name="'+slot+'">'+esc(name)+'</strong>'+placed(slot)+'</div></div>';
+   }else if((cur().placements[r.k+'-c'+t]||[]).length){
+    const slot=r.k+'-c'+t;
+    html+='<div class="cell legacy-out"><div class="drop" data-slot="'+slot+'"><strong>Fuera de la norma · revisar</strong>'+placed(slot)+'</div></div>';
    }else html+='<div class="cell inactive">—</div>';
   }
   html+='</div>';
+  if(r.annual){
+   const legacy=Object.keys(cur().placements).filter(k=>k.startsWith(r.k+'-c')&&(cur().placements[k]||[]).length);
+   if(legacy.length)html+='<div class="legacy-strip"><strong>'+esc(r.l)+':</strong> materias ubicadas como cuatrimestrales en un borrador anterior. Arrastrarlas a la celda anual del nivel: '+legacy.map(k=>'<span class="drop legacy-out" data-slot="'+esc(k)+'">C'+slotTerm(k)+' '+placed(k)+'</span>').join(' ')+'</div>';
+  }
  }
  $id('matrix').innerHTML=html;
  $id('matrix').querySelectorAll('[data-slot]').forEach(el=>{
@@ -208,17 +260,61 @@ renderMatrix=function(){
 assign=assignModal;removeOne=removeModal;validTarget=canAssign;
 renderSocial=function(){};
 validateSocial=function(){return{ok:true,msg:'Constructor '+(CFG.model==='tecnica'?'técnico':'BA +15')+' · distribución por niveles y campos propios. '+CFG.sourceNote}};
+const TECH_FORMAT={lengua:['troncal','Lengua y Literatura'],matematica:['troncal','Matemática'],adicional:['troncal','Lengua Adicional'],
+ naturales:['integracion_natural','Ciencias Naturales'],socialA:['integracion_social','Ciencias Sociales'],
+ artes:['espacio_formativo','Educación Artística'],ef:['espacio_formativo','Educación Física'],
+ representacion:['tecnologia_representacion','Tecnología de la Representación'],taller1:['taller_primer_ciclo','Taller del Primer Ciclo'],
+ foTaller5:['taller_especialidad','Formación Técnico-Específica'],anualEsp:['espacio_anual_especialidad','Formación Técnico-Específica'],
+ foN3:['integracion_especialidad','Formación Técnico-Específica'],practicas:['practicas_profesionalizantes','Prácticas Profesionalizantes']};
+const ANNUAL_FORMATS=['troncal','tecnologia_representacion','taller_primer_ciclo','taller_especialidad','espacio_anual_especialidad'];
+function techSpaces(){
+ const spaces=[];
+ for(const [slot,ids] of Object.entries(cur().placements)){
+  if(!ids?.length)continue;
+  const key=slot.replace(/-(?:n|c)\d+$/,''),def=TECH_FORMAT[key];if(!def)continue;
+  const list=ids.map(byIdInMap).filter(Boolean),term=slotTerm(slot),year=slotYear(slot);
+  const hours=list.map(x=>Number(x.weeklyHours));
+  let id=slot;
+  if(key==='socialA'&&year>=4)id=(list.every(x=>FLEX_SOCIAL.test(x.name))?'t-social-flex-':'t-social-comp-')+slot;
+  spaces.push({id,year,...(term?{term}:{}),format:def[0],area:def[1],name:def[1],
+   duration:ANNUAL_FORMATS.includes(def[0])?'anual':'cuatrimestral',
+   subjectIds:list.map(x=>x.id),weeklyHours:hours.length&&hours.every(h=>h>0)?hours.reduce((a,b)=>a+b,0):null,
+   character:cur().phase2V28?.groups?.[slot]?.character});
+ }
+ return spaces;
+}
+function showNorma(result){
+ const el=$id('validation');if(!el)return;
+ const items=[...result.errors.map(x=>['Error',x]),...result.warnings.filter(x=>x.code!=='HOURS_UNVERIFIED'&&x.code!=='SUBJECTS_PENDING').map(x=>['Pendiente',x])];
+ const unverified=result.warnings.filter(x=>x.code==='HOURS_UNVERIFIED').length;
+ el.className='validation '+(result.errors.length?'rule-block':'');
+ el.innerHTML='<strong>'+(result.errors.length?'El mapa no cumple la norma IF-2026-51169092-GCABA-SSPIE':'Composición estructuralmente consistente con IF-2026-51169092-GCABA-SSPIE')+'</strong>'+
+  '<ul class="norma-list">'+items.slice(0,12).map(([k,x])=>'<li>'+k+': '+esc(x.message)+(x.page?' (pág. '+x.page+')':'')+'</li>').join('')+
+  (items.length>12?'<li>… y '+(items.length-12)+' observaciones más.</li>':'')+
+  (unverified?'<li>Pendiente: '+unverified+' espacios sin carga horaria declarada en el catálogo (no se verifica el tope de 9 horas).</li>':'')+'</ul>';
+}
+window.V2ModalNorma={spaces:()=>CFG.model==='tecnica'?techSpaces():[],
+ evaluate:()=>CFG.model==='tecnica'&&NORM?NORM.validateFinalComposition({model:'tecnica',specialtyId:SPECIALTY,spaces:techSpaces()}):null};
 validateOffer=function(){
  const invalid=[];for(const [slot,ids] of Object.entries(cur().placements)){
   for(const id of ids){const s=byIdInMap(id);const [ok,msg]=canAssign(slot,s);if(!ok)invalid.push(msg)}
  }
  if(invalid.length){blocked(invalid[0]);return}
+ if(CFG.model==='tecnica'){
+  if(!NORM){blocked('No se pudo cargar la norma de composición; el mapa no se valida.');return}
+  const result=window.V2ModalNorma.evaluate();
+  cur().normaComposicion={ruleSet:result.ruleSet,source:result.source,errors:result.errors.length,warnings:result.warnings.length,checkedAt:new Date().toISOString()};
+  if(result.errors.length){cur().valid=false;save();renderOffer();showNorma(result);toast('El mapa no cumple la norma de composición',true);return}
+  cur().valid=true;save();renderOffer();showNorma(result);
+  toast('Mapa consistente con la norma. Quedan pendientes de revisión pedagógica y del plan oficial.');
+  return;
+ }
  cur().valid=true;save();renderOffer();
  toast('Mapa estructural guardado en el borrador. La homologación requiere revisar la norma y contenidos de esta modalidad.');
 };
 const modal=$id('rulesModal');
 if(modal){
- modal.innerHTML='<div class="modal-box"><div class="row" style="justify-content:space-between"><h2>Reglas de composición</h2><button id="closeModalV2" class="btn">Cerrar</button></div><div class="modal-rule-note"><strong>'+esc(CFG.model==='tecnica'?'Educación Técnica · seis niveles · C1–C12':'BA +15 · cuatro niveles · C1–C8')+'</strong></div><p>'+esc(CFG.sourceNote)+'</p><p>Se respetan los niveles y el campo curricular de cada materia. Los espacios de integración y formativos se muestran como formatos diferentes. El mapa no se homologa automáticamente.</p><p>Las materias cuatrimestrales se asignan mediante el mismo drag and drop de V2; la distribución se replica al cuatrimestre par del nivel. Los espacios anuales ocupan ambos.</p></div>';
+ modal.innerHTML='<div class="modal-box"><div class="row" style="justify-content:space-between"><h2>Reglas de composición</h2><button id="closeModalV2" class="btn">Cerrar</button></div><div class="modal-rule-note"><strong>'+esc(CFG.model==='tecnica'?'Educación Técnica · seis niveles · C1–C12':'BA +15 · cuatro niveles · C1–C8')+'</strong></div><p>'+esc(CFG.sourceNote)+'</p>'+(CFG.model==='tecnica'?'<p><strong>IF-2026-51169092-GCABA-SSPIE · Modalidad Técnica</strong></p><ul class="norma-list"><li>Troncales anuales: Lengua y Literatura 1.º–5.º; Matemática y Lengua Adicional 1.º–5.º (6.º en Computación y Administración de Empresas).</li><li>Ciencias Sociales: 8 espacios de integración cuatrimestrales (10 en Computación; 4/5 EIO y 4/5 EIE). Ciudadanía y Trabajo / Ciencia y Tecnología se ubican en 4.º, 5.º o 6.º y pueden integrarse con la Formación Específica del mismo año.</li><li>Ciencias Naturales: 6 espacios en 1.º a 3.º (4 EIO y 2 EIE); solo en 1.º puede haber una única asignatura.</li><li>Educación Física: 12 espacios formativos cuatrimestrales. Educación Artística: 2, en 1.º.</li><li>Tecnología de la Representación: 2 o 3 anuales. Taller del 1.er ciclo: 2 anuales (1.º y 2.º).</li><li>Taller de la Especialidad: anual, de 3.º a 6.º según especialidad. Espacio anual de la especialidad: 4.º, 5.º y 6.º.</li><li>Espacios de integración de la Especialidad: 4 a 6 por año en 4.º a 6.º; no rige el tope de 9 horas.</li><li>Prácticas Profesionalizantes: 1 o 2, en 5.º/6.º, dentro del Proyecto de Vinculación con el Futuro.</li><li>Ningún espacio de integración o formativo supera 9 horas cátedra, salvo los de la Especialidad. Cada espacio integra al menos dos asignaturas del mismo año, salvo excepción del plan.</li></ul>':'<p>Se respetan los niveles y el campo curricular de cada materia. Los espacios de integración y formativos se muestran como formatos diferentes. El mapa no se homologa automáticamente.</p>')+'<p>Las materias cuatrimestrales se asignan mediante el mismo drag and drop de V2; la distribución se replica al cuatrimestre par del nivel. Los espacios anuales ocupan ambos.</p></div>';
  modal.querySelector('#closeModalV2').onclick=()=>modal.classList.remove('open');
 }
 window.V2ModalMap={model:CFG.model,levels:LV,terms:TERMS,rowDefs,canAssign,assign:assignModal,move:moveModal,remove:removeModal};

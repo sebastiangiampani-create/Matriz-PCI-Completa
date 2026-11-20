@@ -118,16 +118,29 @@ const PREVIOS={
   'v91-plans-coverage':{archivo:'src/v2-familia/v91-plans-coverage.js',motivo:'Cobertura de planes sobre la base de la modalidad.'}
 };
 
-/** Reglas curriculares de Media: requieren normativa de cada modalidad. */
+/**
+ * Reglas curriculares de Media: no se copian. Para cada modalidad se indica
+ * cómo se resuelve según su propia norma (o qué falta).
+ */
+const NORMA_TECNICA='IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18';
+const SIN_NORMA_BA15='Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15.';
 const PENDIENTES={
-  'v20-format-order':'Orden Laboratorio/Taller de Formación Orientada en Nivel 4 y 5 de Media.',
-  'v21-custom-social-ui':'Opción 10/12 laboratorios de Ciencias Sociales de Media.',
-  'v23-prearm':'Prearmado de troncales y talleres según la estructura de Media.',
-  'v24-social-interactions':'Intercambio de materias de Sociales Nivel 3 (C5/C6) de Media.',
-  'v29-fo-rules':'Reglas de Formación Orientada de Media.',
-  'v30-fo-minimum-guard':'Mínimos de materias por espacio FO de Media (foN4, foLab5, foTaller5).',
-  'v33-articulation-rules':'Articulación FG → FO y tope de horas de Media.',
-  'v47-fo-content-atomicizer':'Atomización de contenidos FO de las orientaciones de Media.'
+  'v20-format-order':{motivo:'Orden Laboratorio/Taller de Formación Orientada en Nivel 4 y 5 de Media.',
+    tecnica:'No aplica: '+NORMA_TECNICA+' no define ese orden; los formatos de la Especialidad se ubican por nivel en v19-mapa-modalidad.',ba15:SIN_NORMA_BA15},
+  'v21-custom-social-ui':{motivo:'Opción 10/12 laboratorios de Ciencias Sociales de Media.',
+    tecnica:'Reemplazado: Sociales 8 espacios (10 en Computación) y ubicación de Ciudadanía y Trabajo / Ciencia y Tecnología en 4.º–6.º, en v19-mapa-modalidad y validador '+NORMA_TECNICA+'.',ba15:SIN_NORMA_BA15},
+  'v23-prearm':{motivo:'Prearmado de troncales y talleres según la estructura de Media.',
+    tecnica:'No aplica: la norma no establece un prearmado; las troncales se ubican en celdas anuales por nivel.',ba15:SIN_NORMA_BA15},
+  'v24-social-interactions':{motivo:'Intercambio de materias de Sociales Nivel 3 (C5/C6) de Media.',
+    tecnica:'Reemplazado: integración de Ciudadanía y Trabajo / Ciencia y Tecnología con la Formación Específica del mismo año (pág. 15), en v19-mapa-modalidad.',ba15:SIN_NORMA_BA15},
+  'v29-fo-rules':{motivo:'Reglas de Formación Orientada de Media.',
+    tecnica:'Reemplazado: formatos de la Especialidad (Taller anual 3.º–6.º, Espacio anual 4.º–6.º, integraciones 4.º–6.º, Prácticas 5.º–6.º) según '+NORMA_TECNICA+'.',ba15:SIN_NORMA_BA15},
+  'v30-fo-minimum-guard':{motivo:'Mínimos de materias por espacio FO de Media (foN4, foLab5, foTaller5).',
+    tecnica:'Reemplazado: mínimo de dos asignaturas, tope de 9 horas y cantidades por nivel con validateFinalComposition ('+NORMA_TECNICA+').',ba15:SIN_NORMA_BA15},
+  'v33-articulation-rules':{motivo:'Articulación FG → FO y tope de horas de Media.',
+    tecnica:'No aplica: la integración FG + FO en laboratorios es margen del Bachillerato (pág. 12).',ba15:SIN_NORMA_BA15},
+  'v47-fo-content-atomicizer':{motivo:'Atomización de contenidos FO de las orientaciones de Media.',
+    tecnica:'No aplica: Técnica usa la base de contenidos de su especialidad.',ba15:SIN_NORMA_BA15}
 };
 
 /** Lee la secuencia exacta de módulos del V2 original. */
@@ -185,7 +198,8 @@ export async function construir(){
     }else if(PREVIOS[modulo]){
       entrada.estado='derivado-previo';entrada.archivos={tecnica:PREVIOS[modulo].archivo,ba15:PREVIOS[modulo].archivo};entrada.motivo=PREVIOS[modulo].motivo;
     }else if(PENDIENTES[modulo]){
-      entrada.estado='pendiente-normativa';entrada.motivo=PENDIENTES[modulo];
+      entrada.estado='pendiente-normativa';entrada.motivo=PENDIENTES[modulo].motivo;
+      entrada.equivalentes={tecnica:PENDIENTES[modulo].tecnica,ba15:PENDIENTES[modulo].ba15};
     }else{
       entrada.estado='original';entrada.archivos={tecnica:ruta,ba15:ruta};
     }

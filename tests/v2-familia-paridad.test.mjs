@@ -35,6 +35,7 @@ test('cada módulo tiene un estado y las reglas de Media no se cargan en otras m
     if(m.estado==='pendiente-normativa'){
       assert.equal(m.archivos,undefined,`${m.modulo} no debe cargarse sin normativa de la modalidad`);
       assert.ok(m.motivo);
+      assert.ok(m.equivalentes?.tecnica&&m.equivalentes?.ba15,`${m.modulo}: falta indicar cómo se resuelve en cada modalidad`);
     }else{
       for(const perfil of Object.keys(PERFILES))assert.ok(m.archivos?.[perfil],`${m.modulo} sin archivo para ${perfil}`);
     }
