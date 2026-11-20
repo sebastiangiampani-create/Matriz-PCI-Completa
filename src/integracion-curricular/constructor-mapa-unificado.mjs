@@ -266,6 +266,12 @@ export function createGrouping(data,{year,term,kind,area,name,replicate=true}){
     throw Error('Acción no permitida: la integración FG–FO solo corresponde a Naturales o Sociales.');
   if(k==='integrado'&&level<3)
     throw Error('Las articulaciones FG–FO requieren Formación Orientada desde 3.º año.');
+  // Anexo II 17/11/2026: la orientación Ciencias Naturales conserva
+  // ocho laboratorios de FG (C1-C8), no diez. Las otras orientaciones
+  // mantienen diez (C1-C10). No se modifica ni excluye ningún histórico.
+  if(draft.orientationId==='ciencias_naturales'&&area==='Ciencias Naturales'&&
+     k==='laboratorio'&&level===5)
+    throw Error('Ciencias Naturales orientada tiene ocho laboratorios FG, de C1 a C8. No se agrega un laboratorio FG en C9 o C10; los talleres FO pertenecen a otra fila.');
   const row=k==='integrado'?'Integración FG–FO':mapRow(area,k);
   const id='borrador-'+(globalThis.crypto?.randomUUID?.()||Math.random().toString(36).slice(2));
   const main={id,name:String(name).trim(),kind:k,area:String(area).trim(),
