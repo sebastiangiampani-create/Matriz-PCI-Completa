@@ -277,16 +277,18 @@ function assignTutorContent(contentId) {
   toast('Contenido de Tutoría ubicado.');
 }
 
+function setTextIfChanged(element, text) {
+  if (element && element.textContent !== text) element.textContent = text;
+}
+
 function renderTutorBag() {
   const current = state();
   if (!current || current.current !== OTHER_AREA) return;
   ensureTutorFilterOptions();
   const list = $('contentList');
   if (!list) return;
-  list.querySelectorAll('.pci-tutoria-item').forEach((item) => item.remove());
   const visible = tutorVisibleRows();
   const map = assignments();
-  if (visible.length && list.querySelector('.empty-state')) list.querySelector('.empty-state').remove();
 
   const html = visible.map((content) => {
     const locations = map.get(content.id) ?? [];
@@ -302,14 +304,25 @@ function renderTutorBag() {
         </div>
       </article>`;
   }).join('');
-  list.insertAdjacentHTML('beforeend', html);
 
-  list.querySelectorAll('[data-pci-assign-tutor]').forEach((button) => {
-    button.addEventListener('click', (event) => {
-      event.stopPropagation();
-      assignTutorContent(button.dataset.pciAssignTutor);
+  // Renderizado idempotente: solo se reconstruye la bolsa de Tutoría cuando
+  // cambia su contenido. Reinsertar siempre los nodos disparaba los demás
+  // observadores del DOM y generaba un ciclo de refresco permanente que
+  // desprendía los botones antes de poder pulsarlos.
+  const signature = html;
+  const rendered = list.querySelectorAll('.pci-tutoria-item').length;
+  if (list.__pciTutorSignature !== signature || rendered !== visible.length) {
+    list.querySelectorAll('.pci-tutoria-item').forEach((item) => item.remove());
+    if (visible.length && list.querySelector('.empty-state')) list.querySelector('.empty-state').remove();
+    list.insertAdjacentHTML('beforeend', html);
+    list.__pciTutorSignature = signature;
+    list.querySelectorAll('[data-pci-assign-tutor]').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        assignTutorContent(button.dataset.pciAssignTutor);
+      });
     });
-  });
+  }
 
   const source = [...data().filter((content) => content.area === 'Tecnologías'), ...tutorData];
   const query = $('contentSearch')?.value.trim().toLocaleLowerCase('es') ?? '';
@@ -325,8 +338,8 @@ function renderTutorBag() {
       && (!pendingOnly || !locations.length);
   }).length;
   const pending = source.filter((content) => !(map.get(String(content.id))?.length)).length;
-  if ($('bagMeta')) $('bagMeta').textContent = `${visibleCombined} visibles · ${pending} pendientes`;
-  if ($('coverageHint')) $('coverageHint').textContent = 'Otros formatos incorpora también Tutoría. Sus contenidos pueden ubicarse únicamente en Nivel 1 y Nivel 2 (C1–C4).';
+  setTextIfChanged($('bagMeta'), `${visibleCombined} visibles · ${pending} pendientes`);
+  setTextIfChanged($('coverageHint'), 'Otros formatos incorpora también Tutoría. Sus contenidos pueden ubicarse únicamente en Nivel 1 y Nivel 2 (C1–C4).');
 }
 
 function renderTutorPlacementWarning() {
