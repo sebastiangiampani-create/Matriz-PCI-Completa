@@ -87,6 +87,8 @@ jobs:
         run: |
           mkdir -p test-artifacts/multipci-portal
           node tests/multipci-portal-browser.mjs
+      - name: Revisar preview aislada PR47 sin conexión a Supabase
+        run: node tests/preview-pr47-browser.mjs
       - name: Guardar las capturas sin publicar en main
         if: always()
         uses: actions/upload-artifact@v4
