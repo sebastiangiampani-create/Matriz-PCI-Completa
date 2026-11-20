@@ -432,7 +432,6 @@ async function start() {
 
   observer = new MutationObserver(scheduleRefresh);
   observer.observe(document.body, { childList: true, subtree: true });
-  window.__pciCurriculumUiReady=true;
   // openArea puede actualizar el estado y el tablero sin mutaciones de nodos
   // observables por el complemento. Forzamos la actualización de sus reglas.
   const api=window.PCIApp;
@@ -455,6 +454,7 @@ async function start() {
 
   if ($('overview')?.classList.contains('active')) window.PCIApp.openOverview();
   scheduleRefresh();
+  window.__pciCurriculumUiReady=true;
 }
 
 start().catch((error) => {
