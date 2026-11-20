@@ -1,0 +1,32 @@
+name: Paquete portable de prueba - tres motores V2
+on:
+  push:
+    branches: [feature/tres-entornos-v2-paralelos-20261120]
+    paths:
+      - experiencias-v2/**
+      - .github/workflows/descargar-revision-tres-v2.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  archivo-para-evaluar:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar paquete completo ejecutable con servidor local
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          zip -q -r dist/PCI_V2_Media_Tecnica_BA15.zip . \
+            -x ".git/*" ".github/*" "node_modules/*" "test-artifacts/*" \
+               "dist/*" "*.env" "**/.env" "*.pem" "**/*.pem" "*.key" "**/*.key"
+          test -s dist/PCI_V2_Media_Tecnica_BA15.zip
+          unzip -l dist/PCI_V2_Media_Tecnica_BA15.zip | grep "experiencias-v2/INICIAR_EN_WINDOWS.cmd"
+          unzip -l dist/PCI_V2_Media_Tecnica_BA15.zip | grep "vendor/pci-sec-aprende-v2/app-core.html"
+      - name: Adjuntar ZIP descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: PCI-V2-para-probar-sin-produccion
+          path: dist/PCI_V2_Media_Tecnica_BA15.zip
+          retention-days: 7
