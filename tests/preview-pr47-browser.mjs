@@ -64,6 +64,29 @@ try{
     const card=page.locator('.school-offer-card').filter({hasText:name});
     await card.locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
     await page.locator(visible).waitFor({timeout:30000});
+    if(name==='Comunicación'){
+      assert.equal(await page.locator('#mapHead tr').count(),2,
+        'Media recupera cabecera de niveles y cuatrimestres V2.');
+      assert.equal(await page.locator('#mapBody tr').count(),14,
+        'Media conserva todas las filas de FG y FO.');
+      assert.equal(await page.locator('#mapBody [data-pci-annual=true]').count(),15,
+        'Las tres troncales de Media ocupan cinco pares anuales.');
+    }
+    if(name==='Computación'){
+      assert.equal(await page.locator('#mapHead tr').count(),2,
+        'Técnica conserva seis niveles con C1–C12.');
+      assert.equal(await page.locator('#mapHead tr').last().locator('th').count(),12);
+      assert.ok(await page.locator('#mapBody [data-pci-annual=true]').count()>0,
+        'Técnica representa espacios anuales que ocupan ambos cuatrimestres.');
+    }
+    if(name==='Economía y Administración'){
+      assert.equal(await page.locator('#ba15Builder .mapTable thead tr').count(),2,
+        'BA +15 muestra nivel y cuatrimestre por separado.');
+      assert.equal(await page.locator('#ba15Builder .mapTable tbody tr').count(),8,
+        'BA +15 diferencia troncales, ciencias, talleres y FO.');
+      assert.equal(await page.locator('#ba15Builder .mapTable [data-pci-annual=true]').count(),12,
+        'Las troncales BA +15 ocupan cuatro pares anuales cada una.');
+    }
     await page.screenshot({path:'test-artifacts/multipci-portal/pr47-'+
       (name==='Comunicación'?'media':name==='Computación'?'tecnica':'ba15')+'.png',fullPage:true});
     await page.locator('#schoolHomeLink').click();
