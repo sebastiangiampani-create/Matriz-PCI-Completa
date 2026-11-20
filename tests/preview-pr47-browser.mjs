@@ -71,7 +71,13 @@ try{
   }
   assert.deepEqual(network,[],'La revisión no debe enviar solicitudes a Supabase');
   assert.deepEqual(errors,[],'Errores JavaScript en la revisión: '+errors.join('; '));
-  console.log('PR47 aislado: tres PCI, navegación y guardado/reapertura simulados correctos.');
+  // Confirmar también que la URL pública de revisión sirve el archivo de ESTA rama.
+  const external='https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/fix/rescate-constructor-v2-reglas-20261119/revision-pr47.html';
+  const publicResponse=await fetch(external,{signal:AbortSignal.timeout(20000)});
+  assert.equal(publicResponse.status,200,'El enlace externo de revisión debe devolver HTTP 200');
+  const publicHtml=await publicResponse.text();
+  assert.match(publicHtml,/src\/preview-pr47-mock\.js/,'El enlace debe servir la vista aislada, no producción');
+  console.log('PR47 aislado: tres PCI, guardado simulado, cero requests Supabase y enlace externo disponible.');
 }finally{
   await browser?.close();
   server.close();
