@@ -7,7 +7,7 @@ const button=(label,callback,klass='btn')=>{const x=element('button',label,klass
 const field=(label,value,callback,textarea=false)=>{const l=element('label');l.append(element('span',label));const x=element(textarea?'textarea':'input');x.value=value||'';x.addEventListener('change',()=>callback(x.value));l.append(x);return l;};
 const select=(label,options,change)=>{const l=element('label');l.append(element('span',label));const s=element('select');for(const [v,n] of options){const op=element('option',n);op.value=v;s.append(op)}s.addEventListener('change',()=>change(s.value));l.append(s);return {wrap:l,select:s};};
 const download=(draft)=>{const blob=new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='PCI-BA15-'+draft.schoolId+'-'+draft.pciId+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyDemo=false,saveRemote=null,canEditRemote=false,savedRevision=0}={}){
+export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyDemo=false,saveRemote=null,canEditRemote=false,savedRevision=0,developmentHost=null,onPhaseChange=null}={}){
  const key=['pci-ba15-borrador-local-v1',identity.schoolId,identity.pciId].join(':');
  let draft=initialDraft?structuredClone(initialDraft):crearBorradorBa15(identity),term=1,selected=null,planIndex=0,view='mapa';
  let nesContents=[],nesLoading=true,nesError='',dirty=false,remoteBusy=false,recoveryDraft=null;
@@ -23,13 +23,13 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   if(matchesIdentity(saved)){
    if(initialDraft&&JSON.stringify(saved)!==JSON.stringify(initialDraft)){
     if(confirm('Hay un borrador BA +15 local distinto del servidor. ¿Recuperarlo para revisar y guardar sin perder lo trabajado?')){
-     draft=saved;dirty=true;structureDirty=true;structureDirty=true;
+     draft=saved;dirty=true;structureDirty=true;
     }else{
      recoveryDraft=saved;
      try{sessionStorage.setItem(key+'.recovery',JSON.stringify(saved));}catch{}
     }
    }else if(!initialDraft){
-    draft=saved;dirty=true;
+    draft=saved;dirty=true;structureDirty=true;
    }
   }
  }catch{}
@@ -95,20 +95,33 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
    if(id)assign(id);
   });
  }
+ function setPhase(next,{silent=false}={}){
+  if(next!=='oferta'&&next!=='desarrollo'&&next!=='fo')return false;
+  if(next!=='oferta'&&!getPhaseStatus().ready)return false;
+  view=next==='oferta'?'mapa':'planes';selected=null;planIndex=0;render();
+  if(!silent&&typeof onPhaseChange==='function')
+   onPhaseChange(next==='oferta'?'oferta':'desarrollo');
+  return true;
+ }
  function getPhaseStatus(){
   const check=validarBorradorBa15(draft);
   return phaseGate({revision:remoteRevision,dirty:structureDirty,
-    issues:[...check.errores,...check.advertencias],label:'BA +15 C1–C8'});
+    issues:check.errores,warnings:check.advertencias,label:'BA +15 C1–C8'});
  }
  function render(){
   host.replaceChildren();
+  if(developmentHost)developmentHost.replaceChildren();
+  const showingDevelopment=view==='planes'&&!!developmentHost;
+  host.hidden=showingDevelopment;
+  if(developmentHost)developmentHost.hidden=!showingDevelopment;
+  const surface=showingDevelopment?developmentHost:host;
   const tools=element('div','','actions');
   const validation=validarBorradorBa15(draft),gate=getPhaseStatus();
-  const builder=button('1 · Constructor C1–C8',()=>{view='mapa';render()},view==='mapa'?'btn primary':'btn');
+  const builder=button('1 · Constructor C1–C8',()=>setPhase('oferta'),view==='mapa'?'btn primary':'btn');
   const develop=button('2 · Desarrollo curricular',()=>{
     const check=getPhaseStatus();
     if(!check.ready){status.textContent='Primero completá y guardá el mapa BA +15. '+check.detail;view='mapa';render();return;}
-    developmentUnlocked=true;view='planes';render();
+    developmentUnlocked=true;setPhase('desarrollo');
   },view==='planes'?'btn primary':'btn');
   develop.disabled=!gate.ready;
   develop.title=gate.ready?'Abrir planes heredados de este PCI':'Completá todas las materias de C1–C8 y guardá el mapa antes de desarrollar.';
@@ -117,14 +130,14 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
     button('Exportar borrador JSON',()=>download(draft)));
   if(saveRemote&&canEditRemote&&!readOnlyDemo){const online=button(remoteBusy?'Guardando…':'Guardar BA +15 online',persistRemote,'btn primary');online.disabled=!dirty||remoteBusy;tools.append(online);}
   if(recoveryDraft&&!readOnlyDemo)tools.append(button('Descargar borrador anterior protegido',()=>download(recoveryDraft)));
-  host.append(tools,status,element('p',phaseText(gate),'pci-phase-state'+(gate.ready?' ready':'')));
-  if(view==='planes'&&term<=2){host.append(element('p',nesLoading?'Cargando contenidos FG oficiales NES de 1.º y 2.º…':nesError?'No se pudo cargar la base NES: '+nesError:'Base NES 1.º + 2.º disponible para Nivel I: '+nesContents.length+' contenidos con año de origen identificado.','muted'));}
+  surface.append(tools,status,element('p',phaseText(gate),'pci-phase-state'+(gate.ready?' ready':'')));
+  if(view==='planes'&&term<=2){surface.append(element('p',nesLoading?'Cargando contenidos FG oficiales NES de 1.º y 2.º…':nesError?'No se pudo cargar la base NES: '+nesError:'Base NES 1.º + 2.º disponible para Nivel I: '+nesContents.length+' contenidos con año de origen identificado.','muted'));}
   if(view==='control'){
    const total=draft.niveles.reduce((n,l)=>n+l.espacios.length,0);
    const panel=element('div','','workCard');panel.append(element('h3','Control de construcción curricular'),element('p',total+' espacios creados · '+draft.niveles.length+' niveles · 8 cuatrimestres.'));
    const issues=[...validation.errores.map(x=>'ERROR: '+x),...validation.advertencias.map(x=>'REVISAR: '+x)];
    panel.append(element('p',validation.valido?'Cobertura y articulaciones documentadas en la propuesta de prueba.':'Pendientes de revisión: '+issues.length));
-   const ul=element('ul');for(const m of issues){ul.append(element('li',m));}panel.append(ul);host.append(panel);return;
+   const ul=element('ul');for(const m of issues){ul.append(element('li',m));}panel.append(ul);surface.append(panel);return;
   }
   if(view==='mapa'){
    const matrix=element('div','','mapScroll'),tbl=element('table','','mapTable');
@@ -158,13 +171,13 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
     }
     body.append(row);
    }
-   tbl.append(body);matrix.append(tbl);host.append(matrix);
+   tbl.append(body);matrix.append(tbl);surface.append(matrix);
   }
   const nav=element('div','','demoTermNav');
   for(const t of BA15_TERMS)nav.append(button('C'+t.numero+' · Nivel '+['I','II','III','IV'][t.nivel-1],()=>{term=t.numero;selected=null;planIndex=0;render()},'tab'+(t.numero===term?' active':'')));
-  host.append(nav);
+  surface.append(nav);
   const levelNum=Math.floor((term-1)/2)+1,level=draft.niveles[levelNum-1];
-  const summary=element('p','Nivel '+['I','II','III','IV'][levelNum-1]+' · C'+term+' · '+level.asignaturas.reduce((a,s)=>a+s.horas,0)+' horas semanales oficiales del nivel · '+level.espacios.filter(e=>e.term===term).length+' espacios del cuatrimestre','muted');host.append(summary);
+  const summary=element('p','Nivel '+['I','II','III','IV'][levelNum-1]+' · C'+term+' · '+level.asignaturas.reduce((a,s)=>a+s.horas,0)+' horas semanales oficiales del nivel · '+level.espacios.filter(e=>e.term===term).length+' espacios del cuatrimestre','muted');surface.append(summary);
   const layout=element('div','','ba15BuilderGrid');
   const aside=element('section','','workCard'),main=element('section','','workCard');
   if(view==='mapa'){
@@ -269,16 +282,30 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
       };
       query.addEventListener('input',showMatches);contentBox.append(query,results);showMatches();card.append(contentBox);
      }
-     for(const [key,label] of [['punto_partida','Punto de partida'],['indagacion','Indagación'],['produccion','Producción'],['evaluacion','Evaluación']])
-      card.append(field(label,p.etapas[key],v=>update(t=>{t.etapas[key]=v;}),true));
+     card.append(element('p',e.planes.length+' planes · '+
+        new Set(e.planes.flatMap(plan=>Array.isArray(plan.contenidos)?plan.contenidos:[])).size+
+        ' contenidos únicos vinculados · cobertura oficial por verificar','pci-development-plan-count'));
+      for(const [key,label] of [['punto_partida','Punto de partida'],['indagacion','Indagación'],['produccion','Producción'],['evaluacion','Evaluación']]){
+       const previous=p.etapas?.[key],value=typeof previous==='string'?previous:previous?.description||'';
+       card.append(field(label,value,v=>update(t=>{
+        t.etapas=t.etapas||{};
+        const old=t.etapas[key];
+        t.etapas[key]=old&&typeof old==='object'?{...old,description:v}:v;
+       }),true));
+      }
     }
     if(view==='mapa'&&canCompose())card.append(button('Eliminar agrupamiento',()=>{if(confirm('¿Eliminar este espacio del borrador local?'))change(()=>{selected=null;return eliminarEspacioBa15(draft,{nivel:levelNum,espacioId:e.id});});},'btn'));
    }
    main.append(card);
   }
-  layout.append(aside,main);host.append(layout);
+  layout.append(aside,main);surface.append(layout);
  }
  render();
  loadV2Fg().then(rows=>{nesContents=rows.filter(x=>x.year===1||x.year===2);nesLoading=false;render();}).catch(err=>{nesLoading=false;nesError=err.message||String(err);render();});
- return {destroy(){host.replaceChildren();},getDraft(){return structuredClone(draft);},isDirty(){return dirty;}};
+ return {
+  destroy(){host.replaceChildren();host.hidden=false;
+   if(developmentHost){developmentHost.replaceChildren();developmentHost.hidden=true;}},
+  getDraft(){return structuredClone(draft);},isDirty(){return dirty;},
+  setPhase,phaseStatus:getPhaseStatus
+ };
 }
