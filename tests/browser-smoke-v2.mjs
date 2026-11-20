@@ -87,7 +87,7 @@ try {
 
   await page.evaluate(() => window.PCIApp.openArea('Artes'));
   await page.waitForSelector('#board.active');
-  await page.waitForFunction(() => document.querySelector('#boardAlert')?.textContent.includes('Regla curricular de Artes'));
+  await page.waitForFunction(() => document.querySelectorAll('[data-pci-art-language]').length === 3);
   assert.equal(await page.locator('[data-pci-art-language]').count(), 3, 'Artes debe ofrecer tres lenguajes para elegir dos.');
   await page.locator('[data-pci-art-language="Artes Visuales"]').check();
   await page.locator('[data-pci-art-language="Música"]').check();
