@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - feature/v2-tres-modalidades-sin-superposicion-20261120
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
