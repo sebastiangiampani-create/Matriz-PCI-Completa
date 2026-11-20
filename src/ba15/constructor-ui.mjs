@@ -106,7 +106,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
  function getPhaseStatus(){
   const check=validarBorradorBa15(draft);
   return phaseGate({revision:remoteRevision,dirty:structureDirty,
-    issues:check.errores,warnings:check.advertencias,label:'BA +15 C1–C8'});
+    issues:[...check.errores,...check.advertencias],label:'BA +15 C1–C8'});
  }
  function render(){
   host.replaceChildren();
