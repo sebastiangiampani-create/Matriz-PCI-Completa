@@ -1,0 +1,62 @@
+name: Incorporar V2 original (lectura unicamente)
+on:
+  push:
+    branches:
+      - feature/v2-original-reutilizado-20261120
+    paths:
+      - .github/workflows/copiar-v2-original-solo-lectura.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  vendor-v2:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout del destino - exclusivamente Matriz PCI Completa
+        uses: actions/checkout@v4
+        with:
+          ref: feature/v2-original-reutilizado-20261120
+          persist-credentials: true
+      - name: Checkout SOLO LECTURA del original V2 en commit inmovilizado
+        uses: actions/checkout@v4
+        with:
+          repository: sebastiangiampani-create/pci-sec-aprendeV2
+          ref: 883707e281894990b537032880922f4c078689ad
+          path: _v2_referencia_lectura
+          persist-credentials: false
+      - name: Copiar archivos originales sin transformarlos
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="vendor/pci-sec-aprende-v2"
+          mkdir -p "$dest"
+          for name in app.html app-core.html app-v2.js README.md LICENSE.md; do
+            cp "_v2_referencia_lectura/$name" "$dest/$name"
+          done
+          for name in src data assets; do
+            cp -a "_v2_referencia_lectura/$name" "$dest/$name"
+          done
+          cat > "$dest/SOURCE_SNAPSHOT.txt" <<'EOF'
+          Repositorio de origen: sebastiangiampani-create/pci-sec-aprendeV2
+          Commit original: 883707e281894990b537032880922f4c078689ad
+          Original copiado sin alterar archivos. No escribir jamás al repositorio de origen.
+          EOF
+          test -f "$dest/src/v19-map.js"
+          test -f "$dest/src/v47-phase2-matrix.js"
+          test -f "$dest/data/materias-v2.json"
+          cmp "_v2_referencia_lectura/src/v19-map.js" "$dest/src/v19-map.js"
+          cmp "_v2_referencia_lectura/app-core.html" "$dest/app-core.html"
+          test ! -d "$dest/.git"
+      - name: Guardar snapshot UNICAMENTE en la rama de trabajo del destino
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "pci-v2-vendor[bot]"
+          git config user.email "pci-v2-vendor[bot]@users.noreply.github.com"
+          git add vendor/pci-sec-aprende-v2
+          if git diff --cached --quiet; then
+            echo "Snapshot ya incorporado; no hay cambios."
+            exit 0
+          fi
+          git commit -m "vendor: copia inalterada PCI Secundaria Aprende V2"
+          git push origin HEAD:refs/heads/feature/v2-original-reutilizado-20261120
