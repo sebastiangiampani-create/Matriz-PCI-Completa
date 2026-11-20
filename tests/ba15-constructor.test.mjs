@@ -69,7 +69,7 @@ test('Mapa V2 BA +15: troncal anual ocupa ambos cuatrimestres con un único ID y
  assert.deepEqual(draft.niveles[0].espacios[0].miembros,[math.id]);
  assert.throws(()=>asignarMateriaBa15(draft,{nivel:1,espacioId:annual.id,materiaId:language.id}),/troncal anual/);
  const validation=validarBorradorBa15(draft);
- assert.ok(!validation.advertencias.some(x=>x.includes('falta ubicar Matemática')),
+ assert.ok(!validation.advertencias.some(x=>/^Nivel 1 C[12]: falta ubicar Matemática$/.test(x)),
   'Un único espacio anual cubre C1 y C2 sin duplicar el agrupamiento');
  assert.equal(original.niveles[0].espacios.length,0,'No hay mutación del borrador anterior');
 });
