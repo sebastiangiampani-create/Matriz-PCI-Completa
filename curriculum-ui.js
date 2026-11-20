@@ -132,6 +132,15 @@ function renderArtsRule() {
   const selected = result.selectedLanguages;
   const missingWorkshops = result.workshops.filter((workshop) => !workshop.complete);
   const uncheckedDisabled = selected.length >= 2;
+  // Evitar reconstruir checkboxes ante mutaciones ajenas al estado curricular:
+  // Playwright y el usuario deben poder interactuar con el mismo nodo.
+  const signature = JSON.stringify({
+    selected, workshops: result.workshops,
+    unselectedAssignments: result.unselectedAssignments,
+  });
+  if (alert.dataset.pciArtsSignature === signature &&
+      alert.querySelectorAll('[data-pci-art-language]').length === ART_LANGUAGES.length) return;
+  alert.dataset.pciArtsSignature = signature;
 
   alert.hidden = false;
   alert.className = `notice ${result.complete ? 'success' : 'warning'}`;
