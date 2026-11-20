@@ -1,0 +1,29 @@
+name: Comprobar preview externo de los tres V2
+on:
+  push:
+    branches: [feature/tres-entornos-v2-paralelos-20261120]
+    paths:
+      - tests/comprobar-vista-publica-tres-v2.mjs
+      - .github/workflows/comprobar-enlaces-tres-v2.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  enlaces-publicos:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preparar Chrome
+        run: |
+          npm install --no-save playwright@1.55.0
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install chromium
+          fi
+      - name: Diagnosticar accesibilidad web sin cambiar Pages ni produccion
+        run: node tests/comprobar-vista-publica-tres-v2.mjs
