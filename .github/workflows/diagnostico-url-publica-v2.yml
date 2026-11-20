@@ -1,0 +1,26 @@
+name: Diagnóstico URL pública PCI V2
+on:
+  push:
+    branches: [fix/rescate-constructor-v2-reglas-20261119]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verificar-enlace-real:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install chromium
+          fi
+      - name: Abrir exactamente el enlace entregado al usuario
+        run: node tests/diagnostico-enlace-publicado.mjs
