@@ -21,6 +21,7 @@ on:
       - 'tests/flujo-constructor-tres-modalidades.test.mjs'
       - 'tests/pci-desarrollo-resumen.test.mjs'
       - 'tests/multipci-portal-browser.mjs'
+      - 'tests/preview-pr47-browser.mjs'
       - 'tests/ba15-constructor.test.mjs'
       - 'tests/tecnica-integrada-v2.test.mjs'
       - 'src/integracion-curricular/constructor-mapa-unificado.mjs'
