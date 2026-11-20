@@ -129,62 +129,26 @@ function renderArtsRule() {
   const alert = $('boardAlert');
   if (!current || !alert) return;
   const result = evaluateArts(current, rows);
-  const selected = result.selectedLanguages;
-  const missingWorkshops = result.workshops.filter((workshop) => !workshop.complete);
-  const uncheckedDisabled = selected.length >= 2;
-  // Evitar reconstruir checkboxes ante mutaciones ajenas al estado curricular:
-  // Playwright y el usuario deben poder interactuar con el mismo nodo.
-  const signature = JSON.stringify({
-    selected, workshops: result.workshops,
-    unselectedAssignments: result.unselectedAssignments,
-  });
-  if (alert.dataset.pciArtsSignature === signature &&
-      alert.querySelectorAll('[data-pci-art-language]').length === ART_LANGUAGES.length) return;
-  alert.dataset.pciArtsSignature = signature;
-
+  const missingWorkshops = result.workshops.filter(workshop => !workshop.complete);
+  const signature = JSON.stringify({workshops: result.workshops,complete: result.complete});
+  if (alert.dataset.pciArtsSignature !== signature ||
+      !alert.textContent.includes('Regla curricular de Artes')) {
+    alert.dataset.pciArtsSignature = signature;
+    alert.innerHTML = `
+      <strong>Regla curricular de Artes</strong>
+      <p style="margin:.45rem 0 .7rem">Cada taller debe abordar los tres ejes: Producción, Apreciación y Contextualización. Se pueden combinar los lenguajes artísticos.</p>
+      <p style="margin:.35rem 0"><strong>${result.completeWorkshops}/${result.totalWorkshops} talleres</strong> cumplen los tres ejes.</p>
+      ${missingWorkshops.length ? `<p style="margin:.35rem 0">Revisar: ${missingWorkshops.map(workshop => `${escapeHtml(workshop.groupName)} (falta ${workshop.missingAxes.map(escapeHtml).join(', ')})`).join(' · ')}</p>` : ''}
+    `;
+  }
   alert.hidden = false;
   alert.className = `notice ${result.complete ? 'success' : 'warning'}`;
-  alert.innerHTML = `
-    <strong>Regla curricular de Artes</strong>
-    <p style="margin:.45rem 0 .7rem">Elegí exactamente dos lenguajes. La cobertura se calcula solo sobre esos dos y cada taller debe incluir, como mínimo, contenidos de Producción, Apreciación y Contextualización.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:.6rem 1rem;margin:.4rem 0 .7rem">
-      ${ART_LANGUAGES.map((language) => {
-        const checked = selected.includes(language);
-        return `<label class="check-row"><input type="checkbox" data-pci-art-language="${escapeHtml(language)}" ${checked ? 'checked' : ''} ${!checked && uncheckedDisabled ? 'disabled' : ''}> ${escapeHtml(language)}</label>`;
-      }).join('')}
-    </div>
-    <p style="margin:.35rem 0"><strong>${result.completeWorkshops}/${result.totalWorkshops} talleres</strong> cumplen los tres ejes.</p>
-    ${result.unselectedAssignments.length ? `<p style="margin:.35rem 0">⚠ Hay ${result.unselectedAssignments.length} contenido${result.unselectedAssignments.length === 1 ? '' : 's'} de un lenguaje no seleccionado; no cuentan para la cobertura.</p>` : ''}
-    ${missingWorkshops.length ? `<p style="margin:.35rem 0">Revisar: ${missingWorkshops.map((workshop) => `${escapeHtml(workshop.groupName)} (${workshop.missingAxes.length ? `falta ${workshop.missingAxes.map(escapeHtml).join(', ')}` : 'contiene un lenguaje no seleccionado'})`).join(' · ')}</p>` : ''}
-  `;
-
-  alert.querySelectorAll('[data-pci-art-language]').forEach((input) => {
-    input.addEventListener('change', () => {
-      const language = input.dataset.pciArtLanguage;
-      const currentRules = state().curriculumRules;
-      const next = new Set(currentRules.artLanguages ?? []);
-      if (input.checked) {
-        if (next.size >= 2) {
-          input.checked = false;
-          toast('Artes permite elegir exactamente dos lenguajes.');
-          return;
-        }
-        next.add(language);
-      } else {
-        next.delete(language);
-      }
-      currentRules.artLanguages = [...next];
-      persistState();
-      scheduleRefresh();
-    });
-  });
-
   const label = $('coverageLabel');
   const hint = $('coverageHint');
   const bar = $('coverageBar');
-  if (label) label.textContent = `Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres · ${selected.length}/2 lenguajes`;
-  if (hint) hint.textContent = 'No se exige ubicar todos los contenidos: se validan los dos lenguajes elegidos y los tres ejes dentro de cada taller.';
-  if (bar) bar.style.width = `${artsPercent(result)}%`;
+  if (label) label.textContent = `Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres`;
+  if (hint) hint.textContent = 'La validación se realiza por los tres ejes de cada taller, sin restringir lenguajes.';
+  if (bar) bar.style.width = `${result.totalWorkshops ? Math.round(result.completeWorkshops / result.totalWorkshops * 100) : 0}%`;
   setPendingLabel('Mostrar solo disponibles sin ubicar');
 }
 
@@ -383,7 +347,6 @@ function applyCurrentAreaRules() {
   if (!current) return;
   if (current.current === 'Artes') {
     renderArtsRule();
-    filterArtsBag();
     markOptionalContentItems();
     return;
   }
