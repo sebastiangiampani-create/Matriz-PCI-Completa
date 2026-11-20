@@ -10,6 +10,7 @@ on:
       - revision-v2-embed.html
       - tests/v2-integrado-portal-browser.mjs
       - tests/multipci-portal-browser.mjs
+      - tests/pci-nueva-escuela-browser.mjs
       - .github/workflows/integrar-v2-real-portal.yml
   workflow_dispatch:
 permissions:
@@ -44,6 +45,8 @@ jobs:
           mkdir -p test-artifacts/v2-original
           node tests/v2-integrado-portal-browser.mjs
           node tests/multipci-portal-browser.mjs
+          node tests/pci-nueva-escuela-browser.mjs
+          node tests/vinculos-historicos-browser.mjs
       - name: Capturas de evidencia, sin desplegar producción
         if: always()
         uses: actions/upload-artifact@v4
