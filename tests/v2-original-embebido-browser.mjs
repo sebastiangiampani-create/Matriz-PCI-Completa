@@ -77,5 +77,9 @@ try{
  assert.equal(outside.length,0,'Esta revisión no puede solicitar datos a Supabase');
  assert.deepEqual(errors,[],'El V2 copiado debe funcionar sin errores JS');
  await page.screenshot({path:'test-artifacts/v2-original/02-borrador-recuperado.png',fullPage:true});
- console.log('V2 ORIGINAL OK: cinco niveles, 10 cuatrimestres, arrastre y borradores aislados por PCI.');
+ const previewUrl='https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/feature/v2-original-reutilizado-20261120/revision-v2-original.html';
+ const remote=await fetch(previewUrl,{signal:AbortSignal.timeout(25000)});
+ assert.equal(remote.status,200,'La URL pública debe servir el constructor V2 original');
+ assert.match(await remote.text(),/revision-v2-embed\.html/);
+ console.log('V2 ORIGINAL OK: cinco niveles, 10 cuatrimestres, arrastre, PCI aislados y URL pública verificada.');
 }finally{await browser?.close();server.close();}
