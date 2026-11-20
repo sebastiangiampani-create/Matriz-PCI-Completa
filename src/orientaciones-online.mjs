@@ -799,7 +799,7 @@ async function openOriginalV2(p){
     pci:p.pci_id,orientation,school:school?.name||'Escuela '+schoolId,
     model:p.model
   });
-  if(isTechnical)params.set('specialty',p.specialty_name);
+  if(isTechnical){const specialty=findSpecialty(p.specialty_name);if(!specialty)throw Error('Especialidad técnica sin catálogo');params.set('specialty',specialty.id);}
   if(!isMedia)params.set('orientation',p.orientation_id);
   $('v2OriginalFrame').src=(isMedia?'revision-v2-embed.html':'revision-v2-modalidad.html')+'?'+params;
   updateV2Display();
