@@ -52,10 +52,11 @@ test('BA +15 completo: al guardar la estructura se habilita la Fase 2 de ese PCI
    for(const subject of subjects){
     const format=['troncal','taller','orientado'].includes(subject.formatoOriginal)?
      subject.formatoOriginal:'laboratorio';
+    if(format==='troncal'&&term%2===0)continue;
     const key=format+':'+(format==='troncal'?subject.id:subject.area);
     if(!formats.has(key)){
      draft=crearEspacioBa15(draft,{nivel:level,term,
-      nombre:subject.nombre+' · C'+term,formato:format});
+      nombre:format==='troncal'?subject.nombre:subject.nombre+' · C'+term,formato:format});
      formats.set(key,draft.niveles[level-1].espacios.at(-1).id);
     }
     draft=asignarMateriaBa15(draft,{nivel:level,espacioId:formats.get(key),materiaId:subject.id});
