@@ -5,7 +5,7 @@ import {migrateState} from '../pci-model.js';
 import {
   COMPOSITION_VERSION,ROWS,fgSubjectsByYear,historicGroups,
   compositionFor,createGrouping,placeSubject,removeSubject,removeGrouping,
-  arrangementWarnings,withComposition,quarterYear,pairedTerm
+  arrangementWarnings,withComposition,quarterYear,pairedTerm,subjectArea,mapRow
 } from '../src/integracion-curricular/constructor-mapa-unificado.mjs';
 
 const refs={subjects:JSON.parse(await readFile(new URL('../data/integracion-curricular/referencia-v2/materias-v2.json',import.meta.url),'utf8'))};
@@ -210,4 +210,20 @@ test('Orientación Naturales: ocultar solo plantillas genéricas vacías C9/C10 
     .filter(g=>g.area==='Ciencias Naturales');
   assert.equal(retained.length,9);
   assert.equal(retained.find(g=>g.startTerm===9).contents,1);
+});
+
+test('Educación Física nunca se clasifica como Ciencias Naturales, ni su taller como laboratorio',()=>{
+  assert.equal(subjectArea('Educación Física'),'Educación Física');
+  assert.equal(subjectArea('Física'),'Ciencias Naturales');
+  assert.equal(mapRow('Educación Física','workshop'),'Talleres FG · Educación Física');
+  assert.equal(mapRow('Ciencias Naturales','laboratory'),'Laboratorios FG · Naturales');
+  const initial=migrateState({});
+  const ws={orientations:{ciencias_naturales:{fg:{areas:initial.areas},fo:{spaces:[]}}}};
+  const all=historicGroups(ws,'ciencias_naturales');
+  const natural=all.filter(g=>g.row==='Laboratorios FG · Naturales');
+  const education=all.filter(g=>g.row==='Talleres FG · Educación Física');
+  assert.equal(natural.length,8,'Ciencias Naturales orientada solo muestra ocho laboratorios FG.');
+  assert.equal(education.length,10,'Los diez talleres de Educación Física aparecen en su propia fila.');
+  assert.ok(natural.every(g=>g.kind==='laboratory'));
+  assert.ok(education.every(g=>g.kind==='workshop'));
 });
