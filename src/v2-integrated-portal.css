@@ -1,3 +1,45 @@
-/* El mapa heredado se conserva para conciliación, sin permitir ediciones sobre la representación antigua mientras el original V2 sea el constructor principal. */
-#offerPane[data-historical-readonly] button,#offerPane[data-historical-readonly] input,#offerPane[data-historical-readonly] select,#offerPane[data-historical-readonly] textarea{pointer-events:none!important;opacity:.65}
-#offerPane[data-historical-readonly] .constructor-matrix{opacity:.9}
+/* Un único entorno visual: la interfaz V2 maneja construcción y desarrollo.
+   Los constructores históricos se conservan en el repositorio y en sus
+   unidades de datos, pero no se renderizan en el nuevo editor. */
+#editor.v2-family-active > .panel.card:first-of-type{display:none!important}
+#editor.v2-family-active #offerPane,
+#editor.v2-family-active #developmentPane,
+#editor.v2-family-active #fgPane,
+#editor.v2-family-active #foPane{display:none!important}
+#editor.v2-family-active #v2OriginalPane{
+ display:block!important;
+ margin:0;
+ padding:0!important;
+ background:#fff;
+ border:0!important;
+ border-radius:0!important;
+ box-shadow:none!important
+}
+#editor.v2-family-active #v2OriginalPane .topline{
+ max-width:1700px;
+ margin:8px auto 14px;
+ padding:12px 18px;
+ border-bottom:1px solid #d8e1e8;
+ gap:12px
+}
+#editor.v2-family-active #v2OriginalFrame{
+ display:block!important;
+ width:100%;
+ height:min(1350px,calc(100vh - 90px));
+ min-height:800px;
+ border:0!important;
+ border-radius:0!important;
+ background:white
+}
+#editor.v2-family-active #v2OriginalStatus{
+ margin:0 14px 6px;
+ padding:8px 12px;
+ font-size:.78rem
+}
+#editor.v2-family-active [data-historical-readonly]{
+ display:none!important
+}
+@media(max-width:700px){
+ #editor.v2-family-active #v2OriginalPane .topline{padding:10px 12px}
+ #editor.v2-family-active #v2OriginalFrame{height:calc(100vh - 50px);min-height:700px}
+}
