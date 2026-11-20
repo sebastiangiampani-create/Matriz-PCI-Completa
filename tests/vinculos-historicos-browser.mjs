@@ -75,7 +75,7 @@ try{
  assert.equal(JSON.stringify(historical),original,'El histórico nunca se modifica');
  await page.screenshot({path:'test-artifacts/multipci-portal/asignacion-fg-a-varios-y-especificas.png',fullPage:true});
  await page.locator('.school-offer-card').filter({hasText:'Comunicación Mañana'}).locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
- await page.locator('#offerPane:not([hidden])').waitFor({timeout:20000});
+ await page.locator('#v2OriginalPane:not([hidden])').waitFor({timeout:20000});
  const preview=page.locator('#pciHistoricLinks');
  assert.match(await preview.textContent(),/3 contenidos y 2 planes|3 contenidos y 2 planes/);
  await preview.locator('summary').first().click();
@@ -85,12 +85,12 @@ try{
  await page.locator('#editor [data-back-to-school]').click();
  await page.locator('#empty:not([hidden])').waitFor();
  await page.locator('.school-offer-card').filter({hasText:'Economía Tarde'}).locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
- await page.locator('#offerPane:not([hidden])').waitFor({timeout:20000});
+ await page.locator('#v2OriginalPane:not([hidden])').waitFor({timeout:20000});
  const econ=await page.locator('#pciHistoricLinks').textContent();
  assert.match(econ,/Lengua trabajada|2 contenidos y 1 planes/);
  assert.doesNotMatch(econ,/Comunicación y medios|Robótica de Taller/);
  await page.reload({waitUntil:'domcontentloaded'});
- await page.locator('#offerPane:not([hidden])').waitFor({timeout:20000});
+ await page.locator('#v2OriginalPane:not([hidden])').waitFor({timeout:20000});
  assert.equal(revision,1,'Volver al PCI no agrega guardados');
  assert.equal(JSON.stringify(historical),original);
  assert.deepEqual(pageErrors,[],'No deben aparecer errores JS en el recorrido: '+pageErrors.join(' | '));
