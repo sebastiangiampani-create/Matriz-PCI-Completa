@@ -89,6 +89,9 @@ export function asignarMateriaBa15(draft,{nivel,espacioId,materiaId}){
     space.formato!==subject.formatoOriginal)
    throw Error('Acción no permitida: '+subject.nombre+' corresponde a un espacio '+
      subject.formatoOriginal+'. Revisá la fila del mapa antes de asignarla.');
+ if(space.formato==='troncal'&&
+    (subject.formatoOriginal!=='troncal'||space.nombre!==subject.nombre))
+   throw Error('Acción no permitida: cada troncal anual conserva su propia materia y fila del mapa.');
  const occupied=e=>e.formato==='troncal'&&e.duration==='anual'?
   [2*nivel-1,2*nivel]:[e.term];
  if(level.espacios.some(e=>e.miembros.includes(materiaId)&&
