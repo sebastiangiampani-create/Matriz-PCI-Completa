@@ -70,6 +70,23 @@ try{
    if(!document.querySelector('[data-map-id="'+id+'"]'))throw Error('No se asignó la materia con drop V2');
   });
   assert.equal(await page.locator('#matrix [data-map-id]').count()>0,true);
+  const foField=await page.evaluate(async()=>{
+    const s=window.__V2_MODAL.subjects.find(x=>x.origin==='FO'&&x.year>=2);
+    if(!s)throw Error('La bolsa FO de la modalidad está vacía');
+    const row=window.V2ModalMap.rowDefs().find(r=>{
+      const slot=r.k+(r.annual?'-n':'-c')+(r.annual?s.year:s.year*2-1);
+      return window.V2ModalMap.canAssign(slot,s)[0]});
+    if(!row)throw Error('No hay espacio FO compatible para '+s.name);
+    const slot=row.k+(row.annual?'-n':'-c')+(row.annual?s.year:s.year*2-1);
+    window.V2ModalMap.assign(slot,s.id);
+    const p=window.PCIPhase2V28;
+    await p.loadCurriculum();
+    const g=p.gb(slot),pool=p.getPool(g.area).filter(c=>c.component==='FO');
+    if(!pool.length)throw Error('El espacio FO no tiene contenidos de su base específica');
+    if(pool.some(c=>c.area!==g.area))throw Error('Se mezclaron campos de contenidos FO');
+    return {area:g.area,slot,contents:pool.length};
+  });
+  assert.ok(foField.contents>0,'El espacio FO debe seleccionar contenidos de su campo curricular');
   const phase2=await page.evaluate(async()=>{
    const p=window.PCIPhase2V28;
    if(!p)throw Error('No se instaló la Fase 2 V2');
