@@ -1,0 +1,3 @@
+/* El mapa heredado se conserva para conciliación, sin permitir ediciones sobre la representación antigua mientras el original V2 sea el constructor principal. */
+#offerPane[data-historical-readonly] button,#offerPane[data-historical-readonly] input,#offerPane[data-historical-readonly] select,#offerPane[data-historical-readonly] textarea{pointer-events:none!important;opacity:.65}
+#offerPane[data-historical-readonly] .constructor-matrix{opacity:.9}
