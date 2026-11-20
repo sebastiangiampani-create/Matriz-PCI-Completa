@@ -391,6 +391,8 @@ function applyCurrentAreaRules() {
 }
 
 function refresh() {
+  window.__pciCurriculumUiRefreshCount=(window.__pciCurriculumUiRefreshCount||0)+1;
+  window.__pciCurriculumUiLastArea=state()?.current||null;
   if (applying || !window.PCIApp?.getState || !data().length) return;
   applying = true;
   observer?.disconnect();
@@ -398,6 +400,7 @@ function refresh() {
     ensureRules();
     updateOverviewCoverage();
     applyCurrentAreaRules();
+    window.__pciCurriculumUiAppliedArea=state()?.current||null;
   } finally {
     applying = false;
     observer?.observe(document.body, { childList: true, subtree: true });
