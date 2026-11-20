@@ -44,13 +44,24 @@ test('Las funciones de fase nunca modifican planes, agrupamientos o documentos d
 test('BA +15 completo: al guardar la estructura se habilita la Fase 2 de ese PCI',()=>{
  let draft=crearBorradorBa15({schoolId:1017,pciId:'pci-completo',orientationId:'economia_administracion',shiftId:'noche'});
  for(let level=1;level<=4;level++){
-  const ids=draft.niveles[level-1].asignaturas.map(s=>s.id);
+  const subjects=draft.niveles[level-1].asignaturas;
   for(const term of [level*2-1,level*2]){
-   draft=crearEspacioBa15(draft,{nivel:level,term,nombre:'Agrupamiento Nivel '+level+' C'+term,formato:'laboratorio'});
-   const id=draft.niveles[level-1].espacios.at(-1).id;
-   for(const materiaId of ids)draft=asignarMateriaBa15(draft,{nivel:level,espacioId:id,materiaId});
-   draft=actualizarEspacioBa15(draft,{nivel:level,espacioId:id,
-     changes:{articulacion:'Agrupamiento de materias del nivel y sus articulaciones pedagógicas'}});
+   // No ubicar troncales ni talleres en un laboratorio ficticio:
+   // cada materia respeta el formato identificado por el plan BA +15.
+   const formats=new Map();
+   for(const subject of subjects){
+    const format=['troncal','taller','orientado'].includes(subject.formatoOriginal)?
+     subject.formatoOriginal:'laboratorio';
+    const key=format+':'+(format==='troncal'?subject.id:subject.area);
+    if(!formats.has(key)){
+     draft=crearEspacioBa15(draft,{nivel:level,term,
+      nombre:subject.nombre+' · C'+term,formato:format});
+     formats.set(key,draft.niveles[level-1].espacios.at(-1).id);
+    }
+    draft=asignarMateriaBa15(draft,{nivel:level,espacioId:formats.get(key),materiaId:subject.id});
+   }
+   for(const id of formats.values())draft=actualizarEspacioBa15(draft,{nivel:level,espacioId:id,
+    changes:{articulacion:'Articulación pedagógica de este espacio curricular del nivel'}});
   }
  }
  const audit=validarBorradorBa15(draft);
