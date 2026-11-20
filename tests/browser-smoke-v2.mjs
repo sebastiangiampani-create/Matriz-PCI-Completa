@@ -73,7 +73,7 @@ try {
   await page.goto(`${BASE_URL}/escuela.html?school=1`, { waitUntil: 'networkidle' });
   await page.waitForSelector('#gateTitle');
   assert.match(await page.locator('#gateTitle').textContent(), /Escuela de muestra 1/);
-  assert.equal(await page.locator('.credit').count(), 1, 'El acceso de escuela debe mostrar la autoría.');
+  assert.equal(await page.locator('#gateForm img[alt="Escuela de Maestros"]').count(), 1, 'El acceso debe conservar la marca institucional; la autoría se verifica en la matriz.');
   await page.screenshot({ path: `${ARTIFACTS}/02-acceso-escuela-1.png`, fullPage: true });
 
   await waitForApp(page, browserErrors, '03-error-carga.png');
