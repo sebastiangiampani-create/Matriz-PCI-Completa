@@ -64,15 +64,16 @@ try{
     const card=page.locator('.school-offer-card').filter({hasText:name});
     await card.locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
     await page.locator(visible).waitFor({timeout:30000});
-    const visual=await page.evaluate(()=>({
-      loaded:[...document.styleSheets].some(sheet=>String(sheet.href||'').includes('v2-original-map-appearance.css')),
-      grid:getComputedStyle(document.querySelector('#mapBody tr')).display,
-      mapBackground:getComputedStyle(document.querySelector('#mapBody tr th')).backgroundColor,
-      levelBackground:getComputedStyle(document.querySelector('#mapHead tr:first-child th:nth-child(2)')).backgroundColor,
-      annualCells:document.querySelectorAll('#mapBody [data-pci-annual=true]').length
-    }));
+    const visual=await page.evaluate(isBa=>{
+      const table=document.querySelector(isBa?'#ba15Builder .mapTable':'#offerPane .constructor-matrix');
+      return {
+        loaded:[...document.styleSheets].some(sheet=>String(sheet.href||'').includes('v2-original-map-appearance.css')),
+        grid:getComputedStyle(table.querySelector('tbody tr')).display,
+        levelBackground:getComputedStyle(table.querySelector('thead tr:first-child th:nth-child(2)')).backgroundColor
+      };
+    },name==='Economía y Administración');
     assert.equal(visual.loaded,true,'La apariencia se carga desde estilos originales V2 adaptados.');
-    assert.equal(visual.grid,'grid','La matriz se presenta con la cuadrícula original V2, no tabla continua.');
+    assert.equal(visual.grid,'grid','La matriz se presenta con cuadrícula original V2, no tabla continua.');
     assert.equal(visual.levelBackground,'rgb(18, 57, 92)','V2 conserva la banda institucional azul de niveles.');
     if(name==='Comunicación'){
       assert.equal(await page.locator('#mapHead tr').count(),2,
