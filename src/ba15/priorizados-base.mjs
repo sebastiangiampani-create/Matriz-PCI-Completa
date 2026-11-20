@@ -8,8 +8,9 @@
  * NES 4.º       -> BA +15 Nivel 3
  * NES 5.º       -> BA +15 Nivel 4
  */
+import {loadV2Fg,FG_REFERENCE} from '../integracion-curricular/catalogos.js';
 export const BA15_FG_BASE_VERSION='ba15-fg-media-reindexada/1';
-export const BA15_FG_SOURCE_VERSION='PCI Aprende V2 - FG v103';
+export const BA15_FG_SOURCE_VERSION=FG_REFERENCE;
 export const BA15_FG_LEVEL_MAP=Object.freeze({
  1:1,2:1,3:2,4:3,5:4
 });
@@ -61,4 +62,10 @@ export function summarizeBa15FgBase(rows){
  });
  return {version:BA15_FG_BASE_VERSION,source:BA15_FG_SOURCE_VERSION,
   total:all.length,uniqueIds:new Set(all.map(x=>String(x.id))).size,byLevel};
+}
+
+/** Carga la referencia FG de Media y devuelve la base BA +15 ya reindexada. */
+export async function loadBa15FgBase(options={}){
+ const source=await loadV2Fg(options);
+ return buildBa15FgBase(source);
 }
