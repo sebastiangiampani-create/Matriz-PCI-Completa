@@ -663,7 +663,7 @@ export function createIntegratedTechnicalUI({
  }
  function isDirty(){return !!(offerDirty||planDirty);}
  return {
-  open,close,renderTab,saveOffer,isDirty,phaseGate,
+  open,close,renderTab,saveOffer,isDirty,phaseGate,openDevelopmentSpace:openPlan,
   get active(){return !!pci;},
   get offer(){return offer?copy(offer):null;},
   get source(){return source;}
