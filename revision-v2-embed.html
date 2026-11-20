@@ -55,7 +55,25 @@
 
     const beforePhase2=moduleSources.slice(0,8).map(inline).join('');
     const afterPhase2=moduleSources.slice(8).map(inline).join('');
-    html=html.replace('<script id="v2LocalStorageAdapter" type="text/plain">
+    html=html.replace('</body>',
+      beforePhase2+
+      inline(foAtomicSource)+
+      inline(phase2Source)+
+      afterPhase2+
+      inline(document.getElementById('v2BridgeAdapter').textContent)+
+      '<script>(async()=>{if(window.__pciBaseInit)await window.__pciBaseInit();window.dispatchEvent(new Event("pci-app-ready"));})();</scr'+'ipt>\n'+
+      '</body>'
+    );
+
+    document.open();
+    document.write(html);
+    document.close();
+  }catch(error){
+    document.body.innerHTML='<main style="font-family:system-ui;padding:24px"><strong>Error al cargar la aplicación.</strong><p>'+String(error.message||error)+'</p></main>';
+  }
+})();
+</script>
+<script id="v2LocalStorageAdapter" type="text/plain">
 (()=>{
   'use strict';
   // No usar la clave global de V2; cada PCI queda aislado por identificador.
@@ -119,24 +137,6 @@
    }finally{importing=false;}
    send('V2_ORIGINAL_READY',{orientation,school,sourceCommit:'883707e281894990b537032880922f4c078689ad'});
  };
-})();
-</script>
-</body>',
-      beforePhase2+
-      inline(foAtomicSource)+
-      inline(phase2Source)+
-      afterPhase2+
-      inline(document.getElementById('v2BridgeAdapter').textContent)+
-      '<script>(async()=>{if(window.__pciBaseInit)await window.__pciBaseInit();window.dispatchEvent(new Event("pci-app-ready"));})();</scr'+'ipt>\n'+
-      '</body>'
-    );
-
-    document.open();
-    document.write(html);
-    document.close();
-  }catch(error){
-    document.body.innerHTML='<main style="font-family:system-ui;padding:24px"><strong>Error al cargar la aplicación.</strong><p>'+String(error.message||error)+'</p></main>';
-  }
 })();
 </script>
 </body>
