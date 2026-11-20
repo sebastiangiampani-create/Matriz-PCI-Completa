@@ -1,0 +1,10 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Secundaria BA +15 · PCI V2</title><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link href="estilos.css" rel="stylesheet"></head><body data-model="ba15">
+<header><a class="brand" href="index.html">PCI · Secundaria Aprende V2</a><nav class="nav"><a href="media.html">Media</a><a href="tecnica.html">Técnica</a><a href="ba15.html" aria-current="page">BA +15</a></nav></header>
+<main><section class="hero"><span class="eyebrow">APLICACIÓN DERIVADA DE V2</span><h1>Secundaria BA +15</h1><p>El constructor conserva la experiencia V2, con cuatro niveles y ocho cuatrimestres. Los contenidos de Formación Orientada están pendientes de validación normativa.</p></section>
+<form class="form" id="selector" autocomplete="off"><h2>Seleccionar la oferta curricular</h2><div class="fields">
+<label>Escuela de prueba <input id="escuela" maxlength="70" value="Escuela de prueba" required></label>
+<label>Turno <select id="turno" required><option value="manana">Mañana</option><option value="tarde">Tarde</option><option value="vespertino">Vespertino</option><option value="noche" selected>Noche</option></select></label>
+<label id="catalogoLabel">Orientación <select id="catalogo" required></select></label>
+<label>Identificador de la prueba <input id="pci-id" maxlength="70" minlength="3" pattern="[A-Za-z0-9_-]{3,70}" required value="revision-ba15"></label>
+</div><button type="submit">Abrir el constructor V2 completo</button><p id="mensaje" class="note" role="status" aria-live="polite">Al abrir se accede al motor V2 completo, sin una segunda matriz ni pantallas superpuestas.</p></form>
+<div class="footer"><a href="index.html">Volver a las tres modalidades</a> · Prueba aislada, sin conexión a las bases escolares</div></main><script type="module" src="seleccion.mjs"></script></body></html>
