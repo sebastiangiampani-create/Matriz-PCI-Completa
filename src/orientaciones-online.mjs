@@ -867,6 +867,155 @@ function setTab(next,force=false,routeMode='push'){
   writeRoute(routeMode,pci?.pci_id,next);
   return next!=='oferta';
 }
+
+function filterDevelopmentCards(){
+ const year=$('developmentLevel').value,formation=$('developmentFormation').value;
+ for(const card of $('developmentCards').querySelectorAll('.pci-development-card')){
+  card.hidden=(year!=='todos'&&card.dataset.level!==year)||
+   (formation!=='todos'&&card.dataset.formation!==formation);
+ }
+}
+function renderDevelopmentOverview(){
+ const token=++developmentSeq,currentPci=pci;
+ if(!currentPci)return;
+ const isTechnical=technical.active;
+ const entries=isTechnical?
+  technicalDevelopmentSpaces(technical.offer):
+  mediaDevelopmentSpaces({
+   historicalAreas:fgSourceState?.areas||{},
+   composition:compositionFor(workspace,currentPci),
+   foSpaces:getCurrentOffer()?.spaces||[]
+  });
+ let foCatalog=[];
+ if(!isTechnical){
+  try{foCatalog=selectFoByOrientation(refs.fo,currentPci.orientation_id,ORIENTATIONS)}
+  catch{/* Algunas orientaciones todavía no cuentan con catálogo FO verificado. */}
+ }
+ const active=()=>token===developmentSeq&&tab==='desarrollo'&&pci?.pci_id===currentPci.pci_id;
+ const rows=$('developmentCards'),metrics=$('developmentStats'),coverageHost=$('developmentCoverage');
+ const levelFilter=$('developmentLevel'),formationFilter=$('developmentFormation');
+ const oldLevel=levelFilter.value;
+ levelFilter.replaceChildren();
+ for(const [value,label] of [['todos','Todos los niveles'],
+  ...[...new Set(entries.map(x=>x.level).filter(x=>x>0))].sort((a,b)=>a-b)
+   .map(n=>[String(n),'Nivel '+n])]){
+  const option=elem('option',label);option.value=value;levelFilter.append(option);
+ }
+ levelFilter.value=[...levelFilter.options].some(x=>x.value===oldLevel)?oldLevel:'todos';
+ const metricsFor=entry=>{
+  const ids=spaceIds(entry.document);
+  const selected=ids.length;
+  if(isTechnical)return {description:selected+' referencias asociadas · denominador por validar',
+   pending:true,used:selected};
+  const subjects=(entry.document?.curricularSubjects||entry.document?.members||[])
+   .map(m=>m?.name||m?.subject||'').filter(Boolean);
+  const result=entry.component==='FG'?
+   verifiedCoverage({rows:refs.fg,ids,area:entry.area,year:entry.level,subjects}):
+   verifiedCoverage({rows:foCatalog,ids,basis:'trajectory'});
+  if(!result.verified)return {description:selected+' contenidos · referencia oficial pendiente',
+   pending:true,used:selected};
+  if(result.missing>0)return {description:selected+' contenidos vinculados · '+
+    result.matched+' coinciden con V2 · revisar equivalencias',
+    pending:true,used:selected};
+  return {description:result.matched+'/'+result.total+' contenidos · '+
+   result.percentage+'% '+(result.basis==='trajectory'?'trayectoria':'nivel'),
+   pending:false,used:result.matched};
+ };
+ function display(){
+  if(!active())return;
+  rows.replaceChildren();metrics.replaceChildren();coverageHost.replaceChildren();
+  const totals=countsForDevelopment(entries);
+  for(const [count,label] of [[totals.spaces,'Espacios del PCI'],
+   [totals.plans,'Planes vinculados o previstos'],
+   [totals.contentIds.length,'Contenidos únicos identificados']]){
+   const item=elem('div',undefined,'pci-development-stat');
+   note('strong',count,item);note('small',label,item);metrics.append(item);
+  }
+  for(const entry of entries){
+   const card=elem('button',undefined,'pci-development-card');
+   card.type='button';card.dataset.level=String(entry.level);
+   card.dataset.formation=entry.component;
+   note('small',(entry.component==='FG'?'Formación General':'Formación Orientada')+
+    ' · Nivel '+(entry.level||'por revisar')+' · C'+(entry.term||'?'),card);
+   note('strong',entry.name,card);
+   note('span',entry.format+(entry.origin==='historico'?' · histórico conservado':''),card);
+   const summary=metricsFor(entry);
+   note('span',summary.description,card,'pci-development-card-count');
+   note('small',entry.plans+' planes '+(entry.origin==='propuesto'?'a desarrollar':'registrados o previstos'),card);
+   card.onclick=()=>{
+    if(!active())return;
+    if(entry.component==='FG'&&!isTechnical){
+     if(setTab('fg',true))openFgArea(entry.area,entry.id).catch(error=>message(error.message,'error'));
+    }else if(setTab('fo',true)){
+     const action=isTechnical?technical.openDevelopmentSpace(entry.id):openFoSpace(entry.id);
+     Promise.resolve(action).catch(error=>message(error.message,'error'));
+    }
+   };
+   rows.append(card);
+  }
+  filterDevelopmentCards();
+  if(!entries.length){
+   note('p','Todavía no hay espacios curriculares construidos. Regresá a Fase 1.',rows,'muted');
+   return;
+  }
+  if(isTechnical){
+   note('p','La cobertura porcentual Técnica requiere contrastar el plan oficial de cada especialidad. No se inventan porcentajes.',coverageHost,'muted');
+   return;
+  }
+  const buckets=new Map();
+  for(const entry of entries.filter(x=>x.component==='FG'&&x.level>0)){
+   const key=entry.level+'|'+entry.area;
+   if(!buckets.has(key))buckets.set(key,[]);
+   buckets.get(key).push(entry);
+  }
+  for(const group of buckets.values()){
+   const first=group[0],ids=[...new Set(group.flatMap(g=>spaceIds(g.document)))];
+   const result=verifiedCoverage({rows:refs.fg,ids,year:first.level,area:first.area});
+   const item=elem('div',undefined,'pci-development-level-row');
+   note('strong','Nivel '+first.level+' · '+first.area,item);
+   const info=result.verified&&result.missing===0?
+    result.matched+'/'+result.total+' contenidos · '+result.percentage+'%':
+    ids.length+' contenidos vinculados · equivalencias V2 pendientes';
+   note('span',info,item);coverageHost.append(item);
+  }
+  if(!buckets.size)note('p','No se identificaron agrupamientos FG para calcular cobertura por nivel.',coverageHost,'muted');
+ }
+ display();
+ if(isTechnical)return;
+ // Lectura de unidades por PCI, sin escrituras ni importación destructiva.
+ // Hasta cuatro consultas simultáneas y descarte de resultados de otra navegación.
+ const jobs=[];
+ for(const area of [...new Set(entries.filter(x=>x.component==='FG').map(x=>x.area))]){
+  jobs.push(async()=>{
+   const result=await getUnit(currentPci,'fg','area',area,'fg-sec-aprende-v2/1');
+   if(!active()||!result.exists)return;
+   const document=guardFgUnit(result.document,currentPci,area);
+   for(const e of entries.filter(x=>x.component==='FG'&&x.area===area)){
+    const match=(document.groups||[]).find(g=>String(g.id)===e.id);
+    if(match){e.document=match;e.plans=(match.plansBimestrales||[]).length;}
+   }
+   display();
+  });
+ }
+ for(const e of entries.filter(x=>x.component==='FO')){
+  jobs.push(async()=>{
+   const result=await getUnit(currentPci,'fo','space',e.id,'fo-sec-aprende-v2/1');
+   if(!active()||!result.exists)return;
+   e.document=guardFoUnit(result.document,currentPci,e.id);
+   e.plans=(e.document.plansBimestrales||[]).length;
+   display();
+  });
+ }
+ let cursor=0;
+ void Promise.allSettled(Array.from({length:Math.min(4,jobs.length)},async()=>{
+  while(active()&&cursor<jobs.length){
+   const job=jobs[cursor++];
+   try{await job()}
+   catch(error){if(active())message('Algunos desarrollos necesitan revisión de lectura: '+error.message,'warn');}
+  }
+ }));
+}
+
 function renderAreas(){
   const host=$('areaList');host.replaceChildren();
   const staged=workspace&&pci?compositionFor(workspace,pci):null;
