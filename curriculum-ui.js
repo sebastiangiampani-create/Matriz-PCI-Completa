@@ -15,6 +15,7 @@ let refreshTimer = null;
 let applying = false;
 
 const $ = (id) => document.getElementById(id);
+window.__pciCurriculumUiLoaded=true;
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 })[character]);
@@ -422,6 +423,7 @@ async function start() {
   if (!response.ok) throw new Error('No se pudieron cargar los contenidos de Tutoría.');
   tutorData = await response.json();
   await waitForApp();
+  window.__pciCurriculumUiAppReady=true;
 
   const existingIds = new Set(data().map((content) => String(content.id)));
   data().push(...tutorData.filter((content) => !existingIds.has(String(content.id))));
@@ -430,6 +432,7 @@ async function start() {
 
   observer = new MutationObserver(scheduleRefresh);
   observer.observe(document.body, { childList: true, subtree: true });
+  window.__pciCurriculumUiReady=true;
   // openArea puede actualizar el estado y el tablero sin mutaciones de nodos
   // observables por el complemento. Forzamos la actualización de sus reglas.
   const api=window.PCIApp;
@@ -455,6 +458,7 @@ async function start() {
 }
 
 start().catch((error) => {
+  window.__pciCurriculumUiError=error?.message||String(error);
   console.error(error);
   toast(error.message);
 });
