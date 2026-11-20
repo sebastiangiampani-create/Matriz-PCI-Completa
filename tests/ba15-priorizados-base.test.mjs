@@ -6,6 +6,7 @@ import {
  buildBa15FgBase,summarizeBa15FgBase,BA15_FG_BASE_VERSION,
  BA15_FG_SOURCE_VERSION,BA15_FG_LEVEL_MAP
 } from '../src/ba15/priorizados-base.mjs';
+import {crearBorradorBa15} from '../src/ba15/constructor.mjs';
 
 const fetchFn=async url=>{
  try{const data=await readFile(url,'utf8');return {ok:true,text:async()=>data};}
@@ -72,4 +73,14 @@ test('La base rechaza catálogo incompleto, años desconocidos e IDs repetidos',
  assert.throws(()=>buildBa15FgBase(small),/incompleta/);
  assert.throws(()=>buildBa15FgBase([...small,{...small[0],id:'f',year:6}],{expectedCount:6}),/año de origen/);
  assert.throws(()=>buildBa15FgBase([...small,{...small[0]}],{expectedCount:6}),/ID vacío o duplicado/);
+});
+
+test('Cada nuevo PCI BA +15 registra versión y tabla de equivalencias de su base FG',()=>{
+ const draft=crearBorradorBa15({pciId:'ba15-noche',schoolId:99,
+  orientationId:'turismo',shiftId:'noche'});
+ assert.equal(draft.priorizadosFGBase.version,BA15_FG_BASE_VERSION);
+ assert.equal(draft.priorizadosFGBase.source,BA15_FG_SOURCE_VERSION);
+ assert.deepEqual(draft.priorizadosFGBase.yearToBa15Level,{1:1,2:1,3:2,4:3,5:4});
+ assert.deepEqual(draft.priorizadosFGBase.levels.map(x=>x.sourceYears),[[1,2],[3],[4],[5]]);
+ assert.equal(draft.niveles.length,4);
 });
