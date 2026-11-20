@@ -136,8 +136,10 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   if(view==='planes'){
     const levelNo=Math.floor((term-1)/2)+1;
     const sourceLevel=BA15_FG_LEVELS[levelNo-1];
+    const levelContentCount=ba15FgContents.filter(x=>Number(x.ba15Level)===levelNo).length;
     surface.append(element('p','Nivel '+['I','II','III','IV'][levelNo-1]+
      ' · base FG propia BA +15 · priorizados de '+sourceLevel.sourceLabel+
+     (fgBaseLoading?' · cargando contenidos…':' · '+levelContentCount+' contenidos priorizados')+
      ' · Formación Orientada según orientación. Se conservan los IDs y contenidos de origen.',
      'muted'));
   }
