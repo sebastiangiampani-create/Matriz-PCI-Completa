@@ -1,6 +1,6 @@
 import {BA15_NIVELES,BA15_CCC} from './reglas-curriculares.mjs';
-import {loadV2Fg,loadV2Fo,selectFoByOrientation} from '../integracion-curricular/catalogos.js';
-import {buildBa15FgBase,BA15_FG_LEVELS,BA15_FG_BASE_VERSION,BA15_FG_SOURCE_VERSION,BA15_FG_LEVEL_MAP} from './priorizados-base.mjs';
+import {loadV2Fo,selectFoByOrientation} from '../integracion-curricular/catalogos.js';
+import {loadBa15FgBase,BA15_FG_LEVELS,BA15_FG_BASE_VERSION,BA15_FG_SOURCE_VERSION,BA15_FG_LEVEL_MAP} from './priorizados-base.mjs';
 import {ORIENTATIONS} from '../integracion-curricular/bridge.js';
 import {phaseGate,phaseText} from '../pci-flujo-fases.mjs';
 import {BA15_TERMS,crearBorradorBa15,crearEspacioBa15,asignarMateriaBa15,quitarMateriaBa15,actualizarEspacioBa15,eliminarEspacioBa15,validarBorradorBa15} from './constructor.mjs';
@@ -333,7 +333,7 @@ export function montarConstructorBa15(host,identity,{initialDraft=null,readOnlyD
   layout.append(aside,main);surface.append(layout);
  }
  render();
- loadV2Fg().then(rows=>{ba15FgContents=buildBa15FgBase(rows);fgBaseLoading=false;render();})
+ loadBa15FgBase().then(rows=>{ba15FgContents=rows;fgBaseLoading=false;render();})
   .catch(err=>{fgBaseLoading=false;fgBaseError=err.message||String(err);render();});
  loadV2Fo().then(rows=>{
    foContents=selectFoByOrientation(rows,identity.orientationId,ORIENTATIONS);
