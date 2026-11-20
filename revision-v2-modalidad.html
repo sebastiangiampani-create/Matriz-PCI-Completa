@@ -46,8 +46,8 @@
     const baseUrl=new URL('vendor/pci-sec-aprende-v2/',location.href).href;
     html=html.replace('<head>','<head><base href="'+baseUrl+'">');
     const shimScript=document.getElementById('v2LocalStorageAdapter').textContent;
-    const configCode='window.__V2_MODAL='+JSON.stringify(config).replace(/</g,'\\u003c')+';';
-    html=html.replace('<script>',inline(configCode)+inline(shimScript)+'<script>');
+    window.__V2_MODAL=config; // Comparte datos ya verificados sin inyectar JSON masivo en HTML.
+    html=html.replace('<script>',inline(shimScript)+'<script>');
     const closeScript='</scr'+'ipt>';
     html=html.replace('\ninit();\n'+closeScript,'\nwindow.__pciBaseInit=init;\n'+closeScript);
 
