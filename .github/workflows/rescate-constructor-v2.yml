@@ -6,6 +6,7 @@ on:
       - 'src/constructor-v2-ui.mjs'
       - 'src/orientaciones-online.mjs'
       - 'src/ba15/**'
+      - 'curriculum-ui.js'
       - 'src/ba15/priorizados-base.mjs'
       - 'src/tecnica/**'
       - 'src/pci-flujo-fases.mjs'
