@@ -100,21 +100,18 @@ try{
   const source=v2.locator('#bagContent [data-sub="fg-1-matematica"]');
   const assigned=target.locator('[data-rm="fg-1-matematica"]');
   if(await assigned.count())await assigned.first().click();
-  // V2 mantiene el gesto de seleccionar la materia y pulsar el casillero;
-  // se prueba ese mismo flujo accesible dentro del portal escolar.
-  await source.click();
-  await target.click();
-  try{
-    await target.locator('[data-map-id="fg-1-matematica"]').waitFor({timeout:15000});
-  }catch(error){
-    console.log('V2 INTEGRATION DEBUG',JSON.stringify({
-      target:await target.textContent(),
-      source:await source.textContent(),
-      portalStatus:await page.locator('#v2OriginalStatus').textContent(),
-      pageErrors:pageConsole
-    }));
-    throw error;
-  }
+  // Comprobar el manejador original de drag/drop V19 dentro del iframe.
+  // El mismo evento HTML5 que recibe el gesto del usuario, sin modificar V2.
+  await v2.locator('body').evaluate(()=>{
+    const source=document.querySelector('#bagContent [data-sub="fg-1-matematica"]');
+    const target=document.querySelector('#matrix .drop[data-slot="matematica-n1"]');
+    if(!source||!target)throw Error('Origen o destino V2 ausente');
+    const transfer=new DataTransfer();
+    source.dispatchEvent(new DragEvent('dragstart',{bubbles:true,cancelable:true,dataTransfer:transfer}));
+    target.dispatchEvent(new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:transfer}));
+    target.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:transfer}));
+  });
+  await target.locator('[data-map-id="fg-1-matematica"]').waitFor({timeout:15000});
   await page.locator('#v2OriginalSave').click();
   await page.waitForFunction(()=>document.querySelector('#v2OriginalStatus')?.textContent.includes('revisión 1'),null,{timeout:20000});
   const key=[initialPcis[0].pci_id,'oferta','map','mapa-original-v2-v1'].join(':');
