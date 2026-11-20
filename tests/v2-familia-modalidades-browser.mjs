@@ -26,8 +26,18 @@ try{
   page.on('response',r=>{if(r.status()>=400)requests.push({url:r.url(),status:r.status()})});
   const id=model==='tecnica'?'v2-tecnica-computacion':'v2-ba15-economia';
   await page.goto(origin+'/revision-v2-modalidad.html?model='+model+'&'+filter+'&pci='+id+'&school=Escuela+de+prueba',{waitUntil:'domcontentloaded'});
-  try{await page.locator('#offer.active').waitFor({timeout:60000})}
-  catch(error){console.log('BOOT DIAGNOSTIC '+model,JSON.stringify({body:(await page.locator('body').textContent()).slice(0,3400),errors,requests}));throw error}
+  try{await page.locator('#offer.active').waitFor({timeout:16000})}
+  catch(error){
+    const diag=await page.evaluate(()=>({
+      modal:window.__V2_MODAL?.model||null,level:window.__V2_MODAL?.levels,
+      baseInit:typeof window.__pciBaseInit,screen:typeof window.screen,
+      map:!!window.V2ModalMap,phase2:!!window.PCIPhase2V28,
+      scripts:[...document.scripts].map(x=>({id:x.id,type:x.type,len:x.textContent?.length,head:x.textContent?.slice(0,100)})).slice(0,25),
+      bodyTail:document.body?.textContent?.slice(-900)
+    }));
+    console.log('BOOT DIAGNOSTIC '+model,JSON.stringify({diag,errors,requests}));
+    throw error;
+  }
   assert.equal(await page.locator('#matrix .grid.levels .level').count(),levels,'V2 debe renderizar la cantidad de niveles de la modalidad');
   assert.equal(await page.locator('#matrix .term').count(),levels*2+1,'V2 debe renderizar la cantidad de cuatrimestres de la modalidad');
   const rows=await page.locator('#matrix .rowlabel').allTextContents();
