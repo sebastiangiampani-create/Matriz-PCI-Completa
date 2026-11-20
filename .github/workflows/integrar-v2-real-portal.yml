@@ -9,6 +9,7 @@ on:
       - src/v2-integrated-portal.css
       - revision-v2-embed.html
       - tests/v2-integrado-portal-browser.mjs
+      - tests/multipci-portal-browser.mjs
       - .github/workflows/integrar-v2-real-portal.yml
   workflow_dispatch:
 permissions:
