@@ -38,11 +38,11 @@ export function subjectArea(name){
   if(/matemat/.test(n))return 'Matemática';
   if(/lengua y literatura/.test(n))return 'Lengua y Literatura';
   if(/lengua adicional|ingles|frances|portugues/.test(n))return 'Lenguas Adicionales';
+  if(/educacion fisica/.test(n))return 'Educación Física';
   if(/biologia|fisica|quimica/.test(n))return 'Ciencias Naturales';
   if(/historia|geografia|economia|filosofia|etica|ciudadan/.test(n))return 'Ciencias Sociales';
   if(/artes|educacion artistica|musica|teatro/.test(n))return 'Artes';
   if(/tecnolog|informacion/.test(n))return 'Tecnologías';
-  if(/educacion fisica/.test(n))return 'Educación Física';
   return 'Otros formatos';
 }
 export function mapRow(area,kind=''){
@@ -51,11 +51,11 @@ export function mapRow(area,kind=''){
   if(/matemat/.test(a))return 'Matemática';
   if(/lengua y literatura/.test(a))return 'Lengua y Literatura';
   if(/lenguas adicional|lengua adicional/.test(a))return 'Lenguas Adicionales';
+  if(/educacion fisica/.test(a))return 'Talleres FG · Educación Física';
   if(/naturales|biologia|fisica|quimica/.test(a))return 'Laboratorios FG · Naturales';
   if(/sociales|historia|geografia|economia|filosofia/.test(a))return 'Laboratorios FG · Sociales';
   if(/artes|artistica/.test(a))return 'Talleres FG · Artes';
   if(/tecnolog/.test(a))return 'Talleres FG · Tecnologías';
-  if(/educacion fisica/.test(a))return 'Talleres FG · Educación Física';
   if(k==='troncal')return 'Otros espacios FG';
   return 'Otros formatos';
 }
