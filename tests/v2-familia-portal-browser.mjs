@@ -143,6 +143,28 @@ try{
     await page.locator('#editor [data-back-to-school]').click();
     await page.locator('#empty:not([hidden])').waitFor({timeout:20000});
   }
+  // La revisión compartible usa el mismo portal y sus tres tarjetas,
+  // pero intercepta la API con datos simulados sin llamar a Supabase.
+  const review=await browser.newPage({viewport:{width:1440,height:950}});
+  const external=[];
+  review.on('request',r=>{if(r.url().includes('supabase.co'))external.push(r.url())});
+  await review.goto('http://127.0.0.1:'+port+'/revision-v2-portal-real.html?school=1001',
+    {waitUntil:'domcontentloaded'});
+  await review.waitForFunction(()=>document.querySelectorAll('.school-offer-card').length>=3,null,{timeout:35000});
+  for(const m of records){
+    const card=review.locator('.school-offer-card').filter({hasText:m.track}).first();
+    await card.locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
+    await review.locator('#v2OriginalPane:not([hidden])').waitFor({timeout:35000});
+    const iframe=review.frameLocator('#v2OriginalFrame');
+    await iframe.locator('#offer.active').waitFor({timeout:60000});
+    assert.equal(await iframe.locator('#matrix .term').count(),m.terms+1);
+    assert.equal(await iframe.locator('#matrix .grid.levels .level').count(),m.levels);
+    await review.screenshot({path:'test-artifacts/v2-modalidades/revision-publica-'+m.model+'.png',fullPage:true});
+    await review.locator('#editor [data-back-to-school]').click();
+    await review.locator('#empty:not([hidden])').waitFor({timeout:18000});
+  }
+  assert.deepEqual(external,[],'La revisión pública no puede contactar Supabase');
+  await review.close();
   assert.equal(state.pcis.length,3,'Mantener tres PCIs de modelos distintos');
   assert.equal(state.units.size,2,'Solo dos unidades V2 nuevas guardadas');
   assert.deepEqual(pageConsole,[],'Sin excepciones JS en portal');
