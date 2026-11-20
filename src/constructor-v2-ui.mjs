@@ -311,6 +311,15 @@ export function renderUnifiedConstructor({
         cell.append(b);
       }
       if(!cell.children.length){
+        // Regla diferencial de Naturales orientada: FG ofrece 8 laboratorios,
+        // C1-C8. Los espacios de FO mantienen talleres en su propia fila.
+        // Si existe un grupo histórico en C9/C10, se muestra arriba y no se borra.
+        if(rowName==='Laboratorios FG · Naturales' &&
+           pci.orientation_id==='ciencias_naturales' && term>=9){
+          const notice=el('span','Sin laboratorio FG en este nivel','muted');
+          notice.title='En la orientación Ciencias Naturales corresponden 8 laboratorios FG de C1 a C8. Los talleres orientados están en Talleres FO.';
+          cell.append(notice);row.append(cell);continue;
+        }
         const foRow=['Laboratorios FO','Talleres FO'].includes(rowName);
         if(foRow&&quarterYear(term)>=3){
           const zone=createAction('↔',()=>{
