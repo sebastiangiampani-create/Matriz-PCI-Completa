@@ -99,6 +99,11 @@ try {
   assert.equal(await page.locator('[data-pci-art-language]').count(), 3, 'Artes debe ofrecer tres lenguajes para elegir dos.');
   await page.locator('[data-pci-art-language="Artes Visuales"]').check();
   await page.locator('[data-pci-art-language="Música"]').check();
+  console.log('ART SELECTION DEBUG', JSON.stringify(await page.evaluate(() => ({
+    selected: window.PCIApp.getState().curriculumRules?.artLanguages,
+    controls: [...document.querySelectorAll('[data-pci-art-language]')].map(input => ({name:input.dataset.pciArtLanguage, checked:input.checked,disabled:input.disabled})),
+    refreshCount: window.__pciCurriculumUiRefreshCount
+  }))));
   await page.waitForFunction(() => document.querySelector('[data-pci-art-language="Teatro"]')?.disabled === true);
   assert.deepEqual(
     await page.evaluate(() => window.PCIApp.getState().curriculumRules.artLanguages),
