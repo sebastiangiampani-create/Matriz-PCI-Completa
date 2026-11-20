@@ -1,0 +1,180 @@
+/*
+ * Restauración visual del constructor original PCI Secundaria Aprende V2.
+ * Fuente de referencia inmutable:
+ * sebastiangiampani-create/pci-sec-aprendeV2/app-core.html
+ * .workspace/.bag/.matrix/.grid/.level/.term/.rowlabel/.cell/.drop/.placed
+ * y src/v19-map.js (presentación de materias y formatos).
+ *
+ * Solo se traslada la presentación. Conserva intactos los identificadores
+ * de grupos, listeners drag/drop, modelos y persistencia multi-PCI.
+ */
+#offerPane, #ba15Builder {
+ --v2-ink:#12395c;--v2-muted:#5f7382;--v2-band:#edf3f8;
+ --v2-line:#d8e1e8;--v2-mint:#83ded3;--v2-mint-dark:#126e65;
+ --v2-mint-soft:#e7f8f5;--v2-gold-soft:#fff4d8;
+ --v2-ok-soft:#e6f6ee;
+ color:var(--v2-ink);font-family:Archivo,Arial,sans-serif;
+}
+#offerPane .constructor-shell {
+ grid-template-columns:290px minmax(0,1fr);gap:12px;align-items:start;
+}
+#offerPane .constructor-side.content-bag.card {
+ position:sticky;top:80px;max-height:calc(100vh - 95px);
+ padding:14px;border:1px solid var(--v2-line);border-radius:18px;
+ background:#fff;box-shadow:0 14px 34px rgba(18,57,92,.08);
+}
+#offerPane .constructor-subject-list {gap:5px;max-height:400px;margin:9px 0;}
+#offerPane .constructor-bank-subject {
+ display:block;min-height:0;padding:7px;margin:2px 0;
+ border:1px solid var(--v2-line);border-radius:9px;background:#fff;
+ color:var(--v2-ink);font-size:.68rem;font-weight:800;line-height:1.15;
+ cursor:grab;
+}
+#offerPane .constructor-bank-subject:hover,
+#offerPane .constructor-bank-subject.active{
+ border-color:var(--v2-mint-dark);background:var(--v2-mint-soft);
+}
+#offerPane .constructor-bank-subject small{
+ color:var(--v2-muted);font-size:.54rem;font-weight:600;margin-top:2px;
+}
+#offerPane .builder-head h4,#offerPane .builder-map-heading h4{
+ font-size:1rem;font-weight:900;color:var(--v2-ink);
+}
+#offerPane .builder-map-heading{margin-bottom:8px}
+#offerPane .builder-filters label,#offerPane .constructor-add-card label{
+ color:var(--v2-muted);font-size:.68rem;font-weight:800;
+}
+#offerPane .builder-filters select,#offerPane .builder-filters input,
+#offerPane .constructor-add-card select,#offerPane .constructor-add-card input{
+ border-color:var(--v2-line);border-radius:9px;font-size:.72rem;
+}
+#offerPane .constructor-add-card{
+ border:1px solid var(--v2-line);border-radius:12px;background:#fff;
+}
+#offerPane .mapScroll,#ba15Builder .mapScroll{
+ overflow:auto;border:1px solid var(--v2-line);border-radius:13px;
+ background:#fff;padding:8px;scrollbar-width:thin;
+}
+/* El original V2 es una cuadrícula, NO una tabla con bordes continuos. */
+#offerPane .constructor-matrix,
+#ba15Builder .mapTable {
+ display:block;min-width:1240px!important;width:100%;padding:0;
+ border-collapse:separate;border-spacing:0;background:#fff;
+ font-size:.62rem;
+}
+#offerPane .constructor-matrix thead,
+#offerPane .constructor-matrix tbody,
+#ba15Builder .mapTable thead,
+#ba15Builder .mapTable tbody {display:block;}
+#offerPane .constructor-matrix tr,
+#ba15Builder .mapTable tr {
+ display:grid;grid-template-columns:165px repeat(10,minmax(86px,1fr));
+ gap:4px;margin:0 0 4px;align-items:stretch;
+}
+#ba15Builder .mapTable tr{
+ grid-template-columns:165px repeat(8,minmax(86px,1fr));
+}
+#offerPane .constructor-matrix th,
+#offerPane .constructor-matrix td,
+#ba15Builder .mapTable th,
+#ba15Builder .mapTable td{
+ display:block;min-width:0!important;max-width:none!important;
+ margin:0;border:0;white-space:normal;box-sizing:border-box;
+}
+#offerPane .constructor-matrix thead tr:first-child th:not(:first-child),
+#ba15Builder .mapTable thead tr:first-child th:not(:first-child){
+ grid-column:span 2;background:var(--v2-ink);color:#fff;
+ border-radius:7px;padding:6px;text-align:center;
+ font-size:.62rem;font-weight:900;
+}
+#offerPane .constructor-matrix thead tr:first-child th:first-child,
+#ba15Builder .mapTable thead tr:first-child th:first-child{
+ padding:6px;background:transparent;color:var(--v2-ink);
+ font-size:.62rem;font-weight:900;
+}
+#offerPane .constructor-matrix thead tr:nth-child(2)::before,
+#ba15Builder .mapTable thead tr:nth-child(2)::before{
+ content:"Espacio";display:block;background:var(--v2-band);
+ border-radius:7px;padding:5px;text-align:center;
+ font-size:.6rem;font-weight:900;
+}
+#offerPane .constructor-matrix thead tr:nth-child(2) th,
+#ba15Builder .mapTable thead tr:nth-child(2) th{
+ background:var(--v2-band);color:var(--v2-ink);
+ border-radius:7px;padding:5px;text-align:center;
+ font-size:.6rem;font-weight:900;
+}
+#offerPane .constructor-matrix tbody th,
+#ba15Builder .mapTable tbody th{
+ position:sticky;left:0;z-index:3;background:var(--v2-band);
+ border-radius:8px;padding:7px;text-align:left;
+ font-size:.61rem;font-weight:900;line-height:1.2;
+ display:flex;align-items:center;
+ box-shadow:6px 0 8px rgba(255,255,255,.85);
+}
+#offerPane .constructor-matrix tbody td,
+#ba15Builder .mapTable tbody td{
+ min-height:54px;border:1px solid var(--v2-line);
+ border-radius:8px;padding:4px;background:#fff!important;
+}
+#offerPane .constructor-matrix tbody td[colspan="2"],
+#ba15Builder .mapTable tbody td[colspan="2"]{grid-column:span 2;}
+#offerPane .constructor-group,
+#offerPane .constructor-empty-drop,
+#ba15Builder .mapTable .slot,
+#ba15Builder .mapTable .ba15EmptySlot{
+ display:block;width:100%;min-height:44px;margin:2px 0;
+ border:1.5px dashed #9dafbb;border-radius:7px;
+ padding:5px;background:#fff;color:var(--v2-ink);
+ font-size:.6rem;font-weight:800;line-height:1.18;
+ text-align:left;box-shadow:none;
+}
+#offerPane .constructor-group.historia{
+ background:var(--v2-band);border-color:#9dafbb;
+}
+#offerPane .constructor-group.propuesta{
+ background:var(--v2-gold-soft);border-color:#dfc88e;
+}
+#offerPane .constructor-group.orientada{
+ background:var(--v2-mint-soft);border-color:var(--v2-mint-dark);
+}
+#offerPane .constructor-group:hover,
+#offerPane .constructor-group.drop-over,
+#offerPane .constructor-empty-drop.drop-over,
+#ba15Builder .mapTable .drop-over{
+ background:var(--v2-mint-soft);border-color:var(--v2-mint-dark);
+ outline:1px solid var(--v2-mint-dark);outline-offset:0;
+}
+#offerPane .constructor-group small{
+ font-size:.54rem;color:var(--v2-muted);line-height:1.22;
+ font-weight:600;
+}
+#offerPane .constructor-member{
+ background:#fff;border:1px solid var(--v2-line);
+ padding:3px 5px;font-size:.55rem;border-radius:6px;
+}
+#offerPane .constructor-empty-drop{color:#8296a3;text-align:center}
+#offerPane .constructor-empty-drop:disabled{
+ border-color:var(--v2-line);border-style:dashed;
+ background:#f4f6f8;color:#aab4bb;opacity:1;
+}
+#offerPane .constructor-cell>span.muted{
+ display:grid;place-items:center;min-height:44px;
+ color:#aab4bb;background:#f4f6f8;border:1px dashed var(--v2-line);
+ border-radius:7px;font-size:.55rem;text-align:center;
+}
+#offerPane .builder-selected-subject,
+#offerPane .builder-head .pill{
+ background:var(--v2-mint-soft);color:var(--v2-mint-dark);
+}
+#ba15Builder .mapTable .slot{background:var(--v2-gold-soft);border-color:#dfc88e;}
+#ba15Builder .mapTable .ba15EmptySlot{background:#fff;text-align:center;}
+@media(max-width:1100px){
+ #offerPane .constructor-shell{grid-template-columns:240px minmax(0,1fr)}
+ #offerPane .constructor-matrix,#ba15Builder .mapTable{min-width:1160px!important}
+}
+@media(max-width:850px){
+ #offerPane .constructor-shell{grid-template-columns:1fr}
+ #offerPane .constructor-side.content-bag.card{position:static;max-height:480px}
+ #offerPane .constructor-matrix,#ba15Builder .mapTable{min-width:1120px!important}
+}
