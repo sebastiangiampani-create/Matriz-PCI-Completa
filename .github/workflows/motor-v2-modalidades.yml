@@ -25,6 +25,7 @@ jobs:
           node --check src/v2-familia/v19-mapa-modalidad.js
           node --check src/v2-familia/v47-desarrollo-modalidad.js
           node --check tests/v2-familia-modalidades-browser.mjs
+          node --check tests/v2-familia-portal-browser.mjs
       - name: Instalar entorno Playwright
         shell: bash
         run: |
@@ -35,7 +36,9 @@ jobs:
             npx playwright install chromium
           fi
       - name: Probar Técnica 12 C y BA +15 8 C, bolsas y Fase 2
-        run: node tests/v2-familia-modalidades-browser.mjs
+        run: |
+          node tests/v2-familia-modalidades-browser.mjs
+          node tests/v2-familia-portal-browser.mjs
       - name: Capturas del mapa original adaptado
         if: always()
         uses: actions/upload-artifact@v4
