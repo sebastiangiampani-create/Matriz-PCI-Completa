@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {migrateState} from '../pci-model.js';
 import {
   COMPOSITION_VERSION,ROWS,fgSubjectsByYear,historicGroups,
   compositionFor,createGrouping,placeSubject,removeSubject,removeGrouping,
@@ -190,4 +191,23 @@ test('Naturales orientada: 8 laboratorios FG C1-C8; nunca taller FG de Naturales
     kind:'laboratorio',area:'Ciencias Naturales',name:'FG otras orientaciones'}));
   assert.equal(initial.groups.length,0);
   assert.equal(ws.orientations.ciencias_naturales.fo.spaces.length,0);
+});
+
+test('Orientación Naturales: ocultar solo plantillas genéricas vacías C9/C10 sin borrar histórico',()=>{
+  const historical=migrateState({});
+  const ws={orientations:{ciencias_naturales:{
+    fg:{areas:historical.areas},fo:{spaces:[]}
+  }}};
+  const before=JSON.stringify(ws);
+  const naturalGroups=historicGroups(ws,'ciencias_naturales')
+    .filter(g=>g.area==='Ciencias Naturales');
+  assert.deepEqual(naturalGroups.map(g=>g.startTerm),[1,2,3,4,5,6,7,8]);
+  assert.equal(ws.orientations.ciencias_naturales.fg.areas['Ciencias Naturales'].groups.length,10);
+  assert.equal(JSON.stringify(ws),before,'No se reescribió el estado original');
+  const worked=structuredClone(ws);
+  worked.orientations.ciencias_naturales.fg.areas['Ciencias Naturales'].groups[8].items=['priorizado-historico'];
+  const retained=historicGroups(worked,'ciencias_naturales')
+    .filter(g=>g.area==='Ciencias Naturales');
+  assert.equal(retained.length,9);
+  assert.equal(retained.find(g=>g.startTerm===9).contents,1);
 });
