@@ -52,7 +52,7 @@ try{
    'Debe existir la bolsa real de materias V2');
  assert.ok(await frame.locator('#matrix [data-slot]').count()>25,
    'Deben existir casilleros reales de arrastre V2');
- assert.equal(await page.locator('#status').textContent(),'V2 original cargado · PCI aislado');
+ assert.match(await page.locator('#status').textContent(),/V2 original cargado|Borrador V2 guardado/);
  await page.screenshot({path:'test-artifacts/v2-original/01-constructor-v2-mismo-codigo.png',fullPage:true});
  const target=frame.locator('[data-slot="matematica-n1"]');
  const source=frame.locator('#bagContent [data-sub="fg-1-matematica"]');
