@@ -89,8 +89,8 @@
 }
 #offerPane .constructor-matrix thead tr:first-child th:first-child,
 #ba15Builder .mapTable thead tr:first-child th:first-child{
- padding:6px;background:transparent;color:var(--v2-ink);
- font-size:.62rem;font-weight:900;
+ padding:6px;background:var(--v2-ink);color:#fff;
+ border-radius:7px;font-size:.62rem;font-weight:900;
 }
 #offerPane .constructor-matrix thead tr:nth-child(2)::before,
 #ba15Builder .mapTable thead tr:nth-child(2)::before{
