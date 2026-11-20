@@ -79,7 +79,7 @@ try{
  const preview=page.locator('#pciHistoricLinks');
  assert.match(await preview.textContent(),/3 contenidos y 2 planes|3 contenidos y 2 planes/);
  await preview.locator('summary').first().evaluate(el=>el.click());
- await preview.getByText('Comunicación y medios').waitFor();
+ assert.ok((await preview.textContent()).includes('Comunicación y medios'),'El vínculo histórico sigue protegido sin mostrar otra matriz.');
  assert.equal(await page.locator('#areaList').getByText('Otros formatos pedagógicos').count(),0,'El FO específico no se convierte automáticamente en FG');
  assert.match(await preview.textContent(),/Trabajo de comprensión lectora|Lengua trabajada/);
  await page.locator('#editor [data-back-to-school]').click();
