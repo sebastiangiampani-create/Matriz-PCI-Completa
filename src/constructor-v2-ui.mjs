@@ -213,12 +213,15 @@ export function renderUnifiedConstructor({
       onNotice(subject.name+' ubicada en C'+term+' (y su cuatrimestre par cuando corresponde). Revisá y guardá el mapa.');
     }catch(error){onError(error.message)}
   }
-  const h=el('tr');h.append(el('th','Área y formato'));
-  for(let t=1;t<=10;t++){
-    const header=el('th','C'+t);header.append(smallNote('Nivel '+quarterYear(t)));
-    h.append(header);
+  // PCI V2: niveles en pares de cuatrimestres y troncales anuales indivisibles.
+  const levels=el('tr');
+  const areaHeader=el('th','Área y formato');areaHeader.rowSpan=2;levels.append(areaHeader);
+  for(let level=1;level<=5;level++){
+    const header=el('th','Nivel '+level);header.colSpan=2;levels.append(header);
   }
-  mapHead.replaceChildren(h);mapBody.replaceChildren();
+  const quarters=el('tr');
+  for(let t=1;t<=10;t++)quarters.append(el('th','C'+t));
+  mapHead.replaceChildren(levels,quarters);mapBody.replaceChildren();
   const sourceColors={
     legacy:'historia',propuesta:'propuesta',fo:'orientada'
   };
@@ -226,6 +229,12 @@ export function renderUnifiedConstructor({
     const row=el('tr');const title=el('th',rowName);row.append(title);
     for(let term=1;term<=10;term++){
       const cell=el('td',undefined,'constructor-cell');const items=[];
+      const annualTrunk=['Matemática','Lengua y Literatura','Lenguas Adicionales'].includes(rowName);
+      if(annualTrunk && term%2===1){
+        cell.colSpan=2;
+        cell.dataset.pciAnnual='true';
+        cell.setAttribute('aria-label',rowName+' · Nivel '+quarterYear(term)+' · C'+term+'–C'+(term+1)+' · anual');
+      }
       for(const g of groups.filter(x=>x.row===rowName&&x.startTerm<=term&&x.endTerm>=term&&
         !proposed.some(p=>p.legacyGroupId===x.id&&p.area===x.area))){
         items.push({source:'legacy',name:g.name,model:g});
@@ -336,6 +345,7 @@ export function renderUnifiedConstructor({
         cell.append(plus);
       }
       row.append(cell);
+      if(annualTrunk && term%2===1)term++;
     }
     mapBody.append(row);
   }
