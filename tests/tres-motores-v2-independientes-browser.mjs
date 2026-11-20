@@ -53,8 +53,8 @@ try{
   assert.ok(await page.locator('#bagContent [data-sub]').count()>0,'Cada motor necesita su bolsa de materias');
   const props=await page.evaluate(()=>{
     const data=window.__V2_MODAL;
-    return {school:window.state?.school??null,
-      track:window.state?.active??null,modal:data?.model??'media',
+    return {school:typeof state==='undefined'?null:state.school,
+      track:typeof state==='undefined'?null:state.active,modal:data?.model??'media',
       levels:data?.levels??5,terms:data?.terms??10,
       phase2:!!window.PCIPhase2V28};
   });
