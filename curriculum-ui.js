@@ -430,6 +430,19 @@ async function start() {
 
   observer = new MutationObserver(scheduleRefresh);
   observer.observe(document.body, { childList: true, subtree: true });
+  // openArea puede actualizar el estado y el tablero sin mutaciones de nodos
+  // observables por el complemento. Forzamos la actualización de sus reglas.
+  const api=window.PCIApp;
+  if(api?.openArea&&!api.openArea.__pciCurriculumRefresh){
+    const original=api.openArea.bind(api);
+    const wrapped=(...args)=>{
+      const result=original(...args);
+      scheduleRefresh();
+      return result;
+    };
+    Object.defineProperty(wrapped,'__pciCurriculumRefresh',{value:true});
+    api.openArea=wrapped;
+  }
   window.addEventListener('pci-state-change', scheduleRefresh);
   ['input', 'change'].forEach((eventName) => {
     ['contentSearch', 'subjectFilter', 'axisFilter', 'pendingFilter'].forEach((id) => {
