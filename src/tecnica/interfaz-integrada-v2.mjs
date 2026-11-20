@@ -244,9 +244,14 @@ export function createIntegratedTechnicalUI({
    for(let i=0;i<group.cells.length;i++){
     const cell=group.cells[i],td=el('td',tr);
     // Los espacios anuales ocupan ambos cuatrimestres del nivel.
+    // No ocultar contenidos de C par: unir columnas únicamente cuando ambas
+    // celdas muestran exactamente los mismos espacios anuales del nivel.
+    const nextCell=group.cells[i+1];
     const annual=cell.term%2===1&&cell.spaces.length>0&&
-      cell.spaces.every(x=>x.duration==='anual'&&x.term===cell.term);
-    if(annual){td.colSpan=2;i++;}
+      cell.spaces.every(x=>x.duration==='anual'&&x.term===cell.term)&&
+      nextCell?.spaces.length===cell.spaces.length&&
+      nextCell.spaces.every(x=>cell.spaces.some(y=>y.id===x.id));
+    if(annual){td.colSpan=2;td.dataset.pciAnnual='true';i++;}
     // Una zona vacía admite mover el formato dentro de los cuatrimestres
     // permitidos por la regla Técnica, sin modificar sus contenidos.
     td.classList.add('constructor-cell');
