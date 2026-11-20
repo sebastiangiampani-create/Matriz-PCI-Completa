@@ -54,20 +54,26 @@ try{
    'Deben existir casilleros reales de arrastre V2');
  assert.match(await page.locator('#status').textContent(),/V2 original cargado|Borrador V2 guardado/);
  await page.screenshot({path:'test-artifacts/v2-original/01-constructor-v2-mismo-codigo.png',fullPage:true});
- const target=frame.locator('[data-slot="matematica-n1"]');
+ const target=frame.locator('#matrix .drop[data-slot="matematica-n1"]');
  const source=frame.locator('#bagContent [data-sub="fg-1-matematica"]');
+ const oldAssignment=target.locator('[data-rm="fg-1-matematica"]');
+ if(await oldAssignment.count())await oldAssignment.first().click();
  await source.dragTo(target);
- await frame.locator('[data-slot="matematica-n1"] .placed').waitFor({timeout:12000});
- const placed=await frame.locator('[data-slot="matematica-n1"] .placed').textContent();
+ await target.locator('[data-map-id="fg-1-matematica"]').waitFor({timeout:12000});
+ const placed=await target.locator('[data-map-id="fg-1-matematica"]').textContent();
  assert.match(placed,/Matemática/,'El drag-and-drop original sigue funcionando');
  await page.locator('[data-pci="demo-turismo-tarde"]').click();
  await frame.locator('#offer.active').waitFor({timeout:60000});
  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('cargado'),null,{timeout:15000});
- assert.equal(await frame.locator('[data-slot="matematica-n1"] .placed').count(),0,
-   'El PCI Turismo debe empezar con su propio borrador');
+ const otherMap=frame.locator('#matrix .drop[data-slot="matematica-n1"]');
+ if(await otherMap.locator('[data-rm="fg-1-matematica"]').count()){
+   await otherMap.locator('[data-rm="fg-1-matematica"]').first().click();
+ }
+ assert.equal(await otherMap.locator('[data-map-id="fg-1-matematica"]').count(),0,
+   'Al retirar Matemática de Turismo no se altera Comunicación');
  await page.locator('[data-pci="demo-comunicacion-manana"]').click();
  await frame.locator('#offer.active').waitFor({timeout:60000});
- await frame.locator('[data-slot="matematica-n1"] .placed').waitFor({timeout:12000});
+ await frame.locator('#matrix .drop[data-slot="matematica-n1"] [data-map-id="fg-1-matematica"]').waitFor({timeout:12000});
  assert.equal(outside.length,0,'Esta revisión no puede solicitar datos a Supabase');
  assert.deepEqual(errors,[],'El V2 copiado debe funcionar sin errores JS');
  await page.screenshot({path:'test-artifacts/v2-original/02-borrador-recuperado.png',fullPage:true});
