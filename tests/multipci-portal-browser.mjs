@@ -3,6 +3,8 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { resolve, extname, relative, sep } from 'node:path';
 import { chromium } from 'playwright';
+import {crearBorradorBa15,crearEspacioBa15,asignarMateriaBa15,actualizarEspacioBa15,validarBorradorBa15}
+ from '../src/ba15/constructor.mjs';
 
 const root = process.cwd();
 const types = {'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.txt':'text/plain; charset=utf-8','.svg':'image/svg+xml'};
@@ -287,6 +289,63 @@ try{
  assert.equal(state.pcis.length,2,'La navegación no debe borrar ningún PCI');
  assert.equal(state.units.get(unitKey)?.revision,1,'La navegación no modifica el guardado online');
  assert.equal(pageConsole.length,0,'La nueva navegación no debe generar errores JavaScript: '+pageConsole.join(' | '));
+ // Escenario de Fase 2: mapa completo sintético ya guardado en revisión 2.
+ // No se conecta ni escribe en Supabase real.
+ let complete=crearBorradorBa15({schoolId:1001,pciId:newId,
+  orientationId:'economia_administracion',shiftId:'noche'});
+ for(let level=1;level<=4;level++)for(const term of [level*2-1,level*2]){
+  const groups=new Map();
+  for(const subject of complete.niveles[level-1].asignaturas){
+   const format=['troncal','taller','orientado'].includes(subject.formatoOriginal)?
+    subject.formatoOriginal:'laboratorio';
+   const label=format==='troncal'?subject.id:format+':'+subject.area;
+   if(!groups.has(label)){
+    complete=crearEspacioBa15(complete,{nivel:level,term,
+     nombre:subject.nombre+' · C'+term,formato:format});
+    groups.set(label,complete.niveles[level-1].espacios.at(-1).id);
+   }
+   complete=asignarMateriaBa15(complete,{nivel:level,
+    espacioId:groups.get(label),materiaId:subject.id});
+  }
+  for(const id of groups.values())complete=actualizarEspacioBa15(complete,{
+   nivel:level,espacioId:id,changes:{articulacion:'Articulación institucional documentada'}
+  });
+ }
+ const completeAudit=validarBorradorBa15(complete);
+ assert.deepEqual(completeAudit.errores,[]);
+ assert.deepEqual(completeAudit.advertencias,[]);
+ const savedMedia=structuredClone(state.units.get(mediaKey));
+ state.units.set(unitKey,{exists:true,revision:2,
+  base_version:'oferta-ba15-constructor-v1',document:complete});
+ await page.locator('#ba15Pending [data-back-to-school]').click();
+ await page.locator('#empty:not([hidden])').waitFor();
+ const launchBa=()=>page.locator('.school-offer-card')
+  .filter({hasText:'Economía y Administración'})
+  .getByRole('button',{name:/Abrir Desarrollo Curricular/}).click();
+ await launchBa();
+ await page.locator('#ba15Development:not([hidden])').waitFor({timeout:15000});
+ assert.equal(await page.locator('#ba15Builder').isHidden(),true);
+ await page.locator('#ba15Development .ba15Space').first().locator('button').first().click();
+ const objectives=page.locator('#ba15Development label').filter({hasText:'Objetivos'}).first().locator('textarea');
+ await objectives.fill('Objetivo nuevo del plan 1 - escenario de prueba');
+ await objectives.dispatchEvent('change');
+ await page.locator('#ba15Development').getByRole('button',{name:/Guardar BA \+15 online/}).click();
+ await page.waitForFunction(()=>document.getElementById('ba15Development')?.textContent?.includes('guardado online'),null,{timeout:15000});
+ assert.equal(state.units.get(unitKey)?.revision,3);
+ assert.equal(state.units.get(unitKey).document.niveles[0].espacios[0].planes[0].objetivos,
+  'Objetivo nuevo del plan 1 - escenario de prueba');
+ assert.deepEqual(state.units.get(mediaKey),savedMedia,'El PCI de Media no cambia');
+ await page.screenshot({path:'test-artifacts/multipci-portal/ba15-fase2-planes-reales.png',fullPage:true});
+ await page.locator('#ba15Pending [data-back-to-school]').click();
+ await page.locator('#empty:not([hidden])').waitFor();
+ await launchBa();
+ await page.locator('#ba15Development:not([hidden])').waitFor({timeout:15000});
+ await page.locator('#ba15Development .ba15Space').first().locator('button').first().click();
+ assert.equal(await page.locator('#ba15Development label').filter({hasText:'Objetivos'}).first().locator('textarea').inputValue(),
+  'Objetivo nuevo del plan 1 - escenario de prueba');
+ assert.deepEqual(pageConsole,[],'Fase 2 no presenta errores JavaScript');
+ console.log('E2E BA+15 FASE 2 OK: composición completa guardada, cuatro planes, persistencia de objetivos y PCI Media intacto.');
+
  console.log('E2E OK: escuela Media+BA15, mapa y desarrollo desde tarjetas, retorno, filtros, guardado rev1 por PCI y sin errores JS.');
 
  // Caso real: abrir el enlace del portal en una pestaña SIN sessionStorage
