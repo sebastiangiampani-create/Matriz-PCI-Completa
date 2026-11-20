@@ -129,6 +129,12 @@
  const originalInit=window.__pciBaseInit;
  window.__pciBaseInit=async()=>{
    await originalInit();
+   // Solo en la vista simulada: habilitar el panel original V2 para
+   // probar drag-and-drop sin pedir credenciales de escuelas reales.
+   // El control de acceso institucional de producción NO se sustituye.
+   if(window.PCIAccessPanelV85?.applyProfile){
+     window.PCIAccessPanelV85.applyProfile({role:'admin'},{persist:true});
+   }
    importing=true;
    try{
      state.school=school;state.active=orientation;state.selected=[orientation];
