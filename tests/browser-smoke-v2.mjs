@@ -88,6 +88,13 @@ try {
 
   await page.evaluate(() => window.PCIApp.openArea('Artes'));
   await page.waitForSelector('#board.active');
+  console.log('RULE REFRESH DEBUG',JSON.stringify(await page.evaluate(()=>({
+   ready:window.__pciCurriculumUiReady,wrapped:!!window.PCIApp.openArea.__pciCurriculumRefresh,
+   current:window.PCIApp.getState().current,refreshCount:window.__pciCurriculumUiRefreshCount,
+   lastArea:window.__pciCurriculumUiLastArea,appliedArea:window.__pciCurriculumUiAppliedArea,
+   checkboxes:document.querySelectorAll('[data-pci-art-language]').length,
+   alert:document.querySelector('#boardAlert')?.textContent
+  }))));
   await page.waitForFunction(() => document.querySelectorAll('[data-pci-art-language]').length === 3);
   assert.equal(await page.locator('[data-pci-art-language]').count(), 3, 'Artes debe ofrecer tres lenguajes para elegir dos.');
   await page.locator('[data-pci-art-language="Artes Visuales"]').check();
