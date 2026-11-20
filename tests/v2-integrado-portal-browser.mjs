@@ -142,6 +142,20 @@ try{
   assert.equal(state.units.get(key).revision,1,'La reapertura no modifica el historial.');
   assert.deepEqual(state.pcis.map(p=>p.pci_id),['00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002']);
   assert.deepEqual(pageConsole,[],'El portal y la copia V2 no deben generar excepciones JS.');
+  // La revisión pública comparte los archivos del portal, no otra demo.
+  const review=await browser.newPage({viewport:{width:1440,height:900}});
+  const reviewNetwork=[];
+  review.on('request',request=>{if(request.url().includes('supabase.co'))reviewNetwork.push(request.url());});
+  await review.goto('http://127.0.0.1:'+port+'/revision-v2-portal-real.html?school=1001',
+    {waitUntil:'domcontentloaded'});
+  await review.locator('.school-offer-card').filter({hasText:'Comunicación'})
+    .locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
+  await review.locator('#v2OriginalPane:not([hidden])').waitFor({timeout:35000});
+  await review.frameLocator('#v2OriginalFrame').locator('#offer.active').waitFor({timeout:60000});
+  assert.equal(await review.locator('#offerPane').isHidden(),true);
+  assert.deepEqual(reviewNetwork,[],'La revisión no debe enviar datos a Supabase real.');
+  await review.screenshot({path:'test-artifacts/v2-original/portal-v2-preview.png',fullPage:true});
+  await review.close();
   console.log('INTEGRACIÓN REAL V2: apertura desde tarjeta Media, drag/drop, guardado Supabase simulado, revisión y PCI aislados.');
 }finally{
  await browser.close();
