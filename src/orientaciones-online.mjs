@@ -830,7 +830,7 @@ async function openOriginalV2(p){
   }
   v2Original={pciId:p.pci_id,schoolId:Number(p.school_id),orientationId:p.orientation_id,
     shiftId:p.shift_id,revision:Number(saved.revision)||0,document:saved.exists?saved.document:null,
-    ready:false,dirty:false,saving:false};
+    ready:false,dirty:false,saving:false,userInteracted:false};
   v2LegacyVisible=false;
   const school=schools.find(x=>Number(x.school_id)===schoolId);
   $('v2OriginalTitle').textContent='Mapa de la Oferta V2 · '+orientation+
@@ -849,6 +849,15 @@ function onOriginalV2Message(event){
   if(!msg||msg.pci!==current.pciId||pci?.pci_id!==current.pciId)return;
   if(msg.type==='V2_ORIGINAL_READY'){
     current.ready=true;
+    // El motor V2 emite save() también durante mantenimiento interno.
+    // Detectar actividad del editor antes de marcar cambios sin guardar.
+    const doc=$('v2OriginalFrame').contentDocument;
+    if(doc&&!current.interactionBound){
+      const mark=()=>{if(current===v2Original&&!current.saving)current.userInteracted=true;};
+      for(const type of ['pointerdown','keydown','input','change','dragstart','drop'])
+        doc.addEventListener(type,mark,true);
+      current.interactionBound=true;
+    }
     if(current.document?.v2){
       $('v2OriginalFrame').contentWindow.postMessage({
         type:'V2_IMPORT',pci:current.pciId,document:current.document.v2
@@ -859,7 +868,7 @@ function onOriginalV2Message(event){
       'Constructor V2 original listo. Nuevo borrador independiente por PCI.';
     updateV2Display();
   }
-  if(msg.type==='V2_ORIGINAL_SAVED'&&current.ready){
+  if(msg.type==='V2_ORIGINAL_SAVED'&&current.ready&&current.userInteracted){
     // V2 conserva guardados automáticos de interfaz (incluso al restaurar un
     // PCI). No generar falsos "cambios pendientes" si el contenido es idéntico
     // a la última revisión comprobada en el servidor.
@@ -896,7 +905,7 @@ async function commitOriginalV2(current,v2State){
     const result=await saveUnit('oferta','map',V2_UNIT_ID,V2_BASE_VERSION,document,current.revision);
     if(current!==v2Original||pci?.pci_id!==current.pciId)return;
     current.revision=Number(result.revision);
-    current.document=document;current.dirty=false;
+    current.document=document;current.dirty=false;current.userInteracted=false;
     $('v2OriginalStatus').textContent='Mapa V2 original guardado y leído nuevamente · revisión '+current.revision;
     status('Guardado V2 confirmado');
   }catch(error){
