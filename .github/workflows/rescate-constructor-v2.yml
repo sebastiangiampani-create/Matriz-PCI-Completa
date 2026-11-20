@@ -8,7 +8,11 @@ on:
       - 'src/ba15/**'
       - 'src/tecnica/**'
       - 'src/pci-flujo-fases.mjs'
-      - 'tests/flujo-constructor-tres-modalidades.test.mjs'
+      - 'src/pci-desarrollo-resumen.mjs'
+      - 'src/pci-router.mjs'
+      - 'pci-orientaciones.html'
+      - 'tests/pci-desarrollo-resumen.test.mjs'
+      - 'tests/flujo-constructor-tres-modalidades.test.mjs tests/pci-desarrollo-resumen.test.mjs'
       - 'tests/multipci-portal-browser.mjs'
       - 'tests/ba15-constructor.test.mjs'
       - 'tests/tecnica-integrada-v2.test.mjs'
@@ -39,6 +43,9 @@ jobs:
           node --check src/normativa/adaptador-mapa-media-20261117.mjs
           node --check src/pci-fase-desarrollo-fg.mjs
           node --check src/orientaciones-online.mjs
+          node --check src/pci-desarrollo-resumen.mjs
+          node --check src/pci-router.mjs
+          node --check tests/pci-desarrollo-resumen.test.mjs
           node --check src/ba15/constructor-ui.mjs
           node --check src/tecnica/interfaz-integrada-v2.mjs
           node --check src/tecnica/espacio-trabajo-v2.mjs
