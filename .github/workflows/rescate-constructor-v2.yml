@@ -1,7 +1,7 @@
 name: Rescate constructor PCI V2 - reglas y mapa
 on:
   push:
-    branches: [fix/recuperar-mapas-v2-20261120]
+    branches: [fix/recuperar-mapas-v2-20261120, fix/estetica-original-v2-mapas-20261120]
   pull_request:
     branches: [main]
     paths:
@@ -27,6 +27,8 @@ on:
       - 'src/integracion-curricular/constructor-mapa-unificado.mjs'
       - 'tests/constructor-mapa-unificado.test.mjs'
       - 'pci-orientaciones.css'
+      - 'src/v2-original-map-appearance.css'
+      - 'revision-pr47.html'
       - '.github/workflows/rescate-constructor-v2.yml'
   workflow_dispatch:
 permissions:
