@@ -32,7 +32,17 @@ try{
  await page.goto('http://127.0.0.1:'+server.address().port+'/revision-v2-original.html',
    {waitUntil:'domcontentloaded'});
  const frame=page.frameLocator('#originalV2');
- await frame.locator('#offer.active').waitFor({timeout:60000});
+ try {
+   await frame.locator('#offer.active').waitFor({timeout:22000});
+ }catch(error){
+   for(const f of page.frames()){
+     const txt=await f.locator('body').textContent().catch(()=>'(sin cuerpo)');
+     console.log('V2 FRAME DEBUG',JSON.stringify({url:f.url(),body:txt?.slice(0,2000)}));
+   }
+   console.log('V2 ERRORS',JSON.stringify(errors));
+   await page.screenshot({path:'test-artifacts/v2-original/error-carga.png',fullPage:true}).catch(()=>{});
+   throw error;
+ }
  await frame.locator('#matrix .grid.levels').waitFor({timeout:25000});
  assert.equal(await frame.locator('#matrix .grid.levels .level').count(),5,
    'El constructor original Media mantiene cinco niveles V2');
