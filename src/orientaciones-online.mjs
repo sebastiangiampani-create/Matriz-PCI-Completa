@@ -12,7 +12,7 @@ import {montarConstructorBa15} from './ba15/constructor-ui.mjs';
 import {loadMatrixContents,loadV2Fg,loadV2Fo,loadV2Rules,selectFoByOrientation} from './integracion-curricular/catalogos.js';
 import {automaticallyValidateImportedFg,AUTO_VALIDATION_LABEL} from './integracion-curricular/auto-validacion-importacion.js';
 import {seedOfferStructure,foSubjectBank,assignFoSubject,moveFoSpace,validateOfferStructure,stageFoContent,setFoAlternative,assignPvfReference,confirmFoContentAfterOffer} from './integracion-curricular/mapa-oferta.js';
-import {withComposition,compositionFor,arrangementWarnings} from './integracion-curricular/constructor-mapa-unificado.mjs';
+import {withComposition,compositionFor,arrangementWarnings,selectSocialOption,projectSocialGroupsForPci} from './integracion-curricular/constructor-mapa-unificado.mjs';
 import {phaseGate,phaseText} from './pci-flujo-fases.mjs';
 import {mediaDevelopmentSpaces,technicalDevelopmentSpaces,countsForDevelopment,
  spaceIds,verifiedCoverage} from './pci-desarrollo-resumen.mjs';
@@ -327,6 +327,15 @@ async function init(){
     $('developmentFormation').addEventListener('change',filterDevelopmentCards);
     $('saveOffer').onclick=()=>technical.active?technical.saveOffer():saveOffer();
     $('continueDevelopment').onclick=()=>setTab('desarrollo',true);
+    $('socialOption').addEventListener('change',()=>{
+      if(!pci||!workspace)return;
+      try{
+        const chosen=selectSocialOption(compositionFor(workspace,pci),$('socialOption').value);
+        workspace=withComposition(workspace,pci,chosen);
+        markDirty('oferta');renderOffer();
+        message('Opción de Sociales registrada en el mapa de este PCI. Revisá C5/C6 y guardá.','warn');
+      }catch(error){message(error.message,'error');renderOffer();}
+    });
     $('foAlternative').addEventListener('change',()=>{
       if(!pci||!workspace)return;
       try{workspace=setFoAlternative(workspace,pci.orientation_id,$('foAlternative').value);markDirty('oferta');renderOffer();message('Alternativa FO cambiada, todavía sin guardar.','warn');}
@@ -882,7 +891,15 @@ function renderDevelopmentOverview(){
  const entries=isTechnical?
   technicalDevelopmentSpaces(technical.offer):
   mediaDevelopmentSpaces({
-   historicalAreas:fgSourceState?.areas||{},
+   historicalAreas:(()=>{
+    const areas=copy(fgSourceState?.areas||{});
+    if(areas['Ciencias Sociales']){
+      const option=compositionFor(workspace,currentPci).socialOption;
+      areas['Ciencias Sociales'].groups=projectSocialGroupsForPci(
+       areas['Ciencias Sociales'].groups,option).groups.filter(g=>!g.excludedFromPci);
+    }
+    return areas;
+   })(),
    composition:compositionFor(workspace,currentPci),
    foSpaces:getCurrentOffer()?.spaces||[]
   });
@@ -1151,6 +1168,8 @@ function renderOffer(){
   const grid=$('offerGrid');grid.replaceChildren();
   const current=getCurrentOffer(),alternative=current.subjectAlternative||'A';
   $('foAlternative').value=alternative;
+  $('socialOption').value=String(compositionFor(workspace,pci).socialOption||'');
+  $('socialOption').disabled=!canEdit()||!['borrador','en_revision'].includes(pci.status);
   $('foAlternative').disabled=!canEdit()||current.spaces.some(s=>s.kind!=='proyecto'&&(s.members||[]).length>0);
   $('confirmFoContents').disabled=true;
   $('confirmFoContents').hidden=true;
