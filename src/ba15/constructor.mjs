@@ -1,10 +1,17 @@
 import {BA15_NIVELES,BA15_CCC,validarBa15} from './reglas-curriculares.mjs';
+import {BA15_FG_BASE_VERSION,BA15_FG_SOURCE_VERSION,BA15_FG_LEVEL_MAP,BA15_FG_LEVELS} from './priorizados-base.mjs';
 export const BA15_TERMS=Object.freeze(Array.from({length:8},(_,i)=>Object.freeze({id:'C'+(i+1),nivel:Math.floor(i/2)+1,numero:i+1})));
 const copy=v=>JSON.parse(JSON.stringify(v));
 const validTerm=(n,level)=>Number.isInteger(n)&&n>=1&&n<=8&&Math.floor((n-1)/2)+1===level;
 export function crearBorradorBa15({pciId,schoolId,orientationId,shiftId}){
  if(!pciId||!schoolId||!orientationId||!shiftId)throw Error('Falta identificar escuela, PCI, orientación o turno.');
  return {schema:'ba15-constructor-v1',pciId:String(pciId),schoolId:Number(schoolId),orientationId:String(orientationId),shiftId:String(shiftId),
+  priorizadosFGBase:{
+   version:BA15_FG_BASE_VERSION,
+   source:BA15_FG_SOURCE_VERSION,
+   yearToBa15Level:{...BA15_FG_LEVEL_MAP},
+   levels:BA15_FG_LEVELS.map(x=>({level:x.level,sourceYears:[...x.sourceYears]}))
+  },
   niveles:BA15_NIVELES.map((bank,i)=>({
    nivel:i+1,
    asignaturas:bank.map((e,j)=>({id:'n'+(i+1)+'s'+(j+1),nombre:e.nombre,horas:e.horas,area:e.area,formatoOriginal:e.formato})),
