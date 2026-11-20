@@ -28,6 +28,11 @@ jobs:
           node --check src/v2-familia/v47-desarrollo-modalidad.js
           node --check tests/v2-familia-modalidades-browser.mjs
           node --check tests/v2-familia-portal-browser.mjs
+          node --check scripts/derivar-v2-familia.mjs
+      - name: Paridad módulo por módulo con V2 (derivados al día y vendor intacto)
+        run: |
+          node scripts/derivar-v2-familia.mjs --check
+          node --test tests/v2-familia-paridad.test.mjs
       - name: Instalar entorno Playwright
         shell: bash
         run: |

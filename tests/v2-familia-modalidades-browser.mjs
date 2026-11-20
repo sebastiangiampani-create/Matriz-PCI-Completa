@@ -40,6 +40,13 @@ try{
   }
   assert.equal(await page.locator('#matrix .grid.levels .level').count(),levels,'V2 debe renderizar la cantidad de niveles de la modalidad');
   assert.equal(await page.locator('#matrix .term').count(),levels*2+1,'V2 debe renderizar la cantidad de cuatrimestres de la modalidad');
+  const paridad=await page.evaluate(()=>window.__V2_PARIDAD);
+  const manifiesto=JSON.parse(await readFile('src/v2-familia/manifiesto-paridad-v2.json','utf8'));
+  const esperados=manifiesto.modulos.filter(m=>m.modulo!==manifiesto.fase2&&m.archivos).map(m=>m.archivos[model]);
+  assert.deepEqual(paridad.cargados.map(x=>x.archivo),esperados,'La modalidad debe cargar la misma secuencia de módulos que V2');
+  assert.equal(paridad.cargados.some(x=>x.estado==='pendiente-normativa'),false,'No cargar reglas de Media sin normativa');
+  const filas=(await page.locator('#matrix .rowlabel').allTextContents()).join(' ');
+  assert.equal(/Opción: 10 laboratorios|Opción: 12 laboratorios/.test(filas),false,'No mostrar la opción de Sociales de Media');
   const rows=await page.locator('#matrix .rowlabel').allTextContents();
   assert.ok(rows.some(t=>t.includes('Ciencias Naturales')),'Conservar la fila de Ciencias Naturales');
   if(model==='tecnica'){

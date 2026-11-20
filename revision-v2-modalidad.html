@@ -10,16 +10,13 @@
 <p style="font-family:system-ui;padding:24px">Cargando V2 derivado para modalidad curricular…</p>
 <script>
 (async()=>{
-  const modulePaths=[
-    'src/v2-familia/v19-mapa-modalidad.js',
-    'src/v2-familia/v38-phase2-workspace.js',
-    'vendor/pci-sec-aprende-v2/src/v47-elective-plans.js',
-    'vendor/pci-sec-aprende-v2/src/v48-phase2-institutional-content.js',
-    'src/v2-familia/v91-coverage-core.js',
-    'src/v2-familia/v91-plans-coverage.js',
-    'vendor/pci-sec-aprende-v2/src/v119-responsive-legibility.js',
-    'vendor/pci-sec-aprende-v2/src/ui-navigation-consistency.js'
-  ];
+  // La secuencia de módulos se toma del manifiesto de paridad, generado a
+  // partir de vendor/pci-sec-aprende-v2/app.html: mismo orden que V2 Media.
+  const loadManifest=async()=>{
+    const response=await fetch('src/v2-familia/manifiesto-paridad-v2.json',{cache:'no-store'});
+    if(!response.ok)throw new Error('No se pudo cargar el manifiesto de paridad V2.');
+    return response.json();
+  };
   const fetchText=async url=>{
     const response=await fetch(url,{cache:'no-store'});
     if(!response.ok)throw new Error(`No se pudo cargar ${url}.`);
@@ -30,9 +27,22 @@
   try{
     const {loadV2ModalProfile}=await import('./src/v2-familia/catalogos-modalidad.mjs');
     const config=await loadV2ModalProfile(Object.fromEntries(new URLSearchParams(location.search)));
+    const manifest=await loadManifest();
+    const profile=manifest.perfiles[config.model];
+    if(!profile||profile.niveles!==Number(config.levels)||profile.cuatrimestres!==Number(config.terms))
+      throw new Error('El perfil curricular no coincide con el manifiesto de paridad V2.');
+    const fileOf=entry=>entry.archivos?.[config.model]||null;
+    const loadable=manifest.modulos.filter(entry=>entry.modulo!==manifest.fase2&&fileOf(entry));
+    const before=new Set(manifest.antesDeFase2);
+    const phase2Entry=manifest.modulos.find(entry=>entry.modulo===manifest.fase2);
+    if(!phase2Entry||!fileOf(phase2Entry))throw new Error('Falta el Desarrollo Curricular derivado de V2.');
+    const modulePaths=loadable.map(fileOf);
+    const beforeCount=loadable.filter(entry=>before.has(entry.modulo)).length;
+    window.__V2_PARIDAD={model:config.model,cargados:loadable.map(entry=>({modulo:entry.modulo,estado:entry.estado,archivo:fileOf(entry)})),
+      pendientes:manifest.modulos.filter(entry=>entry.estado==='pendiente-normativa').map(entry=>entry.modulo)};
     const [htmlRaw,phase2Source,...moduleSources]=await Promise.all([
       fetchText('src/v2-familia/app-core-modalidad.html'),
-      fetchText('src/v2-familia/v47-desarrollo-modalidad.js'),
+      fetchText(fileOf(phase2Entry)),
       ...modulePaths.map(fetchText)
     ]);
 
@@ -51,8 +61,8 @@
     const closeScript='</scr'+'ipt>';
     html=html.replace('\ninit();\n'+closeScript,'\nwindow.__pciBaseInit=init;\n'+closeScript);
 
-    const beforePhase2=moduleSources.slice(0,1).map(inline).join('');
-    const afterPhase2=moduleSources.slice(1).map(inline).join('');
+    const beforePhase2=moduleSources.slice(0,beforeCount).map(inline).join('');
+    const afterPhase2=moduleSources.slice(beforeCount).map(inline).join('');
     html=html.replace('</body>',
       beforePhase2+
       inline(phase2Source)+
@@ -85,6 +95,34 @@
   Storage.prototype.setItem=function(key,value){return oldSet.call(this,key===KEY?scoped:key,value);};
   Storage.prototype.removeItem=function(key){return oldRemove.call(this,key===KEY?scoped:key);};
   window.__v2PciId=pci;
+  // Cargas horarias: los módulos V2 leen data/horas-v2.json (horas de Media).
+  // En la modalidad se responde con las horas de su propio catálogo; si una
+  // materia no tiene horas declaradas, V2 muestra «Carga horaria pendiente».
+  const modal=window.__V2_MODAL;
+  const hoursDocument=()=>{
+    const fg={},fo={'3':{},A:{}};
+    for(const s of modal.subjects||[]){
+      const h=Number(s.weeklyHours);if(!(h>0))continue;
+      const y=String(s.year);
+      if(s.origin==='FG'){(fg[y]=fg[y]||{})[s.name]=h;continue;}
+      if(y==='3')fo['3'][s.name]=h;
+      (fo.A[y]=fo.A[y]||{})[s.name]=h;
+    }
+    return {version:2,source:'Catálogo de la modalidad '+modal.model,
+      semantics:'Horas declaradas en el catálogo de la modalidad. Sin dato: Carga horaria pendiente.',
+      formacion_general:fg,formacion_orientada:{[modal.track]:fo}};
+  };
+  const originalFetch=window.fetch.bind(window);
+  window.fetch=function(input,init){
+    const url=new URL(typeof input==='string'?input:input?.url||'',document.baseURI);
+    if(url.pathname.endsWith('/data/horas-v2.json'))
+      return Promise.resolve(new Response(JSON.stringify(hoursDocument()),{status:200,headers:{'Content-Type':'application/json'}}));
+    return originalFetch(input,init);
+  };
+  // Grillas por nivel de los módulos institucionales de V2 (5 columnas en Media).
+  const css=document.createElement('style');
+  css.textContent='.v48-course-grid,.v57-label-grid,.v72-course-years{grid-template-columns:repeat('+Number(modal.levels)+',minmax(54px,1fr))!important}';
+  (document.head||document.documentElement).appendChild(css);
 })();
 </script>
 <script id="v2BridgeAdapter" type="text/plain">
