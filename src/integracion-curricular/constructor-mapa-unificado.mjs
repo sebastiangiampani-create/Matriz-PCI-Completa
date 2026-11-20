@@ -165,6 +165,20 @@ export function historicGroups(pack,orientationId){
       });
     }
   }
+  // La matriz histórica genérica siempre trae 10 plantillas Naturales.
+  // En la orientación Ciencias Naturales corresponden solo ocho C1-C8.
+  // Omitimos de la VISTA exclusivamente las plantillas originales vacías
+  // de C9-C10; cualquier trabajo histórico o personalización se conserva.
+  if(orientationId==='ciencias_naturales'){
+    return groups.filter(g=>{
+      if(g.area!=='Ciencias Naturales'||![9,10].includes(g.startTerm))return true;
+      const isEmptyFactoryTemplate=
+        g.id==='ciencias-naturales-laboratory-'+g.startTerm&&
+        g.name==='Laboratorio '+g.startTerm&&
+        !g.hasWork&&!g.members.length;
+      return !isEmptyFactoryTemplate;
+    });
+  }
   return groups;
 }
 /**
