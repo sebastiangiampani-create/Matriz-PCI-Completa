@@ -1,0 +1,50 @@
+name: Comprobar constructor V2 ORIGINAL copiado
+on:
+  push:
+    branches:
+      - feature/v2-original-reutilizado-20261120
+    paths:
+      - revision-v2-embed.html
+      - revision-v2-original.html
+      - tests/v2-original-embebido-browser.mjs
+      - .github/workflows/probar-v2-original-embebido.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar-copia:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar que app-core y motor v19 SON exactamente archivos del original
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object vendor/pci-sec-aprende-v2/app-core.html)" = a318ca1730857d0394113f5f079387183f348048
+          test "$(git hash-object vendor/pci-sec-aprende-v2/src/v19-map.js)" = e1a72cc683e875a414c631c9727ce1a725378df6
+          test -f vendor/pci-sec-aprende-v2/src/v47-phase2-matrix.js
+          test -f vendor/pci-sec-aprende-v2/data/materias-v2.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preparar navegador
+        shell: bash
+        run: |
+          npm install --no-save playwright@1.55.0
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install chromium
+          fi
+      - name: Probar V2 original, drag/drop y aislamiento por PCI
+        run: |
+          mkdir -p test-artifacts/v2-original
+          node tests/v2-original-embebido-browser.mjs
+      - name: Guardar capturas de la aplicación original
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-original-reutilizado
+          path: test-artifacts/v2-original
+          retention-days: 7
