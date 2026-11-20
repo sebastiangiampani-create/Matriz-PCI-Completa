@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#12395c">
+<title>PCI Secundaria Aprende · Gestión</title>
+</head>
+<body>
+<p style="font-family:system-ui;padding:24px">Cargando el constructor V2 original copiado sin cambios…</p>
+<script>
+(async()=>{
+  const modulePaths=[
+    'vendor/pci-sec-aprende-v2/src/v19-map.js','vendor/pci-sec-aprende-v2/src/v20-format-order.js','vendor/pci-sec-aprende-v2/src/v21-custom-social-ui.js','vendor/pci-sec-aprende-v2/src/v22-teachers.js',
+    'vendor/pci-sec-aprende-v2/src/v23-prearm.js','vendor/pci-sec-aprende-v2/src/v24-social-interactions.js','vendor/pci-sec-aprende-v2/src/v25-institutional-spaces.js','vendor/pci-sec-aprende-v2/src/v26-other-formats-print.js',
+    'vendor/pci-sec-aprende-v2/src/v29-fo-rules.js','vendor/pci-sec-aprende-v2/src/v30-fo-minimum-guard.js','vendor/pci-sec-aprende-v2/src/v31-integration-hours-print.js','vendor/pci-sec-aprende-v2/src/v32-phase2-entry-fix.js',
+    'vendor/pci-sec-aprende-v2/src/v38-phase2-workspace.js','vendor/pci-sec-aprende-v2/src/v47-elective-plans.js','vendor/pci-sec-aprende-v2/src/v42-homologacion-performance.js',
+    'vendor/pci-sec-aprende-v2/src/v48-institutional-layer.js','vendor/pci-sec-aprende-v2/src/v48-phase2-institutional-content.js','vendor/pci-sec-aprende-v2/src/v48-disable-phase1-teachers.js','vendor/pci-sec-aprende-v2/src/v57-custom-divisions.js',
+    'vendor/pci-sec-aprende-v2/src/v52-derived-teacher-load.js','vendor/pci-sec-aprende-v2/src/v59-phase2-annual-matrix.js','vendor/pci-sec-aprende-v2/src/v33-articulation-rules.js',
+    'vendor/pci-sec-aprende-v2/src/v71-simple-assignment-excel.js','vendor/pci-sec-aprende-v2/src/v71-management-nav-reset.js','vendor/pci-sec-aprende-v2/src/v71-lean-management.js','vendor/pci-sec-aprende-v2/src/v72-students-commissions.js',
+    'vendor/pci-sec-aprende-v2/src/v68-institutional-export.js','vendor/pci-sec-aprende-v2/src/v73-management-home.js','vendor/pci-sec-aprende-v2/src/v74-home-redesign.js','vendor/pci-sec-aprende-v2/src/v75-app-architecture.js',
+    'vendor/pci-sec-aprende-v2/src/v80-access-control.js','vendor/pci-sec-aprende-v2/src/v85-access-panel.js',
+    'vendor/pci-sec-aprende-v2/src/ui-hide-version-labels.js','vendor/pci-sec-aprende-v2/src/ui-navigation-consistency.js',
+    'vendor/pci-sec-aprende-v2/src/creative-commons-footer.js','vendor/pci-sec-aprende-v2/src/v84-content-control-table.js',
+    'vendor/pci-sec-aprende-v2/src/v91-coverage-core.js','vendor/pci-sec-aprende-v2/src/v91-plans-coverage.js','vendor/pci-sec-aprende-v2/src/v93-curricular-coverage-dashboard.js','vendor/pci-sec-aprende-v2/src/v108-pci-document-editor.js','vendor/pci-sec-aprende-v2/src/v112-remove-obsolete-map-notice.js','vendor/pci-sec-aprende-v2/src/v114-plan-criteria-excel.js','vendor/pci-sec-aprende-v2/src/v119-responsive-legibility.js'
+  ];
+  const fetchText=async url=>{
+    const response=await fetch(url,{cache:'no-store'});
+    if(!response.ok)throw new Error(`No se pudo cargar ${url}.`);
+    return response.text();
+  };
+  const inline=source=>'<script>'+String(source).replace(/<\/script/gi,'<\\/script')+'</scr'+'ipt>\n';
+
+  try{
+    const [htmlRaw,phase2Source,foAtomicSource,...moduleSources]=await Promise.all([
+      fetchText('vendor/pci-sec-aprende-v2/app-core.html'),
+      fetchText('vendor/pci-sec-aprende-v2/src/v47-phase2-matrix.js'),
+      fetchText('vendor/pci-sec-aprende-v2/src/v47-fo-content-atomicizer.js'),
+      ...modulePaths.map(fetchText)
+    ]);
+
+    if(!phase2Source.includes('function areaPool')||!phase2Source.includes('id="v28level"')||!phase2Source.includes('loadCurriculum')||!phase2Source.includes('window.PCIPhase2V28=')){
+      throw new Error('No se pudo cargar la versión curricular V96 de Fase 2.');
+    }
+
+    let html=htmlRaw;
+    // El código original se conserva en vendor; solo añadimos un adaptador
+    // separado para que cada PCI tenga almacenamiento independiente.
+    const baseUrl=new URL('vendor/pci-sec-aprende-v2/',location.href).href;
+    html=html.replace('<head>','<head><base href="'+baseUrl+'">');
+    const shimScript=document.getElementById('v2LocalStorageAdapter').textContent;
+    html=html.replace('<script>',inline(shimScript)+'<script>');
+    const closeScript='</scr'+'ipt>';
+    html=html.replace('\ninit();\n'+closeScript,'\nwindow.__pciBaseInit=init;\n'+closeScript);
+
+    const beforePhase2=moduleSources.slice(0,8).map(inline).join('');
+    const afterPhase2=moduleSources.slice(8).map(inline).join('');
+    html=html.replace('<script id="v2LocalStorageAdapter" type="text/plain">
+(()=>{
+  'use strict';
+  // No usar la clave global de V2; cada PCI queda aislado por identificador.
+  const params=new URLSearchParams(location.search);
+  const pci=String(params.get('pci')||'v2-media-muestra');
+  if(!/^[a-zA-Z0-9_-]{3,90}$/.test(pci))
+    throw Error('Identificador PCI inválido en el adaptador.');
+  const KEY='pci-sa-v2-app-20260910-21';
+  const scoped='pci-original-v2::'+pci+'::'+KEY;
+  const oldGet=Storage.prototype.getItem,oldSet=Storage.prototype.setItem,oldRemove=Storage.prototype.removeItem;
+  Storage.prototype.getItem=function(key){return oldGet.call(this,key===KEY?scoped:key);};
+  Storage.prototype.setItem=function(key,value){return oldSet.call(this,key===KEY?scoped:key,value);};
+  Storage.prototype.removeItem=function(key){return oldRemove.call(this,key===KEY?scoped:key);};
+  window.__v2PciId=pci;
+})();
+</script>
+<script id="v2BridgeAdapter" type="text/plain">
+(()=>{
+ 'use strict';
+ const q=new URLSearchParams(location.search);
+ const pci=window.__v2PciId;
+ const orientation=q.get('orientation')||'Comunicación';
+ const school=q.get('school')||'Escuela de prueba V2';
+ const accepted=new Set(ORIENTATIONS);
+ if(!accepted.has(orientation))throw Error('La orientación no figura en el V2 original: '+orientation);
+ const sameOrigin=location.origin;
+ const send=(type,additional={})=>{
+   if(window.parent!==window)window.parent.postMessage({type,pci,...additional},sameOrigin);
+ };
+ const originalSave=save;
+ let importing=false;
+ save=function(...args){
+   const ret=originalSave(...args);
+   if(!importing)send('V2_ORIGINAL_SAVED',{document:JSON.parse(JSON.stringify(state))});
+   return ret;
+ };
+ const applyDocument=doc=>{
+   if(!doc||typeof doc!=='object'||Array.isArray(doc))return;
+   if(doc.maps&&typeof doc.maps==='object'&&!Array.isArray(doc.maps)){
+     state.maps={...state.maps,[orientation]:JSON.parse(JSON.stringify(doc.maps[orientation]||ensure(orientation)))};
+   }
+   state.school=school;state.active=orientation;state.selected=[orientation];
+   importing=true;try{originalSave();renderHome();screen('offer');}
+   finally{importing=false;}
+ };
+ window.addEventListener('message',event=>{
+   if(event.source!==window.parent||event.origin!==sameOrigin)return;
+   const data=event.data||{};
+   if(data.pci!==pci)return;
+   if(data.type==='V2_IMPORT')applyDocument(data.document);
+   if(data.type==='V2_EXPORT')send('V2_ORIGINAL_EXPORTED',{document:JSON.parse(JSON.stringify(state))});
+ });
+ const originalInit=window.__pciBaseInit;
+ window.__pciBaseInit=async()=>{
+   await originalInit();
+   importing=true;
+   try{
+     state.school=school;state.active=orientation;state.selected=[orientation];
+     if(!state.maps[orientation])ensure(orientation);
+     originalSave();renderHome();screen('offer');
+   }finally{importing=false;}
+   send('V2_ORIGINAL_READY',{orientation,school,sourceCommit:'883707e281894990b537032880922f4c078689ad'});
+ };
+})();
+</script>
+</body>',
+      beforePhase2+
+      inline(foAtomicSource)+
+      inline(phase2Source)+
+      afterPhase2+
+      inline(document.getElementById('v2BridgeAdapter').textContent)+
+      '<script>(async()=>{if(window.__pciBaseInit)await window.__pciBaseInit();window.dispatchEvent(new Event("pci-app-ready"));})();</scr'+'ipt>\n'+
+      '</body>'
+    );
+
+    document.open();
+    document.write(html);
+    document.close();
+  }catch(error){
+    document.body.innerHTML='<main style="font-family:system-ui;padding:24px"><strong>Error al cargar la aplicación.</strong><p>'+String(error.message||error)+'</p></main>';
+  }
+})();
+</script>
+</body>
+</html>
