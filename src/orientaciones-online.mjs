@@ -1031,7 +1031,10 @@ function renderAreas(){
     button.onclick=()=>openFgArea(area);host.appendChild(button);
   });
 }
-async function openFgArea(area){
+async function openFgArea(area,groupId=null){
+  if(fgDoc&&selectedFgArea===area){
+   selectedFgGroupId=groupId;renderFgEditor();return;
+  }
   if(fgDirty&&!confirm('Hay cambios de FG sin guardar. ¿Abrir otra área sin guardar?'))return;
   try{
     const original=Object.hasOwn(fgSourceState?.areas||{},area);
@@ -1046,7 +1049,7 @@ async function openFgArea(area){
     const recovered=recallDraft('fg',area,currentRevision,pci,
       value=>guardFgUnit(value,pci,area));
     const inherited=inheritFgComposition({unit:recovered||serverDoc,composition,pci,area});
-    selectedFgArea=area;fgDoc=inherited.unit;fgRevision=currentRevision;
+    selectedFgArea=area;selectedFgGroupId=groupId;fgDoc=inherited.unit;fgRevision=currentRevision;
     fgDirty=!!recovered||inherited.changed;
     if(inherited.changed)markDirty('fg');
     renderAreas();renderFgEditor();
@@ -1059,8 +1062,14 @@ async function openFgArea(area){
 function renderFgEditor(){
   const host=$('areaEditor');host.replaceChildren();if(!fgDoc)return;
   note('h3',selectedFgArea,host);
+  if(selectedFgGroupId){
+   const back=elem('button','Ver todos los espacios de '+selectedFgArea,'btn');
+   back.type='button';back.onclick=()=>{selectedFgGroupId=null;renderFgEditor();};
+   host.append(back);
+  }
   note('p','Copia independiente · Revisión '+fgRevision+' · '+(fgRevision?'Guardada':'Sin guardar aún'),host,'muted');
   for(const [gi,g] of fgDoc.groups.entries()){
+    if(selectedFgGroupId&&String(g.id)!==selectedFgGroupId)continue;
     const card=elem('div',undefined,'workCard');
     note('strong',(g.name||'Espacio '+(gi+1))+' · '+(g.level||'nivel s/d'),card);
     note('p',(g.items||[]).length+' contenidos · '+(g.plansBimestrales||[]).length+' planes · C'+(g.startTerm||'?'),card);
@@ -1071,6 +1080,45 @@ function renderFgEditor(){
       const details=elem('details');const summary=elem('summary',plan.name||'Plan '+(pi+1));details.appendChild(summary);
       details.appendChild(field('Sinopsis',plan.synopsis||'',v=>{plan.synopsis=v;markDirty('fg');}));
       details.appendChild(field('Objetivos',plan.objectives||'',v=>{plan.objectives=v;markDirty('fg');}));
+      // Selección pedagógica del catálogo V2: sin modificar items históricos.
+      const official=(refs.fg||[]).filter(x=>Number(x.year)===Number(g.level)&&x.area===selectedFgArea);
+      const ids=Array.isArray(plan.contentIds)?plan.contentIds:[];
+      const coverage=verifiedCoverage({rows:official,ids});
+      const contentPanel=elem('div',undefined,'pci-plan-content-box');
+      note('strong','Contenidos del plan · V2',contentPanel);
+      note('p',coverage.verified&&coverage.missing===0?
+       coverage.matched+'/'+coverage.total+' contenidos · '+coverage.percentage+'%':
+       ids.length+' contenidos seleccionados · correspondencia oficial pendiente',contentPanel,'muted');
+      if((g.items||[]).length)note('small',
+       (g.items||[]).length+' contenidos históricos del agrupamiento conservados.',contentPanel,'muted');
+      for(const id of ids){
+       const source=official.find(x=>x.id===id);
+       const line=elem('div',undefined,'ba15Member');
+       note('span',source?source.text:'Referencia '+id+' · verificar origen',line);
+       const remove=elem('button','Quitar del plan','btn');remove.type='button';
+       remove.disabled=!canEdit()||!['borrador','en_revision'].includes(pci.status);
+       remove.onclick=()=>{plan.contentIds=ids.filter(x=>x!==id);markDirty('fg');renderFgEditor();};
+       line.append(remove);contentPanel.append(line);
+      }
+      const search=elem('input');search.type='search';search.placeholder='Buscar contenido, eje o materia…';
+      search.setAttribute('aria-label','Buscar contenidos V2 de '+selectedFgArea);
+      search.disabled=!canEdit()||!['borrador','en_revision'].includes(pci.status);
+      const results=elem('div',undefined,'pci-plan-search-results');
+      search.addEventListener('input',()=>{
+       results.replaceChildren();
+       const q=search.value.trim().toLocaleLowerCase('es');
+       if(q.length<2)return;
+       for(const entry of official.filter(x=>!ids.includes(x.id)&&
+        [x.subject,x.axis,x.subaxis,x.text].some(v=>String(v||'').toLocaleLowerCase('es').includes(q))).slice(0,20)){
+        const add=elem('button',(entry.subject||'')+' · '+entry.text,'pci-plan-content-option');
+        add.type='button';
+        add.onclick=()=>{plan.contentIds=[...new Set([...(plan.contentIds||[]),entry.id])];markDirty('fg');renderFgEditor();};
+        results.append(add);
+       }
+      });
+      contentPanel.append(search,results);details.append(contentPanel);
+      details.appendChild(field('Contenidos propios / adecuaciones',plan.contenidosPropios||'',
+       v=>{plan.contenidosPropios=v;markDirty('fg');}));
       for(const stage of stages){
         const val=plan.stages?.[stage];
         const label=stageLabel[stage];
