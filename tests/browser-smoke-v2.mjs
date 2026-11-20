@@ -23,7 +23,7 @@ async function waitForServer() {
 
 async function waitForApp(page, browserErrors, screenshotName) {
   await page.goto(`${BASE_URL}/app.html`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(8_000);
+  await page.waitForTimeout(12_000);
   if (await page.locator('#loading').count()) {
     const loadingText = await page.locator('#loading').innerText();
     await page.screenshot({ path: `${ARTIFACTS}/${screenshotName}`, fullPage: true });
@@ -87,14 +87,6 @@ try {
 
   await page.evaluate(() => window.PCIApp.openArea('Artes'));
   await page.waitForSelector('#board.active');
-  console.log('ART DEBUG', JSON.stringify(await page.evaluate(() => ({
-    current:window.PCIApp?.getState?.()?.current,
-    areas:Object.keys(window.PCIApp?.getState?.()?.areas||{}),
-    alert:document.querySelector('#boardAlert')?.textContent,
-    alertHidden:document.querySelector('#boardAlert')?.hidden,
-    checkboxes:document.querySelectorAll('[data-pci-art-language]').length,
-    toast:document.querySelector('#toast')?.textContent
-  }))));
   await page.waitForFunction(() => document.querySelectorAll('[data-pci-art-language]').length === 3);
   assert.equal(await page.locator('[data-pci-art-language]').count(), 3, 'Artes debe ofrecer tres lenguajes para elegir dos.');
   await page.locator('[data-pci-art-language="Artes Visuales"]').check();
