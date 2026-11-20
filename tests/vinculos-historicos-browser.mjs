@@ -78,7 +78,7 @@ try{
  await page.locator('#v2OriginalPane:not([hidden])').waitFor({timeout:20000});
  const preview=page.locator('#pciHistoricLinks');
  assert.match(await preview.textContent(),/3 contenidos y 2 planes|3 contenidos y 2 planes/);
- await preview.locator('summary').first().click();
+ await preview.locator('summary').first().evaluate(el=>el.click());
  await preview.getByText('Comunicación y medios').waitFor();
  assert.equal(await page.locator('#areaList').getByText('Otros formatos pedagógicos').count(),0,'El FO específico no se convierte automáticamente en FG');
  assert.match(await preview.textContent(),/Trabajo de comprensión lectora|Lengua trabajada/);
