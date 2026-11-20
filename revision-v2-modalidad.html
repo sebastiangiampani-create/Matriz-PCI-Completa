@@ -92,10 +92,10 @@
  'use strict';
  const q=new URLSearchParams(location.search);
  const pci=window.__v2PciId;
- const orientation=q.get('orientation')||'Comunicación';
+ const orientation=window.__V2_MODAL.track;
  const school=q.get('school')||'Escuela de prueba V2';
  const accepted=new Set(ORIENTATIONS);
- if(!accepted.has(orientation))throw Error('La orientación no figura en el V2 original: '+orientation);
+ if(!accepted.has(orientation))throw Error('La orientación no coincide con este PCI: '+orientation);
  const sameOrigin=location.origin;
  const send=(type,additional={})=>{
    if(window.parent!==window)window.parent.postMessage({type,pci,...additional},sameOrigin);
