@@ -5,6 +5,7 @@
  */
 import {validateFinalComposition,FINAL_RULESET_ID}
   from './composicion-pci-20261117.mjs';
+import {projectSocialGroupsForPci} from '../integracion-curricular/constructor-mapa-unificado.mjs';
 
 const array=x=>Array.isArray(x)?x:[];
 const obj=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
@@ -42,7 +43,8 @@ export function projectMediaWorkspaceForFinalValidation(workspace,orientationId)
  const parent=workspace?.orientations?.[orientationId];
  if(!obj(parent?.fg?.areas)||!Array.isArray(parent?.fo?.spaces))
   throw Error('No hay un PCI de Media con FG y FO disponibles para la revisión.');
- const mapped=[],unknown=[];
+ const mapped=[],unknown=[],socialConflicts=[];
+ const socialOption=parent.fo.composicionFgV2?.socialOption;
  const proposalGroups=array(parent.fo.composicionFgV2?.groups);
  // Proyectar las decisiones de la Fase 1 sin modificar la copia FG histórica.
  const proposedFor=(area,id)=>proposalGroups.find(g=>
@@ -50,7 +52,11 @@ export function projectMediaWorkspaceForFinalValidation(workspace,orientationId)
  for(const [name,block] of Object.entries(parent.fg.areas)){
   const rule=fgAreas[name];
   if(!rule){unknown.push(name);continue;}
-  for(const g of array(block?.groups)){
+  const projection=name==='Ciencias Sociales'?
+   projectSocialGroupsForPci(block?.groups,socialOption):
+   {groups:array(block?.groups),conflicts:[]};
+  socialConflicts.push(...projection.conflicts);
+  for(const g of projection.groups.filter(x=>!x.excludedFromPci)){
    const year=yearOf(g),term=startingTerm(g,year),annual=rule.duration==='anual';
    const overlay=proposedFor(name,g.id);
    const members=overlay?array(overlay.members):
@@ -113,14 +119,17 @@ export function projectMediaWorkspaceForFinalValidation(workspace,orientationId)
  }
  const totalSocial=mapped.filter(s=>s.format==='laboratorio_social').length;
  return {model:'bachillerato',orientation:parent.name||orientationId,
-  spaces:mapped,selectedSocialOption:[10,12].includes(totalSocial)?totalSocial:null,
-  warningAreasNotMapped:unknown,sourceSchema:workspace.version,
+  spaces:mapped,selectedSocialOption:[10,12].includes(Number(socialOption))?
+   Number(socialOption):[10,12].includes(totalSocial)?totalSocial:null,
+  socialConflicts,warningAreasNotMapped:unknown,sourceSchema:workspace.version,
   explicitFgCompositions:mapped.filter(s=>s.origin==='matriz_fg_preservada'&&s.subjectIds.length>0).length};
 }
 export function validateMediaWorkspaceFinal(workspace,orientationId){
  const projection=projectMediaWorkspaceForFinalValidation(workspace,orientationId);
  const check=validateFinalComposition(projection);
  const warnings=[...check.warnings];
+ for(const issue of projection.socialConflicts||[])
+  check.errors.push({code:'BACH_SOCIAL_LEGACY_CONFLICT',message:issue,page:9,severity:'error'});
  for(const area of projection.warningAreasNotMapped)
   warnings.push({code:'AREA_NOT_HOMOLOGATED',message:'Área no normalizada: '+area,
     severity:'warning',page:8});
