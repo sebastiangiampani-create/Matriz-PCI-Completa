@@ -138,7 +138,9 @@ async function onHistoryChange(event){
       if(stayingInsidePci){
         // Cambiar de pestaña NO vuelve a descargar ni reemplazar el
         // documento FG/FO que está abierto y quizá aún no fue guardado.
-        if(pci.model==='ba15'){
+        if(v2Original){
+          setTab(destination.view,true,'none');
+        }else if(pci.model==='ba15'){
           const target=['fo','desarrollo'].includes(destination.view)?'desarrollo':'oferta';
           const changed=ba15Controller?.setPhase(target,{silent:true});
           tab=changed?target:'oferta';updateBa15Screen(tab==='desarrollo');
@@ -328,7 +330,7 @@ async function init(){
     $('developmentFormation').addEventListener('change',filterDevelopmentCards);
     $('saveOffer').onclick=()=>technical.active?technical.saveOffer():saveOffer();
     $('v2OriginalSave').onclick=()=>saveOriginalV2();
-    $('v2ShowLegacyMap').onclick=()=>{v2LegacyVisible=!v2LegacyVisible;updateV2Display();};
+
     window.addEventListener('message',onOriginalV2Message);
     $('continueDevelopment').onclick=()=>setTab('desarrollo',true);
     $('socialOption').addEventListener('change',()=>{
@@ -659,81 +661,29 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
   try{
     status('Cargando PCI y resguardo histórico…');
     const result=await call('get-school-pci',{school_id:schoolId,pci_id:id});
-    if(result.pci?.model==='ba15'){
-      const b=result.pci;
-      if(Number(b.school_id)!==schoolId || !b.pci_id || !b.orientation_id || !b.legacy_sha256)
-        throw Error('Identidad o resguardo del PCI BA +15 incompletos.');
-      technical.close();pci=b;workspace=null;auto=null;developmentSeq++;
+    if(['ba15','tecnica'].includes(result.pci?.model)){
+      const p=result.pci;
+      if(Number(p.school_id)!==schoolId||!p.pci_id||!p.orientation_id||
+         !p.shift_id||!p.legacy_sha256||!p.process_id)
+        throw Error('Identidad o resguardo histórico incompleto de este PCI.');
+      if(p.model==='tecnica'&&!p.specialty_name)
+        throw Error('La especialidad Técnica debe estar registrada.');
+      technical.close();ba15Controller?.destroy();ba15Controller=null;
+      pci=p;workspace=null;auto=null;developmentSeq++;
       fgDirty=false;foDirty=false;offerDirty=false;
-      show('editor',false);show('technicalPending',false);show('empty',false);
-      show('ba15Pending',true);
-      historicLinksUI.renderPreview($('ba15HistoricLinks'),b);
-      $('ba15Name').textContent=pcis.find(x=>x.pci_id===id)?.title||'PCI BA +15';
-      mostrarMapaBa15({metrics:$('ba15Metrics'),navigation:$('ba15Navigation'),map:$('ba15Map'),validation:$('ba15Validation')});
-      const identity={pciId:b.pci_id,schoolId:b.school_id,orientationId:b.orientation_id,shiftId:b.shift_id};
-      const unitId='mapa-ba15-v1',baseVersion='oferta-ba15-constructor-v1';
-      const saved=await getUnit(b,'oferta','map',unitId,baseVersion);
-      const remoteDraft=saved.exists?saved.document:null;
-      if(remoteDraft && (remoteDraft.schema!=='ba15-constructor-v1'||
-         Number(remoteDraft.schoolId)!==Number(b.school_id)||
-         remoteDraft.pciId!==b.pci_id||
-         remoteDraft.orientationId!==b.orientation_id||
-         remoteDraft.shiftId!==b.shift_id))
-        throw Error('El borrador BA +15 online no pertenece a este PCI. No se cargó.');
-      let revision=Number(saved.revision)||0;
-      ba15Controller?.destroy();
-      ba15Controller=montarConstructorBa15($('ba15Builder'),identity,{
-        initialDraft:remoteDraft,
-        canEditRemote:canEdit()&&['borrador','en_revision'].includes(b.status),
-        savedRevision:revision,
-        developmentHost:$('ba15Development'),
-        onPhaseChange:next=>{
-          tab=next;updateBa15Screen(next==='desarrollo');
-          writeRoute('push',b.pci_id,next);
-        },
-        saveRemote:async document=>{
-          if(pci?.pci_id!==b.pci_id)throw Error('Se cambió de PCI: no se permite guardar en otro.');
-          const result=await saveUnit('oferta','map',unitId,baseVersion,document,revision);
-          revision=Number(result.revision);
-          return revision;
-        }
-      });
-      $('ba15Info').textContent='Turno '+({manana:'mañana',tarde:'tarde',vespertino:'vespertino',noche:'noche'}[b.shift_id]||b.shift_id)+
-        ' · Orientación '+(ORIENTATIONS.find(x=>x.id===b.orientation_id)?.name||b.orientation_id)+
-        ' · Documento histórico protegido';
+      show('ba15Pending',false);show('technicalPending',false);
+      show('empty',false);show('editor',true);
+      $('pciName').textContent=pcis.find(x=>x.pci_id===id)?.title||p.title;
+      $('pciTag').textContent=p.model==='tecnica'?'Educación Técnica':'Secundaria BA +15';
+      $('pciInfo').textContent='Turno '+p.shift_id+' · V2 curricular propio · origen histórico protegido';
+      $('editor').classList.add('v2-family-active');
+      $('editor').classList.remove('technical-editor');
       $('app').classList.remove('school-home');
       renderPcis();
       tab='oferta';
-      if(['fo','desarrollo'].includes(requestedTab)){
-         if(ba15Controller.setPhase('desarrollo',{silent:true}))tab='desarrollo';
-         else status('Primero completá y guardá el Constructor curricular BA +15 de este PCI.');
-       }else status('BA +15: Fase 1 Constructor C1–C8; Fase 2 después del mapa completo y guardado');
-       updateBa15Screen(tab==='desarrollo');
-      writeRoute(routeMode,b.pci_id,tab);
-      return;
-    }
-    if(result.pci?.model==='tecnica'){
-      ba15Controller?.destroy();ba15Controller=null;
-      // Mismo editor institucional FG → Oferta → Desarrollo curricular V2.
-      // La especialidad y el PCI registrados identifican la fuente y el ámbito.
-      const tech=result.pci;
-      if(Number(tech.school_id)!==schoolId || !tech.legacy_sha256 ||
-        !tech.orientation_id || !tech.process_id)
-        throw Error('Falta validar la escuela o el resguardo original de este PCI Técnico.');
-      technical.close();
-      pci=tech;workspace=null;auto=null;fgDirty=false;offerDirty=false;foDirty=false;
-      selectedFgArea=null;selectedFoSpace=null;
-      const linked=filteredHistoricForPci(tech.legacy_state,historicLinksUI.document,tech);
-      await technical.open(tech,linked.state);
-      show('technicalPending',false);show('ba15Pending',false);
-      show('empty',false);show('editor');
-      historicLinksUI.renderPreview($('pciHistoricLinks'),tech);
-      $('editor').classList.add('technical-editor');
-      $('offerGrid').closest('details').open=true;
-      $('app').classList.remove('school-home');
-      renderPcis();setTab(['fg','oferta','fo','desarrollo'].includes(requestedTab)?requestedTab:'oferta',true,'none');
-      writeRoute(routeMode,tech.pci_id,tab);
-      status('PCI Técnico · Fase 1 construcción C1–C12; Fase 2 solo tras mapa revisado y guardado');
+      await openOriginalV2(p);
+      writeRoute(routeMode,p.pci_id,'oferta');
+      status('Constructor V2 '+(p.model==='tecnica'?'Técnica · seis niveles · C1–C12':'BA +15 · cuatro niveles · C1–C8'));
       return;
     }
     technical.close();
@@ -779,6 +729,7 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
     historicLinksUI.renderPreview($('pciHistoricLinks'),p);
     if(linked.missing.length)
       message(linked.missing.length+' grupos asignados no figuran en el resguardo original del PCI. Requieren conciliación manual; no se sobrescribió nada.','warn');
+    $('editor').classList.add('v2-family-active');
     $('editor').classList.remove('technical-editor');
     $('app').classList.remove('school-home');
     renderPcis();setTab(['fg','oferta','fo'].includes(requestedTab)?requestedTab:'oferta',true,'none');renderAreas();
@@ -797,18 +748,21 @@ async function openPci(id,requestedTab='oferta',routeMode='push',skipGuard=false
 const V2_UNIT_ID='mapa-original-v2-v1';
 const V2_BASE_VERSION='v2-original-embedded-v1';
 function updateV2Display(){
-  const enabled=!!(v2Original&&pci?.model==='comun'&&v2Original.pciId===pci.pci_id&&tab==='oferta');
+  const enabled=!!(v2Original&&pci?.pci_id===v2Original.pciId);
   show('v2OriginalPane',enabled);
   if(!enabled)return;
-  show('offerPane',v2LegacyVisible);
-  $('v2OriginalFrame').hidden=v2LegacyVisible;
-  $('v2OriginalSave').disabled=!canEdit()||!!v2Original.saving||!v2Original.ready;
-  $('v2ShowLegacyMap').textContent=v2LegacyVisible?
-    'Volver al constructor V2 original':'Mostrar mapa anterior del PCI (consulta)';
-  if(v2LegacyVisible)$('offerPane').setAttribute('data-historical-readonly','true');
-  else $('offerPane').removeAttribute('data-historical-readonly');
+  show('offerPane',false);
+  show('developmentPane',false);
+  show('fgPane',false);
+  show('foPane',false);
+  $('v2OriginalFrame').hidden=false;
+  $('v2OriginalSave').disabled=!canEdit()||!!v2Original.saving||
+    !v2Original.ready||!['borrador','en_revision'].includes(pci.status);
+  // El único mapa de la Fase 1 en esta vista es el V2.
+  // La versión anterior no se renderiza encima ni al lado.
 }
 function closeOriginalV2(){
+  $('editor')?.classList.remove('v2-family-active');
   v2Original=null;v2LegacyVisible=false;
   const frame=$('v2OriginalFrame');
   if(frame)frame.src='about:blank';
@@ -816,29 +770,38 @@ function closeOriginalV2(){
   if($('offerPane'))$('offerPane').removeAttribute('data-historical-readonly');
 }
 async function openOriginalV2(p){
-  if(p?.model!=='comun')return;
+  if(!['comun','tecnica','ba15'].includes(p?.model))throw Error('Modalidad curricular no reconocida');
   const orientation=ORIENTATIONS.find(x=>x.id===p.orientation_id)?.name;
-  if(!orientation)throw Error('La orientación de Media no existe en el catálogo V2.');
-  const saved=await getUnit(p,'oferta','map',V2_UNIT_ID,V2_BASE_VERSION);
+  if(!orientation)throw Error('La orientación registrada no existe en el catálogo escolar.');
+  const isMedia=p.model==='comun',isTechnical=p.model==='tecnica';
+  const unitId=isMedia?V2_UNIT_ID:'mapa-v2-familia-'+p.model+'-v1';
+  const baseVersion=isMedia?V2_BASE_VERSION:'v2-familia-'+p.model+'-20261120/1';
+  const saved=await getUnit(p,'oferta','map',unitId,baseVersion);
   if(saved.exists){
     const d=saved.document;
-    if(d?.schema!==V2_BASE_VERSION||d.pciId!==p.pci_id||
-       Number(d.schoolId)!==Number(p.school_id)||
+    if(d?.schema!==baseVersion||d.model!==undefined&&d.model!==p.model||
+       d.pciId!==p.pci_id||Number(d.schoolId)!==Number(p.school_id)||
        d.orientationId!==p.orientation_id||d.shiftId!==p.shift_id||
        !d.v2||typeof d.v2!=='object'||!d.v2.maps)
-      throw Error('El guardado original V2 no corresponde a la identidad de este PCI. No se abrió.');
+      throw Error('El guardado V2 no corresponde a este PCI. No se importó.');
   }
-  v2Original={pciId:p.pci_id,schoolId:Number(p.school_id),orientationId:p.orientation_id,
-    shiftId:p.shift_id,revision:Number(saved.revision)||0,document:saved.exists?saved.document:null,
+  v2Original={pciId:p.pci_id,model:p.model,unitId,baseVersion,
+    schoolId:Number(p.school_id),orientationId:p.orientation_id,
+    shiftId:p.shift_id,revision:Number(saved.revision)||0,
+    document:saved.exists?saved.document:null,
     ready:false,dirty:false,saving:false,userInteracted:false};
-  v2LegacyVisible=false;
   const school=schools.find(x=>Number(x.school_id)===schoolId);
-  $('v2OriginalTitle').textContent='Mapa de la Oferta V2 · '+orientation+
-    ' · Turno '+(p.shift_id||'');
-  $('v2OriginalStatus').textContent='Cargando el constructor original V2 de '+orientation+'…';
-  const params=new URLSearchParams({pci:p.pci_id,orientation,
-    school:school?.name||'Escuela '+schoolId});
-  $('v2OriginalFrame').src='revision-v2-embed.html?'+params;
+  const levels=isMedia?5:isTechnical?6:4;
+  $('v2OriginalTitle').textContent='Mapa de la Oferta V2 · '+(isTechnical?p.specialty_name:orientation)+
+    ' · '+levels+' niveles · C1–C'+(levels*2);
+  $('v2OriginalStatus').textContent='Cargando el V2 '+(isTechnical?'de Técnica':isMedia?'original de Media':'de BA +15')+'…';
+  const params=new URLSearchParams({
+    pci:p.pci_id,orientation,school:school?.name||'Escuela '+schoolId,
+    model:p.model
+  });
+  if(isTechnical)params.set('specialty',p.specialty_name);
+  if(!isMedia)params.set('orientation',p.orientation_id);
+  $('v2OriginalFrame').src=(isMedia?'revision-v2-embed.html':'revision-v2-modalidad.html')+'?'+params;
   updateV2Display();
 }
 function onOriginalV2Message(event){
@@ -899,10 +862,10 @@ async function commitOriginalV2(current,v2State){
   try{
     if(!identity||current!==v2Original||identity.pci_id!==current.pciId)
       throw Error('Cambió el PCI mientras se preparaba el guardado.');
-    const document={schema:V2_BASE_VERSION,schoolId:current.schoolId,
+    const document={schema:current.baseVersion,model:current.model,schoolId:current.schoolId,
       pciId:current.pciId,orientationId:current.orientationId,shiftId:current.shiftId,
       v2:v2State};
-    const result=await saveUnit('oferta','map',V2_UNIT_ID,V2_BASE_VERSION,document,current.revision);
+    const result=await saveUnit('oferta','map',current.unitId,current.baseVersion,document,current.revision);
     if(current!==v2Original||pci?.pci_id!==current.pciId)return;
     current.revision=Number(result.revision);
     current.document=document;current.dirty=false;current.userInteracted=false;
@@ -979,6 +942,16 @@ function refreshPhaseState(){
   return gate;
 }
 function setTab(next,force=false,routeMode='push'){
+  if(v2Original){
+    // Fase 1 y Fase 2 son las pantallas originales del motor V2;
+    // no hay navegación a los constructores históricos en paralelo.
+    const target=['desarrollo','fo','fg'].includes(next)?'proposal':'offer';
+    const doc=$('v2OriginalFrame')?.contentWindow;
+    if(doc?.screen)doc.screen(target);
+    tab=target==='proposal'?'desarrollo':'oferta';
+    updateV2Display();writeRoute(routeMode,pci?.pci_id,tab);
+    return true;
+  }
   if(!['fg','oferta','fo','desarrollo'].includes(next))return false;
   // La Fase 2 solo se habilita después de un mapa completo y GUARDADO
   // del PCI seleccionado. Ningún dato histórico se borra ni se reescribe.
