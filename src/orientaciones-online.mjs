@@ -404,6 +404,7 @@ async function reloadSchool(){
   }
   technical.close();
   ba15Controller?.destroy();ba15Controller=null;
+  closeOriginalV2();
   pci=null;workspace=null;auto=null;selectedFgArea=null;selectedFoSpace=null;
   fgDirty=false;foDirty=false;offerDirty=false;
   show('editor',false);show('technicalPending',false);show('ba15Pending',false);show('empty');
