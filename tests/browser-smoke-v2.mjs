@@ -77,7 +77,7 @@ try {
   await page.screenshot({ path: `${ARTIFACTS}/02-acceso-escuela-1.png`, fullPage: true });
 
   await waitForApp(page, browserErrors, '03-error-carga.png');
-  assert.equal(await page.locator('.site-credit').count(), 1, 'La matriz debe mostrar la autoría.');
+  assert.equal(await page.locator('.site-footer img[alt="Escuela de Maestros"]').count(), 1, 'La matriz debe conservar el pie institucional.');
   assert.match(await page.locator('#coverageHint').textContent(), /más de un espacio/);
   assert.equal(
     await page.evaluate(() => window.PCIApp.getData().filter((item) => item.area === 'Tutoría').length),
