@@ -298,10 +298,12 @@ try{
   for(const subject of complete.niveles[level-1].asignaturas){
    const format=['troncal','taller','orientado'].includes(subject.formatoOriginal)?
     subject.formatoOriginal:'laboratorio';
+   // V2: una única troncal anual por nivel, no una copia en C par.
+   if(format==='troncal'&&term%2===0)continue;
    const label=format==='troncal'?subject.id:format+':'+subject.area;
    if(!groups.has(label)){
     complete=crearEspacioBa15(complete,{nivel:level,term,
-     nombre:subject.nombre+' · C'+term,formato:format});
+     nombre:format==='troncal'?subject.nombre:subject.nombre+' · C'+term,formato:format});
     groups.set(label,complete.niveles[level-1].espacios.at(-1).id);
    }
    complete=asignarMateriaBa15(complete,{nivel:level,
