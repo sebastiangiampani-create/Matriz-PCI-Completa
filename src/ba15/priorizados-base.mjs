@@ -9,7 +9,7 @@
  * NES 5.º       -> BA +15 Nivel 4
  */
 export const BA15_FG_BASE_VERSION='ba15-fg-media-reindexada/1';
-export const BA15_FG_SOURCE_VERSION='fg-sec-aprende-v2/1';
+export const BA15_FG_SOURCE_VERSION='PCI Aprende V2 - FG v103';
 export const BA15_FG_LEVEL_MAP=Object.freeze({
  1:1,2:1,3:2,4:3,5:4
 });
