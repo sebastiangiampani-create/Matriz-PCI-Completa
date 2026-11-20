@@ -163,3 +163,31 @@ test('Rescate V2: la bolsa conserva las horas oficiales como metadato interno',a
  assert.equal(subjects.find(s=>s.name==='Matemática')?.hours,4);
  assert.equal(subjects.find(s=>s.name==='Historia')?.hours,2);
 });
+
+test('Naturales orientada: 8 laboratorios FG C1-C8; nunca taller FG de Naturales',()=>{
+  const naturalPci={...pci,orientation_id:'ciencias_naturales'};
+  const ws={orientations:{ciencias_naturales:{
+    fg:{mode:'conservar',areas:{}},fo:{spaces:[]}
+  }}};
+  const initial=compositionFor(ws,naturalPci);
+  let draft=initial;
+  for(let year=1;year<=4;year++){
+    draft=createGrouping(draft,{year,term:year*2-1,
+      kind:'laboratorio',area:'Ciencias Naturales',
+      name:'Laboratorio FG Naturales '+year+'º'});
+  }
+  assert.equal(draft.groups.length,8);
+  assert.deepEqual(draft.groups.map(x=>x.term).sort((a,b)=>a-b),
+    [1,2,3,4,5,6,7,8]);
+  assert.throws(()=>createGrouping(draft,{year:5,term:9,kind:'laboratorio',
+      area:'Ciencias Naturales',name:'Laboratorio FG fuera de oferta'}),/ocho laboratorios FG/);
+  assert.throws(()=>createGrouping(draft,{year:2,term:3,kind:'taller',
+      area:'Ciencias Naturales',name:'Taller FG inválido'}),/formato prescripto/);
+  const regular=compositionFor({orientations:{comunicacion:{
+    fg:{mode:'conservar',areas:{}},fo:{spaces:[]}
+  }}},pci);
+  assert.doesNotThrow(()=>createGrouping(regular,{year:5,term:9,
+    kind:'laboratorio',area:'Ciencias Naturales',name:'FG otras orientaciones'}));
+  assert.equal(initial.groups.length,0);
+  assert.equal(ws.orientations.ciencias_naturales.fo.spaces.length,0);
+});
