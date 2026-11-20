@@ -408,8 +408,13 @@ function refresh() {
 }
 
 function scheduleRefresh() {
-  clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(refresh, 30);
+  // Coalescer sin reiniciar el plazo: los cambios continuos del DOM no deben
+  // impedir que se apliquen las reglas al cambiar de area.
+  if (refreshTimer !== null) return;
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null;
+    refresh();
+  }, 30);
 }
 
 async function waitForApp() {
