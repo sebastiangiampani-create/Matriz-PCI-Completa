@@ -83,6 +83,7 @@ try{
     process_id:'process-second-pci'});
   await page.goto('http://127.0.0.1:'+port+'/pci-orientaciones.html',{waitUntil:'domcontentloaded'});
   await page.locator('#app:not([hidden])').waitFor({timeout:45000});
+  await page.waitForFunction(()=>document.querySelectorAll('.school-offer-card').length===2,null,{timeout:25000});
   assert.equal(await page.locator('.school-offer-card').count(),2);
   await page.locator('.school-offer-card').filter({hasText:'Comunicación'})
     .locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
