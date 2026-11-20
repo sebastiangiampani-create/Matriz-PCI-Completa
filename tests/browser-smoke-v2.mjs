@@ -88,28 +88,13 @@ try {
 
   await page.evaluate(() => window.PCIApp.openArea('Artes'));
   await page.waitForSelector('#board.active');
-  console.log('RULE REFRESH DEBUG',JSON.stringify(await page.evaluate(()=>({
-   ready:window.__pciCurriculumUiReady,wrapped:!!window.PCIApp.openArea.__pciCurriculumRefresh,
-   current:window.PCIApp.getState().current,refreshCount:window.__pciCurriculumUiRefreshCount,
-   lastArea:window.__pciCurriculumUiLastArea,appliedArea:window.__pciCurriculumUiAppliedArea,
-   checkboxes:document.querySelectorAll('[data-pci-art-language]').length,
-   alert:document.querySelector('#boardAlert')?.textContent
-  }))));
-  await page.waitForFunction(() => document.querySelectorAll('[data-pci-art-language]').length === 3);
-  assert.equal(await page.locator('[data-pci-art-language]').count(), 3, 'Artes debe ofrecer tres lenguajes para elegir dos.');
-  await page.locator('[data-pci-art-language="Artes Visuales"]').check();
-  await page.locator('[data-pci-art-language="Música"]').check();
-  console.log('ART SELECTION DEBUG', JSON.stringify(await page.evaluate(() => ({
-    selected: window.PCIApp.getState().curriculumRules?.artLanguages,
-    controls: [...document.querySelectorAll('[data-pci-art-language]')].map(input => ({name:input.dataset.pciArtLanguage, checked:input.checked,disabled:input.disabled})),
-    refreshCount: window.__pciCurriculumUiRefreshCount
-  }))));
-  await page.waitForFunction(() => document.querySelector('[data-pci-art-language="Teatro"]')?.disabled === true);
-  assert.deepEqual(
-    await page.evaluate(() => window.PCIApp.getState().curriculumRules.artLanguages),
-    ['Artes Visuales', 'Música'],
-  );
+  await page.waitForFunction(() => document.querySelector('#boardAlert')?.textContent.includes('Regla curricular de Artes'));
+  for (const axis of ['Producción', 'Apreciación', 'Contextualización']) {
+    assert.match(await page.locator('#boardAlert').textContent(), new RegExp(axis));
+  }
   assert.match(await page.locator('#coverageHint').textContent(), /tres ejes/);
+  assert.equal(await page.locator('[data-pci-art-language]').count(), 0,
+    'La validación vigente de Artes no exige seleccionar lenguajes.');
   await page.screenshot({ path: `${ARTIFACTS}/03-artes-regla-curricular.png`, fullPage: true });
 
   await page.evaluate(() => window.PCIApp.openArea('Educación Física'));
