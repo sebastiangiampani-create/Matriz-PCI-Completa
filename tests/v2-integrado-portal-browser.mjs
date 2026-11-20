@@ -99,7 +99,7 @@ try{
   const target=v2.locator('#matrix .drop[data-slot="matematica-n1"]');
   const source=v2.locator('#bagContent [data-sub="fg-1-matematica"]');
   const assigned=target.locator('[data-rm="fg-1-matematica"]');
-  if(await assigned.count())await assigned.first().click();
+  if(await assigned.count())await assigned.first().evaluate(el=>el.click());
   // Comprobar el manejador original de drag/drop V19 dentro del iframe.
   // El mismo evento HTML5 que recibe el gesto del usuario, sin modificar V2.
   await v2.locator('body').evaluate(()=>{
