@@ -57,31 +57,44 @@ function contentMap(data) {
 export function evaluateArts(state, data) {
   const byId = contentMap(data);
   const groups = state?.areas?.Artes?.groups ?? [];
+  const selectedLanguages = [...new Set(
+    (Array.isArray(state?.curriculumRules?.artLanguages)
+      ? state.curriculumRules.artLanguages : [])
+      .filter(language => ART_LANGUAGES.includes(language))
+  )].slice(0, 2);
+  const unselectedAssignments = [];
 
-  const workshops = groups.map((group) => {
-    const contents = (group.items ?? []).map((id) => byId.get(String(id))).filter(Boolean);
-    const axes = new Set(contents.map(artAxisForContent).filter(Boolean));
-    const missingAxes = ART_AXES.filter((axis) => !axes.has(axis));
+  const workshops = groups.map(group => {
+    const contents = (group.items ?? []).map(id => byId.get(String(id))).filter(Boolean);
+    const selectedContents = contents.filter(content => {
+      const language = artLanguageForContent(content);
+      if (language && !selectedLanguages.includes(language)) {
+        unselectedAssignments.push({groupId: group.id, contentId: content.id, language});
+        return false;
+      }
+      return true;
+    });
+    const axes = new Set(selectedContents.map(artAxisForContent).filter(Boolean));
+    const missingAxes = ART_AXES.filter(axis => !axes.has(axis));
     return {
       groupId: group.id,
       groupName: group.name,
       axes: [...axes],
       missingAxes,
-      unselectedLanguageItems: [],
+      unselectedLanguageItems: contents
+        .filter(content => {
+          const language = artLanguageForContent(content);
+          return language && !selectedLanguages.includes(language);
+        }).map(content => content.id),
       complete: missingAxes.length === 0,
     };
   });
-
-  const completeWorkshops = workshops.filter((workshop) => workshop.complete).length;
+  const completeWorkshops = workshops.filter(workshop => workshop.complete).length;
   return {
-    // Se conservan estos campos vacíos por compatibilidad con la UI anterior.
-    // La regla vigente ya no selecciona ni restringe lenguajes artísticos.
-    selectedLanguages: [],
-    totalWorkshops: groups.length,
-    completeWorkshops,
-    workshops,
-    unselectedAssignments: [],
-    complete: groups.length > 0 && completeWorkshops === groups.length,
+    selectedLanguages, totalWorkshops: groups.length, completeWorkshops,
+    workshops, unselectedAssignments,
+    complete: selectedLanguages.length === 2 && groups.length > 0
+      && completeWorkshops === groups.length && unselectedAssignments.length === 0,
   };
 }
 
