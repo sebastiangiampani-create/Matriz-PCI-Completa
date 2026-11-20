@@ -106,6 +106,9 @@ try{
   await page.locator('.school-offer-card').filter({hasText:'Ciencias Naturales'})
     .locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
   await page.locator('#offerPane:not([hidden])').waitFor({timeout:30000});
+  await page.waitForFunction(()=>document.querySelector('#pciTag')?.textContent.includes('Ciencias Naturales')
+    && [...document.querySelectorAll('#mapBody tr')].some(tr=>
+      tr.querySelector('th')?.textContent==='Laboratorios FG · Naturales'),null,{timeout:30000});
   const naturalsRow=page.locator('#mapBody tr').filter({has:page.locator('th:text-is("Laboratorios FG · Naturales")')});
   assert.equal(await naturalsRow.count(),1);
   assert.equal(await naturalsRow.getByText('Sin laboratorio FG en este nivel').count(),2,
