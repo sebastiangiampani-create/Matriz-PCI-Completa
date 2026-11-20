@@ -40,7 +40,7 @@ try{
   page.on('pageerror',e=>errors.push(e.message));
   page.on('response',r=>{if(r.status()>=400)missing.push({url:r.url().slice(0,180),status:r.status()})});
   await page.goto(origin+'/experiencias-v2/'+p.model+'.html',{waitUntil:'domcontentloaded'});
-  await page.locator('#catalogo option').first().waitFor({timeout:10000});
+  await page.waitForFunction(()=>document.querySelector('#catalogo')?.options.length>0,null,{timeout:10000});
   await page.locator('#catalogo').selectOption(p.selector);
   await page.locator('#escuela').fill('Escuela de ensayo');
   await page.locator('#turno').selectOption(p.model==='ba15'?'noche':'manana');
