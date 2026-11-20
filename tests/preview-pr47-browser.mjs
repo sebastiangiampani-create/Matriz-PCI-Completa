@@ -59,7 +59,7 @@ try{
   assert.equal(remote.revision,1);
   for(const {name,visible} of [
     {name:'Comunicación',visible:'#offerPane:not([hidden])'},
-    {name:'Computación',visible:'#technicalPending:not([hidden])'},
+    {name:'Computación',visible:'#editor.technical-editor:not([hidden])'},
     {name:'Economía y Administración',visible:'#ba15Pending:not([hidden])'}]){
     const card=page.locator('.school-offer-card').filter({hasText:name});
     await card.locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
