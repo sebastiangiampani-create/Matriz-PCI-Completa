@@ -95,7 +95,7 @@ try{
   assert.deepEqual(network,[],'La revisión no debe enviar solicitudes a Supabase');
   assert.deepEqual(errors,[],'Errores JavaScript en la revisión: '+errors.join('; '));
   // Confirmar también que la URL pública de revisión sirve el archivo de ESTA rama.
-  const external='https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/fix/rescate-constructor-v2-reglas-20261119/revision-pr47.html';
+  const external='https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/fix/recuperar-mapas-v2-20261120/revision-pr47.html';
   const publicResponse=await fetch(external,{signal:AbortSignal.timeout(20000)});
   assert.equal(publicResponse.status,200,'El enlace externo de revisión debe devolver HTTP 200');
   const publicHtml=await publicResponse.text();
