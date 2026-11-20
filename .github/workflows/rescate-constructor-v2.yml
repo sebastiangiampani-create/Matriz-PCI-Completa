@@ -12,6 +12,7 @@ on:
       - 'src/pci-router.mjs'
       - 'pci-orientaciones.html'
       - 'tests/pci-desarrollo-resumen.test.mjs'
+      - 'tests/pci-sociales-opciones-v2.test.mjs'
       - 'tests/flujo-constructor-tres-modalidades.test.mjs tests/pci-desarrollo-resumen.test.mjs'
       - 'tests/multipci-portal-browser.mjs'
       - 'tests/ba15-constructor.test.mjs'
@@ -45,7 +46,8 @@ jobs:
           node --check src/orientaciones-online.mjs
           node --check src/pci-desarrollo-resumen.mjs
           node --check src/pci-router.mjs
-          node --check tests/pci-desarrollo-resumen.test.mjs
+          node --check tests/pci-desarrollo-resumen.test.mjs tests/pci-sociales-opciones-v2.test.mjs
+          node --check tests/pci-sociales-opciones-v2.test.mjs
           node --check src/ba15/constructor-ui.mjs
           node --check src/tecnica/interfaz-integrada-v2.mjs
           node --check src/tecnica/espacio-trabajo-v2.mjs
