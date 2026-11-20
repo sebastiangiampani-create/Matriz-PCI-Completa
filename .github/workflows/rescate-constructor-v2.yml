@@ -91,7 +91,7 @@ jobs:
       - name: Probar constructor real, historial, arrastre y vuelta de fases
         run: |
           mkdir -p test-artifacts/multipci-portal
-          node tests/multipci-portal-browser.mjs
+          node tests/v2-familia-portal-browser.mjs
       - name: Revisar preview aislada PR47 sin conexión a Supabase
         run: node tests/v2-integrado-portal-browser.mjs
       - name: Guardar las capturas sin publicar en main
