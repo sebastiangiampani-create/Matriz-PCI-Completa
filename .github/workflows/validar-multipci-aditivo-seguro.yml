@@ -118,7 +118,7 @@ jobs:
       - name: Simular escuela con Media y agregar BA +15 sin sobrescribir
         run: |
           mkdir -p test-artifacts/multipci-portal
-          node tests/multipci-portal-browser.mjs
+          node tests/v2-familia-portal-browser.mjs
           node tests/pci-nueva-escuela-browser.mjs
           node tests/vinculos-historicos-browser.mjs
       - name: Conservar captura del recorrido
