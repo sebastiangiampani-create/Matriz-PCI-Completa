@@ -8,7 +8,7 @@
   <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
   <title>Organización curricular de la escuela · PCI Secundaria Aprende</title>
   <link rel="stylesheet" href="app.css?v=20260902-1">
-  <link rel="stylesheet" href="pci-orientaciones.css?v=20261119-legacy-links-1">
+  <link rel="stylesheet" href="pci-orientaciones.css?v=20261119-phase2-v2-1">
 </head>
 <body>
   <header class="site-top no-print">
@@ -126,7 +126,7 @@
           <div id="ba15HistoricLinks" class="historic-pci-preview" hidden></div>
           <div class="note"><strong>Mapa oficial BA +15 · Resolución 1375/MEDGC/25, Anexo I.</strong>
             Cuatro niveles, ocho cuatrimestres (C1–C8), 38 horas cátedra semanales por nivel, formación general y orientada y talleres articulados.
-            Constructor curricular de borrador habilitado por PCI: podés organizar espacios, seleccionar contenidos NES y guardar el desarrollo sin alterar la Formación General histórica. La aprobación normativa final requiere revisión.</div>
+            Fase 1: construí el mapa por drag & drop. Fase 2: desarrollá contenidos, objetivos, secuencias y planes en una instancia diferente. Ningún contenido histórico se reemplaza. La aprobación normativa final requiere revisión.</div>
           <div id="ba15Metrics" class="metrics" aria-live="polite"></div>
           <nav id="ba15Navigation" class="navtabs" aria-label="Niveles BA +15"></nav>
           <div id="ba15Map" class="mapScroll"></div>
@@ -134,6 +134,7 @@
           
           <h3>Constructor curricular por cuatrimestre</h3>
           <div id="ba15Builder" aria-label="Constructor curricular de BA +15"></div>
+           <section id="ba15Development" class="ba15-development-workspace" aria-label="Fase 2 · Desarrollo curricular BA +15" hidden></section>
           <details class="note" style="margin-top:18px"><summary><strong>Información institucional complementaria · Reconocimiento de saberes previos (CCC)</strong></summary><p>El Ciclo de Complementación Curricular se consulta de forma independiente del constructor. No constituye un nivel adicional, no ocupa C1–C8, no se incorpora como formato ni se suma a la cobertura del mapa curricular.</p></details>
 
           <p class="muted">Norma: <a href="https://documentosboletinoficial.buenosaires.gob.ar/publico/PE-RES-MEDGC-MEDGC-1375-25-ANX-2.pdf" target="_blank" rel="noopener noreferrer">Anexo I IF-2025-44785236-GCABA-SSPIE</a>. Los componentes propios de cada orientación deben contrastarse con su plan oficial.</p>
@@ -160,14 +161,33 @@
             </div>
             <div class="navtabs" role="tablist" aria-label="Fases del PCI">
               <button type="button" class="tab active" data-tab="oferta">1 · Constructor curricular</button>
-              <button type="button" class="tab" data-tab="fg">2 · Desarrollo FG</button>
-              <button type="button" class="tab" data-tab="fo">2 · Desarrollo FO</button>
+              <button type="button" class="tab" data-tab="desarrollo">2 · Desarrollo curricular</button>
+              <button type="button" class="tab phase-detail-tab" data-tab="fg">Editar FG</button>
+              <button type="button" class="tab phase-detail-tab" data-tab="fo">Editar FO</button>
             </div>
             <div id="pciHistoricLinks" class="historic-pci-preview" hidden></div>
             <p id="pciPhaseState" class="pci-phase-state" role="status" aria-live="polite"></p>
             <div id="message" class="message" role="status" aria-live="polite"></div>
           </div>
+          <section class="panel card pane" id="developmentPane" hidden>
+            <div class="topline"><div>
+              <span class="eyebrow">2 · DESARROLLO CURRICULAR SEGÚN PCI</span>
+              <h3>Espacios heredados del mapa de la oferta</h3>
+              <p class="muted">Elegí un espacio. Se conservan los contenidos, objetivos, secuencias y los cuatro planes de aprendizaje anteriores. La composición curricular se modifica únicamente en el Constructor.</p>
+            </div></div>
+            <div id="developmentStats" class="pci-development-stats" aria-live="polite"></div>
+            <div class="pci-development-filters">
+              <label>Nivel <select id="developmentLevel"><option value="todos">Todos los niveles</option></select></label>
+              <label>Formación <select id="developmentFormation"><option value="todos">FG + FO</option><option value="FG">Formación General</option><option value="FO">Formación Orientada</option></select></label>
+            </div>
+            <div id="developmentCards" class="pci-development-cards"></div>
+            <section class="pci-development-levels">
+              <h4>Indicadores del Desarrollo Curricular V2</h4>
+              <div id="developmentCoverage" aria-live="polite"></div>
+            </section>
+          </section>
           <div class="panel card pane" id="fgPane" hidden>
+            <button type="button" class="text-button backToDevelopment" data-back-to-development>← Volver a espacios curriculares</button>
             <div class="topline"><div><span class="eyebrow">FG Matriz histórica → FG V2</span><h3>Formación General por área</h3><p class="muted">Los contenidos y las secuencias anteriores se importan sin cambiar el documento original. Las equivalencias V2 se identifican automáticamente.</p></div></div>
             <div class="split original-workspace">
               <div id="areaList" class="areaList content-bag card"></div>
@@ -241,6 +261,7 @@
             </div>
           </div>
           <div class="panel pane" id="foPane" hidden>
+            <button type="button" class="text-button backToDevelopment" data-back-to-development>← Volver a espacios curriculares</button>
             <div class="topline"><div><span class="eyebrow">FO · Desarrollo curricular</span><h3>Planes de aprendizaje</h3><p class="muted">Cada espacio FO guarda sus objetivos, sinopsis y las cuatro etapas de cada plan, con control de versiones.</p></div></div>
             <div class="split">
               <div id="foSpaces" class="areaList content-bag card"></div>
