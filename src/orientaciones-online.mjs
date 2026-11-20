@@ -860,8 +860,13 @@ function onOriginalV2Message(event){
     updateV2Display();
   }
   if(msg.type==='V2_ORIGINAL_SAVED'&&current.ready){
-    current.dirty=true;
-    $('v2OriginalStatus').textContent='Cambios locales V2 pendientes: pulsá «Guardar constructor V2 en este PCI».';
+    // V2 conserva guardados automáticos de interfaz (incluso al restaurar un
+    // PCI). No generar falsos "cambios pendientes" si el contenido es idéntico
+    // a la última revisión comprobada en el servidor.
+    const before=current.document?.v2;
+    current.dirty=!before||JSON.stringify(msg.document)!==JSON.stringify(before);
+    if(current.dirty)
+      $('v2OriginalStatus').textContent='Cambios locales V2 pendientes: pulsá «Guardar constructor V2 en este PCI».';
   }
   if(msg.type==='V2_ORIGINAL_EXPORTED'){
     if(!current.saving||!msg.document?.maps)return;
