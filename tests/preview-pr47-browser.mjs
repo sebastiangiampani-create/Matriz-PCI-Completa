@@ -64,6 +64,16 @@ try{
     const card=page.locator('.school-offer-card').filter({hasText:name});
     await card.locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
     await page.locator(visible).waitFor({timeout:30000});
+    const visual=await page.evaluate(()=>({
+      loaded:[...document.styleSheets].some(sheet=>String(sheet.href||'').includes('v2-original-map-appearance.css')),
+      grid:getComputedStyle(document.querySelector('#mapBody tr')).display,
+      mapBackground:getComputedStyle(document.querySelector('#mapBody tr th')).backgroundColor,
+      levelBackground:getComputedStyle(document.querySelector('#mapHead tr:first-child th:nth-child(2)')).backgroundColor,
+      annualCells:document.querySelectorAll('#mapBody [data-pci-annual=true]').length
+    }));
+    assert.equal(visual.loaded,true,'La apariencia se carga desde estilos originales V2 adaptados.');
+    assert.equal(visual.grid,'grid','La matriz se presenta con la cuadrícula original V2, no tabla continua.');
+    assert.equal(visual.levelBackground,'rgb(18, 57, 92)','V2 conserva la banda institucional azul de niveles.');
     if(name==='Comunicación'){
       assert.equal(await page.locator('#mapHead tr').count(),2,
         'Media recupera cabecera de niveles y cuatrimestres V2.');
@@ -131,7 +141,7 @@ try{
     assert.deepEqual(network,[],'La revisión no debe enviar solicitudes a Supabase');
   assert.deepEqual(errors,[],'Errores JavaScript en la revisión: '+errors.join('; '));
   // Confirmar también que la URL pública de revisión sirve el archivo de ESTA rama.
-  const external='https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/fix/recuperar-mapas-v2-20261120/revision-pr47.html';
+  const external='https://raw.githack.com/sebastiangiampani-create/Matriz-PCI-Completa/fix/estetica-original-v2-mapas-20261120/revision-pr47.html';
   const publicResponse=await fetch(external,{signal:AbortSignal.timeout(20000)});
   assert.equal(publicResponse.status,200,'El enlace externo de revisión debe devolver HTTP 200');
   const publicHtml=await publicResponse.text();
