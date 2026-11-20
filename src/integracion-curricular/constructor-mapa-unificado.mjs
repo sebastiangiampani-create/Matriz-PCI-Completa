@@ -67,11 +67,78 @@ export const ROWS=Object.freeze([
   'Integración FG–FO','Laboratorios FO','Talleres FO',
   'Proyecto de Vinculación con el Futuro','Otros formatos'
 ]);
+/**
+ * Opción B de Sociales de Bachillerato: 10 o 12 laboratorios.
+ * El mapa antiguo podía tener un segundo C6 y un segundo C7; las normas
+ * finales requieren dos agrupamientos en C5 y dos en C6 para la opción 12.
+ * Proyectamos una COPIA por PCI. Nunca reescribimos los grupos históricos.
+ */
+export function projectSocialGroupsForPci(original,option=null){
+ const selected=option===10||option===12?option:null;
+ const groups=clone(array(original));
+ const conflicts=[];
+ const beginning=g=>Number(g.startTerm??g.termStart??g.term??((Number(g.level)||0)*2-1));
+ const worked=g=>array(g.items).length>0||
+  ['summary','synopsis','objective','objectives','context','practiceAxis']
+   .some(k=>typeof g[k]==='string'&&g[k].trim())||
+  array(g.plansBimestrales).some(p=>
+   ['objectives','synopsis','context'].some(k=>typeof p?.[k]==='string'&&p[k].trim())||
+   array(p?.contentIds).length>0||
+   Object.values(p?.stages||{}).some(stage=>
+    typeof stage==='string'?stage.trim():
+    Object.values(stage||{}).some(v=>typeof v==='string'&&v.trim())));
+ if(!selected)return {groups,conflicts};
+ const positions=new Map();
+ groups.forEach((g,index)=>{
+  const term=beginning(g),seen=positions.get(term)||[];
+  seen.push(index);positions.set(term,seen);
+ });
+ const extra=(term)=>positions.get(term)?.slice(1)||[];
+ const extra5=extra(5),extra6=extra(6),extra7=extra(7);
+ const excess=groups.length===12&&extra5.length+extra6.length+extra7.length===2;
+ const placement=excess&&extra5.length===0&&extra6.length===1&&extra7.length===1?
+  [extra6[0],extra7[0]]:null;
+ const correct=excess&&extra5.length===1&&extra6.length===1;
+ let exclude=[];
+ if(selected===10&&excess)exclude=correct?[extra5[0],extra6[0]]:
+  placement||[];
+ if(selected===12&&placement){
+  for(const [index,target] of [[placement[0],5],[placement[1],6]]){
+   if(worked(groups[index])){
+    conflicts.push('El agrupamiento histórico '+groups[index].name+
+     ' tiene contenidos o planes; revisar antes de cambiar su cuatrimestre.');
+    continue;
+   }
+   groups[index].originalTerm=beginning(groups[index]);
+   groups[index].startTerm=target;groups[index].endTerm=target;
+   groups[index].level=Math.ceil(target/2);
+   groups[index].proyectadoSoloEnPci=true;
+  }
+ }
+ for(const index of exclude){
+  if(worked(groups[index])){
+   conflicts.push('No se puede excluir del PCI el agrupamiento histórico '+groups[index].name+
+    ': contiene trabajo pedagógico. Requiere conciliación.');
+   continue;
+  }
+  groups[index].excludedFromPci=true;
+ }
+ if(excess&&!correct&&!placement)
+  conflicts.push('La distribución histórica de Sociales requiere revisión de C5 y C6.');
+ return {groups,conflicts};
+}
+export function selectSocialOption(data,option){
+ const draft=guardComposition(data),choice=Number(option);
+ if(![10,12].includes(choice))throw Error('Elegí 10 o 12 laboratorios de Sociales.');
+ draft.socialOption=choice;return draft;
+}
 export function historicGroups(pack,orientationId){
-  const fg=pack?.orientations?.[orientationId]?.fg?.areas||{};
+  const current=pack?.orientations?.[orientationId];
+  const fg=current?.fg?.areas||{},option=current?.fo?.composicionFgV2?.socialOption;
   const groups=[];
   for(const [area,block] of Object.entries(fg)){
-    for(const g of array(block?.groups)){
+    const source=area==='Ciencias Sociales'?projectSocialGroupsForPci(block?.groups,option).groups:array(block?.groups);
+    for(const g of source.filter(x=>!x.excludedFromPci)){
       const start=Number(g.startTerm||((Number(g.level)||0)*2-1));
       const end=Number(g.endTerm||start);
       if(!positive(start)||start>10||end<start)continue;
@@ -132,7 +199,7 @@ export function blankComposition(identity){
     schema:COMPOSITION_VERSION,
     schoolId:Number(identity.schoolId),pciId:String(identity.pciId),
     orientationId:String(identity.orientationId),
-    groups:[],draft:true
+    groups:[],socialOption:null,draft:true
   };
 }
 export function compositionFor(workspace,pci){
