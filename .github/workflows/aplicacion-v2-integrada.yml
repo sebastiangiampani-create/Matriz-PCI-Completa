@@ -6,14 +6,19 @@ on:
     paths:
       - index.html
       - pci-orientaciones.html
+      - pci-orientaciones.css
+      - panel-*.html
       - src/aplicacion-v2/**
       - src/pci-router.mjs
       - src/v2-familia/**
       - src/migracion/**
       - scripts/derivar-v2-familia.mjs
+      - scripts/preparar-publicacion-aplicacion-v2.mjs
       - assets/**
       - tests/aplicacion-v2-browser.mjs
       - tests/aplicacion-v2-documentos.test.mjs
+      - tests/aplicacion-v2-publicacion.test.mjs
+      - tests/aplicacion-v2-admin-browser.mjs
       - .github/workflows/aplicacion-v2-integrada.yml
   workflow_dispatch:
 
@@ -33,6 +38,7 @@ jobs:
         run: >-
           node --test
           tests/aplicacion-v2-documentos.test.mjs
+          tests/aplicacion-v2-publicacion.test.mjs
           tests/migracion-legado-fg.test.mjs
           tests/aplicar-migracion-v2.test.mjs
           tests/revision-aceptacion-v2.test.mjs
@@ -48,6 +54,8 @@ jobs:
           fi
       - name: Probar escuela, tres modalidades y planes en escritorio y celular
         run: node tests/aplicacion-v2-browser.mjs
+      - name: Probar acceso administrador sobre la publicación completa
+        run: node tests/aplicacion-v2-admin-browser.mjs
       - name: Conservar evidencias y fallos de la aplicación integrada
         if: always()
         uses: actions/upload-artifact@v4
