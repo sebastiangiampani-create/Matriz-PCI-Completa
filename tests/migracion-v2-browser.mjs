@@ -130,7 +130,7 @@ const report = { paso: 2, fechaEjecucion: new Date().toISOString(),
   commit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   pagina: 'revision-v2-embed.html', datos: 'Estado escolar simulado y catálogos oficiales locales',
   contenidoControl: control, dispositivos: [], capturas: [], errores: [],
-  inicializaciones: [],
+  inicializaciones: [], fallosDePlanes: [],
   solicitudesSupabase: [], otrasSolicitudesExternasBloqueadas: [], fuentesRemotasSustituidas: 0 };
 
 async function screenshot(page, file) {
@@ -197,6 +197,43 @@ async function checkPlan(page, slot, expected, count, capture) {
   assert.match(await page.locator('.v38-top h2').innerText(), new RegExp(`1 de ${count}`));
   if (capture) await screenshot(page, capture);
   await page.locator('.v38-top [data-close]').click();
+}
+async function recordPlan(page, record, slot, expected, count, capture, field) {
+  try {
+    await checkPlan(page, slot, expected, count, capture);
+    record[field] = `Texto y cuatro etapas conservados; editor de ${count} planes.`;
+  } catch (error) {
+    // Conservar el fallo y continuar los casos independientes. El resultado
+    // global sigue siendo fallido mientras cualquier editor no pueda abrirse.
+    const geometria = await page.evaluate(() => {
+      const describe = el => {
+        if (!el) return null;
+        const r = el.getBoundingClientRect(), css = getComputedStyle(el);
+        return { tag: el.tagName, id: el.id, clase: el.className,
+          texto: el.textContent.trim().slice(0,180),
+          rect: { x:r.x, y:r.y, width:r.width, height:r.height },
+          clientWidth:el.clientWidth, scrollWidth:el.scrollWidth, scrollLeft:el.scrollLeft,
+          minWidth:css.minWidth, gridTemplateColumns:css.gridTemplateColumns,
+          contentVisibility:css.contentVisibility,
+          overflowX: css.overflowX, pointerEvents: css.pointerEvents };
+      };
+      const button = document.querySelector('#v38modal [data-open="1"]');
+      const r = button?.getBoundingClientRect();
+      return { viewport: { innerWidth, innerHeight, scrollX, scrollY,
+          visual: visualViewport && { width:visualViewport.width, height:visualViewport.height,
+            scale:visualViewport.scale, offsetLeft:visualViewport.offsetLeft, offsetTop:visualViewport.offsetTop } },
+        boton: describe(button), modal: describe(document.querySelector('#v38modal')),
+        contenedor: describe(document.querySelector('#v38modal .v38-shell')),
+        cabecera: describe(document.querySelector('#v38modal .v38-top')),
+        elementos: [...document.querySelectorAll('#v38modal .v38-body, #v38modal .v38-grid, #v38modal .v38-card, #v38modal .v95-coverage-table')].map(describe),
+        enCentroDelBoton: r ? document.elementsFromPoint(r.x+r.width/2,r.y+r.height/2).slice(0,5).map(describe) : [] };
+    });
+    const fallo = { dispositivo:record.dispositivo, slot, error:error.stack, geometria };
+    record[field] = { resultado:'fallido', ...fallo };
+    report.fallosDePlanes.push(fallo);
+    await screenshot(page, capture.replace('.png','-error.png'));
+    console.error(`${record.dispositivo}: fallo conservado al abrir el plan de ${slot}.`);
+  }
 }
 async function coverage(page, duplicate) {
   const data = await page.evaluate(controlId => {
@@ -303,18 +340,16 @@ try {
       await page.locator('#v28groups [data-g="socialB-c5"] .v28-assigned-wrap').evaluate(
         el => el.scrollIntoView({ block: 'center' }));
       await screenshot(page, `${device.nombre}-02-contenidos-sociales.png`);
-      await checkPlan(page, 'socialB-c5', scenarios[0].migration.groups['socialB-c5'].plansBimestrales[0], 2,
-        `${device.nombre}-03-plan-cuatrimestral.png`);
-      record.planCuatrimestral = 'Texto y cuatro etapas conservados; editor de 2 planes.';
+      await recordPlan(page, record, 'socialB-c5', scenarios[0].migration.groups['socialB-c5'].plansBimestrales[0], 2,
+        `${device.nombre}-03-plan-cuatrimestral.png`, 'planCuatrimestral');
 
       await area(page, 'Matemática');
       const mathCard = page.locator('#v28groups [data-g="matematica-n1"]');
       assert.ok((await mathCard.locator('.v28-assigned').innerText()).includes(control.text));
       record.contenidoDeTerceroVisibleEnPrimero = true;
       record.encabezadoHistoricoArea = await page.locator('#v47coverageCount').innerText();
-      await checkPlan(page, 'matematica-n1', scenarios[0].migration.groups['matematica-n1'].plansBimestrales[0], 4,
-        `${device.nombre}-04-plan-anual.png`);
-      record.planAnual = 'Texto y cuatro etapas conservados; editor de 4 planes.';
+      await recordPlan(page, record, 'matematica-n1', scenarios[0].migration.groups['matematica-n1'].plansBimestrales[0], 4,
+        `${device.nombre}-04-plan-anual.png`, 'planAnual');
       record.soloEnPrimero = await coverage(page, false);
       await coveragePanel(page, false, `${device.nombre}-05-cobertura-solo-en-primero.png`);
 
@@ -322,8 +357,8 @@ try {
       await importState(page, `sim-migracion-${device.nombre}-b`, scenarios[1]);
       record.enPrimeroYTercero = await coverage(page, true);
       await coveragePanel(page, true, `${device.nombre}-06-cobertura-en-tercero.png`);
-      record.resultado = 'aprobado';
-      console.log(`${device.nombre}: opción B, contenidos, ambos editores y cobertura aprobados.`);
+      record.resultado = report.fallosDePlanes.some(f => f.dispositivo === device.nombre) ? 'fallido' : 'aprobado';
+      console.log(`${device.nombre}: ${record.resultado}; mapa, contenidos, editores y cobertura registrados.`);
     } catch (error) {
       record.resultado = 'fallido'; record.error = error.stack;
       await screenshot(page, `${device.nombre}-error.png`).catch(() => {});
@@ -335,6 +370,8 @@ try {
   assert.deepEqual(report.errores, [], 'La aplicación debe funcionar sin errores JavaScript.');
   assert.deepEqual(await fingerprints(), protectedBefore, 'Motor, migrador, adaptador y página deben permanecer intactos.');
   report.archivosProtegidosVerificados = protectedPaths.length;
+  assert.deepEqual(report.fallosDePlanes.map(f => `${f.dispositivo}: ${f.slot}`), [],
+    'Todos los planes deben abrirse por la interfaz; los fallos registrados no se omiten.');
   report.resultado = 'aprobado';
   console.log('PASO 2 APROBADO: escritorio y celular; cero solicitudes a Supabase; código de aplicación intacto.');
 } catch (error) {
