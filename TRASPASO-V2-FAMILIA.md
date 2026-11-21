@@ -37,7 +37,16 @@ node tests/v2-ba15-norma-browser.mjs
 
 ## Pendientes
 
-1. Catálogo de Técnica (Computación): faltan Lengua Adicional 1.º–5.º y cargas horarias; los tres espacios anuales figuran como integración.
-2. Control `motor-curricular-y-resguardo`: decidir si se agrega `arts-multiple-workshops.js` a la lista del guardián o se revierte ese arreglo.
-3. URL pública de prueba: requiere cambiar en GitHub la fuente de Pages a "GitHub Actions".
-4. Botón "Volver al panel" tapado por el encabezado (también ocurre en V2 original).
+1. Cargas horarias de Técnica por especialidad (sin ellas no se verifica el tope de 9 h).
+2. Los espacios anuales de cada especialidad técnica figuran como integración en el catálogo (p. ej. Computación: Lab. de Algoritmos, Lab. Orientado a Objetos, Desarrollo de Sistemas).
+3. URL pública de prueba: Pages con fuente "GitHub Actions" y publicación del PR en subcarpeta, sin cambiar la raíz.
+4. Botón "Volver al panel" tapado por el encabezado (también en V2 original).
+5. Revisión pedagógica e institucional con casos reales antes de fusionar.
+
+## Hecho (no rehacer)
+
+- Secuencia completa de módulos V2 en Técnica y BA +15 (generador + manifiesto).
+- Reglas IF-2026-51169092 (Técnica) y RES-1375-MEDGC-25 (BA +15) en el mapa y en Validar Mapa.
+- 16 orientaciones con bloque → eje → subeje en Media y BA +15 (derivado `derivados/media/v47-phase2-matrix.js`).
+- Lengua Adicional 1.º–5.º en Técnica desde la NES.
+- Ciclos de refresco del DOM corregidos (Tutoría y talleres de Artes); guardián actualizado con autorización.
