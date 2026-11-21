@@ -7,7 +7,8 @@ import {findSpecialty,TECNICA,validateRelation} from './pautas-pci-20261005.mjs'
 import {phaseGate as evaluatePhaseGate} from '../pci-flujo-fases.mjs';
 import {
  TECH_FIELDS,TECH_FG_AREAS,TECH_SPECIFIC_AREAS,TECH_OFFER_VERSION,TECH_PLAN_VERSION,
- technicalSubjectBank,technicalOfferSeed,guardTechnicalOffer,guardTechnicalPlan,
+ technicalSubjectBank,technicalSubjectCards,placeTechnicalSubject,
+ technicalOfferSeed,guardTechnicalOffer,guardTechnicalPlan,
  technicalMapRows,technicalCoverage,technicalPlanSeed,validateTechnicalDraft,
  prepareTechnicalOfferFinal,
  addTechnicalIntegration,addTechnicalRepresentationThird,addTechnicalAnnualPending,
@@ -91,6 +92,30 @@ export function createIntegratedTechnicalUI({
      revision:offerRevision,dirty:offerDirty,issues,warnings:(audit.warnings||[]).map(x=>x.message),
      label:'Constructor de Educación Técnica'
    });
+ }
+ let selectedTechnicalSubject=null,draggedTechnicalSubject=null,draggedTechnicalSpace=null;
+ function assignSubject(space,subjectKey){
+  if(!writable())return;
+  try{
+   offer=placeTechnicalSubject(offer,{spaceId:space.id,subjectKey,bank});
+   selectedTechnicalSubject=null;draggedTechnicalSubject=null;
+   activeSpace=space.id;changedOffer();
+  }catch(error){message(error.message,'error');}
+ }
+ function setupSubjectDrop(node,space){
+  if(!writable())return;
+  node.classList.add('drop-zone');
+  node.addEventListener('dragover',e=>{
+   if(!draggedTechnicalSubject)return;
+   e.preventDefault();node.classList.add('drop-over');
+   if(e.dataTransfer)e.dataTransfer.dropEffect='move';
+  });
+  node.addEventListener('dragleave',()=>node.classList.remove('drop-over'));
+  node.addEventListener('drop',e=>{
+   if(!draggedTechnicalSubject)return;
+   e.preventDefault();e.stopPropagation();node.classList.remove('drop-over');
+   assignSubject(space,draggedTechnicalSubject);
+  });
  }
  function changedOffer(){
   offerDirty=true;
@@ -219,14 +244,50 @@ export function createIntegratedTechnicalUI({
    for(let i=0;i<group.cells.length;i++){
     const cell=group.cells[i],td=el('td',tr);
     // Los espacios anuales ocupan ambos cuatrimestres del nivel.
+    // No ocultar contenidos de C par: unir columnas únicamente cuando ambas
+    // celdas muestran exactamente los mismos espacios anuales del nivel.
+    const nextCell=group.cells[i+1];
     const annual=cell.term%2===1&&cell.spaces.length>0&&
-      cell.spaces.every(x=>x.duration==='anual'&&x.term===cell.term);
-    if(annual){td.colSpan=2;i++;}
+      cell.spaces.every(x=>x.duration==='anual'&&x.term===cell.term)&&
+      nextCell?.spaces.length===cell.spaces.length&&
+      nextCell.spaces.every(x=>cell.spaces.some(y=>y.id===x.id));
+    if(annual){td.colSpan=2;td.dataset.pciAnnual='true';i++;}
+    // Una zona vacía admite mover el formato dentro de los cuatrimestres
+    // permitidos por la regla Técnica, sin modificar sus contenidos.
+    td.classList.add('constructor-cell');
+    td.addEventListener('dragover',e=>{
+     if(!draggedTechnicalSpace)return;
+     e.preventDefault();td.classList.add('drop-over');
+    });
+    td.addEventListener('dragleave',()=>td.classList.remove('drop-over'));
+    td.addEventListener('drop',e=>{
+     if(!draggedTechnicalSpace)return;
+     e.preventDefault();e.stopPropagation();td.classList.remove('drop-over');
+     const sourceSpace=offer.spaces.find(x=>x.id===draggedTechnicalSpace);
+     if(!sourceSpace||sourceSpace.area!==group.area){
+      message('El formato técnico permanece en su área original.','error');return;
+     }
+     try{
+      offer=moveTechnicalTerm(offer,sourceSpace.id,cell.term);
+      draggedTechnicalSpace=null;changedOffer();
+     }catch(error){message(error.message,'error');}
+    });
     for(const s of cell.spaces){
      const name=s.name.replace(/\s+·\s+\d+º$/,'');
-     btn(td,name+(s.duration==='anual'?' · anual':''),()=>{
-      activeSpace=s.id;renderOffer();
+     const button=btn(td,name+(s.duration==='anual'?' · anual':''),()=>{
+      if(selectedTechnicalSubject)assignSubject(s,selectedTechnicalSubject);
+      else {activeSpace=s.id;renderOffer();}
      },'slot'+(s.provisional?' pending':''));
+     button.title='Soltá una materia del mismo nivel o elegí el espacio.';
+     setupSubjectDrop(button,s);
+     button.draggable=writable()&&s.duration==='cuatrimestral';
+     if(button.draggable){
+      button.addEventListener('dragstart',e=>{
+       draggedTechnicalSubject=null;draggedTechnicalSpace=s.id;
+       e.dataTransfer?.setData('application/x-pci-technical-space',s.id);
+      });
+      button.addEventListener('dragend',()=>{draggedTechnicalSpace=null});
+     }
     }
    }
   }
@@ -261,13 +322,41 @@ export function createIntegratedTechnicalUI({
   const year=Number(spaceYear);
   const list=offer.spaces.filter(x=>(!year||x.year===year)&&(!spaceArea||x.area===spaceArea)).sort(
    (a,b)=>a.year-b.year||a.term-b.term||a.area.localeCompare(b.area));
+  const subjectYear=year||offer.spaces.find(x=>x.id===activeSpace)?.year||1;
+  const subjectBag=el('section',target,undefined,'tech-subject-bank workCard');
+  el('h4',subjectBag,'Bolsa de materias · '+subjectYear+'º · '+pci.specialty_name);
+  createWarning(subjectBag,'Arrastrá las materias al mapa C1–C12. La identificación de los años procede del PDF priorizado y requiere revisión del plan oficial. Los contenidos se desarrollan en Fase 2.');
+  const cards=el('div',subjectBag,undefined,'tech-subject-cards');
+  const choices=technicalSubjectCards(bank,{year:subjectYear});
+  for(const subject of choices){
+   const card=btn(cards,subject.name+' · '+subject.area,()=>{
+    selectedTechnicalSubject=selectedTechnicalSubject===subject.key?null:subject.key;
+    renderOffer();
+   },'constructor-bank-subject'+(selectedTechnicalSubject===subject.key?' active':''));
+   card.draggable=writable();
+   card.title='Materia del nivel '+subjectYear+' identificada en el catálogo de la especialidad. Arrastrar a un espacio del mapa.';
+   if(card.draggable){
+    card.addEventListener('dragstart',e=>{
+     draggedTechnicalSubject=subject.key;draggedTechnicalSpace=null;
+     e.dataTransfer?.setData('text/plain',subject.key);
+     if(e.dataTransfer)e.dataTransfer.effectAllowed='move';
+    });
+    card.addEventListener('dragend',()=>{draggedTechnicalSubject=null});
+   }
+  }
+  if(!choices.length)createWarning(cards,'No hay materias de año identificable. Revisá el documento oficial; no se inventan asignaturas.');
+
   const layout=el('div',target,undefined,'split');
   const short=el('div',layout,undefined,'areaList');
   short.setAttribute('aria-label','Espacios curriculares del PCI Técnico');
   for(const s of list){
    const b=btn(short,(s.included===false?'[Por definir] ':'')+s.name+' · '+s.year+'º C'+s.term+
-     (s.duration==='anual'?'–C'+s.endTerm:'')+' · '+s.contentIds.length+' refs',
-     ()=>{activeSpace=s.id;renderOffer();},'areaItem'+(s.id===activeSpace?' active':''));
+     (s.duration==='anual'?'–C'+s.endTerm:'')+' · '+s.subjectIds.length+' materias',
+     ()=>{
+      if(selectedTechnicalSubject)assignSubject(s,selectedTechnicalSubject);
+      else {activeSpace=s.id;renderOffer();}
+     },'areaItem'+(s.id===activeSpace?' active':''));
+   setupSubjectDrop(b,s);
    b.title='Abrir agrupamiento curricular';
   }
   for(let y=4;y<=6;y++){
@@ -375,42 +464,24 @@ export function createIntegratedTechnicalUI({
     catch(err){message(err.message,'error');}
    });mover.disabled=!writable();
   }
-  const curric=el('div',detail);
-  el('h4',curric,'Materias y contenidos priorizados');
-  const related=availableForSpace(s);
-  const assigned=related.filter(x=>s.contentIds.includes(x.id));
-  const otherAssigned=bank.filter(x=>s.contentIds.includes(x.id)&&!related.includes(x));
-  for(const ref of [...assigned,...otherAssigned]){
-   const box=el('details',curric,undefined,'workCard');
-   el('summary',box,ref.name+' · '+(ref.year??'año no identificado')+'º · PDF p.'+ref.page);
-   const href=sourcePdf(ref);
-   if(href){const a=el('a',box,'Ver PDF oficial · página '+ref.page);a.href=href;a.target='_blank';a.rel='noopener noreferrer';}
-   const pre=el('pre',box,ref.text.slice(0,9000));
-   pre.style.whiteSpace='pre-wrap';pre.style.maxHeight='230px';pre.style.overflow='auto';
-   const del=btn(box,'Quitar referencia de este espacio',()=>{
-     try{offer=setTechnicalSubject(offer,s.id,ref.id,bank,false);changedOffer();}
-     catch(err){message(err.message,'error');}
-   });del.disabled=!writable();
+  const subjectsPanel=el('div',detail,undefined,'workCard');
+  el('h4',subjectsPanel,'Materias del agrupamiento · Fase 1');
+  const chosenSubjects=technicalSubjectCards(bank,{year:s.year})
+   .filter(x=>s.subjectIds.includes(x.id));
+  for(const subject of chosenSubjects){
+   const line=el('div',subjectsPanel,undefined,'ba15Member');
+   el('strong',line,subject.name);
+   el('small',line,subject.area+' · año a verificar con el diseño curricular');
+   const remove=btn(line,'Quitar del mapa',()=>{
+    const fresh=copy(offer),space=fresh.spaces.find(x=>x.id===s.id);
+    space.subjectIds=space.subjectIds.filter(id=>id!==subject.id);
+    space.confirmed=false;offer=fresh;changedOffer();
+   });
+   remove.disabled=!writable();
   }
-  const filter=field(curric,'Buscar asignatura del mismo año y modalidad','',()=>{}, {multiline:false});
-  const select=el('select',curric);select.setAttribute('aria-label','Referencias de contenidos priorizados');
-  const rebuild=()=>{
-   const q=normalized(filter.value);select.replaceChildren();
-   const none=el('option',select,'Elegí una página de contenidos del PDF oficial');none.value='';
-   for(const ref of related.filter(x=>!s.contentIds.includes(x.id) &&
-       normalized(x.name).includes(q)).slice(0,250)){
-    const opt=el('option',select,ref.name+' · '+(ref.year??'año a revisar')+' · p.'+ref.page);
-    opt.value=ref.id;
-   }
-  };
-  filter.addEventListener('input',rebuild);rebuild();
-  const add=btn(curric,'Vincular contenido del documento',()=>{
-   if(!select.value)return;
-   try{offer=setTechnicalSubject(offer,s.id,select.value,bank,true);changedOffer();}
-   catch(err){message(err.message,'error');}
-  });add.disabled=!writable()||s.included===false;
-  createWarning(curric,related.length+' referencias de páginas disponibles. Año/campo inferidos: '+
-   'la selección no constituye homologación automática.');
+  if(!chosenSubjects.length)createWarning(subjectsPanel,'Todavía no hay materias ubicadas. Arrastralas desde la bolsa a esta celda.');
+  if(s.contentIds?.length)createWarning(subjectsPanel,
+   'Hay '+s.contentIds.length+' referencias de contenidos históricos protegidas; no se eliminan ni editan durante la composición.');
   const planBtn=btn(panel,'2 · Abrir desarrollo del espacio',()=>{
    const gate=phaseGate();
    if(!gate.ready){message('Primero completá el constructor técnico de este PCI. '+gate.detail,'warn');return;}
@@ -466,7 +537,10 @@ export function createIntegratedTechnicalUI({
     inp.disabled=!writable();
   }
   const space=offer.spaces.find(x=>x.id===plan.space_id);
-  const contentOptions=bank.filter(x=>space?.contentIds.includes(x.id));
+  // Fase 2: materiales y contenidos se eligen aquí, no durante el
+  // arrastre del mapa. Se preservan las referencias históricas si existen.
+  const contentOptions=bank.filter(x=>space?.contentIds.includes(x.id)||
+   space?.subjectIds.includes(x.sectionId)&&x.year===space.year);
   for(const [index,p] of plan.plansBimestrales.entries()){
    const details=el('details',card);if(index===0)details.open=true;
    el('summary',details,p.name||'Plan '+(index+1));
@@ -488,7 +562,7 @@ export function createIntegratedTechnicalUI({
     });
     el('span',label,ref.name+' · p. '+ref.page);
    }
-   if(!contentOptions.length)createWarning(contentBox,'Primero vinculá referencias desde el mapa de la oferta.');
+   if(!contentOptions.length)createWarning(contentBox,'No hay referencias disponibles para las materias de este espacio. Revisá primero su composición curricular.');
    for(const stage of TECH_STAGES){
     const val=p.stages?.[stage]?.description||'';
     const input=field(details,labels[stage],val,v=>{
@@ -594,7 +668,7 @@ export function createIntegratedTechnicalUI({
  }
  function isDirty(){return !!(offerDirty||planDirty);}
  return {
-  open,close,renderTab,saveOffer,isDirty,phaseGate,
+  open,close,renderTab,saveOffer,isDirty,phaseGate,openDevelopmentSpace:openPlan,
   get active(){return !!pci;},
   get offer(){return offer?copy(offer):null;},
   get source(){return source;}

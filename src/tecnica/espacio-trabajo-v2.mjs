@@ -152,6 +152,61 @@ export function technicalSubjectBank(document){
  }
  return rows;
 }
+/**
+ * Banco de MATERIAS por especialidad y año para Fase 1.
+ * Las páginas de contenidos priorizados no son materias individuales:
+ * se agrupan por sección y año, manteniendo la fuente como dato provisional.
+ * Los años no identificados quedan fuera del drop hasta su verificación.
+ */
+export function technicalSubjectCards(bank,{year=null}={}){
+ const result=new Map();
+ for(const row of asArr(bank)){
+  const y=Number(row?.year);
+  if(!Number.isInteger(y)||y<1||y>6||(year!==null&&y!==Number(year)))continue;
+  if(!row.sectionId||!row.name||!row.area)continue;
+  const key=row.sectionId+':'+y;
+  if(!result.has(key))result.set(key,{
+   id:String(row.sectionId),key,year:y,name:String(row.name),
+   area:String(row.area),field:String(row.field),sourceSha:String(row.source_sha256||''),
+   provisional:true
+  });
+ }
+ return [...result.values()].sort((a,b)=>a.year-b.year||
+  a.area.localeCompare(b.area,'es')||a.name.localeCompare(b.name,'es'));
+}
+/**
+ * Ubica una materia del mismo año en un espacio técnico existente.
+ * No altera contenidos priorizados ni planes: son una instancia posterior.
+ */
+export function placeTechnicalSubject(document,{spaceId,subjectKey,bank}){
+ const draft=copy(document),space=draft?.spaces?.find(s=>s.id===spaceId);
+ if(!space||space.included===false||space.archivedLegacy)
+  throw Error('El espacio curricular no está habilitado para composición.');
+ const subject=technicalSubjectCards(bank,{year:space.year})
+  .find(x=>x.key===String(subjectKey));
+ if(!subject||subject.sourceSha!==draft.source_sha256)
+  throw Error('La materia no corresponde al nivel o catálogo de esta especialidad.');
+ const special=['Integración de la Especialidad','Taller de la Especialidad',
+  'Espacio anual de la especialidad'];
+ const sameArea=subject.area===space.area;
+ const compatibleSpecial=special.includes(space.area)&&
+  (subject.field==='formacion_tecnica_especifica'||
+   space.area==='Integración de la Especialidad'&&
+    subject.field==='formacion_cientifico_tecnologica');
+ if(!sameArea&&!compatibleSpecial)
+  throw Error('Acción no permitida: '+subject.name+' corresponde a '+
+   subject.area+', no a '+space.area+'.');
+ const starts=Number(space.term),ends=Number(space.endTerm);
+ for(const other of draft.spaces){
+  if(other.id===space.id||other.included===false||other.archivedLegacy)continue;
+  if(other.subjectIds?.includes(subject.id)&&
+    Number(other.term)<=ends&&Number(other.endTerm)>=starts)
+   throw Error('La materia ya está ubicada en un agrupamiento que coincide en cuatrimestre.');
+ }
+ if(!space.subjectIds.includes(subject.id))space.subjectIds.push(subject.id);
+ space.confirmed=false;
+ return draft;
+}
 export function technicalAreaForSubject(subject,field){
  const s=name(subject);
  if(s==='matematica')return 'Matemática';

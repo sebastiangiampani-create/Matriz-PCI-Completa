@@ -1,6 +1,6 @@
 import {
   ROWS,fgSubjectsByYear,historicGroups,compositionFor,createGrouping,
-  placeSubject,removeSubject,removeGrouping,arrangementWarnings,quarterYear,
+  placeSubject,promoteHistoricGroup,removeSubject,removeGrouping,arrangementWarnings,quarterYear,
   mapRow,subjectArea
 } from './integracion-curricular/constructor-mapa-unificado.mjs';
 import {foSubjectBank} from './integracion-curricular/mapa-oferta.js';
@@ -30,14 +30,14 @@ function subjectBank(refs,pci,currentYear){
       }).subjects.filter(x=>Number(x.year)===Number(currentYear)).map(x=>({
         ...x,component:'FO',area:'Formación Orientada'
       }));
-    }catch{return fg}
+    }catch(error){throw Error('No se pudo cargar la bolsa de Formación Orientada: '+error.message)}
   }
   return [...fg,...fo];
 }
 function currentAlternative(refs,pci){
   return $('foAlternative')?.value||'A';
 }
-const detailedLabel=s=>s.component+' · '+s.name+(Number.isFinite(s.hours)?' · '+s.hours+' h':'');
+const detailedLabel=s=>s.component+' · '+s.name;
 const areaOptions=['Matemática','Lengua y Literatura','Lenguas Adicionales','Ciencias Naturales',
   'Ciencias Sociales','Artes','Tecnologías','Educación Física','Otros formatos'];
 function fillSelect(node,values,preferred){
@@ -65,7 +65,7 @@ function ensureIdentity(pci){
   }
 }
 export function renderUnifiedConstructor({
-  pci,workspace,refs,canEdit,onCompositionChange,onFoAssign,
+  pci,workspace,refs,canEdit,onCompositionChange,onFoAssign,onFoMove,
   onOpenHistoricalArea,onOpenFoSpace,onError,onNotice
 }){
   if(!pci||pci.model!=='comun'||!workspace?.orientations?.[pci.orientation_id])return;
@@ -78,7 +78,9 @@ export function renderUnifiedConstructor({
   const termSelect=$('constructorTerm'),levelSelect=$('constructorLevel'),typeSelect=$('constructorBankType');
   const search=$('constructorSearch'),areaSelect=$('constructorArea'),kindSelect=$('constructorKind');
   const nameInput=$('constructorName'),mirror=$('constructorMirror');
-  const allSubjects=subjectBank(refs,pci,year);
+  let allSubjects=[];
+  try{allSubjects=subjectBank(refs,pci,year);}
+  catch(error){onError(error.message);allSubjects=fgSubjectsByYear(refs,year);}
   const byId=new Map(allSubjects.map(x=>[x.id,x]));
   const groups=historicGroups(workspace,pci.orientation_id);
   const proposed=composition.groups||[];
@@ -103,7 +105,7 @@ export function renderUnifiedConstructor({
     bank.replaceChildren();
     bankCount.textContent=matching.length+' materias';
     if(!matching.length){
-      bag.append(el('p','No hay materias para este filtro.','muted'));return;
+      bank.append(el('p','No hay materias disponibles en este nivel y formación. Revisá la orientación o el catálogo curricular.','muted'));return;
     }
     for(const s of matching){
       const btn=createAction(s.name,()=>{
@@ -119,8 +121,7 @@ export function renderUnifiedConstructor({
         if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
       });
       btn.addEventListener('dragend',()=>{dragId=''});
-      btn.append(smallNote(s.component+' · '+s.year+'º'+
-        (Number.isFinite(s.hours)?' · '+s.hours+' h':'')));
+      btn.append(smallNote(s.component+' · Nivel '+s.year));
       bank.append(btn);
     }
   };
@@ -138,6 +139,16 @@ export function renderUnifiedConstructor({
       const s=selectedSubject(evt);
       const next=placeSubject(composition,{groupId:group.id,subject:s});
       onChange(next);onNotice(s.name+' incorporada a la propuesta de C'+group.term+'. Falta guardar.');
+    }catch(error){onError(error.message)}
+  }
+  function assignToHistorical(group,evt){
+    if(!edit)return;
+    try{
+      const s=selectedSubject(evt);
+      const promoted=promoteHistoricGroup(composition,group);
+      const next=placeSubject(promoted,{groupId:group.id,subject:s});
+      onChange(next);
+      onNotice('Composición del espacio histórico revisada en una copia del PCI. Los contenidos y planes originales siguen intactos.');
     }catch(error){onError(error.message)}
   }
   function assignToFo(space,evt){
@@ -161,12 +172,56 @@ export function renderUnifiedConstructor({
       event.preventDefault();button.classList.remove('drop-over');fn(event);
     });
   }
-  const h=el('tr');h.append(el('th','Área y formato'));
-  for(let t=1;t<=10;t++){
-    const header=el('th','C'+t);header.append(smallNote('Nivel '+quarterYear(t)));
-    h.append(header);
+  // PCI V2: la bolsa se arrastra directamente sobre el mapa.
+  // Las celdas sin formato reciben una materia y crean SOLO un borrador
+  // de composición del PCI, nunca alteran la FG original de la escuela.
+  const formatByRow={
+    'Matemática':['Matemática','troncal'],
+    'Lengua y Literatura':['Lengua y Literatura','troncal'],
+    'Lenguas Adicionales':['Lenguas Adicionales','troncal'],
+    'Laboratorios FG · Naturales':['Ciencias Naturales','laboratorio'],
+    'Laboratorios FG · Sociales':['Ciencias Sociales','laboratorio'],
+    'Talleres FG · Artes':['Artes','taller'],
+    'Talleres FG · Tecnologías':['Tecnologías','taller'],
+    'Talleres FG · Educación Física':['Educación Física','taller'],
+    'Otros espacios FG':['Otros formatos','otro'],
+    'Otros formatos':['Otros formatos','otro']
+  };
+  function addOnEmpty(rowName,term,event){
+    if(!edit)return;
+    try{
+      const subject=selectedSubject(event),config=formatByRow[rowName];
+      if(!config)throw Error('Este destino pertenece a Formación Orientada o a un proyecto específico. Arrastrá la materia al formato FO existente.');
+      if(subject.component!=='FG')
+        throw Error('La bolsa FG y la FO tienen destinos distintos. Usá el laboratorio o taller FO del nivel.');
+      const [area,kind]=config;
+      if(kind==='troncal'&&subjectArea(subject.name)!==area)
+        throw Error('Acción no permitida: cada materia troncal se ubica en su propia fila anual.');
+      if(kind!=='otro'&&area!==subjectArea(subject.name))
+        throw Error('Acción no permitida: esta materia corresponde a '+subjectArea(subject.name)+'.');
+      const level=quarterYear(term);
+      if(Number(subject.year)!==level)
+        throw Error('Acción no permitida: no se trasladan materias entre niveles.');
+      const name=kind==='troncal'?area:
+       (kind==='laboratorio'?'Laboratorio ':kind==='taller'?'Taller ':'Espacio ')+
+       subject.name+' · '+level+'º';
+      const updated=createGrouping(composition,{year:level,term,area,kind,name,replicate:true});
+      const created=updated.groups[updated.groups.length-(kind==='troncal'?1:2)]||null;
+      if(!created)throw Error('No se pudo ubicar el agrupamiento en el cuatrimestre.');
+      const assigned=placeSubject(updated,{groupId:created.id,subject});
+      onChange(assigned);
+      onNotice(subject.name+' ubicada en C'+term+' (y su cuatrimestre par cuando corresponde). Revisá y guardá el mapa.');
+    }catch(error){onError(error.message)}
   }
-  mapHead.replaceChildren(h);mapBody.replaceChildren();
+  // PCI V2: niveles en pares de cuatrimestres y troncales anuales indivisibles.
+  const levels=el('tr');
+  const areaHeader=el('th','Área y formato');areaHeader.rowSpan=2;levels.append(areaHeader);
+  for(let level=1;level<=5;level++){
+    const header=el('th','Nivel '+level);header.colSpan=2;levels.append(header);
+  }
+  const quarters=el('tr');
+  for(let t=1;t<=10;t++)quarters.append(el('th','C'+t));
+  mapHead.replaceChildren(levels,quarters);mapBody.replaceChildren();
   const sourceColors={
     legacy:'historia',propuesta:'propuesta',fo:'orientada'
   };
@@ -174,7 +229,14 @@ export function renderUnifiedConstructor({
     const row=el('tr');const title=el('th',rowName);row.append(title);
     for(let term=1;term<=10;term++){
       const cell=el('td',undefined,'constructor-cell');const items=[];
-      for(const g of groups.filter(x=>x.row===rowName&&x.startTerm<=term&&x.endTerm>=term)){
+      const annualTrunk=['Matemática','Lengua y Literatura','Lenguas Adicionales'].includes(rowName);
+      if(annualTrunk && term%2===1){
+        cell.colSpan=2;
+        cell.dataset.pciAnnual='true';
+        cell.setAttribute('aria-label',rowName+' · Nivel '+quarterYear(term)+' · C'+term+'–C'+(term+1)+' · anual');
+      }
+      for(const g of groups.filter(x=>x.row===rowName&&x.startTerm<=term&&x.endTerm>=term&&
+        !proposed.some(p=>p.legacyGroupId===x.id&&p.area===x.area))){
         items.push({source:'legacy',name:g.name,model:g});
       }
       for(const g of proposed.filter(x=>x.row===rowName&&x.term<=term&&x.endTerm>=term)){
@@ -187,8 +249,14 @@ export function renderUnifiedConstructor({
       for(const item of items){
         const b=el('div',undefined,'constructor-group '+sourceColors[item.source]);
         const activate=()=>{
-          if(item.source==='legacy')onOpenHistoricalArea(item.model.area);
-          else if(item.source==='fo')assignToFo(item.model);
+          if(item.source==='legacy'){
+            if(selectedId)assignToHistorical(item.model);
+            else onOpenHistoricalArea(item.model.area);
+          }
+          else if(item.source==='fo'){
+            if(selectedId)assignToFo(item.model);
+            else onNotice('Elegí una materia FO de la bolsa o arrastrá el formato a otro cuatrimestre del mismo nivel.');
+          }
           else assignToProposal(item.model);
         };
         b.setAttribute('role','button');b.tabIndex=0;
@@ -199,13 +267,26 @@ export function renderUnifiedConstructor({
         });
         b.append(el('strong',item.name,'constructor-group-title'));
         const description=item.source==='legacy'
-          ?'FG conservada · '+item.model.contents+' contenidos · '+item.model.plans+' planes'
+          ?'FG conservada · '+item.model.contents+' contenidos · '+item.model.plans+' planes'+
+            (item.model.hasWork?' · trabajo protegido':' · plantilla revisable')
           :item.source==='fo'
             ?(item.model.members?.length||0)+' materias FO · '+item.model.kind
             :(item.model.members?.length||0)+' materias propuestas';
         b.append(smallNote(description));b.title=item.source==='legacy'
-          ?'Abrir FG histórica copiada, sin modificar el origen'
+          ?item.model.hasWork?'FG con contenidos o planes: conservada y protegida. Revisar equivalencias antes de cambiar materias.':
+            'Podés asignar materias a una copia de esta plantilla FG. El original se conserva.'
           :'Seleccioná una materia de la bolsa o arrastrala aquí';
+        if(item.source==='fo'&&item.model.kind!=='proyecto'&&edit){
+          b.draggable=true;
+          b.title='Arrastrá este formato FO a otro cuatrimestre del mismo nivel.';
+          b.addEventListener('dragstart',event=>{
+            dragId='';
+            event.dataTransfer?.setData('application/x-pci-fo-format',item.model.id);
+            if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
+          });
+        }
+        if(item.source==='legacy'&&!item.model.hasWork)
+          droppable(b,event=>assignToHistorical(item.model,event));
         if(item.source==='propuesta'){
           droppable(b,event=>assignToProposal(item.model,event));
           const memberList=el('div',undefined,'constructor-members');
@@ -229,8 +310,51 @@ export function renderUnifiedConstructor({
         }else if(item.source==='fo')droppable(b,event=>assignToFo(item.model,event));
         cell.append(b);
       }
-      if(!cell.children.length)cell.append(el('span','+','constructor-empty'));
+      if(!cell.children.length){
+        // Regla diferencial de Naturales orientada: FG ofrece 8 laboratorios,
+        // C1-C8. Los espacios de FO mantienen talleres en su propia fila.
+        // Si existe un grupo histórico en C9/C10, se muestra arriba y no se borra.
+        if(rowName==='Laboratorios FG · Naturales' &&
+           pci.orientation_id==='ciencias_naturales' && term>=9){
+          const notice=el('span','Sin laboratorio FG en este nivel','muted');
+          notice.title='En la orientación Ciencias Naturales corresponden 8 laboratorios FG de C1 a C8. Los talleres orientados están en Talleres FO.';
+          cell.append(notice);row.append(cell);continue;
+        }
+        const foRow=['Laboratorios FO','Talleres FO'].includes(rowName);
+        if(foRow&&quarterYear(term)>=3){
+          const zone=createAction('↔',()=>{
+            onNotice('Arrastrá aquí un formato FO del mismo nivel para reubicarlo.');
+          },'constructor-empty constructor-empty-drop');
+          zone.setAttribute('aria-label','Reubicar formato de '+rowName+' en C'+term);
+          if(edit){
+            zone.classList.add('drop-zone');
+            zone.addEventListener('dragover',event=>{
+              if(!event.dataTransfer?.types?.includes('application/x-pci-fo-format'))return;
+              event.preventDefault();zone.classList.add('drop-over');
+            });
+            zone.addEventListener('dragleave',()=>zone.classList.remove('drop-over'));
+            zone.addEventListener('drop',event=>{
+              event.preventDefault();zone.classList.remove('drop-over');
+              const id=event.dataTransfer?.getData('application/x-pci-fo-format');
+              const current=foSpaces.find(x=>x.id===id);
+              if(!current||contextRow(current)!==rowName||
+                Number(current.year)!==quarterYear(term)){
+                onError('Acción no permitida: el formato FO debe permanecer en su tipo y nivel.');return;
+              }
+              if(typeof onFoMove==='function')onFoMove(id,term);
+            });
+          }else zone.disabled=true;
+          cell.append(zone);row.append(cell);continue;
+        }
+        const plus=createAction('+',()=>addOnEmpty(rowName,term,null),'constructor-empty constructor-empty-drop');
+        plus.title='Seleccioná una materia de la bolsa y soltala aquí para construir el agrupamiento de este cuatrimestre.';
+        plus.setAttribute('aria-label','Ubicar materia en '+rowName+' · C'+term);
+        plus.disabled=!edit||!formatByRow[rowName];
+        if(formatByRow[rowName])droppable(plus,event=>addOnEmpty(rowName,term,event));
+        cell.append(plus);
+      }
       row.append(cell);
+      if(annualTrunk && term%2===1)term++;
     }
     mapBody.append(row);
   }
@@ -245,7 +369,7 @@ export function renderUnifiedConstructor({
   );
   levelSelect.onchange=()=>{
     year=Number(levelSelect.value);if(year<3)type='FG';selectedId='';renderUnifiedConstructor({
-      pci,workspace,refs,canEdit,onCompositionChange,onFoAssign,
+      pci,workspace,refs,canEdit,onCompositionChange,onFoAssign,onFoMove,
       onOpenHistoricalArea,onOpenFoSpace,onError,onNotice
     });
   };

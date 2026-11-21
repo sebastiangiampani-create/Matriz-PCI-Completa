@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#12395c">
+<title>PCI Secundaria Aprende · Gestión</title>
+</head>
+<body>
+<p style="font-family:system-ui;padding:24px">Cargando V2 derivado para modalidad curricular…</p>
+<script>
+(async()=>{
+  // La secuencia de módulos se toma del manifiesto de paridad, generado a
+  // partir de vendor/pci-sec-aprende-v2/app.html: mismo orden que V2 Media.
+  const loadManifest=async()=>{
+    const response=await fetch('src/v2-familia/manifiesto-paridad-v2.json',{cache:'no-store'});
+    if(!response.ok)throw new Error('No se pudo cargar el manifiesto de paridad V2.');
+    return response.json();
+  };
+  const fetchText=async url=>{
+    const response=await fetch(url,{cache:'no-store'});
+    if(!response.ok)throw new Error(`No se pudo cargar ${url}.`);
+    return response.text();
+  };
+  const inline=source=>'<script>'+String(source).replace(/<\/script/gi,'<\\/script')+'</scr'+'ipt>\n';
+
+  try{
+    const {loadV2ModalProfile}=await import('./src/v2-familia/catalogos-modalidad.mjs');
+    const config=await loadV2ModalProfile(Object.fromEntries(new URLSearchParams(location.search)));
+    const manifest=await loadManifest();
+    const profile=manifest.perfiles[config.model];
+    if(!profile||profile.niveles!==Number(config.levels)||profile.cuatrimestres!==Number(config.terms))
+      throw new Error('El perfil curricular no coincide con el manifiesto de paridad V2.');
+    const fileOf=entry=>entry.archivos?.[config.model]||null;
+    const loadable=manifest.modulos.filter(entry=>entry.modulo!==manifest.fase2&&fileOf(entry));
+    const before=new Set(manifest.antesDeFase2);
+    const phase2Entry=manifest.modulos.find(entry=>entry.modulo===manifest.fase2);
+    if(!phase2Entry||!fileOf(phase2Entry))throw new Error('Falta el Desarrollo Curricular derivado de V2.');
+    const modulePaths=loadable.map(fileOf);
+    const beforeCount=loadable.filter(entry=>before.has(entry.modulo)).length;
+    window.__V2_PARIDAD={model:config.model,cargados:loadable.map(entry=>({modulo:entry.modulo,estado:entry.estado,archivo:fileOf(entry)})),
+      pendientes:manifest.modulos.filter(entry=>entry.estado==='pendiente-normativa').map(entry=>entry.modulo)};
+    const [htmlRaw,phase2Source,...moduleSources]=await Promise.all([
+      fetchText('src/v2-familia/app-core-modalidad.html'),
+      fetchText(fileOf(phase2Entry)),
+      ...modulePaths.map(fetchText)
+    ]);
+
+    if(!phase2Source.includes('function areaPool')||!phase2Source.includes('id="v28level"')||!phase2Source.includes('loadCurriculum')||!phase2Source.includes('window.PCIPhase2V28=')){
+      throw new Error('No se pudo cargar la versión curricular V96 de Fase 2.');
+    }
+
+    let html=htmlRaw;
+    // El código original se conserva en vendor; solo añadimos un adaptador
+    // separado para que cada PCI tenga almacenamiento independiente.
+    const baseUrl=new URL('vendor/pci-sec-aprende-v2/',location.href).href;
+    html=html.replace('<head>','<head><base href="'+baseUrl+'">');
+    const shimScript=document.getElementById('v2LocalStorageAdapter').textContent;
+    if(config.model==='tecnica'){
+      const params=Object.fromEntries(new URLSearchParams(location.search));
+      config.specialtyId=params.specialty;
+      // Validador puro de IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026).
+      window.__PCI_NORMA=await import('./src/normativa/composicion-pci-20261117.mjs');
+    }
+    window.__V2_MODAL=config; // Comparte datos ya verificados sin inyectar JSON masivo en HTML.
+    html=html.replace('<script>',inline(shimScript)+'<script>');
+    const closeScript='</scr'+'ipt>';
+    html=html.replace('\ninit();\n'+closeScript,'\nwindow.__pciBaseInit=init;\n'+closeScript);
+
+    const beforePhase2=moduleSources.slice(0,beforeCount).map(inline).join('');
+    const afterPhase2=moduleSources.slice(beforeCount).map(inline).join('');
+    html=html.replace('</body>',
+      beforePhase2+
+      inline(phase2Source)+
+      afterPhase2+
+      inline(document.getElementById('v2BridgeAdapter').textContent)+
+      '<script>(async()=>{if(window.__pciBaseInit)await window.__pciBaseInit();window.dispatchEvent(new Event("pci-app-ready"));})();</scr'+'ipt>\n'+
+      '</body>'
+    );
+
+    document.open();
+    document.write(html);
+    document.close();
+  }catch(error){
+    document.body.innerHTML='<main style="font-family:system-ui;padding:24px"><strong>Error al cargar la aplicación.</strong><p>'+String(error.message||error)+'</p></main>';
+  }
+})();
+</script>
+<script id="v2LocalStorageAdapter" type="text/plain">
+(()=>{
+  'use strict';
+  // No usar la clave global de V2; cada PCI queda aislado por identificador.
+  const params=new URLSearchParams(location.search);
+  const pci=String(params.get('pci')||'v2-media-muestra');
+  if(!/^[a-zA-Z0-9_-]{3,90}$/.test(pci))
+    throw Error('Identificador PCI inválido en el adaptador.');
+  const KEY='pci-sa-v2-app-20260910-21';
+  const scoped='pci-v2-modalidad::'+(new URLSearchParams(location.search).get('model')||'')+'::'+pci+'::'+KEY;
+  const oldGet=Storage.prototype.getItem,oldSet=Storage.prototype.setItem,oldRemove=Storage.prototype.removeItem;
+  Storage.prototype.getItem=function(key){return oldGet.call(this,key===KEY?scoped:key);};
+  Storage.prototype.setItem=function(key,value){return oldSet.call(this,key===KEY?scoped:key,value);};
+  Storage.prototype.removeItem=function(key){return oldRemove.call(this,key===KEY?scoped:key);};
+  window.__v2PciId=pci;
+  // Cargas horarias: los módulos V2 leen data/horas-v2.json (horas de Media).
+  // En la modalidad se responde con las horas de su propio catálogo; si una
+  // materia no tiene horas declaradas, V2 muestra «Carga horaria pendiente».
+  const modal=window.__V2_MODAL;
+  const hoursDocument=()=>{
+    const fg={},fo={'3':{},A:{}};
+    for(const s of modal.subjects||[]){
+      const h=Number(s.weeklyHours);if(!(h>0))continue;
+      const y=String(s.year);
+      if(s.origin==='FG'){(fg[y]=fg[y]||{})[s.name]=h;continue;}
+      if(y==='3')fo['3'][s.name]=h;
+      (fo.A[y]=fo.A[y]||{})[s.name]=h;
+    }
+    return {version:2,source:'Catálogo de la modalidad '+modal.model,
+      semantics:'Horas declaradas en el catálogo de la modalidad. Sin dato: Carga horaria pendiente.',
+      formacion_general:fg,formacion_orientada:{[modal.track]:fo}};
+  };
+  const originalFetch=window.fetch.bind(window);
+  window.fetch=function(input,init){
+    const url=new URL(typeof input==='string'?input:input?.url||'',document.baseURI);
+    if(url.pathname.endsWith('/data/horas-v2.json'))
+      return Promise.resolve(new Response(JSON.stringify(hoursDocument()),{status:200,headers:{'Content-Type':'application/json'}}));
+    return originalFetch(input,init);
+  };
+  // Grillas por nivel de los módulos institucionales de V2 (5 columnas en Media).
+  const css=document.createElement('style');
+  css.textContent='.v48-course-grid,.v57-label-grid,.v72-course-years{grid-template-columns:repeat('+Number(modal.levels)+',minmax(54px,1fr))!important}';
+  (document.head||document.documentElement).appendChild(css);
+})();
+</script>
+<script id="v2BridgeAdapter" type="text/plain">
+(()=>{
+ 'use strict';
+ const q=new URLSearchParams(location.search);
+ const pci=window.__v2PciId;
+ const orientation=window.__V2_MODAL.track;
+ const school=q.get('school')||'Escuela de prueba V2';
+ const accepted=new Set(ORIENTATIONS);
+ if(!accepted.has(orientation))throw Error('La orientación no coincide con este PCI: '+orientation);
+ const sameOrigin=location.origin;
+ const send=(type,additional={})=>{
+   if(window.parent!==window)window.parent.postMessage({type,pci,...additional},sameOrigin);
+ };
+ const originalSave=save;
+ let importing=false;
+ save=function(...args){
+   const ret=originalSave(...args);
+   if(!importing)send('V2_ORIGINAL_SAVED',{document:JSON.parse(JSON.stringify(state))});
+   return ret;
+ };
+ const applyDocument=doc=>{
+   if(!doc||typeof doc!=='object'||Array.isArray(doc))return;
+   if(doc.maps&&typeof doc.maps==='object'&&!Array.isArray(doc.maps)){
+     state.maps={...state.maps,[orientation]:JSON.parse(JSON.stringify(doc.maps[orientation]||ensure(orientation)))};
+   }
+   state.school=school;state.active=orientation;state.selected=[orientation];
+   importing=true;try{originalSave();renderHome();screen('offer');}
+   finally{importing=false;}
+ };
+ window.addEventListener('message',event=>{
+   if(event.source!==window.parent||event.origin!==sameOrigin)return;
+   const data=event.data||{};
+   if(data.pci!==pci)return;
+   if(data.type==='V2_IMPORT')applyDocument(data.document);
+   if(data.type==='V2_EXPORT')send('V2_ORIGINAL_EXPORTED',{document:JSON.parse(JSON.stringify(state))});
+ });
+ const originalInit=window.__pciBaseInit;
+ window.__pciBaseInit=async()=>{
+   await originalInit();
+   // Solo en la vista simulada: habilitar el panel original V2 para
+   // probar drag-and-drop sin pedir credenciales de escuelas reales.
+   // El control de acceso institucional de producción NO se sustituye.
+   if(window.PCIAccessPanelV85?.applyProfile){
+     window.PCIAccessPanelV85.applyProfile({role:'admin'},{persist:true});
+   }
+   importing=true;
+   try{
+     state.school=school;state.active=orientation;state.selected=[orientation];
+     if(!state.maps[orientation])ensure(orientation);
+     originalSave();renderHome();screen('offer');
+   }finally{importing=false;}
+   send('V2_ORIGINAL_READY',{orientation,school,model:window.__V2_MODAL.model,levels:window.__V2_MODAL.levels,terms:window.__V2_MODAL.terms,source:'copia V2 propia por modalidad'});
+ };
+})();
+</script>
+</body>
+</html>

@@ -1004,3 +1004,99 @@ h3 {letter-spacing:-.01em;}
  .legacy-group-head{align-items:flex-start}
  .historic-assign-toolbar{align-items:flex-start;flex-direction:column}
 }
+
+/* Rescate constructor V2: el destino vacío es realmente arrastrable y navegable. */
+.layout .constructor-empty-drop{
+  box-sizing:border-box;width:100%;min-height:52px;padding:8px;
+  border:1px dashed #bbd0d7;border-radius:9px;
+  color:#567687;background:#f7fbfc;font:inherit;
+  font-size:1rem;font-weight:850;cursor:copy;
+}
+.layout .constructor-empty-drop:hover,
+.layout .constructor-empty-drop.drop-over{
+  background:#d6f2e9;border-color:#126e65;color:#126e65;outline:2px solid #126e65;
+}
+.layout .constructor-empty-drop:focus-visible{
+  outline:3px solid #126e65;outline-offset:2px;
+}
+.layout .constructor-empty-drop:disabled{
+  cursor:default;opacity:.55;background:#f7fafb;
+}
+
+/* PCI V2: bolsa arrastrable en las tres modalidades, misma identidad visual. */
+.ba15Subject[draggable="true"]{cursor:grab;border:1px solid #c6d9e3;border-radius:10px;
+  margin-bottom:6px;padding:9px;background:#fff;touch-action:pan-y;}
+.ba15Subject.active,.ba15Subject:focus-visible{outline:2px solid #126e65;
+  border-color:#126e65;background:#e7f8f5;}
+#ba15Builder .mapTable .slot.drop-zone,#ba15Builder .mapTable .ba15EmptySlot.drop-zone,
+#mapBody .slot.drop-zone{border:1px dashed #9fbdce;min-height:40px;cursor:copy;}
+#ba15Builder .mapTable .drop-over,
+#mapBody .drop-over,.tech-offer-view .drop-over{
+  background:#c9f3e9!important;border-color:#126e65!important;
+  outline:2px solid #126e65;outline-offset:-1px;
+}
+.tech-subject-bank{margin:10px 0;max-width:100%;}
+.tech-subject-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:7px;max-height:215px;overflow:auto;margin-top:8px;}
+.tech-subject-cards .constructor-bank-subject{font-size:.73rem;
+  white-space:normal;text-align:left;overflow-wrap:anywhere;cursor:grab;}
+.tech-subject-cards .constructor-bank-subject.active{
+  background:#e7f8f5;border:2px solid #126e65;
+}
+@media(max-width:780px){.tech-subject-cards{grid-template-columns:1fr 1fr;max-height:250px;}}
+@media(max-width:480px){.tech-subject-cards{grid-template-columns:1fr;}}
+
+/* PCI V2 · dos instancias sin alterar el sistema visual institucional. */
+.layout .navtabs .phase-detail-tab:not(.active){display:none}
+.layout .navtabs .phase-detail-tab.active{background:#e6f7f2;color:#126e65}
+.layout .pci-development-stats{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0;
+}
+.layout .pci-development-stat{
+ padding:14px 16px;border:1px solid #d6e3e8;border-radius:14px;background:#fff;
+}
+.layout .pci-development-stat strong{display:block;color:#15374a;font-size:1.45rem;font-weight:900}
+.layout .pci-development-stat small{display:block;color:#617987;font-size:.73rem}
+.layout .pci-development-filters{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+.layout .pci-development-filters label{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:800}
+.layout .pci-development-filters select{
+ padding:9px 11px;border:1px solid #d2e1e6;border-radius:9px;background:#fff;color:#15374a
+}
+.layout .pci-development-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.layout .pci-development-card{
+ display:flex;flex-direction:column;align-items:stretch;gap:8px;min-height:145px;
+ background:#fff;color:#15374a;border:1px solid #d5e2e8;border-radius:15px;
+ padding:14px;text-align:left;cursor:pointer;white-space:normal;font:inherit;
+}
+.layout .pci-development-card strong{font-size:.95rem;line-height:1.35;font-weight:850}
+.layout .pci-development-card small{font-size:.69rem;color:#136c66;font-weight:750}
+.layout .pci-development-card span{font-size:.75rem;color:#5a7181}
+.layout .pci-development-card .pci-development-card-count{margin-top:auto;color:#136c66;font-weight:850}
+.layout .pci-development-card:hover,.layout .pci-development-card:focus-visible{
+ background:#effaf7;border-color:#136c66;outline:2px solid #136c66;outline-offset:1px;
+}
+.layout .pci-development-card[hidden]{display:none}
+.layout .pci-development-levels{border:1px solid #dce5ea;background:#f8fbfc;border-radius:14px;margin-top:18px;padding:16px}
+.layout .pci-development-levels h4{margin:0 0 8px}
+.layout .pci-development-level-row{display:flex;gap:14px;justify-content:space-between;align-items:start;
+ padding:10px 0;border-bottom:1px solid #e0eaf0;font-size:.8rem}
+.layout .pci-development-level-row span{color:#136c66;font-weight:800;text-align:right}
+.layout .pci-plan-content-box{padding:12px;border:1px solid #dce8e8;border-radius:12px;margin:8px 0;background:#f8fcfb}
+.layout .pci-plan-content-box input[type="search"]{
+ box-sizing:border-box;display:block;width:100%;background:#fff;border:1px solid #c7d9dd;border-radius:9px;padding:9px
+}
+.layout .pci-plan-content-option{
+ display:block;margin:5px 0;text-align:left;white-space:normal;padding:7px 10px;
+ border:1px solid #cae0df;border-radius:8px;background:#fff;cursor:pointer;color:#15374a;
+}
+.layout .pci-plan-content-option:hover{background:#dcf4ee;border-color:#136c66}
+.layout .pci-plan-search-results{max-height:185px;overflow-y:auto}
+.layout .pci-development-plan-count{padding:8px;background:#eef8f5;border-radius:8px;font-size:.74rem;color:#126e65}
+.layout #ba15Development:not([hidden]){margin:12px 0}
+.layout #ba15Development .ba15BuilderGrid{margin-top:13px}
+@media(max-width:950px){.layout .pci-development-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+ .layout .pci-development-cards,.layout .pci-development-stats{grid-template-columns:1fr}
+ .layout .pci-development-level-row{display:grid}
+ .layout .pci-development-level-row span{text-align:left}
+}

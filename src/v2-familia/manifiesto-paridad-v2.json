@@ -1,0 +1,855 @@
+{
+  "descripcion": "Correspondencia módulo por módulo entre PCI Secundaria Aprende V2 y sus modalidades derivadas. Generado por scripts/derivar-v2-familia.mjs; no editar a mano.",
+  "origen": {
+    "repositorio": "sebastiangiampani-create/pci-sec-aprendeV2",
+    "commit": "883707e281894990b537032880922f4c078689ad",
+    "copia": "vendor/pci-sec-aprende-v2"
+  },
+  "perfiles": {
+    "tecnica": {
+      "nombre": "Educación Técnica",
+      "niveles": 6,
+      "cuatrimestres": 12
+    },
+    "ba15": {
+      "nombre": "Secundaria BA +15",
+      "niveles": 4,
+      "cuatrimestres": 8
+    }
+  },
+  "fase2": "v47-phase2-matrix",
+  "antesDeFase2": [
+    "v19-map",
+    "v20-format-order",
+    "v21-custom-social-ui",
+    "v22-teachers",
+    "v23-prearm",
+    "v24-social-interactions",
+    "v25-institutional-spaces",
+    "v26-other-formats-print"
+  ],
+  "modulos": [
+    {
+      "modulo": "v19-map",
+      "original": "vendor/pci-sec-aprende-v2/src/v19-map.js",
+      "sha256Original": "fd9e5bde87a9f214",
+      "estado": "derivado-previo",
+      "archivos": {
+        "tecnica": "src/v2-familia/v19-mapa-modalidad.js",
+        "ba15": "src/v2-familia/v19-mapa-modalidad.js"
+      },
+      "motivo": "Filas, formatos, niveles y cuatrimestres de cada modalidad."
+    },
+    {
+      "modulo": "v20-format-order",
+      "original": "vendor/pci-sec-aprende-v2/src/v20-format-order.js",
+      "sha256Original": "3be6891a78acbfae",
+      "estado": "pendiente-normativa",
+      "motivo": "Orden Laboratorio/Taller de Formación Orientada en Nivel 4 y 5 de Media.",
+      "equivalentes": {
+        "tecnica": "No aplica: IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18 no define ese orden; los formatos de la Especialidad se ubican por nivel en v19-mapa-modalidad.",
+        "ba15": "No aplica: el Régimen +15 no establece esta regla de Media (RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche))."
+      }
+    },
+    {
+      "modulo": "v21-custom-social-ui",
+      "original": "vendor/pci-sec-aprende-v2/src/v21-custom-social-ui.js",
+      "sha256Original": "dc1e1eb24b2457f6",
+      "estado": "pendiente-normativa",
+      "motivo": "Opción 10/12 laboratorios de Ciencias Sociales de Media.",
+      "equivalentes": {
+        "tecnica": "Reemplazado: Sociales 8 espacios (10 en Computación) y ubicación de Ciudadanía y Trabajo / Ciencia y Tecnología en 4.º–6.º, en v19-mapa-modalidad y validador IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18.",
+        "ba15": "Reemplazado: áreas por nivel, talleres, Tutoría en Nivel I y estructura completa de 38 h en v19-mapa-modalidad (baMember/baEvaluate), según RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche)."
+      }
+    },
+    {
+      "modulo": "v22-teachers",
+      "original": "vendor/pci-sec-aprende-v2/src/v22-teachers.js",
+      "sha256Original": "fd7c151c157d169e",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v22-teachers.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v22-teachers.js"
+      }
+    },
+    {
+      "modulo": "v23-prearm",
+      "original": "vendor/pci-sec-aprende-v2/src/v23-prearm.js",
+      "sha256Original": "aa3265b39aadb086",
+      "estado": "pendiente-normativa",
+      "motivo": "Prearmado de troncales y talleres según la estructura de Media.",
+      "equivalentes": {
+        "tecnica": "No aplica: la norma no establece un prearmado; las troncales se ubican en celdas anuales por nivel.",
+        "ba15": "No aplica: el Régimen +15 no establece esta regla de Media (RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche))."
+      }
+    },
+    {
+      "modulo": "v24-social-interactions",
+      "original": "vendor/pci-sec-aprende-v2/src/v24-social-interactions.js",
+      "sha256Original": "147e956c58b8bc4e",
+      "estado": "pendiente-normativa",
+      "motivo": "Intercambio de materias de Sociales Nivel 3 (C5/C6) de Media.",
+      "equivalentes": {
+        "tecnica": "Reemplazado: integración de Ciudadanía y Trabajo / Ciencia y Tecnología con la Formación Específica del mismo año (pág. 15), en v19-mapa-modalidad.",
+        "ba15": "No aplica: el Régimen +15 no establece esta regla de Media (RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche))."
+      }
+    },
+    {
+      "modulo": "v25-institutional-spaces",
+      "original": "vendor/pci-sec-aprende-v2/src/v25-institutional-spaces.js",
+      "sha256Original": "510abc374b1f5ba1",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v25-institutional-spaces.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v25-institutional-spaces.js"
+      }
+    },
+    {
+      "modulo": "v26-other-formats-print",
+      "original": "vendor/pci-sec-aprende-v2/src/v26-other-formats-print.js",
+      "sha256Original": "9b97fbfe22625de0",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v26-other-formats-print.js",
+        "ba15": "src/v2-familia/derivados/ba15/v26-other-formats-print.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Imprimir todos los niveles de la modalidad.",
+            "veces": 1,
+            "original": "[1,2,3,4,5].map(printLevel)",
+            "derivado": "[1,2,3,4,5,6].map(printLevel)"
+          },
+          {
+            "motivo": "La opción de laboratorios de Sociales (10/12) es una regla de Media.",
+            "veces": 1,
+            "original": "<span class=\"pci-print-badge\">Sociales: ${esc(social)}</span>",
+            "derivado": ""
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Imprimir todos los niveles de la modalidad.",
+            "veces": 1,
+            "original": "[1,2,3,4,5].map(printLevel)",
+            "derivado": "[1,2,3,4].map(printLevel)"
+          },
+          {
+            "motivo": "La opción de laboratorios de Sociales (10/12) es una regla de Media.",
+            "veces": 1,
+            "original": "<span class=\"pci-print-badge\">Sociales: ${esc(social)}</span>",
+            "derivado": ""
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v47-fo-content-atomicizer",
+      "original": "vendor/pci-sec-aprende-v2/src/v47-fo-content-atomicizer.js",
+      "sha256Original": "7217abda754b75e8",
+      "estado": "pendiente-normativa",
+      "motivo": "Atomización de contenidos FO de las orientaciones de Media.",
+      "equivalentes": {
+        "tecnica": "No aplica: Técnica usa la base de contenidos de su especialidad.",
+        "ba15": "No aplica: el Régimen +15 no establece esta regla de Media (RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche))."
+      }
+    },
+    {
+      "modulo": "v47-phase2-matrix",
+      "original": "vendor/pci-sec-aprende-v2/src/v47-phase2-matrix.js",
+      "sha256Original": "03c52b231df78bfc",
+      "estado": "derivado-previo",
+      "archivos": {
+        "tecnica": "src/v2-familia/v47-desarrollo-modalidad.js",
+        "ba15": "src/v2-familia/v47-desarrollo-modalidad.js"
+      },
+      "motivo": "Desarrollo curricular con bases de contenidos de la modalidad.",
+      "media": {
+        "archivo": "src/v2-familia/derivados/media/v47-phase2-matrix.js",
+        "cambios": [
+          {
+            "motivo": "Agregar la lectura de orientaciones que V2 conserva en data/orientaciones/.",
+            "veces": 1,
+            "original": "async function loadFO(){",
+            "derivado": "// Orientaciones ausentes en curriculum_v96: V2 conserva sus bloques y ejes\n// en data/orientaciones/<archivo>.txt (e…"
+          },
+          {
+            "motivo": "Ciencias Naturales, Matemática y Física, Informática y Educación no tienen filas en curriculum_v96: se completan con los bloques y ejes de V2.",
+            "veces": 1,
+            "original": "if(m.v)rows=rows.filter(x=>x.variant===m.v);FO.set(fkey(),rows);return rows}",
+            "derivado": "if(m.v)rows=rows.filter(x=>x.variant===m.v);if(!rows.length&&m.f)rows=await loadLegacyOrientation(m.f,orientation);FO…"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v29-fo-rules",
+      "original": "vendor/pci-sec-aprende-v2/src/v29-fo-rules.js",
+      "sha256Original": "1374915380cadbb7",
+      "estado": "pendiente-normativa",
+      "motivo": "Reglas de Formación Orientada de Media.",
+      "equivalentes": {
+        "tecnica": "Reemplazado: formatos de la Especialidad (Taller anual 3.º–6.º, Espacio anual 4.º–6.º, integraciones 4.º–6.º, Prácticas 5.º–6.º) según IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18.",
+        "ba15": "Reemplazado: áreas por nivel, talleres, Tutoría en Nivel I y estructura completa de 38 h en v19-mapa-modalidad (baMember/baEvaluate), según RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche)."
+      }
+    },
+    {
+      "modulo": "v30-fo-minimum-guard",
+      "original": "vendor/pci-sec-aprende-v2/src/v30-fo-minimum-guard.js",
+      "sha256Original": "c6c5be677035c592",
+      "estado": "pendiente-normativa",
+      "motivo": "Mínimos de materias por espacio FO de Media (foN4, foLab5, foTaller5).",
+      "equivalentes": {
+        "tecnica": "Reemplazado: mínimo de dos asignaturas, tope de 9 horas y cantidades por nivel con validateFinalComposition (IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18).",
+        "ba15": "Reemplazado: áreas por nivel, talleres, Tutoría en Nivel I y estructura completa de 38 h en v19-mapa-modalidad (baMember/baEvaluate), según RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche)."
+      }
+    },
+    {
+      "modulo": "v31-integration-hours-print",
+      "original": "vendor/pci-sec-aprende-v2/src/v31-integration-hours-print.js",
+      "sha256Original": "d7108424f086b782",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v31-integration-hours-print.js",
+        "ba15": "src/v2-familia/derivados/ba15/v31-integration-hours-print.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Rango de cuatrimestres de la modalidad.",
+            "veces": 1,
+            "original": "Se imprime la matriz visual C1–C10 tal como está construida.",
+            "derivado": "Se imprime la matriz visual C1–C12 tal como está construida."
+          },
+          {
+            "motivo": "Rango de niveles y cuatrimestres de la modalidad.",
+            "veces": 1,
+            "original": "<p>Nivel 1 a Nivel 5 · C1 a C10</p>",
+            "derivado": "<p>Nivel 1 a Nivel 6 · C1 a C12</p>"
+          },
+          {
+            "motivo": "La integración FG + FO en Laboratorios desde Nivel 3 es una regla de Media; queda oculta hasta incorporar la normativa de la modalidad.",
+            "veces": 1,
+            "original": "rule.innerHTML='<strong>Integración FG + FO:</strong> desde Nivel 3, una materia/materialización de Formación Orienta…",
+            "derivado": "rule.hidden=true;"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Rango de cuatrimestres de la modalidad.",
+            "veces": 1,
+            "original": "Se imprime la matriz visual C1–C10 tal como está construida.",
+            "derivado": "Se imprime la matriz visual C1–C8 tal como está construida."
+          },
+          {
+            "motivo": "Rango de niveles y cuatrimestres de la modalidad.",
+            "veces": 1,
+            "original": "<p>Nivel 1 a Nivel 5 · C1 a C10</p>",
+            "derivado": "<p>Nivel 1 a Nivel 4 · C1 a C8</p>"
+          },
+          {
+            "motivo": "La integración FG + FO en Laboratorios desde Nivel 3 es una regla de Media; queda oculta hasta incorporar la normativa de la modalidad.",
+            "veces": 1,
+            "original": "rule.innerHTML='<strong>Integración FG + FO:</strong> desde Nivel 3, una materia/materialización de Formación Orienta…",
+            "derivado": "rule.hidden=true;"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v32-phase2-entry-fix",
+      "original": "vendor/pci-sec-aprende-v2/src/v32-phase2-entry-fix.js",
+      "sha256Original": "e7a3114d6e56d84b",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v32-phase2-entry-fix.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v32-phase2-entry-fix.js"
+      }
+    },
+    {
+      "modulo": "v38-phase2-workspace",
+      "original": "vendor/pci-sec-aprende-v2/src/v38-phase2-workspace.js",
+      "sha256Original": "5e0c70c7da79a01b",
+      "estado": "derivado-previo",
+      "archivos": {
+        "tecnica": "src/v2-familia/v38-phase2-workspace.js",
+        "ba15": "src/v2-familia/v38-phase2-workspace.js"
+      },
+      "motivo": "Espacio de trabajo de Fase 2 con catálogo de la modalidad."
+    },
+    {
+      "modulo": "v47-elective-plans",
+      "original": "vendor/pci-sec-aprende-v2/src/v47-elective-plans.js",
+      "sha256Original": "ce920991c2760372",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v47-elective-plans.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v47-elective-plans.js"
+      }
+    },
+    {
+      "modulo": "v42-homologacion-performance",
+      "original": "vendor/pci-sec-aprende-v2/src/v42-homologacion-performance.js",
+      "sha256Original": "66e6a92883396fac",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v42-homologacion-performance.js",
+        "ba15": "src/v2-familia/derivados/ba15/v42-homologacion-performance.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "No descargar las bases curriculares de Media en Técnica ni en BA +15.",
+            "veces": 1,
+            "original": "window.addEventListener('pci-app-ready',prewarmCurriculum,{once:true});",
+            "derivado": "/* Precarga de bases de Media omitida: la modalidad usa su propio catálogo. */"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "No descargar las bases curriculares de Media en Técnica ni en BA +15.",
+            "veces": 1,
+            "original": "window.addEventListener('pci-app-ready',prewarmCurriculum,{once:true});",
+            "derivado": "/* Precarga de bases de Media omitida: la modalidad usa su propio catálogo. */"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v48-institutional-layer",
+      "original": "vendor/pci-sec-aprende-v2/src/v48-institutional-layer.js",
+      "sha256Original": "0cb483bc3d25df4f",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v48-institutional-layer.js",
+        "ba15": "src/v2-familia/derivados/ba15/v48-institutional-layer.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Un curso por nivel de la modalidad.",
+            "veces": 1,
+            "original": "{courseCounts:{1:1,2:1,3:1,4:1,5:1}}",
+            "derivado": "{courseCounts:{1:1,2:1,3:1,4:1,5:1,6:1}}"
+          },
+          {
+            "motivo": "Recorrer los niveles de la modalidad.",
+            "veces": 1,
+            "original": "for(let y=1;y<=5;y++)",
+            "derivado": "for(let y=1;y<=6;y++)"
+          },
+          {
+            "motivo": "Cursos y divisiones por nivel de la modalidad.",
+            "veces": 2,
+            "original": "[1,2,3,4,5]",
+            "derivado": "[1,2,3,4,5,6]"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Un curso por nivel de la modalidad.",
+            "veces": 1,
+            "original": "{courseCounts:{1:1,2:1,3:1,4:1,5:1}}",
+            "derivado": "{courseCounts:{1:1,2:1,3:1,4:1}}"
+          },
+          {
+            "motivo": "Recorrer los niveles de la modalidad.",
+            "veces": 1,
+            "original": "for(let y=1;y<=5;y++)",
+            "derivado": "for(let y=1;y<=4;y++)"
+          },
+          {
+            "motivo": "Cursos y divisiones por nivel de la modalidad.",
+            "veces": 2,
+            "original": "[1,2,3,4,5]",
+            "derivado": "[1,2,3,4]"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v48-phase2-institutional-content",
+      "original": "vendor/pci-sec-aprende-v2/src/v48-phase2-institutional-content.js",
+      "sha256Original": "0cb6233939a80837",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v48-phase2-institutional-content.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v48-phase2-institutional-content.js"
+      }
+    },
+    {
+      "modulo": "v48-disable-phase1-teachers",
+      "original": "vendor/pci-sec-aprende-v2/src/v48-disable-phase1-teachers.js",
+      "sha256Original": "4d6bb43c58952c01",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v48-disable-phase1-teachers.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v48-disable-phase1-teachers.js"
+      }
+    },
+    {
+      "modulo": "v57-custom-divisions",
+      "original": "vendor/pci-sec-aprende-v2/src/v57-custom-divisions.js",
+      "sha256Original": "4ba8ec0ad3be3430",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v57-custom-divisions.js",
+        "ba15": "src/v2-familia/derivados/ba15/v57-custom-divisions.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Divisiones de todos los niveles.",
+            "veces": 1,
+            "original": "for(let y=1;y<=5;y++)",
+            "derivado": "for(let y=1;y<=6;y++)"
+          },
+          {
+            "motivo": "Divisiones de todos los niveles.",
+            "veces": 1,
+            "original": "[1,2,3,4,5]",
+            "derivado": "[1,2,3,4,5,6]"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Divisiones de todos los niveles.",
+            "veces": 1,
+            "original": "for(let y=1;y<=5;y++)",
+            "derivado": "for(let y=1;y<=4;y++)"
+          },
+          {
+            "motivo": "Divisiones de todos los niveles.",
+            "veces": 1,
+            "original": "[1,2,3,4,5]",
+            "derivado": "[1,2,3,4]"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v52-derived-teacher-load",
+      "original": "vendor/pci-sec-aprende-v2/src/v52-derived-teacher-load.js",
+      "sha256Original": "ceb003750d64b175",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v52-derived-teacher-load.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v52-derived-teacher-load.js"
+      }
+    },
+    {
+      "modulo": "v59-phase2-annual-matrix",
+      "original": "vendor/pci-sec-aprende-v2/src/v59-phase2-annual-matrix.js",
+      "sha256Original": "603f30ebe0e73cb1",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v59-phase2-annual-matrix.js",
+        "ba15": "src/v2-familia/derivados/ba15/v59-phase2-annual-matrix.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Celdas cuatrimestrales de la modalidad.",
+            "veces": 1,
+            "original": "cells.length!==10",
+            "derivado": "cells.length!==12"
+          },
+          {
+            "motivo": "Unir pares de cuatrimestres de todos los niveles.",
+            "veces": 1,
+            "original": "i<10;i+=2",
+            "derivado": "i<12;i+=2"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Celdas cuatrimestrales de la modalidad.",
+            "veces": 1,
+            "original": "cells.length!==10",
+            "derivado": "cells.length!==8"
+          },
+          {
+            "motivo": "Unir pares de cuatrimestres de todos los niveles.",
+            "veces": 1,
+            "original": "i<10;i+=2",
+            "derivado": "i<8;i+=2"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v33-articulation-rules",
+      "original": "vendor/pci-sec-aprende-v2/src/v33-articulation-rules.js",
+      "sha256Original": "6c0417898fe1ed2d",
+      "estado": "pendiente-normativa",
+      "motivo": "Articulación FG → FO y tope de horas de Media.",
+      "equivalentes": {
+        "tecnica": "No aplica: la integración FG + FO en laboratorios es margen del Bachillerato (pág. 12).",
+        "ba15": "No aplica: el Régimen +15 no establece esta regla de Media (RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche))."
+      }
+    },
+    {
+      "modulo": "v71-simple-assignment-excel",
+      "original": "vendor/pci-sec-aprende-v2/src/v71-simple-assignment-excel.js",
+      "sha256Original": "cf0b72d57faeb0c4",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v71-simple-assignment-excel.js",
+        "ba15": "src/v2-familia/derivados/ba15/v71-simple-assignment-excel.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Áreas de coordinación tomadas del mapa de la modalidad.",
+            "veces": 1,
+            "original": "const COORDINATION_AREAS=['Lengua y Literatura','Matemática','Lenguas Adicionales','Ciencias Naturales','Ciencias Soc…",
+            "derivado": "const COORDINATION_AREAS=(window.V2ModalMap?[...new Set(window.V2ModalMap.rowDefs().map(r=>r.area).filter(Boolean))]:…"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Áreas de coordinación tomadas del mapa de la modalidad.",
+            "veces": 1,
+            "original": "const COORDINATION_AREAS=['Lengua y Literatura','Matemática','Lenguas Adicionales','Ciencias Naturales','Ciencias Soc…",
+            "derivado": "const COORDINATION_AREAS=(window.V2ModalMap?[...new Set(window.V2ModalMap.rowDefs().map(r=>r.area).filter(Boolean))]:…"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v71-management-nav-reset",
+      "original": "vendor/pci-sec-aprende-v2/src/v71-management-nav-reset.js",
+      "sha256Original": "fb0a8e700b8f8a18",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v71-management-nav-reset.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v71-management-nav-reset.js"
+      }
+    },
+    {
+      "modulo": "v71-lean-management",
+      "original": "vendor/pci-sec-aprende-v2/src/v71-lean-management.js",
+      "sha256Original": "e7cd08259372bb51",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v71-lean-management.js",
+        "ba15": "src/v2-familia/derivados/ba15/v71-lean-management.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Áreas de coordinación tomadas del mapa de la modalidad.",
+            "veces": 1,
+            "original": "const COORD_AREAS=['Lengua y Literatura','Matemática','Lenguas Adicionales','Ciencias Naturales','Ciencias Sociales',…",
+            "derivado": "const COORD_AREAS=(window.V2ModalMap?[...new Set(window.V2ModalMap.rowDefs().map(r=>r.area).filter(Boolean))]:['Lengu…"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Áreas de coordinación tomadas del mapa de la modalidad.",
+            "veces": 1,
+            "original": "const COORD_AREAS=['Lengua y Literatura','Matemática','Lenguas Adicionales','Ciencias Naturales','Ciencias Sociales',…",
+            "derivado": "const COORD_AREAS=(window.V2ModalMap?[...new Set(window.V2ModalMap.rowDefs().map(r=>r.area).filter(Boolean))]:['Lengu…"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v72-students-commissions",
+      "original": "vendor/pci-sec-aprende-v2/src/v72-students-commissions.js",
+      "sha256Original": "4f3330b5e75fea71",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v72-students-commissions.js",
+        "ba15": "src/v2-familia/derivados/ba15/v72-students-commissions.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Comisiones de todos los niveles.",
+            "veces": 1,
+            "original": "for(let year=1;year<=5;year++)",
+            "derivado": "for(let year=1;year<=6;year++)"
+          },
+          {
+            "motivo": "Comisiones de todos los niveles.",
+            "veces": 1,
+            "original": "[1,2,3,4,5]",
+            "derivado": "[1,2,3,4,5,6]"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Comisiones de todos los niveles.",
+            "veces": 1,
+            "original": "for(let year=1;year<=5;year++)",
+            "derivado": "for(let year=1;year<=4;year++)"
+          },
+          {
+            "motivo": "Comisiones de todos los niveles.",
+            "veces": 1,
+            "original": "[1,2,3,4,5]",
+            "derivado": "[1,2,3,4]"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v68-institutional-export",
+      "original": "vendor/pci-sec-aprende-v2/src/v68-institutional-export.js",
+      "sha256Original": "89abf496e3be7290",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v68-institutional-export.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v68-institutional-export.js"
+      }
+    },
+    {
+      "modulo": "v73-management-home",
+      "original": "vendor/pci-sec-aprende-v2/src/v73-management-home.js",
+      "sha256Original": "552c776e70b8a966",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v73-management-home.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v73-management-home.js"
+      }
+    },
+    {
+      "modulo": "v74-home-redesign",
+      "original": "vendor/pci-sec-aprende-v2/src/v74-home-redesign.js",
+      "sha256Original": "2d6147afc526648d",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v74-home-redesign.js",
+        "ba15": "src/v2-familia/derivados/ba15/v74-home-redesign.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Total de cursos de todos los niveles.",
+            "veces": 1,
+            "original": "[1,2,3,4,5]",
+            "derivado": "[1,2,3,4,5,6]"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Total de cursos de todos los niveles.",
+            "veces": 1,
+            "original": "[1,2,3,4,5]",
+            "derivado": "[1,2,3,4]"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v75-app-architecture",
+      "original": "vendor/pci-sec-aprende-v2/src/v75-app-architecture.js",
+      "sha256Original": "afabb529b6a50afb",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v75-app-architecture.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v75-app-architecture.js"
+      }
+    },
+    {
+      "modulo": "v80-access-control",
+      "original": "vendor/pci-sec-aprende-v2/src/v80-access-control.js",
+      "sha256Original": "24294696568ae858",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v80-access-control.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v80-access-control.js"
+      }
+    },
+    {
+      "modulo": "v85-access-panel",
+      "original": "vendor/pci-sec-aprende-v2/src/v85-access-panel.js",
+      "sha256Original": "f6908ddb7844a907",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v85-access-panel.js",
+        "ba15": "src/v2-familia/derivados/ba15/v85-access-panel.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Áreas habilitables para docentes tomadas del mapa de la modalidad.",
+            "veces": 1,
+            "original": "const AREAS=[\n    'Lengua y Literatura','Matemática','Lenguas Adicionales','Ciencias Naturales',\n    'Ciencias Social…",
+            "derivado": "const AREAS=(window.V2ModalMap?[...new Set(window.V2ModalMap.rowDefs().map(r=>r.area).filter(Boolean))]:['Lengua y Li…"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Áreas habilitables para docentes tomadas del mapa de la modalidad.",
+            "veces": 1,
+            "original": "const AREAS=[\n    'Lengua y Literatura','Matemática','Lenguas Adicionales','Ciencias Naturales',\n    'Ciencias Social…",
+            "derivado": "const AREAS=(window.V2ModalMap?[...new Set(window.V2ModalMap.rowDefs().map(r=>r.area).filter(Boolean))]:['Lengua y Li…"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "ui-hide-version-labels",
+      "original": "vendor/pci-sec-aprende-v2/src/ui-hide-version-labels.js",
+      "sha256Original": "081dbb8076d3b6ea",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/ui-hide-version-labels.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/ui-hide-version-labels.js"
+      }
+    },
+    {
+      "modulo": "ui-navigation-consistency",
+      "original": "vendor/pci-sec-aprende-v2/src/ui-navigation-consistency.js",
+      "sha256Original": "21bb1d5215a541e6",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/ui-navigation-consistency.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/ui-navigation-consistency.js"
+      }
+    },
+    {
+      "modulo": "creative-commons-footer",
+      "original": "vendor/pci-sec-aprende-v2/src/creative-commons-footer.js",
+      "sha256Original": "531312f093224079",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/creative-commons-footer.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/creative-commons-footer.js"
+      }
+    },
+    {
+      "modulo": "v84-content-control-table",
+      "original": "vendor/pci-sec-aprende-v2/src/v84-content-control-table.js",
+      "sha256Original": "40ab692b2b4eded3",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v84-content-control-table.js",
+        "ba15": "src/v2-familia/derivados/ba15/v84-content-control-table.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Rango de cuatrimestres de la modalidad.",
+            "veces": 2,
+            "original": "C1–C10",
+            "derivado": "C1–C12"
+          },
+          {
+            "motivo": "Rango de cuatrimestres de la modalidad.",
+            "veces": 1,
+            "original": "'C1-C10'",
+            "derivado": "'C1-C12'"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Rango de cuatrimestres de la modalidad.",
+            "veces": 2,
+            "original": "C1–C10",
+            "derivado": "C1–C8"
+          },
+          {
+            "motivo": "Rango de cuatrimestres de la modalidad.",
+            "veces": 1,
+            "original": "'C1-C10'",
+            "derivado": "'C1-C8'"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v91-coverage-core",
+      "original": "vendor/pci-sec-aprende-v2/src/v91-coverage-core.js",
+      "sha256Original": "0c9ea91e80ee8d60",
+      "estado": "derivado-previo",
+      "archivos": {
+        "tecnica": "src/v2-familia/v91-coverage-core.js",
+        "ba15": "src/v2-familia/v91-coverage-core.js"
+      },
+      "motivo": "Cobertura sobre la base de contenidos de la modalidad."
+    },
+    {
+      "modulo": "v91-plans-coverage",
+      "original": "vendor/pci-sec-aprende-v2/src/v91-plans-coverage.js",
+      "sha256Original": "411b335dcc8e046d",
+      "estado": "derivado-previo",
+      "archivos": {
+        "tecnica": "src/v2-familia/v91-plans-coverage.js",
+        "ba15": "src/v2-familia/v91-plans-coverage.js"
+      },
+      "motivo": "Cobertura de planes sobre la base de la modalidad."
+    },
+    {
+      "modulo": "v93-curricular-coverage-dashboard",
+      "original": "vendor/pci-sec-aprende-v2/src/v93-curricular-coverage-dashboard.js",
+      "sha256Original": "1ccca37efd2fec37",
+      "estado": "derivado",
+      "archivos": {
+        "tecnica": "src/v2-familia/derivados/tecnica/v93-curricular-coverage-dashboard.js",
+        "ba15": "src/v2-familia/derivados/ba15/v93-curricular-coverage-dashboard.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Cobertura por todos los niveles de la modalidad.",
+            "veces": 3,
+            "original": "[1,2,3,4,5]",
+            "derivado": "[1,2,3,4,5,6]"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Cobertura por todos los niveles de la modalidad.",
+            "veces": 3,
+            "original": "[1,2,3,4,5]",
+            "derivado": "[1,2,3,4]"
+          }
+        ]
+      }
+    },
+    {
+      "modulo": "v108-pci-document-editor",
+      "original": "vendor/pci-sec-aprende-v2/src/v108-pci-document-editor.js",
+      "sha256Original": "f339b6db02b039e1",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v108-pci-document-editor.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v108-pci-document-editor.js"
+      }
+    },
+    {
+      "modulo": "v112-remove-obsolete-map-notice",
+      "original": "vendor/pci-sec-aprende-v2/src/v112-remove-obsolete-map-notice.js",
+      "sha256Original": "70805648249195ef",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v112-remove-obsolete-map-notice.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v112-remove-obsolete-map-notice.js"
+      }
+    },
+    {
+      "modulo": "v114-plan-criteria-excel",
+      "original": "vendor/pci-sec-aprende-v2/src/v114-plan-criteria-excel.js",
+      "sha256Original": "5081c2d42c1d67e7",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v114-plan-criteria-excel.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v114-plan-criteria-excel.js"
+      }
+    },
+    {
+      "modulo": "v119-responsive-legibility",
+      "original": "vendor/pci-sec-aprende-v2/src/v119-responsive-legibility.js",
+      "sha256Original": "9c29768269c4de0e",
+      "estado": "original",
+      "archivos": {
+        "tecnica": "vendor/pci-sec-aprende-v2/src/v119-responsive-legibility.js",
+        "ba15": "vendor/pci-sec-aprende-v2/src/v119-responsive-legibility.js"
+      }
+    }
+  ]
+}

@@ -129,53 +129,26 @@ function renderArtsRule() {
   const alert = $('boardAlert');
   if (!current || !alert) return;
   const result = evaluateArts(current, rows);
-  const selected = result.selectedLanguages;
-  const missingWorkshops = result.workshops.filter((workshop) => !workshop.complete);
-  const uncheckedDisabled = selected.length >= 2;
-
+  const missingWorkshops = result.workshops.filter(workshop => !workshop.complete);
+  const signature = JSON.stringify({workshops: result.workshops,complete: result.complete});
+  if (alert.dataset.pciArtsSignature !== signature ||
+      !alert.textContent.includes('Regla curricular de Artes')) {
+    alert.dataset.pciArtsSignature = signature;
+    alert.innerHTML = `
+      <strong>Regla curricular de Artes</strong>
+      <p style="margin:.45rem 0 .7rem">Cada taller debe abordar los tres ejes: Producción, Apreciación y Contextualización. Se pueden combinar los lenguajes artísticos.</p>
+      <p style="margin:.35rem 0"><strong>${result.completeWorkshops}/${result.totalWorkshops} talleres</strong> cumplen los tres ejes.</p>
+      ${missingWorkshops.length ? `<p style="margin:.35rem 0">Revisar: ${missingWorkshops.map(workshop => `${escapeHtml(workshop.groupName)} (falta ${workshop.missingAxes.map(escapeHtml).join(', ')})`).join(' · ')}</p>` : ''}
+    `;
+  }
   alert.hidden = false;
   alert.className = `notice ${result.complete ? 'success' : 'warning'}`;
-  alert.innerHTML = `
-    <strong>Regla curricular de Artes</strong>
-    <p style="margin:.45rem 0 .7rem">Elegí exactamente dos lenguajes. La cobertura se calcula solo sobre esos dos y cada taller debe incluir, como mínimo, contenidos de Producción, Apreciación y Contextualización.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:.6rem 1rem;margin:.4rem 0 .7rem">
-      ${ART_LANGUAGES.map((language) => {
-        const checked = selected.includes(language);
-        return `<label class="check-row"><input type="checkbox" data-pci-art-language="${escapeHtml(language)}" ${checked ? 'checked' : ''} ${!checked && uncheckedDisabled ? 'disabled' : ''}> ${escapeHtml(language)}</label>`;
-      }).join('')}
-    </div>
-    <p style="margin:.35rem 0"><strong>${result.completeWorkshops}/${result.totalWorkshops} talleres</strong> cumplen los tres ejes.</p>
-    ${result.unselectedAssignments.length ? `<p style="margin:.35rem 0">⚠ Hay ${result.unselectedAssignments.length} contenido${result.unselectedAssignments.length === 1 ? '' : 's'} de un lenguaje no seleccionado; no cuentan para la cobertura.</p>` : ''}
-    ${missingWorkshops.length ? `<p style="margin:.35rem 0">Revisar: ${missingWorkshops.map((workshop) => `${escapeHtml(workshop.groupName)} (${workshop.missingAxes.length ? `falta ${workshop.missingAxes.map(escapeHtml).join(', ')}` : 'contiene un lenguaje no seleccionado'})`).join(' · ')}</p>` : ''}
-  `;
-
-  alert.querySelectorAll('[data-pci-art-language]').forEach((input) => {
-    input.addEventListener('change', () => {
-      const language = input.dataset.pciArtLanguage;
-      const currentRules = state().curriculumRules;
-      const next = new Set(currentRules.artLanguages ?? []);
-      if (input.checked) {
-        if (next.size >= 2) {
-          input.checked = false;
-          toast('Artes permite elegir exactamente dos lenguajes.');
-          return;
-        }
-        next.add(language);
-      } else {
-        next.delete(language);
-      }
-      currentRules.artLanguages = [...next];
-      persistState();
-      scheduleRefresh();
-    });
-  });
-
   const label = $('coverageLabel');
   const hint = $('coverageHint');
   const bar = $('coverageBar');
-  if (label) label.textContent = `Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres · ${selected.length}/2 lenguajes`;
-  if (hint) hint.textContent = 'No se exige ubicar todos los contenidos: se validan los dos lenguajes elegidos y los tres ejes dentro de cada taller.';
-  if (bar) bar.style.width = `${artsPercent(result)}%`;
+  if (label) label.textContent = `Cumplimiento: ${result.completeWorkshops}/${result.totalWorkshops} talleres`;
+  if (hint) hint.textContent = 'La validación se realiza por los tres ejes de cada taller, sin restringir lenguajes.';
+  if (bar) bar.style.width = `${result.totalWorkshops ? Math.round(result.completeWorkshops / result.totalWorkshops * 100) : 0}%`;
   setPendingLabel('Mostrar solo disponibles sin ubicar');
 }
 
@@ -304,16 +277,18 @@ function assignTutorContent(contentId) {
   toast('Contenido de Tutoría ubicado.');
 }
 
+function setTextIfChanged(element, text) {
+  if (element && element.textContent !== text) element.textContent = text;
+}
+
 function renderTutorBag() {
   const current = state();
   if (!current || current.current !== OTHER_AREA) return;
   ensureTutorFilterOptions();
   const list = $('contentList');
   if (!list) return;
-  list.querySelectorAll('.pci-tutoria-item').forEach((item) => item.remove());
   const visible = tutorVisibleRows();
   const map = assignments();
-  if (visible.length && list.querySelector('.empty-state')) list.querySelector('.empty-state').remove();
 
   const html = visible.map((content) => {
     const locations = map.get(content.id) ?? [];
@@ -329,14 +304,25 @@ function renderTutorBag() {
         </div>
       </article>`;
   }).join('');
-  list.insertAdjacentHTML('beforeend', html);
 
-  list.querySelectorAll('[data-pci-assign-tutor]').forEach((button) => {
-    button.addEventListener('click', (event) => {
-      event.stopPropagation();
-      assignTutorContent(button.dataset.pciAssignTutor);
+  // Renderizado idempotente: solo se reconstruye la bolsa de Tutoría cuando
+  // cambia su contenido. Reinsertar siempre los nodos disparaba los demás
+  // observadores del DOM y generaba un ciclo de refresco permanente que
+  // desprendía los botones antes de poder pulsarlos.
+  const signature = html;
+  const rendered = list.querySelectorAll('.pci-tutoria-item').length;
+  if (list.__pciTutorSignature !== signature || rendered !== visible.length) {
+    list.querySelectorAll('.pci-tutoria-item').forEach((item) => item.remove());
+    if (visible.length && list.querySelector('.empty-state')) list.querySelector('.empty-state').remove();
+    list.insertAdjacentHTML('beforeend', html);
+    list.__pciTutorSignature = signature;
+    list.querySelectorAll('[data-pci-assign-tutor]').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        assignTutorContent(button.dataset.pciAssignTutor);
+      });
     });
-  });
+  }
 
   const source = [...data().filter((content) => content.area === 'Tecnologías'), ...tutorData];
   const query = $('contentSearch')?.value.trim().toLocaleLowerCase('es') ?? '';
@@ -352,8 +338,8 @@ function renderTutorBag() {
       && (!pendingOnly || !locations.length);
   }).length;
   const pending = source.filter((content) => !(map.get(String(content.id))?.length)).length;
-  if ($('bagMeta')) $('bagMeta').textContent = `${visibleCombined} visibles · ${pending} pendientes`;
-  if ($('coverageHint')) $('coverageHint').textContent = 'Otros formatos incorpora también Tutoría. Sus contenidos pueden ubicarse únicamente en Nivel 1 y Nivel 2 (C1–C4).';
+  setTextIfChanged($('bagMeta'), `${visibleCombined} visibles · ${pending} pendientes`);
+  setTextIfChanged($('coverageHint'), 'Otros formatos incorpora también Tutoría. Sus contenidos pueden ubicarse únicamente en Nivel 1 y Nivel 2 (C1–C4).');
 }
 
 function renderTutorPlacementWarning() {
@@ -374,7 +360,6 @@ function applyCurrentAreaRules() {
   if (!current) return;
   if (current.current === 'Artes') {
     renderArtsRule();
-    filterArtsBag();
     markOptionalContentItems();
     return;
   }
@@ -391,6 +376,8 @@ function applyCurrentAreaRules() {
 }
 
 function refresh() {
+  window.__pciCurriculumUiRefreshCount=(window.__pciCurriculumUiRefreshCount||0)+1;
+  window.__pciCurriculumUiLastArea=state()?.current||null;
   if (applying || !window.PCIApp?.getState || !data().length) return;
   applying = true;
   observer?.disconnect();
@@ -398,6 +385,7 @@ function refresh() {
     ensureRules();
     updateOverviewCoverage();
     applyCurrentAreaRules();
+    window.__pciCurriculumUiAppliedArea=state()?.current||null;
   } finally {
     applying = false;
     observer?.observe(document.body, { childList: true, subtree: true });
@@ -405,8 +393,13 @@ function refresh() {
 }
 
 function scheduleRefresh() {
-  clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(refresh, 30);
+  // Coalescer sin reiniciar el plazo: los cambios continuos del DOM no deben
+  // impedir que se apliquen las reglas al cambiar de area.
+  if (refreshTimer !== null) return;
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null;
+    refresh();
+  }, 30);
 }
 
 async function waitForApp() {
@@ -430,6 +423,19 @@ async function start() {
 
   observer = new MutationObserver(scheduleRefresh);
   observer.observe(document.body, { childList: true, subtree: true });
+  // openArea puede actualizar el estado y el tablero sin mutaciones de nodos
+  // observables por el complemento. Forzamos la actualización de sus reglas.
+  const api=window.PCIApp;
+  if(api?.openArea&&!api.openArea.__pciCurriculumRefresh){
+    const original=api.openArea.bind(api);
+    const wrapped=(...args)=>{
+      const result=original(...args);
+      scheduleRefresh();
+      return result;
+    };
+    Object.defineProperty(wrapped,'__pciCurriculumRefresh',{value:true});
+    api.openArea=wrapped;
+  }
   window.addEventListener('pci-state-change', scheduleRefresh);
   ['input', 'change'].forEach((eventName) => {
     ['contentSearch', 'subjectFilter', 'axisFilter', 'pendingFilter'].forEach((id) => {
@@ -439,6 +445,7 @@ async function start() {
 
   if ($('overview')?.classList.contains('active')) window.PCIApp.openOverview();
   scheduleRefresh();
+  window.__pciCurriculumUiReady=true;
 }
 
 start().catch((error) => {
