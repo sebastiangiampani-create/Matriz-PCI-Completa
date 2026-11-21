@@ -343,14 +343,20 @@ try {
       await recordPlan(page, record, 'socialB-c5', scenarios[0].migration.groups['socialB-c5'].plansBimestrales[0], 2,
         `${device.nombre}-03-plan-cuatrimestral.png`, 'planCuatrimestral');
 
+      // Un modal bloqueado no debe impedir los casos independientes. Reiniciar
+      // solo el PCI simulado conserva el fallo anterior y no toca la interfaz.
+      if (record.planCuatrimestral?.resultado === 'fallido')
+        await importState(page, `sim-migracion-${device.nombre}-a-matematica`, scenarios[0]);
       await area(page, 'Matemática');
       const mathCard = page.locator('#v28groups [data-g="matematica-n1"]');
       assert.ok((await mathCard.locator('.v28-assigned').innerText()).includes(control.text));
       record.contenidoDeTerceroVisibleEnPrimero = true;
       record.encabezadoHistoricoArea = await page.locator('#v47coverageCount').innerText();
+      record.soloEnPrimero = await coverage(page, false);
       await recordPlan(page, record, 'matematica-n1', scenarios[0].migration.groups['matematica-n1'].plansBimestrales[0], 4,
         `${device.nombre}-04-plan-anual.png`, 'planAnual');
-      record.soloEnPrimero = await coverage(page, false);
+      if (record.planAnual?.resultado === 'fallido')
+        await importState(page, `sim-migracion-${device.nombre}-a-cobertura`, scenarios[0]);
       await coveragePanel(page, false, `${device.nombre}-05-cobertura-solo-en-primero.png`);
 
       // Nuevo PCI simulado: no se reaplica el adaptador a un estado ya marcado.
