@@ -11,6 +11,8 @@ export function montarAvisoAceptacionV2({ host, getState, applyState,
     const el = doc.createElement(tag);
     if (text !== undefined) el.textContent = String(text);
     if (className) el.className = className;
+    // Los controles deben quedar accesibles entre el encabezado y el dock móvil.
+    if (tag === 'button' || tag === 'summary') el.style.scrollMarginBlock = '100px';
     return el;
   };
   host.id = 'v2MigrationNotice';
@@ -18,6 +20,8 @@ export function montarAvisoAceptacionV2({ host, getState, applyState,
   host.hidden = true;
   host.style.marginBottom = '20px';
   host.style.scrollMarginTop = '88px';
+  // El histórico puede contener palabras o referencias sin espacios.
+  host.style.overflowWrap = 'anywhere';
   host.setAttribute('aria-labelledby', 'v2MigrationTitle');
 
   function notify() {
