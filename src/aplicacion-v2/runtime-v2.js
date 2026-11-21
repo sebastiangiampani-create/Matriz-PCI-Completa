@@ -236,8 +236,10 @@
       #pciV2Identity{display:grid;gap:3px;min-width:0;color:var(--ink);font-size:.64rem;line-height:1.35}
       #pciV2Identity strong{font-size:.76rem}#pciV2Identity span{color:var(--muted)}
       #pciV2DraftStatus{font-size:.58rem;color:#126e65}#pciV2DraftStatus[data-error="true"]{color:var(--danger)}
-      header.top{height:auto;min-height:68px;gap:16px}
-      header.top .brand{min-width:0;gap:14px;flex:1 1 380px}header.top .row{flex-wrap:wrap}
+      /* V42 agrega .site-top con altura fija: la identidad escolar requiere
+         que ambas filas participen de la altura real del encabezado. */
+      header.top,header.top.site-top{height:auto;min-height:68px;gap:16px;padding-block:10px}
+      header.top.site-top .brand{min-width:0;gap:14px;flex:1 1 380px}header.top.site-top .row{flex-wrap:wrap}
       #pciV2BackSchool{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
       #pciV2ContextNotice{font-size:.68rem;line-height:1.5;overflow-wrap:anywhere}
       #institutional .v71m-add,#institutional .v71m-teachers,#institutional .v71o-course-label,
@@ -245,16 +247,25 @@
       #institutional .v110-coord-editor-grid,#institutional .v71m-teacher-main{min-width:0}
       #institutional input,#institutional select,#institutional textarea{min-width:0;max-width:100%;box-sizing:border-box}
       #institutional .v71o-course-label select{width:100%}
+      /* Los contenidos técnicos pueden conservar renglones extensos del PDF.
+         El texto debe partirse dentro de su columna, sin agrandar el diálogo. */
+      #v38modal .v38-form,#v38modal .v38-stage-body,#v38modal .v38-pick-group{grid-template-columns:minmax(0,1fr)}
+      #v38modal .v38-form>*,#v38modal .v38-stage-body>*,#v38modal .v38-pick>span{min-width:0}
+      #v38modal .v38-pick{grid-template-columns:auto minmax(0,1fr)}
+      #v38modal .v38-pick p,#v38modal .v38-pick small,#v38modal .v38-top-actions>div{overflow-wrap:anywhere}
+      #v38modal .v38-field input,#v38modal .v38-field textarea{min-width:0;max-width:100%}
       .screen>.back,#v2MigrationNotice button,#v2MigrationNotice summary{scroll-margin-top:calc(var(--pci-v2-header-height,68px) + 80px)!important}
-      @media(min-width:761px){#pciGlobalDock{top:calc(var(--pci-v2-header-height,68px) + 8px)}}
+      /* En escritorio, la navegación conserva su espacio y no flota encima
+         de los títulos cuando Gestión desplaza la página hasta un módulo. */
+      @media(min-width:761px){#pciGlobalDock{position:static;top:auto}}
       @media(max-width:780px){#institutional .v71m-add,#institutional .v71m-teachers,
         #institutional .v71o-subject-row,#institutional .v95-coord-forms,#institutional .v95-coord-form,
         #institutional .v95-coord-list,#institutional .v110-coord-editor-grid{grid-template-columns:minmax(0,1fr)}
         #institutional .v71m-teacher{min-width:0;overflow-wrap:anywhere}
         #institutional .v71m-hours{grid-template-columns:repeat(2,minmax(0,1fr))}
         #institutional .v71o-course-label{max-width:100%}}
-      @media(max-width:760px){header.top{align-items:flex-start;flex-wrap:wrap}header.top .brand{flex-wrap:wrap;gap:8px;flex-basis:100%}
-        header.top .row{justify-content:flex-start;width:100%}
+      @media(max-width:760px){header.top.site-top{align-items:flex-start;flex-wrap:wrap}header.top.site-top .brand{flex-wrap:wrap;gap:8px;flex-basis:100%}
+        header.top.site-top .row{justify-content:flex-start;width:100%}
         #pciV2Identity{width:100%}#pciV2Identity span{max-width:calc(100vw - 40px)}
         #pciV2BackSchool{font-size:.62rem;padding:8px 10px}}
     `;

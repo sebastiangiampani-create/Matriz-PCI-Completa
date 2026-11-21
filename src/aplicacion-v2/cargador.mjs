@@ -168,7 +168,10 @@ export async function cargarAplicacionV2({ contexto, estadoInicial = null, vista
     });
     const phase2 = modules.find(entry => entry.modulo === manifest.fase2);
     if (!phase2) throw Error('Falta el Desarrollo Curricular del motor V2.');
-    if (media) modules.push({ modulo: 'ajustes-vista-media', archivo: 'src/v2-familia/ajustes-vista-media.js' });
+    // V28 y V38 comparten DOM en las tres modalidades. Sus mínimos de grilla,
+    // encabezados flexibles y scroll del editor requieren el mismo ajuste que
+    // Media ya verificó; no se modifica ninguna regla curricular de la modalidad.
+    modules.push({ modulo: 'ajustes-vista-media', archivo: 'src/v2-familia/ajustes-vista-media.js' });
     const corePath = media ? 'vendor/pci-sec-aprende-v2/app-core.html' : 'src/v2-familia/app-core-modalidad.html';
     const [html, runtime, materiasText, ...sources] = await Promise.all([
       texto(corePath), texto('src/aplicacion-v2/runtime-v2.js'),
