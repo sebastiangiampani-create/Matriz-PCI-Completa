@@ -22,7 +22,8 @@
     'vendor/pci-sec-aprende-v2/src/v80-access-control.js','vendor/pci-sec-aprende-v2/src/v85-access-panel.js',
     'vendor/pci-sec-aprende-v2/src/ui-hide-version-labels.js','vendor/pci-sec-aprende-v2/src/ui-navigation-consistency.js',
     'vendor/pci-sec-aprende-v2/src/creative-commons-footer.js','vendor/pci-sec-aprende-v2/src/v84-content-control-table.js',
-    'vendor/pci-sec-aprende-v2/src/v91-coverage-core.js','vendor/pci-sec-aprende-v2/src/v91-plans-coverage.js','vendor/pci-sec-aprende-v2/src/v93-curricular-coverage-dashboard.js','vendor/pci-sec-aprende-v2/src/v108-pci-document-editor.js','vendor/pci-sec-aprende-v2/src/v112-remove-obsolete-map-notice.js','vendor/pci-sec-aprende-v2/src/v114-plan-criteria-excel.js','vendor/pci-sec-aprende-v2/src/v119-responsive-legibility.js'
+    'vendor/pci-sec-aprende-v2/src/v91-coverage-core.js','vendor/pci-sec-aprende-v2/src/v91-plans-coverage.js','vendor/pci-sec-aprende-v2/src/v93-curricular-coverage-dashboard.js','vendor/pci-sec-aprende-v2/src/v108-pci-document-editor.js','vendor/pci-sec-aprende-v2/src/v112-remove-obsolete-map-notice.js','vendor/pci-sec-aprende-v2/src/v114-plan-criteria-excel.js','vendor/pci-sec-aprende-v2/src/v119-responsive-legibility.js',
+    'src/v2-familia/ajustes-vista-media.js'
   ];
   const fetchText=async url=>{
     const response=await fetch(url,{cache:'no-store'});
@@ -34,7 +35,7 @@
   try{
     const [htmlRaw,phase2Source,foAtomicSource,...moduleSources]=await Promise.all([
       fetchText('vendor/pci-sec-aprende-v2/app-core.html'),
-      // Derivado de V2: completa las orientaciones ausentes en curriculum_v96 (ver manifiesto).
+      // Derivado: completa orientaciones y alinea el encabezado con V91 (ver manifiesto).
       fetchText('src/v2-familia/derivados/media/v47-phase2-matrix.js'),
       fetchText('vendor/pci-sec-aprende-v2/src/v47-fo-content-atomicizer.js'),
       ...modulePaths.map(fetchText)

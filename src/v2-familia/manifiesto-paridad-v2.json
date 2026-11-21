@@ -179,6 +179,18 @@
             "veces": 1,
             "original": "if(m.v)rows=rows.filter(x=>x.variant===m.v);FO.set(fkey(),rows);return rows}",
             "derivado": "if(m.v)rows=rows.filter(x=>x.variant===m.v);if(!rows.length&&m.f)rows=await loadLegacyOrientation(m.f,orientation);FO…"
+          },
+          {
+            "motivo": "El encabezado FG utiliza las referencias por nivel y las métricas de trayectoria de V91, conserva el Set de IDs y mantiene FO separada.",
+            "veces": 1,
+            "original": "function componentCoverage(a,component){const gs=ga(a),official=areaPool(a).filter(c=>c.component===component),offici…",
+            "derivado": "function componentCoverage(a,component){\n  const gs=ga(a),official=areaPool(a).filter(c=>c.component===component),off…"
+          },
+          {
+            "motivo": "Esperar la base canónica de V91 antes de mostrar el encabezado; loadCurriculum no depende de openArea.",
+            "veces": 1,
+            "original": "try{await Promise.all([loadFG(),loadFO()]);board()}catch(e)",
+            "derivado": "try{await Promise.all([loadFG(),loadFO()]);await window.PCICoverageV91.ready();board()}catch(e)"
           }
         ]
       }

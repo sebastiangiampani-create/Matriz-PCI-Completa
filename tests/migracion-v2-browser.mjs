@@ -61,11 +61,11 @@ const socialContents = socialSubjects.map(subject => {
 const matrixRows = [control, ...socialContents].map((row, i) => ({
   id: `simulado-${i}`, area: row.area, subject: row.subject, axis: row.axis, text: row.text
 }));
-function plan(name) {
+function plan(name, contentIds) {
   return { number: 1, name: `Plan simulado · ${name}`, autoName: false,
     synopsis: 'Secuencia de prueba para comprobar la conservación del desarrollo pedagógico.',
     objectives: 'Analizar situaciones, explicar procedimientos y fundamentar conclusiones.',
-    contentIds: [], updatedAt: null,
+    contentIds: [...contentIds], updatedAt: null,
     stages: Object.fromEntries(stages.map((stage, i) => [stage, {
       description: `Etapa ${i + 1} del plan de prueba`, duration: 'Dos clases',
       resources: 'Consignas y materiales de la secuencia simulada',
@@ -76,7 +76,7 @@ function legacyGroup(id, level, startTerm, items, name) {
   return { id, level, startTerm, name, items, objective: 'Objetivo del agrupamiento simulado',
     synopsis: 'Datos de prueba, sin información de escuelas reales.',
     context: 'Situación problematizadora de la prueba de migración.',
-    plansBimestrales: [plan(name)] };
+    plansBimestrales: [plan(name, items)] };
 }
 function fixture(alsoInThird) {
   const maths = [legacyGroup('mat-1', 1, 1, ['simulado-0'], 'Matemática · Nivel 1')];
@@ -104,6 +104,10 @@ function fixture(alsoInThird) {
   assert.deepEqual({ legacyState, state }, before, 'La preparación no modifica las entradas.');
   assert.deepEqual(migrated.legacy_state, legacyState);
   assert.deepEqual(migrated.maps[orientation].conflictos, []);
+  assert.deepEqual(migrated.maps[orientation].phase2V28.groups['matematica-n1']
+    .plansBimestrales[0].contentIds, [controlId]);
+  assert.deepEqual(migrated.maps[orientation].phase2V28.groups['socialB-c5']
+    .plansBimestrales[0].contentIds, socialContents.slice(2).map(row => row.id));
   return { migrated, migration };
 }
 const scenarios = [fixture(false), fixture(true)];
@@ -180,13 +184,40 @@ async function area(page, name) {
   await page.locator('#v28groups [data-g]').first().waitFor();
   await page.locator('#v28groups [data-g] .v97-group-coverage').first().waitFor();
 }
-async function checkPlan(page, slot, expected, count, capture) {
+async function modalGeometry(page) {
+  const geometry = await page.evaluate(() => {
+    const rect = selector => {
+      const r = document.querySelector(selector).getBoundingClientRect();
+      return { left: r.left, right: r.right, width: r.width };
+    };
+    const shell = document.querySelector('#v38shell');
+    return { innerWidth, visualWidth: visualViewport.width,
+      modal: rect('#v38modal'), shell: rect('#v38shell'), close: rect('#v38modal [data-close]'),
+      scrollWidth: shell.scrollWidth, clientWidth: shell.clientWidth,
+      scrollTop: shell.scrollTop, scrollLeft: shell.scrollLeft };
+  });
+  const width = page.viewportSize().width;
+  assert.ok(Math.abs(geometry.innerWidth - width) <= 1,
+    `El modal no debe expandir el viewport: ${JSON.stringify(geometry)}.`);
+  for (const key of ['modal', 'shell', 'close']) {
+    assert.ok(geometry[key].left >= -1 && geometry[key].right <= width + 1,
+      `${key} debe quedar dentro de la pantalla: ${JSON.stringify(geometry)}.`);
+  }
+  assert.ok(geometry.scrollWidth <= geometry.clientWidth + 1,
+    `El editor no debe desbordarse horizontalmente: ${JSON.stringify(geometry)}.`);
+  assert.equal(geometry.scrollLeft, 0);
+  return geometry;
+}
+async function checkPlan(page, slot, expected, expectedIds, count, capture) {
   const button = page.locator(`#v28groups [data-g="${slot}"] [data-plans]`);
   await button.evaluate(el => el.scrollIntoView({ block: 'center' }));
   await button.click();
+  const listGeometry = await modalGeometry(page);
   await page.locator('[data-open="1"]').click();
   const editor = page.locator('#v38plan');
   await editor.waitFor();
+  const editorGeometry = await modalGeometry(page);
+  assert.equal(editorGeometry.scrollTop, 0, 'El editor debe abrirse desde el comienzo.');
   assert.equal(await editor.locator('[data-pfield="name"]').inputValue(), expected.name);
   assert.equal(await editor.locator('[data-pfield="synopsis"]').inputValue(), expected.synopsis);
   assert.equal(await editor.locator('[data-pfield="objectives"]').inputValue(), expected.objectives);
@@ -194,14 +225,28 @@ async function checkPlan(page, slot, expected, count, capture) {
     assert.equal(await editor.locator(`[data-stage="${stage}"][data-sfield="${field}"]`).inputValue(),
       expected.stages[stage][field], `${slot}: conservar ${stage}.${field}.`);
   }
+  const selectedIds = await editor.locator('[data-pcontent]:checked').evaluateAll(
+    elements => elements.map(el => el.dataset.pcontent));
+  assert.deepEqual(selectedIds.sort(), [...expectedIds].sort(),
+    `${slot}: las selecciones históricas deben estar marcadas con sus IDs V2.`);
   assert.match(await page.locator('.v38-top h2').innerText(), new RegExp(`1 de ${count}`));
   if (capture) await screenshot(page, capture);
+  // La vuelta desde el final del formulario debe abrir la lista arriba y
+  // permitir volver al editor mediante los botones normales de la interfaz.
+  await editor.locator('[data-back-footer]').click();
+  assert.equal((await modalGeometry(page)).scrollTop, 0);
+  await page.locator('[data-open="1"]').click();
+  await editor.waitFor();
+  assert.equal((await modalGeometry(page)).scrollTop, 0);
+  assert.deepEqual((await editor.locator('[data-pcontent]:checked').evaluateAll(
+    elements => elements.map(el => el.dataset.pcontent))).sort(), [...expectedIds].sort());
   await page.locator('.v38-top [data-close]').click();
+  return { resultado: 'aprobado', cantidadPlanes: count, contenidosSeleccionados: selectedIds,
+    camposYCuatroEtapasConservados: true, reapertura: true, lista: listGeometry, editor: editorGeometry };
 }
-async function recordPlan(page, record, slot, expected, count, capture, field) {
+async function recordPlan(page, record, slot, expected, expectedIds, count, capture, field) {
   try {
-    await checkPlan(page, slot, expected, count, capture);
-    record[field] = `Texto y cuatro etapas conservados; editor de ${count} planes.`;
+    record[field] = await checkPlan(page, slot, expected, expectedIds, count, capture);
   } catch (error) {
     // Conservar el fallo y continuar los casos independientes. El resultado
     // global sigue siendo fallido mientras cualquier editor no pueda abrirse.
@@ -270,6 +315,22 @@ async function coveragePanel(page, duplicate, capture) {
   await results.scrollIntoViewIfNeeded();
   await screenshot(page, capture);
 }
+async function coverageHeader(page, duplicate) {
+  await area(page, 'Matemática');
+  const data = await page.evaluate(() => {
+    const c = PCIPhase2V28.getCoverage('Matemática');
+    return { texto: document.querySelector('#v47coverageCount').innerText,
+      usadosEsSet: c.used instanceof Set, usados: [...c.used], total: c.total,
+      porcentaje: c.percent, componente: c.component };
+  });
+  assert.equal(data.usadosEsSet, true, 'El encabezado debe conservar el contrato Set de V2.');
+  assert.deepEqual(data.usados, duplicate ? [controlId] : []);
+  assert.equal(data.total, 68);
+  assert.equal(data.porcentaje, duplicate ? 1.5 : 0);
+  assert.equal(data.componente, 'FG');
+  assert.match(data.texto, duplicate ? /^1 de 68\b/ : /^0 de 68\b/);
+  return data;
+}
 
 let browser;
 try {
@@ -327,9 +388,11 @@ try {
       // Cobertura en casos independientes antes de los editores: una falla de
       // interacción en un modal no puede impedir que se compruebe el cálculo.
       record.soloEnPrimero = await coverage(page, false);
+      record.encabezadoSoloEnPrimero = await coverageHeader(page, false);
       await coveragePanel(page, false, `${device.nombre}-05-cobertura-solo-en-primero.png`);
       await importState(page, `sim-migracion-${device.nombre}-b`, scenarios[1]);
       record.enPrimeroYTercero = await coverage(page, true);
+      record.encabezadoEnPrimeroYTercero = await coverageHeader(page, true);
       await coveragePanel(page, true, `${device.nombre}-06-cobertura-en-tercero.png`);
       await importState(page, `sim-migracion-${device.nombre}-a-desarrollo`, scenarios[0]);
 
@@ -349,7 +412,8 @@ try {
       await page.locator('#v28groups [data-g="socialB-c5"] .v28-assigned-wrap').evaluate(
         el => el.scrollIntoView({ block: 'center' }));
       await screenshot(page, `${device.nombre}-02-contenidos-sociales.png`);
-      await recordPlan(page, record, 'socialB-c5', scenarios[0].migration.groups['socialB-c5'].plansBimestrales[0], 2,
+      await recordPlan(page, record, 'socialB-c5', scenarios[0].migration.groups['socialB-c5'].plansBimestrales[0],
+        socialContents.slice(2).map(row => row.id), 2,
         `${device.nombre}-03-plan-cuatrimestral.png`, 'planCuatrimestral');
 
       // Un modal bloqueado no debe impedir los casos independientes. Reiniciar
@@ -358,14 +422,20 @@ try {
         await importState(page, `sim-migracion-${device.nombre}-a-matematica`, scenarios[0]);
       await area(page, 'Matemática');
       const mathCard = page.locator('#v28groups [data-g="matematica-n1"]');
-      // v38 usa content-visibility:auto: desplazar la tarjeta antes de leer su
-      // texto renderizado, igual que en los cuatro agrupamientos de Sociales.
+      // Leer el texto efectivamente renderizado, conservando la comprobación
+      // exacta que detectó el problema de las tarjetas en celular.
       await mathCard.locator('.v28-assigned-wrap').scrollIntoViewIfNeeded();
       await mathCard.locator('.v28-assigned').waitFor({ state: 'visible' });
-      assert.ok((await mathCard.locator('.v28-assigned').innerText()).includes(control.text));
+      record.contenidoMatematica = await mathCard.locator('.v28-assigned').evaluate(el => ({
+        texto: el.innerText, visible: el.checkVisibility({ contentVisibilityAuto: true }),
+        renderizadoTarjeta: getComputedStyle(el.closest('.v28-group')).contentVisibility
+      }));
+      assert.ok(record.contenidoMatematica.texto.includes(control.text),
+        `El texto completo debe verse en Matemática: ${JSON.stringify(record.contenidoMatematica)}.`);
       record.contenidoDeTerceroVisibleEnPrimero = true;
-      record.encabezadoHistoricoArea = await page.locator('#v47coverageCount').innerText();
-      await recordPlan(page, record, 'matematica-n1', scenarios[0].migration.groups['matematica-n1'].plansBimestrales[0], 4,
+      assert.match(await page.locator('#v47coverageCount').innerText(), /^0 de 68\b/);
+      await recordPlan(page, record, 'matematica-n1', scenarios[0].migration.groups['matematica-n1'].plansBimestrales[0],
+        [controlId], 4,
         `${device.nombre}-04-plan-anual.png`, 'planAnual');
       record.resultado = report.fallosDePlanes.some(f => f.dispositivo === device.nombre) ? 'fallido' : 'aprobado';
       console.log(`${device.nombre}: ${record.resultado}; mapa, contenidos, editores y cobertura registrados.`);
