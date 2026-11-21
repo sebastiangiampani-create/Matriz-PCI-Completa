@@ -38,8 +38,13 @@ async function loadV2OrientationFile(orientationId,orientationName){
  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
  const rows=JSON.parse(await new Response(stream).text());
  if(!Array.isArray(rows))throw Error('Base de orientación V2 inválida: '+orientationId);
- return rows.filter(r=>text(r.id)&&text(r.text)).map(r=>({id:text(r.id),orientation:orientationName,block:text(r.block),
-  subject:text(r.block),axis:text(r.axis),subaxis:'',text:text(r.text)}));
+ // Estructura V2: bloque → eje → subeje → texto. En estos archivos el eje
+ // llega como «Eje · Subeje»; se separa como en la base FO actual de V2.
+ return rows.filter(r=>text(r.id)&&text(r.text)).map(r=>{
+  const [axis,...rest]=text(r.axis).split(' · ');
+  return {id:text(r.id),orientation:orientationName,block:text(r.block),subject:text(r.block),
+   axis:text(axis),subaxis:text(rest.join(' · ')),text:text(r.text)};
+ });
 }
 export async function loadBa15V2Profile(orientationId){
  const o=ORIENTATIONS.find(x=>x.id===orientationId);
