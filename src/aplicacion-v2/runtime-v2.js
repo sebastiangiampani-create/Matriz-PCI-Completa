@@ -10,6 +10,7 @@
   const protectedMaps = new WeakSet();
   let hydrating = true, ready = false, notice = null, migrationSequence = 0;
   let reported = '', draftFailure = false, draftSequence = 0, leaving = false;
+  let restoredSerial = '';
   let activeView = 'oferta';
   const baseSave = save;
   const baseScreen = screen;
@@ -46,6 +47,9 @@
       school: publicContext.school.name, selected: [track], active: track,
       maps: { [track]: emptyMap() }
     };
+    // Referencia del estado recibido, antes del prearmado y de la prescripción
+    // PVF. Un estado nuevo en memoria todavía no es un borrador conservado.
+    if (config.modelo === 'media' && editable) restoredSerial = JSON.stringify(state);
     // Con histórico, el mapa vacío es una decisión explícita hasta la aceptación.
     if (provided || config.fuenteLegado) preserveMaps();
   }
@@ -65,6 +69,7 @@
 
   function snapshot() {
     identity();
+    window.PCIPVFMedia?.reconcile();
     return copy(state);
   }
 
@@ -175,6 +180,7 @@
       state = normalizedState;
       preserveMaps();
       identity();
+      window.PCIPVFMedia?.reconcile();
       renderHome();
       window.screen({ oferta: 'offer', desarrollo: 'proposal', gestion: 'institutional', panel: 'panel' }[activeView] || 'offer');
     } finally { hydrating = false; }
@@ -324,7 +330,12 @@
     if (navigate(initial) === false) navigate('oferta');
     ready = true;
     hydrating = false;
-    reported = JSON.stringify(snapshot());
+    const initialSnapshot = snapshot();
+    const initialSerial = JSON.stringify(initialSnapshot);
+    if (config.modelo === 'media' && editable) {
+      reported = restoredSerial;
+      if (initialSerial !== restoredSerial) await reportDraft(initialSnapshot);
+    } else reported = initialSerial;
     writeView(activeView, true);
     if (config.fuenteLegado) await prepareMigration();
     window.addEventListener('popstate', () => {
