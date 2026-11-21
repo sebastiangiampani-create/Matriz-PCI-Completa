@@ -134,13 +134,44 @@ const report = { paso: 2, fechaEjecucion: new Date().toISOString(),
   commit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   pagina: 'revision-v2-embed.html', datos: 'Estado escolar simulado y catálogos oficiales locales',
   contenidoControl: control, dispositivos: [], capturas: [], errores: [],
-  inicializaciones: [], fallosDePlanes: [],
+  inicializaciones: [], fallosDePlanes: [], geometriaCapturas: [],
   solicitudesSupabase: [], otrasSolicitudesExternasBloqueadas: [], fuentesRemotasSustituidas: 0 };
 
+async function settleView(page) {
+  return page.evaluate(async () => {
+    await document.fonts.ready;
+    const sample = () => {
+      const shell = document.querySelector('#v38modal:not([hidden]) #v38shell');
+      const r = shell?.getBoundingClientRect();
+      return { scrollX, scrollY, visualX: visualViewport.offsetLeft,
+        visualY: visualViewport.offsetTop, width: visualViewport.width,
+        height: visualViewport.height, shellTop: r?.top ?? null,
+        shellScroll: shell?.scrollTop ?? null };
+    };
+    // V42 usa desplazamiento suave. Una captura mientras sigue moviéndose
+    // puede recortar incluso un modal fijo; esperar estabilidad, sin alterar CSS.
+    return new Promise((resolve, reject) => {
+      let previous, stable = 0;
+      const start = performance.now();
+      const frame = () => {
+        const current = sample(), key = JSON.stringify(current);
+        stable = key === previous ? stable + 1 : 0;
+        if (stable >= 4) return resolve(current);
+        if (performance.now() - start > 5000)
+          return reject(Error('La vista no se estabilizó antes de la captura.'));
+        previous = key;
+        requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    });
+  });
+}
 async function screenshot(page, file) {
-  await page.evaluate(async () => { await document.fonts.ready;
-    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
+  const before = await settleView(page);
   await page.screenshot({ path: resolve(artifacts, file), fullPage: false });
+  const after = await settleView(page);
+  report.geometriaCapturas.push({ archivo: file, antes: before, despues: after });
+  assert.deepEqual(after, before, `${file}: la vista debe permanecer estable durante la captura.`);
   report.capturas.push(file);
 }
 async function importState(page, pci, data) {
@@ -185,23 +216,29 @@ async function area(page, name) {
   await page.locator('#v28groups [data-g] .v97-group-coverage').first().waitFor();
 }
 async function modalGeometry(page) {
+  await settleView(page);
   const geometry = await page.evaluate(() => {
     const rect = selector => {
       const r = document.querySelector(selector).getBoundingClientRect();
-      return { left: r.left, right: r.right, width: r.width };
+      return { left: r.left, right: r.right, width: r.width,
+        top: r.top, bottom: r.bottom, height: r.height };
     };
     const shell = document.querySelector('#v38shell');
-    return { innerWidth, visualWidth: visualViewport.width,
+    return { innerWidth, innerHeight, visualWidth: visualViewport.width,
+      visualHeight: visualViewport.height, visualTop: visualViewport.offsetTop,
       modal: rect('#v38modal'), shell: rect('#v38shell'), close: rect('#v38modal [data-close]'),
       scrollWidth: shell.scrollWidth, clientWidth: shell.clientWidth,
       scrollTop: shell.scrollTop, scrollLeft: shell.scrollLeft };
   });
   const width = page.viewportSize().width;
+  const height = page.viewportSize().height;
   assert.ok(Math.abs(geometry.innerWidth - width) <= 1,
     `El modal no debe expandir el viewport: ${JSON.stringify(geometry)}.`);
   for (const key of ['modal', 'shell', 'close']) {
     assert.ok(geometry[key].left >= -1 && geometry[key].right <= width + 1,
       `${key} debe quedar dentro de la pantalla: ${JSON.stringify(geometry)}.`);
+    assert.ok(geometry[key].top >= -1 && geometry[key].bottom <= height + 1,
+      `${key} debe verse completo en altura: ${JSON.stringify(geometry)}.`);
   }
   assert.ok(geometry.scrollWidth <= geometry.clientWidth + 1,
     `El editor no debe desbordarse horizontalmente: ${JSON.stringify(geometry)}.`);
