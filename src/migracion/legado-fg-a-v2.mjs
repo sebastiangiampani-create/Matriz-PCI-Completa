@@ -10,8 +10,10 @@
  *  - Ciencias Sociales de 3.º en Media: dos laboratorios simultáneos en un
  *    mismo cuatrimestre corresponden a la opción de 12 laboratorios de V2
  *    (socialA y socialB en C5/C6); el resultado informa socialOption 'B'.
- *  - Contenidos de otro año: se pueden ubicar en cualquier nivel (y repetir);
- *    solo suman cobertura en su propio año. Si no coinciden en el año del
+ *  - Contenidos de otro año: se pueden ubicar en cualquier nivel (y repetir).
+ *    Solo cuentan para la cobertura cuando están ubicados en su propio nivel;
+ *    ubicados únicamente en otro nivel no cuentan en ninguno (v91-coverage-core
+ *    cruza cada nivel con el universo de ese año). Si no coinciden en el año del
  *    agrupamiento, se buscan en los demás años; con una única coincidencia
  *    exacta se incorporan con su ID V2 (que conserva su año). Su materia no
  *    se agrega a la celda ni genera pendientes.
@@ -361,7 +363,7 @@ export function migrarLegadoFgAV2({
           legacyGroupId: String(grupo.id ?? ''),
           materiasPropuestas: copiar(materias.ids),
           origenesContenido,
-          // Suman cobertura solo en su propio año (el ID V2 conserva el año).
+          // No cuentan en este nivel; solo cuentan si también se ubican en su nivel.
           contenidosOtroAnio,
           materiasOtroAnio: copiar(materias.otrosAnios),
           grupoOriginal: copiar(grupo)
