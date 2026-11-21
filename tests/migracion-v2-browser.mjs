@@ -324,6 +324,15 @@ try {
       await page.locator('#matrix .drop[data-slot="socialB-c5"]').scrollIntoViewIfNeeded();
       await screenshot(page, `${device.nombre}-01-mapa-opcion-b.png`);
 
+      // Cobertura en casos independientes antes de los editores: una falla de
+      // interacción en un modal no puede impedir que se compruebe el cálculo.
+      record.soloEnPrimero = await coverage(page, false);
+      await coveragePanel(page, false, `${device.nombre}-05-cobertura-solo-en-primero.png`);
+      await importState(page, `sim-migracion-${device.nombre}-b`, scenarios[1]);
+      record.enPrimeroYTercero = await coverage(page, true);
+      await coveragePanel(page, true, `${device.nombre}-06-cobertura-en-tercero.png`);
+      await importState(page, `sim-migracion-${device.nombre}-a-desarrollo`, scenarios[0]);
+
       await area(page, 'Ciencias Sociales');
       for (const slot of socialSlots) {
         const card = page.locator(`#v28groups [data-g="${slot}"]`);
@@ -349,20 +358,15 @@ try {
         await importState(page, `sim-migracion-${device.nombre}-a-matematica`, scenarios[0]);
       await area(page, 'Matemática');
       const mathCard = page.locator('#v28groups [data-g="matematica-n1"]');
+      // v38 usa content-visibility:auto: desplazar la tarjeta antes de leer su
+      // texto renderizado, igual que en los cuatro agrupamientos de Sociales.
+      await mathCard.locator('.v28-assigned-wrap').scrollIntoViewIfNeeded();
+      await mathCard.locator('.v28-assigned').waitFor({ state: 'visible' });
       assert.ok((await mathCard.locator('.v28-assigned').innerText()).includes(control.text));
       record.contenidoDeTerceroVisibleEnPrimero = true;
       record.encabezadoHistoricoArea = await page.locator('#v47coverageCount').innerText();
-      record.soloEnPrimero = await coverage(page, false);
       await recordPlan(page, record, 'matematica-n1', scenarios[0].migration.groups['matematica-n1'].plansBimestrales[0], 4,
         `${device.nombre}-04-plan-anual.png`, 'planAnual');
-      if (record.planAnual?.resultado === 'fallido')
-        await importState(page, `sim-migracion-${device.nombre}-a-cobertura`, scenarios[0]);
-      await coveragePanel(page, false, `${device.nombre}-05-cobertura-solo-en-primero.png`);
-
-      // Nuevo PCI simulado: no se reaplica el adaptador a un estado ya marcado.
-      await importState(page, `sim-migracion-${device.nombre}-b`, scenarios[1]);
-      record.enPrimeroYTercero = await coverage(page, true);
-      await coveragePanel(page, true, `${device.nombre}-06-cobertura-en-tercero.png`);
       record.resultado = report.fallosDePlanes.some(f => f.dispositivo === device.nombre) ? 'fallido' : 'aprobado';
       console.log(`${device.nombre}: ${record.resultado}; mapa, contenidos, editores y cobertura registrados.`);
     } catch (error) {
