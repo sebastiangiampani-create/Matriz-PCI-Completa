@@ -130,6 +130,7 @@ const report = { paso: 2, fechaEjecucion: new Date().toISOString(),
   commit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   pagina: 'revision-v2-embed.html', datos: 'Estado escolar simulado y catálogos oficiales locales',
   contenidoControl: control, dispositivos: [], capturas: [], errores: [],
+  inicializaciones: [],
   solicitudesSupabase: [], otrasSolicitudesExternasBloqueadas: [], fuentesRemotasSustituidas: 0 };
 
 async function screenshot(page, file) {
@@ -143,6 +144,12 @@ async function importState(page, pci, data) {
     { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.PCIPhase2V28 && window.PCICoverageV91 &&
     document.querySelector('#offer.active'), null, { timeout: 30000 });
+  // v80 aplica el acceso dos veces al arrancar (1400 ms desde app-ready y
+  // 2200 ms desde su carga). Cada aplicación puede volver al inicio de Fase 2.
+  // Observar su finalización evita navegar sobre una aplicación aún iniciándose.
+  await page.waitForFunction(() => window.__paso2Arranque?.iniciosV80.length === 2,
+    null, { timeout: 15000 });
+  report.inicializaciones.push({ pci, ...await page.evaluate(() => window.__paso2Arranque) });
   await page.evaluate(({ pci, document }) => window.postMessage({ type: 'V2_IMPORT', pci, document }, location.origin),
     { pci, document: data.migrated });
   await page.waitForFunction(({ orientation, fecha }) =>
@@ -171,9 +178,12 @@ async function area(page, name) {
   await page.locator(`#v28home [data-area="${name}"]`).click();
   await page.locator('#v28board').waitFor({ state: 'visible' });
   await page.locator('#v28groups [data-g]').first().waitFor();
+  await page.locator('#v28groups [data-g] .v97-group-coverage').first().waitFor();
 }
 async function checkPlan(page, slot, expected, count, capture) {
-  await page.locator(`#v28groups [data-g="${slot}"] [data-plans]`).click();
+  const button = page.locator(`#v28groups [data-g="${slot}"] [data-plans]`);
+  await button.evaluate(el => el.scrollIntoView({ block: 'center' }));
+  await button.click();
   await page.locator('[data-open="1"]').click();
   const editor = page.locator('#v38plan');
   await editor.waitFor();
@@ -238,7 +248,26 @@ try {
       hasTouch: device.hasTouch, deviceScaleFactor: 1, serviceWorkers: 'block' });
     await context.route('**/*', async route => {
       const url = new URL(route.request().url());
-      if (url.origin === origin) return route.continue();
+      if (url.origin === origin) {
+        if (url.pathname.endsWith('/data/materias-v2.json')) {
+          // init() espera este GET después de instalar los módulos. El listener
+          // es pasivo: no altera sesiones, funciones, callbacks ni estado V2.
+          await route.request().frame().evaluate(() => {
+            if (!window.PCIAppAccessV80) throw Error('El observador requiere el módulo de acceso instalado.');
+            window.__paso2Arranque = { eventos: [], iniciosV80: [] };
+            window.addEventListener('pci-access-changed', event => {
+              const pila = new Error().stack;
+              const record = { tiempo: performance.now(), rol: event.detail.role, pila,
+                tableroVisible: !!document.querySelector('#v28board:not([hidden])'),
+                pantalla: document.querySelector('.screen.active')?.id };
+              window.__paso2Arranque.eventos.push(record);
+              if (/\bat start\s*\(/.test(pila) && !pila.includes('applyProfile'))
+                window.__paso2Arranque.iniciosV80.push(record);
+            });
+          });
+        }
+        return route.continue();
+      }
       if (['fonts.googleapis.com', 'fonts.gstatic.com'].includes(url.hostname)) {
         report.fuentesRemotasSustituidas++;
         return route.fulfill({ status: 200, contentType: 'text/css', body: '' });
@@ -261,6 +290,9 @@ try {
       await area(page, 'Ciencias Sociales');
       for (const slot of socialSlots) {
         const card = page.locator(`#v28groups [data-g="${slot}"]`);
+        await card.locator('.v28-assigned-wrap').scrollIntoViewIfNeeded();
+        assert.ok(await card.locator('.v28-assigned').first().isVisible(),
+          `${slot}: los contenidos no deben estar ocultos.`);
         for (const id of scenarios[0].migration.groups[slot].contents) {
           const content = catalog.find(row => row.id === id);
           assert.ok((await card.locator('.v28-assigned').allTextContents()).some(t => t.includes(content.text)),
@@ -268,7 +300,8 @@ try {
         }
       }
       record.contenidosSocialesVisibles = true;
-      await page.locator('#v28groups [data-g="socialB-c5"]').scrollIntoViewIfNeeded();
+      await page.locator('#v28groups [data-g="socialB-c5"] .v28-assigned-wrap').evaluate(
+        el => el.scrollIntoView({ block: 'center' }));
       await screenshot(page, `${device.nombre}-02-contenidos-sociales.png`);
       await checkPlan(page, 'socialB-c5', scenarios[0].migration.groups['socialB-c5'].plansBimestrales[0], 2,
         `${device.nombre}-03-plan-cuatrimestral.png`);
