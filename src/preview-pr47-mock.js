@@ -118,6 +118,13 @@
     // El encabezado exterior no debe tapar controles dentro del iframe al desplazarse.
     const portalHeader=document.querySelector('.site-top');
     if(portalHeader)portalHeader.style.position='relative';
+    // El marco completo debe caber en la ventana y no competir con dos desplazamientos animados.
+    document.documentElement.style.scrollBehavior='auto';
+    const editorFrame=document.getElementById('v2OriginalFrame');
+    if(editorFrame){
+      editorFrame.style.height='min(1130px, calc(100dvh - 24px))';
+      editorFrame.style.minHeight='0';
+    }
     const protectLinks=()=>{
       for(const id of ['platformHomeLink','adminPanelLink','schoolPanelLink','historicalPciLink','homeHistoricalPciLink']){
         const a=document.getElementById(id);
