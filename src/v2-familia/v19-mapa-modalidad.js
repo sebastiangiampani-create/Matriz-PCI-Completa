@@ -43,16 +43,17 @@ const profileRows=CFG.model==='tecnica'?[
  {k:'practicas',l:'Prácticas Profesionalizantes (Proyecto de Vinculación con el Futuro)',area:'Prácticas Profesionalizantes',annual:true,allowedYears:[5,6]},
  {k:'otros',l:'Otros formatos pedagógicos',area:'Otros formatos pedagógicos',format:'otros',a:t=>true}
 ]:[
- {k:'lengua',l:'Lengua y Literatura',area:'Lengua y Literatura',annual:true},
- {k:'matematica',l:'Matemática',area:'Matemática',annual:true},
- {k:'adicional',l:'Lengua Adicional',area:'Lengua Adicional',annual:true},
- {k:'naturales',l:'Laboratorios · Ciencias Naturales',area:'Ciencias Naturales',format:'laboratorio',a:t=>true},
- {k:'socialA',l:'Laboratorios · Ciencias Sociales',area:'Ciencias Sociales',format:'laboratorio',a:t=>true},
- {k:'artes',l:'Talleres · Artes',area:'Talleres articulados',format:'taller',a:t=>true},
- {k:'tecnologias',l:'Talleres · Tecnologías',area:'Formación General',format:'taller',a:t=>true},
+ // BA +15: RES-1375-MEDGC-25, Anexo I, 6.3 (estructura) y 6.5 (áreas); formatos de SSGDA-105-26.
+ {k:'lengua',l:'Lengua y Literatura',area:'Lengua y Literatura',annual:true,allowedYears:[1,2,3,4]},
+ {k:'matematica',l:'Matemática',area:'Matemática',annual:true,allowedYears:[1,2,3,4]},
+ {k:'adicional',l:'Lengua Adicional (Inglés)',area:'Lengua Adicional',annual:true,allowedYears:[1,2,3,4]},
+ {k:'naturales',l:'Laboratorio de Ciencias Naturales',area:'Ciencias Naturales',format:'laboratorio',a:t=>true},
+ {k:'socialA',l:'Laboratorio de Ciencias Sociales',area:'Ciencias Sociales',format:'laboratorio',a:t=>true},
+ {k:'artes',l:'Talleres · Artes',area:'Talleres articulados',format:'taller',a:t=>t<=2||t===5||t===6},
+ {k:'tecnologias',l:'Talleres · Educación Tecnológica / Tecnologías de la Información',area:'Formación General',format:'taller',a:t=>t<=6},
  {k:'ef',l:'Talleres · Educación Física',area:'Talleres articulados',format:'taller',a:t=>true},
- {k:'foN3',l:'Formación Orientada · espacios curriculares',area:'Formación Orientada',format:'orientacion',a:t=>t>=3},
- {k:'otros',l:'Tutoría, EDI y otros formatos',area:'Otros formatos pedagógicos',format:'otros',a:t=>true}
+ {k:'foN3',l:'Laboratorio de la Orientación (Área de la Orientación)',area:'Formación Orientada',format:'orientacion',a:t=>t>=3},
+ {k:'otros',l:'Tutoría (Nivel I) y EDI (taller)',area:'Otros formatos pedagógicos',format:'otros',a:t=>true}
 ];
 function profileRow(k){return profileRows.find(r=>r.k===k)}
 function mappedArea(s){
@@ -104,6 +105,25 @@ function techMember(r,s,level){
  }
  return [false,'Espacio curricular inexistente'];
 }
+function baMember(r,s,level){
+ const area=mappedArea(s),name=String(s.name||''),orient=s.origin==='FO'||areaOf(s)==='Formación Orientada';
+ const no=msg=>[false,msg+' RES-1375-MEDGC-25, Anexo I, 6.5.'];
+ switch(r.k){
+  case 'lengua':return /^lengua y literatura$/i.test(name)?[true,'']:no('Solo Lengua y Literatura.');
+  case 'matematica':return /^matem[aá]tica$/i.test(name)?[true,'']:no('Solo Matemática.');
+  case 'adicional':return /^(lengua adicional|ingl[eé]s)/i.test(name)?[true,'']:no('Solo Lengua Adicional (Inglés).');
+  case 'naturales':return !orient&&area==='Ciencias Naturales'?[true,'']:no('El Área de Ciencias Naturales integra Biología, Físico-Química, Física y Química según el nivel.');
+  case 'socialA':return !orient&&area==='Ciencias Sociales'?[true,'']:no('El Área de Ciencias Sociales integra Historia, Geografía, Formación Ética y Ciudadana, Economía y Filosofía según el nivel.');
+  case 'artes':return /^artes$/i.test(name)?[true,'']:no('Artes se organiza en taller (Nivel I y III).');
+  case 'ef':return /^educaci[oó]n f[ií]sica$/i.test(name)?[true,'']:no('Solo Educación Física.');
+  case 'tecnologias':return !orient&&/^(educaci[oó]n tecnol[oó]gica|tecnolog[ií]as de la informaci[oó]n)$/i.test(name)?[true,'']:no('Taller de Educación Tecnológica (I) o Tecnologías de la Información (II y III).');
+  case 'foN3':return orient&&level>=2?[true,'']:no('El Área de la Orientación comienza en Nivel II; en Nivel IV suma Historia y Tecnologías de la Información orientadas.');
+  case 'otros':
+   if(/^tutor[ií]a/i.test(name))return level===1?[true,'']:no('Tutoría corresponde al Nivel I.');
+   return /Espacios de Definición|^EDI/i.test(name)||s.origin==='CUSTOM'?[true,'']:no('Solo Tutoría, EDI y espacios agregados por la escuela.');
+ }
+ return [false,'Espacio curricular inexistente'];
+}
 function canAssign(slot,s){
  const level=slotYear(slot),term=slotTerm(slot),r=profileRow(String(slot).replace(/-(?:n|c)\d+$/,''));
  if(!s||!r||!level||level>LV||level<1)return [false,'Espacio curricular inexistente'];
@@ -113,6 +133,7 @@ function canAssign(slot,s){
  if(r.annual&&term)return [false,'El espacio anual debe ubicarse en una celda de nivel'];
  if(!r.annual&&!term)return [false,'Este formato requiere un cuatrimestre'];
  if(CFG.model==='tecnica')return techMember(r,s,level);
+ if(CFG.model==='ba15')return baMember(r,s,level);
  const area=mappedArea(s);
  if(r.k==='anualEsp'&&fieldOf(s)==='formacion_tecnica_especifica')return [true,''];
  if(r.k==='foN3'&&s.origin==='FO'&&fieldOf(s)!=='practicas_profesionalizantes')return [true,''];
@@ -283,23 +304,50 @@ function techSpaces(){
  }
  return spaces;
 }
-function showNorma(result){
+function showNorma(result,label='IF-2026-51169092-GCABA-SSPIE'){
  const el=$id('validation');if(!el)return;
  const items=[...result.errors.map(x=>['Error',x]),...result.warnings.filter(x=>x.code!=='HOURS_UNVERIFIED'&&x.code!=='SUBJECTS_PENDING').map(x=>['Pendiente',x])];
  const unverified=result.warnings.filter(x=>x.code==='HOURS_UNVERIFIED').length;
  el.className='validation '+(result.errors.length?'rule-block':'');
- el.innerHTML='<strong>'+(result.errors.length?'El mapa no cumple la norma IF-2026-51169092-GCABA-SSPIE':'Composición estructuralmente consistente con IF-2026-51169092-GCABA-SSPIE')+'</strong>'+
-  '<ul class="norma-list">'+items.slice(0,12).map(([k,x])=>'<li>'+k+': '+esc(x.message)+(x.page?' (pág. '+x.page+')':'')+'</li>').join('')+
+ el.innerHTML='<strong>'+(result.errors.length?'El mapa no cumple la norma '+label:'Composición estructuralmente consistente con '+label)+'</strong>'+
+  '<ul class="norma-list">'+items.slice(0,12).map(([k,x])=>'<li>'+k+': '+esc(x.message)+(x.page?(/^\d+\.\d/.test(String(x.page))?' (punto '+x.page+')':' (pág. '+x.page+')'):'')+'</li>').join('')+
   (items.length>12?'<li>… y '+(items.length-12)+' observaciones más.</li>':'')+
   (unverified?'<li>Pendiente: '+unverified+' espacios sin carga horaria declarada en el catálogo (no se verifica el tope de 9 horas).</li>':'')+'</ul>';
 }
+const BA_SOURCE='RES-1375-MEDGC-25, Anexo I (IF-2025), 6.3 y 6.5';
+const BA_PLACEHOLDER=/^materias? de la orientaci[oó]n$/i;
+function baEvaluate(){
+ const errors=[],warnings=[],placements=cur().placements;
+ const placedIn=y=>new Set(Object.entries(placements).filter(([k,ids])=>ids?.length&&slotYear(k)===y).flatMap(([,ids])=>ids));
+ for(let y=1;y<=LV;y++){
+  const req=allSubjects().filter(x=>x.year===y&&x.origin==='FG'),inLevel=placedIn(y);
+  const hours=req.reduce((a,x)=>a+(Number(x.weeklyHours)||0),0);
+  if(hours!==38)warnings.push({code:'BA_HOURS_'+y,message:'El catálogo del Nivel '+y+' suma '+hours+' h; la estructura establece 38 horas cátedra.',page:'6.3'});
+  for(const x of req.filter(x=>!BA_PLACEHOLDER.test(x.name)))
+   if(!inLevel.has(x.id))errors.push({code:'BA_MISSING_'+y,message:'Nivel '+y+': falta ubicar '+x.name+' ('+x.weeklyHours+' h).',page:'6.3'});
+  if(y>=2){
+   const orientation=Object.entries(placements).some(([k,ids])=>k.startsWith('foN3-')&&slotYear(k)===y&&ids?.length);
+   if(!orientation)errors.push({code:'BA_ORIENTATION_'+y,message:'Nivel '+y+': el Área de la Orientación no tiene espacios curriculares.',page:'6.5'});
+  }
+ }
+ warnings.push({code:'BA_PRESENCIAL',message:'Turno noche (SSGDA-105-26): troncales ≥80% presencial; laboratorios y talleres 60–70%; Educación Física y Tutoría 100% presencial; EDI 100% asincrónico. Se define en la grilla horaria.',page:'4.1'});
+ return {ruleSet:'ba15-res-1375-25/1',source:BA_SOURCE,errors,warnings};
+}
 window.V2ModalNorma={spaces:()=>CFG.model==='tecnica'?techSpaces():[],
- evaluate:()=>CFG.model==='tecnica'&&NORM?NORM.validateFinalComposition({model:'tecnica',specialtyId:SPECIALTY,spaces:techSpaces()}):null};
+ evaluateBA15:baEvaluate,
+ evaluate:()=>CFG.model==='ba15'?baEvaluate():CFG.model==='tecnica'&&NORM?NORM.validateFinalComposition({model:'tecnica',specialtyId:SPECIALTY,spaces:techSpaces()}):null};
 validateOffer=function(){
  const invalid=[];for(const [slot,ids] of Object.entries(cur().placements)){
   for(const id of ids){const s=byIdInMap(id);const [ok,msg]=canAssign(slot,s);if(!ok)invalid.push(msg)}
  }
  if(invalid.length){blocked(invalid[0]);return}
+ if(CFG.model==='ba15'){
+  const result=baEvaluate();
+  cur().normaComposicion={ruleSet:result.ruleSet,source:result.source,errors:result.errors.length,warnings:result.warnings.length,checkedAt:new Date().toISOString()};
+  cur().valid=!result.errors.length;save();renderOffer();showNorma(result,'RES-1375-MEDGC-25 (Régimen +15)');
+  toast(result.errors.length?'El mapa no cumple la estructura del Régimen +15':'Mapa consistente con el Régimen +15. Queda pendiente la revisión pedagógica.',!!result.errors.length);
+  return;
+ }
  if(CFG.model==='tecnica'){
   if(!NORM){blocked('No se pudo cargar la norma de composición; el mapa no se valida.');return}
   const result=window.V2ModalNorma.evaluate();
@@ -314,7 +362,7 @@ validateOffer=function(){
 };
 const modal=$id('rulesModal');
 if(modal){
- modal.innerHTML='<div class="modal-box"><div class="row" style="justify-content:space-between"><h2>Reglas de composición</h2><button id="closeModalV2" class="btn">Cerrar</button></div><div class="modal-rule-note"><strong>'+esc(CFG.model==='tecnica'?'Educación Técnica · seis niveles · C1–C12':'BA +15 · cuatro niveles · C1–C8')+'</strong></div><p>'+esc(CFG.sourceNote)+'</p>'+(CFG.model==='tecnica'?'<p><strong>IF-2026-51169092-GCABA-SSPIE · Modalidad Técnica</strong></p><ul class="norma-list"><li>Troncales anuales: Lengua y Literatura 1.º–5.º; Matemática y Lengua Adicional 1.º–5.º (6.º en Computación y Administración de Empresas).</li><li>Ciencias Sociales: 8 espacios de integración cuatrimestrales (10 en Computación; 4/5 EIO y 4/5 EIE). Ciudadanía y Trabajo / Ciencia y Tecnología se ubican en 4.º, 5.º o 6.º y pueden integrarse con la Formación Específica del mismo año.</li><li>Ciencias Naturales: 6 espacios en 1.º a 3.º (4 EIO y 2 EIE); solo en 1.º puede haber una única asignatura.</li><li>Educación Física: 12 espacios formativos cuatrimestrales. Educación Artística: 2, en 1.º.</li><li>Tecnología de la Representación: 2 o 3 anuales. Taller del 1.er ciclo: 2 anuales (1.º y 2.º).</li><li>Taller de la Especialidad: anual, de 3.º a 6.º según especialidad. Espacio anual de la especialidad: 4.º, 5.º y 6.º.</li><li>Espacios de integración de la Especialidad: 4 a 6 por año en 4.º a 6.º; no rige el tope de 9 horas.</li><li>Prácticas Profesionalizantes: 1 o 2, en 5.º/6.º, dentro del Proyecto de Vinculación con el Futuro.</li><li>Ningún espacio de integración o formativo supera 9 horas cátedra, salvo los de la Especialidad. Cada espacio integra al menos dos asignaturas del mismo año, salvo excepción del plan.</li></ul>':'<p>Se respetan los niveles y el campo curricular de cada materia. Los espacios de integración y formativos se muestran como formatos diferentes. El mapa no se homologa automáticamente.</p>')+'<p>Las materias cuatrimestrales se asignan mediante el mismo drag and drop de V2; la distribución se replica al cuatrimestre par del nivel. Los espacios anuales ocupan ambos.</p></div>';
+ modal.innerHTML='<div class="modal-box"><div class="row" style="justify-content:space-between"><h2>Reglas de composición</h2><button id="closeModalV2" class="btn">Cerrar</button></div><div class="modal-rule-note"><strong>'+esc(CFG.model==='tecnica'?'Educación Técnica · seis niveles · C1–C12':'BA +15 · cuatro niveles · C1–C8')+'</strong></div><p>'+esc(CFG.sourceNote)+'</p>'+(CFG.model==='tecnica'?'<p><strong>IF-2026-51169092-GCABA-SSPIE · Modalidad Técnica</strong></p><ul class="norma-list"><li>Troncales anuales: Lengua y Literatura 1.º–5.º; Matemática y Lengua Adicional 1.º–5.º (6.º en Computación y Administración de Empresas).</li><li>Ciencias Sociales: 8 espacios de integración cuatrimestrales (10 en Computación; 4/5 EIO y 4/5 EIE). Ciudadanía y Trabajo / Ciencia y Tecnología se ubican en 4.º, 5.º o 6.º y pueden integrarse con la Formación Específica del mismo año.</li><li>Ciencias Naturales: 6 espacios en 1.º a 3.º (4 EIO y 2 EIE); solo en 1.º puede haber una única asignatura.</li><li>Educación Física: 12 espacios formativos cuatrimestrales. Educación Artística: 2, en 1.º.</li><li>Tecnología de la Representación: 2 o 3 anuales. Taller del 1.er ciclo: 2 anuales (1.º y 2.º).</li><li>Taller de la Especialidad: anual, de 3.º a 6.º según especialidad. Espacio anual de la especialidad: 4.º, 5.º y 6.º.</li><li>Espacios de integración de la Especialidad: 4 a 6 por año en 4.º a 6.º; no rige el tope de 9 horas.</li><li>Prácticas Profesionalizantes: 1 o 2, en 5.º/6.º, dentro del Proyecto de Vinculación con el Futuro.</li><li>Ningún espacio de integración o formativo supera 9 horas cátedra, salvo los de la Especialidad. Cada espacio integra al menos dos asignaturas del mismo año, salvo excepción del plan.</li></ul>':CFG.model==='ba15'?'<p><strong>RES-1375-MEDGC-25 · Régimen de Implementación Curricular +15</strong></p><ul class="norma-list"><li>Cuatro niveles (I a IV), 38 horas cátedra semanales por nivel (Anexo I, 6.3).</li><li>Troncales anuales en los cuatro niveles: Lengua y Literatura, Matemática y Lengua Adicional (Inglés).</li><li>Área de Ciencias Naturales: I Biología; II Biología y Físico-Química; III Física; IV Química.</li><li>Área de Ciencias Sociales: I y III Historia, Geografía y FEyC; II suma Economía; IV Filosofía.</li><li>Área de la Orientación: desde Nivel II; en Nivel IV suma Historia y Tecnologías de la Información orientadas.</li><li>Talleres: Educación Física (I–IV), Artes (I y III), Educación Tecnológica (I) y Tecnologías de la Información (II y III); EDI en formato taller; Tutoría en Nivel I.</li><li>Turno noche (SSGDA-105-26): 27 h presenciales y 11 asincrónicas.</li></ul>':'<p>Se respetan los niveles y el campo curricular de cada materia. Los espacios de integración y formativos se muestran como formatos diferentes. El mapa no se homologa automáticamente.</p>')+'<p>Las materias cuatrimestrales se asignan mediante el mismo drag and drop de V2; la distribución se replica al cuatrimestre par del nivel. Los espacios anuales ocupan ambos.</p></div>';
  modal.querySelector('#closeModalV2').onclick=()=>modal.classList.remove('open');
 }
 window.V2ModalMap={model:CFG.model,levels:LV,terms:TERMS,rowDefs,canAssign,assign:assignModal,move:moveModal,remove:removeModal};

@@ -30,6 +30,7 @@ jobs:
           node --check tests/v2-familia-portal-browser.mjs
           node --check scripts/derivar-v2-familia.mjs
           node --check tests/v2-tecnica-norma-browser.mjs
+          node --check tests/v2-ba15-norma-browser.mjs
       - name: Paridad módulo por módulo con V2 (derivados al día y vendor intacto)
         run: |
           node scripts/derivar-v2-familia.mjs --check
@@ -48,6 +49,7 @@ jobs:
           node tests/v2-familia-modalidades-browser.mjs
           node tests/v2-familia-portal-browser.mjs
           node tests/v2-tecnica-norma-browser.mjs
+          node tests/v2-ba15-norma-browser.mjs
       - name: Capturas del mapa original adaptado
         if: always()
         uses: actions/upload-artifact@v4

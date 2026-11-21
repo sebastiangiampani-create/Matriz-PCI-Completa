@@ -48,7 +48,7 @@
       "motivo": "Orden Laboratorio/Taller de Formación Orientada en Nivel 4 y 5 de Media.",
       "equivalentes": {
         "tecnica": "No aplica: IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18 no define ese orden; los formatos de la Especialidad se ubican por nivel en v19-mapa-modalidad.",
-        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+        "ba15": "No aplica: el Régimen +15 no establece esta regla de Media (RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche))."
       }
     },
     {
@@ -59,7 +59,7 @@
       "motivo": "Opción 10/12 laboratorios de Ciencias Sociales de Media.",
       "equivalentes": {
         "tecnica": "Reemplazado: Sociales 8 espacios (10 en Computación) y ubicación de Ciudadanía y Trabajo / Ciencia y Tecnología en 4.º–6.º, en v19-mapa-modalidad y validador IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18.",
-        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+        "ba15": "Reemplazado: áreas por nivel, talleres, Tutoría en Nivel I y estructura completa de 38 h en v19-mapa-modalidad (baMember/baEvaluate), según RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche)."
       }
     },
     {
@@ -80,7 +80,7 @@
       "motivo": "Prearmado de troncales y talleres según la estructura de Media.",
       "equivalentes": {
         "tecnica": "No aplica: la norma no establece un prearmado; las troncales se ubican en celdas anuales por nivel.",
-        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+        "ba15": "No aplica: el Régimen +15 no establece esta regla de Media (RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche))."
       }
     },
     {
@@ -91,7 +91,7 @@
       "motivo": "Intercambio de materias de Sociales Nivel 3 (C5/C6) de Media.",
       "equivalentes": {
         "tecnica": "Reemplazado: integración de Ciudadanía y Trabajo / Ciencia y Tecnología con la Formación Específica del mismo año (pág. 15), en v19-mapa-modalidad.",
-        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+        "ba15": "No aplica: el Régimen +15 no establece esta regla de Media (RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche))."
       }
     },
     {
@@ -152,7 +152,7 @@
       "motivo": "Atomización de contenidos FO de las orientaciones de Media.",
       "equivalentes": {
         "tecnica": "No aplica: Técnica usa la base de contenidos de su especialidad.",
-        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+        "ba15": "No aplica: el Régimen +15 no establece esta regla de Media (RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche))."
       }
     },
     {
@@ -174,7 +174,7 @@
       "motivo": "Reglas de Formación Orientada de Media.",
       "equivalentes": {
         "tecnica": "Reemplazado: formatos de la Especialidad (Taller anual 3.º–6.º, Espacio anual 4.º–6.º, integraciones 4.º–6.º, Prácticas 5.º–6.º) según IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18.",
-        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+        "ba15": "Reemplazado: áreas por nivel, talleres, Tutoría en Nivel I y estructura completa de 38 h en v19-mapa-modalidad (baMember/baEvaluate), según RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche)."
       }
     },
     {
@@ -185,7 +185,7 @@
       "motivo": "Mínimos de materias por espacio FO de Media (foN4, foLab5, foTaller5).",
       "equivalentes": {
         "tecnica": "Reemplazado: mínimo de dos asignaturas, tope de 9 horas y cantidades por nivel con validateFinalComposition (IF-2026-51169092-GCABA-SSPIE (Anexo II, 17/11/2026), Modalidad Técnica, págs. 13–18).",
-        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+        "ba15": "Reemplazado: áreas por nivel, talleres, Tutoría en Nivel I y estructura completa de 38 h en v19-mapa-modalidad (baMember/baEvaluate), según RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche)."
       }
     },
     {
@@ -469,7 +469,7 @@
       "motivo": "Articulación FG → FO y tope de horas de Media.",
       "equivalentes": {
         "tecnica": "No aplica: la integración FG + FO en laboratorios es margen del Bachillerato (pág. 12).",
-        "ba15": "Pendiente: IF-2026-51169092-GCABA-SSPIE regula Bachillerato y Técnica, no BA +15."
+        "ba15": "No aplica: el Régimen +15 no establece esta regla de Media (RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche))."
       }
     },
     {
