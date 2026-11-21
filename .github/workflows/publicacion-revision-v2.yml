@@ -29,7 +29,7 @@ jobs:
       - name: Verificar portal, perfiles y planes en escritorio y celular
         env:
           PCI_PREVIEW_ROOT: ${{ runner.temp }}/pci-revision-dist
-        run: node tests/publicacion-revision-v2-browser.mjs
+        run: node --import ./tests/publicacion-observar-click.mjs tests/publicacion-revision-v2-browser.mjs
       - name: Conservar resultados y capturas
         if: always()
         uses: actions/upload-artifact@v4
