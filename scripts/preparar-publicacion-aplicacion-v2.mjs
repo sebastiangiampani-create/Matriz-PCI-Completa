@@ -7,7 +7,8 @@ import {fileURLToPath} from 'node:url';
 
 const ROOT=await realpath(fileURLToPath(new URL('..',import.meta.url)));
 const EXTENSIONS=new Set(['.html','.js','.mjs','.css','.json','.txt','.svg','.png','.jpg','.jpeg','.webp','.ico','.woff','.woff2','.ttf','.md']);
-const ROOT_FILES=['index.html','pci-orientaciones.html','app.css','pci-orientaciones.css','pci-model.js','schools-catalog.csv'];
+const ROOT_FILES=['index.html','pci-orientaciones.html','panel-general.html','panel-escuela.html',
+  'panel-usuarios.html','panel-accesos.html','app.css','pci-orientaciones.css','pci-model.js','schools-catalog.csv'];
 const inside=(path,dir)=>{const rel=relative(dir,path);return !rel||rel!=='..'&&!rel.startsWith('..'+sep)&&!isAbsolute(rel);};
 async function exists(path){try{await lstat(path);return true;}catch(error){if(error.code==='ENOENT')return false;throw error;}}
 
