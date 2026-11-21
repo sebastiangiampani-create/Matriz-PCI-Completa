@@ -30,12 +30,27 @@ function ba15Name(normalized){
  if(s==='EDI')return'Espacios de Definición Institucional';
  return s;
 }
+async function loadV2OrientationFile(orientationId,orientationName){
+ if(!safeId(orientationId))throw Error('Orientación inválida');
+ const response=await fetch('vendor/pci-sec-aprende-v2/data/orientaciones/'+orientationId+'.txt',{cache:'force-cache'});
+ if(!response.ok)return [];
+ const bytes=Uint8Array.from(atob((await response.text()).trim()),c=>c.charCodeAt(0));
+ const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+ const rows=JSON.parse(await new Response(stream).text());
+ if(!Array.isArray(rows))throw Error('Base de orientación V2 inválida: '+orientationId);
+ return rows.filter(r=>text(r.id)&&text(r.text)).map(r=>({id:text(r.id),orientation:orientationName,block:text(r.block),
+  subject:text(r.block),axis:text(r.axis),subaxis:'',text:text(r.text)}));
+}
 export async function loadBa15V2Profile(orientationId){
  const o=ORIENTATIONS.find(x=>x.id===orientationId);
  if(!o)throw Error('Orientación BA +15 inexistente');
  const fg=await loadBa15FgBase();
  const v2Fo=await loadV2Fo();
- const fo=selectFoByOrientation(v2Fo,orientationId,ORIENTATIONS);
+ let fo=selectFoByOrientation(v2Fo,orientationId,ORIENTATIONS),foSource='Referencia FO V2 (curriculum_v96)';
+ // La base FO actual de V2 (860 contenidos) cubre 10 orientaciones. Para las
+ // demás, V2 conserva sus contenidos en data/orientaciones/<id>.txt: mismo
+ // diseño curricular que Media, sin crear contenidos nuevos.
+ if(!fo.length){fo=await loadV2OrientationFile(orientationId,o.name);foSource='V2 data/orientaciones/'+orientationId+'.txt';}
  if(fg.length!==1126)throw Error('La base BA +15 no conserva los 1.126 contenidos priorizados');
  const subjects=[];
  for(let i=0;i<4;i++)for(const m of BA15_NIVELES[i]){
@@ -62,7 +77,7 @@ export async function loadBa15V2Profile(orientationId){
  const foContents=fo.map(row=>({
    id:row.id,component:'FO',area:'Formación Orientada',subject:text(row.block||row.subject),
    axis:text(row.axis),subaxis:text(row.subaxis),text:text(row.text),
-   block:text(row.block),orientation:oriName,source:'Referencia FO V2, pendiente contraste BA+15'
+   block:text(row.block),orientation:oriName,source:foSource+', mismo diseño que Media'
  }));
  return common('ba15',oriName,4,subjects,fgContents,foContents,
   'Base de Formación General: 1126 contenidos originales con NES 1+2→Nivel 1; NES 3→N2; NES 4→N3; NES 5→N4. Oferta FO orientada por verificar contra plan BA+15.');
