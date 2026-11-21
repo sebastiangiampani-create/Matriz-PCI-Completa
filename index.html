@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <title>Secundaria aprende · PCI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<link href="assets/fonts/archivo-caveat.css" rel="stylesheet">
 <style>
 :root{--i:#12395c;--deep:#0d3550;--blue:#2c5da6;--m:#5f7382;--l:#d8e1e8;--band:#edf3f8;--mint:#e7f8f5}
 *{box-sizing:border-box}html,body{max-width:100%;overflow-x:hidden}body{margin:0;min-height:100vh;display:flex;flex-direction:column;background:#fff;color:var(--i);font-family:Archivo,Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -39,13 +38,13 @@
 const API='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-access';let catalog=[],adminSchools=[],selectedSchool=null;const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();const alpha=list=>[...(list||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'es',{sensitivity:'base',numeric:true}));
 function parseCsv(text){const rows=[];let row=[],field='',q=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(q&&text[i+1]==='"'){field+='"';i++;}else q=!q;}else if(c===','&&!q){row.push(field);field='';}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&text[i+1]==='\n')i++;row.push(field);field='';if(row.some(v=>v!==''))rows.push(row);row=[];}else field+=c;}if(field.length||row.length){row.push(field);if(row.some(v=>v!==''))rows.push(row);}return rows;}
 function isTechnicalSchool(s){if(s?.model==='tecnica')return true;const n=norm(s?.name||'').replace(/[^a-z0-9]+/g,' ');const e=norm(s?.email||'');return n.includes('tecnica')||n.includes('tecnicas')||n.includes('politecnica')||/(^|\s)et(\s|$)/.test(n)||/(^|\s)tec(\s|$)/.test(n)||e.startsWith('det_');}
-function schoolUrl(s){const model=isTechnicalSchool(s)?'&model=tecnica':'';return `escuela-online.html?school=${s.school_id}&name=${encodeURIComponent(s.name)}${model}`;}
+function schoolUrl(s){return organizationUrl(s)+'#historicAssignmentSection';}
 function organizationUrl(s){return `pci-orientaciones.html?school=${encodeURIComponent(s.school_id)}`;}
 const continueToOrganization=new URLSearchParams(location.search).get('continuar')==='pci';
 function schoolDestination(s){
   // La pantalla principal de toda escuela es la Organización curricular.
-  // La Formación General histórica continúa accesible desde allí, con su
-  // editor original y su mismo guardado. No se reescribe ni migra al ingresar.
+  // El trabajo anterior se consulta y asigna desde la misma aplicación.
+  // No se reescribe ni se incorpora automáticamente al ingresar.
   return 'pci-orientaciones.html?school='+encodeURIComponent(s.school_id)+'&nuevo=1';
 }
 async function call(body){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'No se pudo completar la operación.');return d;}catch(e){if(e.name==='AbortError')throw new Error('La operación tardó demasiado. Volvé a intentar.');throw e;}finally{clearTimeout(timer);}}

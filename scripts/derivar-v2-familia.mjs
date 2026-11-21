@@ -43,12 +43,37 @@ const conteos=n=>'{'+Array.from({length:n},(_,i)=>`${i+1}:1`).join(',')+'}';
 const AREAS_MEDIA="['Lengua y Literatura','Matemática','Lenguas Adicionales','Ciencias Naturales','Ciencias Sociales','Artes','Tecnologías','Educación Física','Formación Orientada']";
 // Áreas tomadas de las filas del mapa de la modalidad (V2ModalMap.rowDefs).
 const AREAS_MODALIDAD="(window.V2ModalMap?[...new Set(window.V2ModalMap.rowDefs().map(r=>r.area).filter(Boolean))]:"+AREAS_MEDIA+")";
+const ACCESO_ESCOLAR_V85=[{
+  de:"(() => {\n  const KEY='pci-v85-access-session';",veces:1,
+  a:`(() => {
+  // La aplicación integrada ya verificó la sesión escolar. V85 no ofrece
+  // perfiles simulados ni cambia sus permisos; V80 recibe esa sesión.
+  if(window.__PCI_ESCUELA_VERIFICADA__===true){
+    window.PCIAccessPanelV85=Object.freeze({
+      show:()=>false,applyProfile:()=>false,clear:()=>false,
+      teachers:()=>Object.values(state.institutional?.teachers||{})
+    });
+    return;
+  }
+  const KEY='pci-v85-access-session';`,
+  motivo:'Usar la sesión escolar verificada de la aplicación integrada sin mostrar ni persistir perfiles de prueba; conservar V85 habitual fuera de esa aplicación.'
+}];
+const NAVEGACION_ESCOLAR=[{
+  de:"    if(offer)offer.hidden=management;\n    if(proposal)proposal.hidden=management;\n    if(institutional)institutional.hidden=curricular;",veces:1,
+  a:`    const schoolApp=window.__PCI_ESCUELA_VERIFICADA__===true;
+    if(offer)offer.hidden=schoolApp?false:management;
+    if(proposal)proposal.hidden=schoolApp?false:management;
+    if(institutional)institutional.hidden=schoolApp
+      ? !window.PCIAplicacionV2?.contexto.permissions.puedeEditar : curricular;`,
+  motivo:'Mantener accesibles Oferta, Desarrollo y Gestión en la misma navegación de la aplicación escolar; Gestión requiere el permiso escolar de edición.'
+}];
 
 /**
  * Reemplazos por módulo. `de` debe aparecer exactamente `veces` veces.
  * `a` puede ser una función del perfil.
  */
 const DERIVADOS={
+  'ui-navigation-consistency':NAVEGACION_ESCOLAR,
   'v26-other-formats-print':[
     {de:'[1,2,3,4,5].map(printLevel)',a:p=>lista(p.niveles)+'.map(printLevel)',veces:1,
       motivo:'Imprimir todos los niveles de la modalidad.'},
@@ -101,6 +126,7 @@ const DERIVADOS={
     {de:"'C1-C10'",a:p=>`'C1-C${p.cuatrimestres}'`,veces:1,motivo:'Rango de cuatrimestres de la modalidad.'}
   ],
   'v85-access-panel':[
+    ...ACCESO_ESCOLAR_V85,
     {de:"const AREAS=[\n    'Lengua y Literatura','Matemática','Lenguas Adicionales','Ciencias Naturales',\n    'Ciencias Sociales','Artes','Tecnologías','Educación Física',\n    'Formación Orientada'\n  ];",
       a:'const AREAS='+AREAS_MODALIDAD+';',veces:1,motivo:'Áreas habilitables para docentes tomadas del mapa de la modalidad.'}
   ],
@@ -116,6 +142,8 @@ const DERIVADOS={
  */
 const MEDIA={nombre:'Educación Media',niveles:5,cuatrimestres:10};
 const DERIVADOS_MEDIA={
+  'ui-navigation-consistency':NAVEGACION_ESCOLAR,
+  'v85-access-panel':ACCESO_ESCOLAR_V85,
   'v23-prearm':[
     {de:'    const m=current();\n    m.placements=m.placements||{};',veces:1,
       a:'    const m=current();\n    // El puente identifica por referencia los mapas recibidos explícitamente.\n    if(window.__pciPreserveImportedMap?.(m))return false;\n    m.placements=m.placements||{};',

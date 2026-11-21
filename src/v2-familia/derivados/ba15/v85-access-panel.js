@@ -2,10 +2,20 @@
  * Original: vendor/pci-sec-aprende-v2/src/v85-access-panel.js (V2 883707e).
  * Modalidad: Secundaria BA +15 · 4 niveles · 8 cuatrimestres.
  * Cambios:
+ *  - Usar la sesión escolar verificada de la aplicación integrada sin mostrar ni persistir perfiles de prueba; conservar V85 habitual fuera de esa aplicación.
  *  - Áreas habilitables para docentes tomadas del mapa de la modalidad.
  * Regenerar: node scripts/derivar-v2-familia.mjs
  */
 (() => {
+  // La aplicación integrada ya verificó la sesión escolar. V85 no ofrece
+  // perfiles simulados ni cambia sus permisos; V80 recibe esa sesión.
+  if(window.__PCI_ESCUELA_VERIFICADA__===true){
+    window.PCIAccessPanelV85=Object.freeze({
+      show:()=>false,applyProfile:()=>false,clear:()=>false,
+      teachers:()=>Object.values(state.institutional?.teachers||{})
+    });
+    return;
+  }
   const KEY='pci-v85-access-session';
   const AREAS=(window.V2ModalMap?[...new Set(window.V2ModalMap.rowDefs().map(r=>r.area).filter(Boolean))]:['Lengua y Literatura','Matemática','Lenguas Adicionales','Ciencias Naturales','Ciencias Sociales','Artes','Tecnologías','Educación Física','Formación Orientada']);
   let overlay=null,profileChip=null;
