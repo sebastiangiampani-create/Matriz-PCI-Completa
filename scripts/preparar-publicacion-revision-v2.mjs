@@ -24,6 +24,11 @@ const CURRICULUM_FILES = [
   ...Array.from({length:5}, (_, i) => `data/rest${i + 1}.txt`),
   'data/tutoria.json',
 ];
+// Copias locales exactas de las bibliotecas versionadas de importación/exportación.
+const EXTERNAL_ASSET_FILES = [
+  'assets/exceljs-4.4.0.min.js', 'assets/exceljs-4.4.0-LICENSE.txt',
+  'assets/xlsx-0.18.5.full.min.js', 'assets/xlsx-0.18.5-LICENSE.txt',
+];
 const RUNTIME_EXTENSIONS = new Set(['.js', '.mjs', '.css', '.json', '.html']);
 const ASSET_EXTENSIONS = new Set(['.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf']);
 const CATALOG_EXTENSIONS = new Set(['.json', '.txt']);
@@ -80,7 +85,7 @@ async function validateDestination(raw) {
 }
 
 async function packageRevision(out) {
-  const files = new Set([...ROOT_FILES, ...CURRICULUM_FILES]);
+  const files = new Set([...ROOT_FILES, ...CURRICULUM_FILES, ...EXTERNAL_ASSET_FILES]);
   await collect('src', RUNTIME_EXTENSIONS, files);
   await collect('assets', ASSET_EXTENSIONS, files);
   await collect('vendor/pci-sec-aprende-v2', VENDOR_EXTENSIONS, files);

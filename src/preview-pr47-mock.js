@@ -113,8 +113,11 @@
     const label=document.createElement('div');
     label.textContent='REVISIÓN AISLADA PR #47 · Datos simulados · Sin conexión a Supabase';
     label.setAttribute('role','status');
-    label.style.cssText='position:sticky;top:0;z-index:9999;text-align:center;background:#edf3f8;color:#12395c;border-bottom:1px solid #d8e1e8;padding:7px 12px;font:600 12px Archivo,system-ui,sans-serif';
+    label.style.cssText='position:relative;text-align:center;background:#edf3f8;color:#12395c;border-bottom:1px solid #d8e1e8;padding:7px 12px;font:600 12px Archivo,system-ui,sans-serif';
     document.body.prepend(label);
+    // El encabezado exterior no debe tapar controles dentro del iframe al desplazarse.
+    const portalHeader=document.querySelector('.site-top');
+    if(portalHeader)portalHeader.style.position='relative';
     const protectLinks=()=>{
       for(const id of ['platformHomeLink','adminPanelLink','schoolPanelLink','historicalPciLink','homeHistoricalPciLink']){
         const a=document.getElementById(id);

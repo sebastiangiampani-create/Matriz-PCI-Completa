@@ -30,9 +30,9 @@
     if(!response.ok)throw new Error(`No se pudo cargar ${url}.`);
     return response.text();
   };
-  const inline=source=>'<script>'+String(source).replace(/<\/script/gi,'<\\/script')+'</scr'+'ipt>\n';
-
   try{
+    const {localizarRecursosRevision}=await import('./src/preview-pr47-recursos.mjs');
+    const inline=source=>'<script>'+localizarRecursosRevision(source,location.href).replace(/<\/script/gi,'<\\/script')+'</scr'+'ipt>\n';
     const [htmlRaw,phase2Source,foAtomicSource,...moduleSources]=await Promise.all([
       fetchText('vendor/pci-sec-aprende-v2/app-core.html'),
       // Derivado: completa orientaciones y alinea el encabezado con V91 (ver manifiesto).
@@ -45,7 +45,7 @@
       throw new Error('No se pudo cargar la versión curricular V96 de Fase 2.');
     }
 
-    let html=htmlRaw;
+    let html=localizarRecursosRevision(htmlRaw,location.href);
     // El código original se conserva en vendor; solo añadimos un adaptador
     // separado para que cada PCI tenga almacenamiento independiente.
     const baseUrl=new URL('vendor/pci-sec-aprende-v2/',location.href).href;
