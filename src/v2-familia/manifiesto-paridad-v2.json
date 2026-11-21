@@ -81,6 +81,17 @@
       "equivalentes": {
         "tecnica": "No aplica: la norma no establece un prearmado; las troncales se ubican en celdas anuales por nivel.",
         "ba15": "No aplica: el Régimen +15 no establece esta regla de Media (RES-1375-MEDGC-25, Anexo I (6.3 estructura y 6.5 áreas) y SSGDA-105-26 (turno noche))."
+      },
+      "media": {
+        "archivo": "src/v2-familia/derivados/media/v23-prearm.js",
+        "cambios": [
+          {
+            "motivo": "Conservar la composición de un mapa importado explícitamente, incluso vacío, sin impedir el prearmado habitual de un PCI nuevo.",
+            "veces": 1,
+            "original": "    const m=current();\n    m.placements=m.placements||{};",
+            "derivado": "    const m=current();\n    // El puente identifica por referencia los mapas recibidos explícitamente.\n    if(window._…"
+          }
+        ]
       }
     },
     {
