@@ -193,3 +193,13 @@ test('laboratorios simultáneos fuera de Sociales 3.º quedan pendientes', () =>
   assert.deepEqual(r.groups, {});
   assert.equal(r.resumen.agrupamientosPendientes, 2);
 });
+
+test('un contenido de otro año se conserva, suma solo en su año y no genera pendiente de materia', () => {
+  // m2 (Historia) existe en V2 en 3.º; el agrupamiento es de 1.º.
+  const r = ejecutar({ 'Ciencias Sociales': { groups: [grupo('s1', 1, ['m2'])] } });
+  assert.deepEqual(r.groups['socialA-c1'].contents, ['fg-v2-2']);
+  assert.deepEqual(r.groups['socialA-c1'].contenidosOtroAnio, [{ matrixId: 'm2', anioContenido: 3, ids: ['fg-v2-2'] }]);
+  assert.deepEqual(r.placements['socialA-c1'], []);
+  assert.equal(r.pendientes.filter(x => x.tipo === 'materia').length, 0);
+  assert.equal(r.resumen.contenidosDeOtroAnio, 1);
+});

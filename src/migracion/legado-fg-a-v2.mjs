@@ -10,6 +10,11 @@
  *  - Ciencias Sociales de 3.º en Media: dos laboratorios simultáneos en un
  *    mismo cuatrimestre corresponden a la opción de 12 laboratorios de V2
  *    (socialA y socialB en C5/C6); el resultado informa socialOption 'B'.
+ *  - Contenidos de otro año: se pueden ubicar en cualquier nivel (y repetir);
+ *    solo suman cobertura en su propio año. Si no coinciden en el año del
+ *    agrupamiento, se buscan en los demás años; con una única coincidencia
+ *    exacta se incorporan con su ID V2 (que conserva su año). Su materia no
+ *    se agrega a la celda ni genera pendientes.
  */
 import { analyzeAutomaticFgMatches } from '../integracion-curricular/auto-homologacion-fg.js';
 
@@ -106,12 +111,17 @@ function materiasExactas({ grupo, anio, area, modelo, catalogoHistorico, catalog
     .map(id => catalogoHistorico.get(id)).filter(Boolean);
   const disponibles = lista(modelo.subjects);
   const ids = new Set();
-  const faltantes = [];
+  const faltantes = [], otrosAnios = [];
   for (const materia of new Set(origenes.map(x => String(x.subject ?? '')).filter(Boolean))) {
     const referencias = catalogoV2.filter(x => Number(x.year) === anio &&
       materiaClave(x.subject) === materiaClave(materia) &&
       normalizar(x.area) === normalizar(area));
     const nombres = [...new Set(referencias.map(x => x.subject))];
+    if (!referencias.length && catalogoV2.some(x => materiaClave(x.subject) === materiaClave(materia) &&
+      normalizar(x.area) === normalizar(area))) {
+      otrosAnios.push(materia); // Contenido de otro año: no define la materia de la celda.
+      continue;
+    }
     if (nombres.length !== 1) {
       faltantes.push({ materia, motivo: 'Sin materia oficial única para esa área y año' });
       continue;
@@ -129,7 +139,19 @@ function materiasExactas({ grupo, anio, area, modelo, catalogoHistorico, catalog
     }
     ids.add(String(candidatas[0].id));
   }
-  return { ids: [...ids], faltantes };
+  return { ids: [...ids], faltantes, otrosAnios };
+}
+
+/** Busca una coincidencia exacta del contenido en los demás años (1–5). */
+function coincidenciaOtroAnio({ area, matrixId, anio, matriz, v2, orientationId, aprobadas }) {
+  const grupos = [1, 2, 3, 4, 5].filter(y => y !== anio)
+    .map(y => ({ id: `otro-anio-${y}`, level: y, items: [matrixId] }));
+  const { rows } = analyzeAutomaticFgMatches({
+    areas: { [area]: { groups: grupos } }, matrixRows: matriz, v2FgRows: v2,
+    orientationId, approvedMappings: aprobadas
+  });
+  const exactas = rows.filter(r => ESTADOS_DIRECTOS.has(r.status) && r.references.length);
+  return exactas.length === 1 ? exactas[0] : null;
 }
 
 /** Cuatrimestre original del agrupamiento si pertenece a su año; si no, null. */
@@ -292,17 +314,21 @@ export function migrarLegadoFgAV2({
         const materias = materiasExactas({
           grupo, anio, area, modelo, catalogoHistorico: indiceMatriz, catalogoV2: v2
         });
-        const contenidos = [], origenesContenido = {};
+        const contenidos = [], origenesContenido = {}, contenidosOtroAnio = [];
         for (const matrixId of [...new Set(lista(grupo.items).map(String))]) {
           const clave = JSON.stringify([area, String(grupo.id ?? ''), anio, matrixId]);
           const hallazgo = coincidencias.get(clave);
           const original = indiceMatriz.get(matrixId) || null;
-          if (hallazgo && ESTADOS_DIRECTOS.has(hallazgo.status) && hallazgo.references.length) {
-            for (const referencia of hallazgo.references) {
+          const directo = hallazgo && ESTADOS_DIRECTOS.has(hallazgo.status) && hallazgo.references.length;
+          const otroAnio = directo ? null : coincidenciaOtroAnio({ area: original?.area || area, matrixId, anio,
+            matriz, v2, orientationId: String(orientationId), aprobadas });
+          if (directo || otroAnio) {
+            for (const referencia of (directo ? hallazgo : otroAnio).references) {
               const id = String(referencia.id);
               if (!contenidos.includes(id)) contenidos.push(id);
               (origenesContenido[id] ||= []).push(matrixId);
             }
+            if (otroAnio) contenidosOtroAnio.push({ matrixId, anioContenido: otroAnio.year, ids: otroAnio.references.map(x => String(x.id)) });
           } else {
             pendientes.push({
               tipo: 'contenido', area, anio, slot, grupoId: String(grupo.id ?? ''),
@@ -335,6 +361,9 @@ export function migrarLegadoFgAV2({
           legacyGroupId: String(grupo.id ?? ''),
           materiasPropuestas: copiar(materias.ids),
           origenesContenido,
+          // Suman cobertura solo en su propio año (el ID V2 conserva el año).
+          contenidosOtroAnio,
+          materiasOtroAnio: copiar(materias.otrosAnios),
           grupoOriginal: copiar(grupo)
         };
         ubicadosOk.push(slot);
@@ -358,6 +387,7 @@ export function migrarLegadoFgAV2({
     contenidosDirectos: Object.values(groups).reduce((s, g) =>
       s + Object.values(g.origenesContenido).reduce((n, ids) => n + ids.length, 0), 0),
     contenidosV2: Object.values(groups).reduce((s, g) => s + g.contents.length, 0),
+    contenidosDeOtroAnio: Object.values(groups).reduce((s, g) => s + g.contenidosOtroAnio.length, 0),
     contenidosPendientes: pendientes.filter(x => x.tipo === 'contenido').length + contenidosPendientesDeGrupos,
     materiasPendientes: pendientes.filter(x => x.tipo === 'materia').length,
     planesConservados: Object.values(groups).reduce((s, g) => s + g.plansBimestrales.length, 0),
