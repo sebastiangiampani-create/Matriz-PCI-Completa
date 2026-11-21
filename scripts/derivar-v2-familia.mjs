@@ -111,10 +111,16 @@ const DERIVADOS={
 
 /**
  * Derivados para Media (revision-v2-embed.html). Adaptaciones declaradas de
- * catálogo y presentación; el cálculo de cobertura sigue a cargo de V91.
+ * catálogo, presentación e importación explícita; el cálculo de cobertura
+ * sigue a cargo de V91.
  */
 const MEDIA={nombre:'Educación Media',niveles:5,cuatrimestres:10};
 const DERIVADOS_MEDIA={
+  'v23-prearm':[
+    {de:'    const m=current();\n    m.placements=m.placements||{};',veces:1,
+      a:'    const m=current();\n    // El puente identifica por referencia los mapas recibidos explícitamente.\n    if(window.__pciPreserveImportedMap?.(m))return false;\n    m.placements=m.placements||{};',
+      motivo:'Conservar la composición de un mapa importado explícitamente, incluso vacío, sin impedir el prearmado habitual de un PCI nuevo.'}
+  ],
   'v47-phase2-matrix':[
     {de:'async function loadFO(){',veces:1,
       a:`// Orientaciones ausentes en curriculum_v96: V2 conserva sus bloques y ejes

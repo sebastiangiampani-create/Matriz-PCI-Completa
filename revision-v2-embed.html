@@ -12,7 +12,7 @@
 (async()=>{
   const modulePaths=[
     'vendor/pci-sec-aprende-v2/src/v19-map.js','vendor/pci-sec-aprende-v2/src/v20-format-order.js','vendor/pci-sec-aprende-v2/src/v21-custom-social-ui.js','vendor/pci-sec-aprende-v2/src/v22-teachers.js',
-    'vendor/pci-sec-aprende-v2/src/v23-prearm.js','vendor/pci-sec-aprende-v2/src/v24-social-interactions.js','vendor/pci-sec-aprende-v2/src/v25-institutional-spaces.js','vendor/pci-sec-aprende-v2/src/v26-other-formats-print.js',
+    'src/v2-familia/derivados/media/v23-prearm.js','vendor/pci-sec-aprende-v2/src/v24-social-interactions.js','vendor/pci-sec-aprende-v2/src/v25-institutional-spaces.js','vendor/pci-sec-aprende-v2/src/v26-other-formats-print.js',
     'vendor/pci-sec-aprende-v2/src/v29-fo-rules.js','vendor/pci-sec-aprende-v2/src/v30-fo-minimum-guard.js','vendor/pci-sec-aprende-v2/src/v31-integration-hours-print.js','vendor/pci-sec-aprende-v2/src/v32-phase2-entry-fix.js',
     'vendor/pci-sec-aprende-v2/src/v38-phase2-workspace.js','vendor/pci-sec-aprende-v2/src/v47-elective-plans.js','vendor/pci-sec-aprende-v2/src/v42-homologacion-performance.js',
     'vendor/pci-sec-aprende-v2/src/v48-institutional-layer.js','vendor/pci-sec-aprende-v2/src/v48-phase2-institutional-content.js','vendor/pci-sec-aprende-v2/src/v48-disable-phase1-teachers.js','vendor/pci-sec-aprende-v2/src/v57-custom-divisions.js',
@@ -106,6 +106,10 @@
    if(window.parent!==window)window.parent.postMessage({type,pci,...additional},sameOrigin);
  };
  const originalSave=save;
+ const importedMaps=new WeakSet();
+ // Un documento entregado explícitamente ya contiene la composición deseada.
+ // Se protege su identidad en esta sesión sin añadir marcas al documento.
+ window.__pciPreserveImportedMap=map=>importedMaps.has(map);
  let importing=false;
  let avisoMigracion=null,migrationModules=null,migrationSeq=0;
  const canAcceptMigration=()=>window.PCIAppAccessV80?.getSession().role==='admin';
@@ -117,10 +121,14 @@
  const applyDocument=doc=>{
    if(!doc||typeof doc!=='object'||Array.isArray(doc))return;
    if(doc.maps&&typeof doc.maps==='object'&&!Array.isArray(doc.maps)){
-     state.maps={...state.maps,[orientation]:JSON.parse(JSON.stringify(doc.maps[orientation]||ensure(orientation)))};
+     const provided=Object.hasOwn(doc.maps,orientation)?doc.maps[orientation]:null;
+     const hasMap=provided&&typeof provided==='object'&&!Array.isArray(provided);
+     const map=JSON.parse(JSON.stringify(hasMap?provided:ensure(orientation)));
+     if(hasMap)importedMaps.add(map);
+     state.maps={...state.maps,[orientation]:map};
    }
    state.school=school;state.active=orientation;state.selected=[orientation];
-   importing=true;try{originalSave();renderHome();screen('offer');}
+   importing=true;try{renderHome();originalSave();screen('offer');}
    finally{importing=false;}
  };
  const prepareMigration=async data=>{
@@ -165,7 +173,7 @@
    try{
      state.school=school;state.active=orientation;state.selected=[orientation];
      if(!state.maps[orientation])ensure(orientation);
-     originalSave();renderHome();screen('offer');
+     renderHome();originalSave();screen('offer');
    }finally{importing=false;}
    const [noticeModule,migrationModule]=await Promise.all([
      import(new URL('src/migracion/aviso-aceptacion-v2.mjs',location.href).href),

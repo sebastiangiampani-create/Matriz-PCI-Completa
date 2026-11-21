@@ -6,7 +6,11 @@ on:
     paths:
       - src/migracion/**
       - revision-v2-embed.html
+      - scripts/derivar-v2-familia.mjs
+      - src/v2-familia/derivados/media/v23-prearm.js
+      - src/v2-familia/manifiesto-paridad-v2.json
       - tests/revision-aceptacion-v2.test.mjs
+      - tests/importacion-v2-prearmado.test.mjs
       - tests/aviso-aceptacion-v2-browser.mjs
       - .github/workflows/migracion-v2-paso3.yml
   workflow_dispatch:
@@ -24,7 +28,7 @@ jobs:
         with:
           node-version: '22'
       - name: Verificar revisión pura, migrador, adaptador y paridad
-        run: node --test tests/revision-aceptacion-v2.test.mjs tests/aplicar-migracion-v2.test.mjs tests/migracion-legado-fg.test.mjs tests/v2-familia-paridad.test.mjs
+        run: node --test tests/revision-aceptacion-v2.test.mjs tests/importacion-v2-prearmado.test.mjs tests/aplicar-migracion-v2.test.mjs tests/migracion-legado-fg.test.mjs tests/v2-familia-paridad.test.mjs
       - name: Preparar navegador de prueba
         run: |
           npm install --no-save --package-lock=false playwright@1.55.0

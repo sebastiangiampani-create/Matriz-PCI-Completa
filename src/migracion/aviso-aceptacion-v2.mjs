@@ -14,7 +14,7 @@ export function montarAvisoAceptacionV2({ host, getState, applyState,
     return el;
   };
   host.id = 'v2MigrationNotice';
-  host.className = 'card';
+  host.className = 'card panel';
   host.hidden = true;
   host.style.marginBottom = '20px';
   host.style.scrollMarginTop = '88px';
