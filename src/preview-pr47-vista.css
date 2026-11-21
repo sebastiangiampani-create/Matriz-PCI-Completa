@@ -1,0 +1,13 @@
+/* El nombre y correo de un docente no deben expulsar los controles del panel. */
+#v85Detail:has(#v85TeacherSelect){
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+#v85Detail:has(#v85TeacherSelect) .v85-select-wrap,
+#v85TeacherSelect{
+  min-width:0;
+  max-width:100%;
+}
+#v85TeacherSelect{width:100%}
+@media(max-width:760px){
+  #v85Detail:has(#v85TeacherSelect){grid-template-columns:minmax(0,1fr)}
+}

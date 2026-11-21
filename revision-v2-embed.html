@@ -50,6 +50,7 @@
     // separado para que cada PCI tenga almacenamiento independiente.
     const baseUrl=new URL('vendor/pci-sec-aprende-v2/',location.href).href;
     html=html.replace('<head>','<head><base href="'+baseUrl+'">');
+    html=html.replace('</head>','<link rel="stylesheet" href="'+new URL('src/preview-pr47-vista.css',location.href).href+'"></head>');
     const shimScript=document.getElementById('v2LocalStorageAdapter').textContent;
     html=html.replace('<script>',inline(shimScript)+'<script>');
     const closeScript='</scr'+'ipt>';
