@@ -1,0 +1,40 @@
+name: Migración FG a V2 - Paso 2 aislado
+
+on:
+  push:
+    branches: [test/migracion-v2-paso2-20261121]
+    paths:
+      - tests/migracion-v2-browser.mjs
+      - .github/workflows/migracion-v2-paso2.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  navegador-sin-supabase:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preparar navegador de prueba
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium
+          fi
+      - name: Verificar migración simulada en escritorio y celular
+        run: node tests/migracion-v2-browser.mjs
+      - name: Conservar resultados y capturas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migracion-v2-paso2
+          path: test-artifacts/migracion-v2/
+          if-no-files-found: error
+          retention-days: 7
