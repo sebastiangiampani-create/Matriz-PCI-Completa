@@ -1,24 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { migrarLegadoFgAV2 } from '../src/migracion/legado-fg-a-v2.mjs';
+import { readFileSync } from 'node:fs';
+import { migrarLegadoFgAV2, materiasMotorMedia, agrupamientoVacio } from '../src/migracion/legado-fg-a-v2.mjs';
+
+// Catálogo real de materias del motor V2 (vendor), sin deducir IDs.
+const MOTOR_MEDIA = materiasMotorMedia(JSON.parse(readFileSync(
+  new URL('../vendor/pci-sec-aprende-v2/data/materias-v2.json', import.meta.url), 'utf8')));
 
 const matriz = [
   { id: 'm1', area: 'Matemática', subject: 'Matemática', axis: 'Números', text: 'Operaciones con números racionales' },
   { id: 'm2', area: 'Ciencias Sociales', subject: 'Historia', axis: 'Historia', text: 'Construcción histórica de la ciudadanía' },
   { id: 'm3', area: 'Ciencias Sociales', subject: 'Geografía', axis: 'Territorio', text: 'Procesos urbanos del territorio nacional' },
-  { id: 'm4', area: 'Matemática', subject: 'Matemática', axis: 'Números', text: 'Texto anterior que no coincide' }
+  { id: 'm4', area: 'Matemática', subject: 'Matemática', axis: 'Números', text: 'Texto anterior que no coincide' },
+  { id: 'm5', area: 'Lenguas Adicionales', subject: 'Lenguas Adicionales', axis: 'Oralidad', text: 'Escucha de textos descriptivos' },
+  { id: 'm6', area: 'Artes', subject: 'Artes Visuales', axis: 'Producción', text: 'Producción de imágenes bidimensionales' }
 ];
 const v2 = [
   { id: 'fg-v2-1', component: 'FG', year: 1, area: 'Matemática', subject: 'Matemática', axis: 'Números', text: 'Operaciones con números racionales' },
   { id: 'fg-v2-2', component: 'FG', year: 3, area: 'Ciencias Sociales', subject: 'Historia', axis: 'Historia', text: 'Construcción histórica de la ciudadanía' },
-  { id: 'fg-v2-3', component: 'FG', year: 3, area: 'Ciencias Sociales', subject: 'Geografía', axis: 'Territorio', text: 'Procesos urbanos del territorio nacional' }
+  { id: 'fg-v2-3', component: 'FG', year: 3, area: 'Ciencias Sociales', subject: 'Geografía', axis: 'Territorio', text: 'Procesos urbanos del territorio nacional' },
+  { id: 'fg-v2-4', component: 'FG', year: 1, area: 'Lenguas Adicionales', subject: 'Lenguas Adicionales', axis: 'Oralidad', text: 'Escucha de textos descriptivos' },
+  { id: 'fg-v2-5', component: 'FG', year: 1, area: 'Artes', subject: 'Artes Visuales', axis: 'Producción', text: 'Producción de imágenes bidimensionales' }
 ];
 const grupo = (id, level, items, extra = {}) => ({
   id, level, name: `Agrupamiento ${id}`, items, plansBimestrales: [], ...extra
 });
 const ejecutar = (areas, extra = {}) => migrarLegadoFgAV2({
   legacyState: { areas }, matrixRows: matriz, v2FgRows: v2,
-  model: 'media', orientationId: 'sociales', ...extra
+  model: { model: 'media', subjects: MOTOR_MEDIA }, orientationId: 'sociales', ...extra
 });
 
 test('troncal del año N usa el slot anual y los IDs reales de materia y contenido', () => {
@@ -115,8 +124,8 @@ test('BA +15 no confunde los cinco años anteriores con cuatro niveles distintos
 
 test('dos áreas que convergen al mismo slot no sobrescriben el trabajo anterior', () => {
   const r = ejecutar({
-    'Artes': { groups: [grupo('artes-1', 1, [])] },
-    'Educación Artística': { groups: [grupo('artistica-1', 1, [])] }
+    'Artes': { groups: [grupo('artes-1', 1, [], { objective: 'Explorar lenguajes' })] },
+    'Educación Artística': { groups: [grupo('artistica-1', 1, [], { objective: 'Producir' })] }
   });
   assert.equal(r.groups['artes-c1'].legacyGroupId, 'artes-1');
   assert.equal(r.pendientes[0].grupoOriginal.id, 'artistica-1');
@@ -127,4 +136,60 @@ test('un plan con forma inválida se conserva íntegro fuera del estado editable
   const r = ejecutar({ 'Matemática': { groups: [origen] } });
   assert.equal(r.groups['matematica-n1'], undefined);
   assert.deepEqual(r.sinUbicar[0].grupoOriginal.plansBimestrales, origen.plansBimestrales);
+});
+
+test('Lengua Adicional y Artes usan los IDs reales del motor V2', () => {
+  const r = ejecutar({
+    'Lenguas Adicionales': { groups: [grupo('la-1', 1, ['m5'])] },
+    'Artes': { groups: [grupo('ar-1', 1, ['m6'])] }
+  });
+  assert.deepEqual(r.placements['adicional-n1'], ['fg-1-lengua-adicional']);
+  assert.deepEqual(r.placements['artes-c1'], ['fg-1-artes']);
+  const ids = new Set(MOTOR_MEDIA.map(x => x.id));
+  for (const lista of Object.values(r.placements)) for (const id of lista) assert.ok(ids.has(id), id);
+});
+
+test('sin catálogo del motor no se deduce ningún ID de materia', () => {
+  const r = ejecutar({ 'Lenguas Adicionales': { groups: [grupo('la-1', 1, ['m5'])] } }, { model: 'media' });
+  assert.deepEqual(r.placements['adicional-n1'], []);
+  assert.equal(r.pendientes.find(x => x.tipo === 'materia').motivo.includes('Falta el catálogo'), true);
+});
+
+test('los agrupamientos vacíos no se migran y quedan informados', () => {
+  const plantilla = { name: 'Plan 1', stages: { punto_partida: { description: '' } }, contentIds: [], objectives: '' };
+  const vacio = grupo('ef-1', 1, [], { plansBimestrales: [plantilla] });
+  assert.equal(agrupamientoVacio(vacio), true);
+  assert.equal(agrupamientoVacio(grupo('ef-2', 1, [], { objective: 'Algo' })), false);
+  const r = ejecutar({ 'Educación Física': { groups: [vacio] } });
+  assert.deepEqual(r.groups, {});
+  assert.deepEqual(r.omitidosVacios, [{ area: 'Educación Física', grupoId: 'ef-1', nivel: 1, planesPlantilla: 1 }]);
+  assert.equal(r.resumen.agrupamientosVaciosOmitidos, 1);
+});
+
+test('Sociales 3.º con dos laboratorios simultáneos por cuatrimestre usa la opción de 12 laboratorios', () => {
+  const r = ejecutar({ 'Ciencias Sociales': { groups: [
+    grupo('s5', 3, ['m2'], { startTerm: 5 }), grupo('s6', 3, ['m3'], { startTerm: 5 }),
+    grupo('s7', 3, ['m2'], { startTerm: 6 }), grupo('s8', 3, ['m3'], { startTerm: 6 })
+  ] } });
+  assert.equal(r.groups['socialA-c5'].legacyGroupId, 's5');
+  assert.equal(r.groups['socialB-c5'].legacyGroupId, 's6');
+  assert.equal(r.groups['socialA-c6'].legacyGroupId, 's7');
+  assert.equal(r.groups['socialB-c6'].legacyGroupId, 's8');
+  assert.equal(r.socialOption, 'B');
+  assert.equal(r.resumen.agrupamientosPendientes, 0);
+});
+
+test('Sociales 3.º con un laboratorio por cuatrimestre usa la opción de 10 laboratorios', () => {
+  const r = ejecutar({ 'Ciencias Sociales': { groups: [grupo('s7', 3, ['m2'], { startTerm: 6 })] } });
+  assert.ok(r.groups['socialA-c6']);
+  assert.equal(r.groups['socialA-c5'], undefined);
+  assert.equal(r.socialOption, 'A');
+});
+
+test('laboratorios simultáneos fuera de Sociales 3.º quedan pendientes', () => {
+  const r = ejecutar({ 'Ciencias Sociales': { groups: [
+    grupo('s1', 1, ['m2'], { startTerm: 1 }), grupo('s2', 1, ['m3'], { startTerm: 1 })
+  ] } });
+  assert.deepEqual(r.groups, {});
+  assert.equal(r.resumen.agrupamientosPendientes, 2);
 });
