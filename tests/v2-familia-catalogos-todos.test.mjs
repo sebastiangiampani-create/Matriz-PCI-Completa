@@ -37,5 +37,9 @@ test('Técnica: todas las especialidades cargan seis niveles con formación téc
     assert.equal(p.levels,6,id);
     assert.equal(new Set(p.subjects.map(s=>s.year)).size,6,`${id}: faltan niveles`);
     assert.ok(p.subjects.some(s=>s.field==='formacion_tecnica_especifica'),`${id}: sin formación técnico-específica`);
+    for(const y of [1,2,3,4,5]){
+      assert.ok(p.subjects.some(s=>s.year===y&&(s.area==='Lengua Adicional'||/^(lengua adicional|ingl)/i.test(s.name))),`${id}: falta Lengua Adicional en ${y}.º`);
+      assert.ok(p.contents.fg.some(c=>c.year===y&&c.area==='Lengua Adicional')||p.subjects.some(s=>s.year===y&&/ingl/i.test(s.name)),`${id}: sin contenidos de Lengua Adicional en ${y}.º`);
+    }
   }
 });

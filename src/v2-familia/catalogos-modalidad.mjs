@@ -148,6 +148,20 @@ export async function loadTechnicalV2Profile(specialtyId){
    }
  }
  if(!subjects.length||!fgContents.length)throw Error('Catálogo técnico sin materias o contenidos de FG');
+ // Lengua Adicional 1.º–5.º: troncal en Técnica (IF-2026-51169092, pág. 13).
+ // Si el catálogo de la especialidad no la trae, se toma de la NES (mismo año).
+ const missingLA=[1,2,3,4,5].filter(y=>!subjects.some(x=>x.year===y&&(x.area==='Lengua Adicional'||/^(lengua adicional|ingl[eé]s)/i.test(x.name))));
+ if(missingLA.length){
+  const nes=(await loadBa15FgBase()).filter(r=>/lenguas? adicional/i.test(r.area)&&missingLA.includes(Number(r.sourceYear)));
+  const used=new Set(fgContents.map(x=>x.id));
+  for(const y of missingLA){
+   subjects.push({id:'tec-nes-'+y+'-lengua-adicional',name:'Lengua Adicional',year:y,origin:'FG',area:'Lengua Adicional',field:'formacion_general',source:'NES (Res. 321-MEGC/15)'});
+   for(const r of nes.filter(r=>Number(r.sourceYear)===y)){
+    const id='tec-nes:'+r.id;if(used.has(id))continue;used.add(id);
+    fgContents.push({id,component:'FG',year:y,area:'Lengua Adicional',subject:'Lengua Adicional',axis:text(r.axis),subaxis:text(r.subaxis),text:text(r.text),source:'NES · Lenguas Adicionales '+y+'.º año'});
+   }
+  }
+ }
  return common('tecnica',specialty.name,6,subjects,fgContents,foContents,
   'Especialidad '+specialty.name+' · contenidos priorizados 2026 extraídos de PDF con página y fuente. La extracción requiere validación pedagógica; no equivale a homologación.');
 }
