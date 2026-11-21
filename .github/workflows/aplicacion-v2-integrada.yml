@@ -6,6 +6,7 @@ on:
     paths:
       - index.html
       - pci-orientaciones.html
+      - pci-orientaciones.css
       - panel-*.html
       - src/aplicacion-v2/**
       - src/pci-router.mjs
