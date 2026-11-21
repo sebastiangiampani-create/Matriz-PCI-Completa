@@ -698,6 +698,12 @@
       "cambios": {
         "tecnica": [
           {
+            "motivo": "Usar la sesión escolar verificada de la aplicación integrada sin mostrar ni persistir perfiles de prueba; conservar V85 habitual fuera de esa aplicación.",
+            "veces": 1,
+            "original": "(() => {\n  const KEY='pci-v85-access-session';",
+            "derivado": "(() => {\n  // La aplicación integrada ya verificó la sesión escolar. V85 no ofrece\n  // perfiles simulados ni cambia …"
+          },
+          {
             "motivo": "Áreas habilitables para docentes tomadas del mapa de la modalidad.",
             "veces": 1,
             "original": "const AREAS=[\n    'Lengua y Literatura','Matemática','Lenguas Adicionales','Ciencias Naturales',\n    'Ciencias Social…",
@@ -706,10 +712,27 @@
         ],
         "ba15": [
           {
+            "motivo": "Usar la sesión escolar verificada de la aplicación integrada sin mostrar ni persistir perfiles de prueba; conservar V85 habitual fuera de esa aplicación.",
+            "veces": 1,
+            "original": "(() => {\n  const KEY='pci-v85-access-session';",
+            "derivado": "(() => {\n  // La aplicación integrada ya verificó la sesión escolar. V85 no ofrece\n  // perfiles simulados ni cambia …"
+          },
+          {
             "motivo": "Áreas habilitables para docentes tomadas del mapa de la modalidad.",
             "veces": 1,
             "original": "const AREAS=[\n    'Lengua y Literatura','Matemática','Lenguas Adicionales','Ciencias Naturales',\n    'Ciencias Social…",
             "derivado": "const AREAS=(window.V2ModalMap?[...new Set(window.V2ModalMap.rowDefs().map(r=>r.area).filter(Boolean))]:['Lengua y Li…"
+          }
+        ]
+      },
+      "media": {
+        "archivo": "src/v2-familia/derivados/media/v85-access-panel.js",
+        "cambios": [
+          {
+            "motivo": "Usar la sesión escolar verificada de la aplicación integrada sin mostrar ni persistir perfiles de prueba; conservar V85 habitual fuera de esa aplicación.",
+            "veces": 1,
+            "original": "(() => {\n  const KEY='pci-v85-access-session';",
+            "derivado": "(() => {\n  // La aplicación integrada ya verificó la sesión escolar. V85 no ofrece\n  // perfiles simulados ni cambia …"
           }
         ]
       }
@@ -728,10 +751,39 @@
       "modulo": "ui-navigation-consistency",
       "original": "vendor/pci-sec-aprende-v2/src/ui-navigation-consistency.js",
       "sha256Original": "21bb1d5215a541e6",
-      "estado": "original",
+      "estado": "derivado",
       "archivos": {
-        "tecnica": "vendor/pci-sec-aprende-v2/src/ui-navigation-consistency.js",
-        "ba15": "vendor/pci-sec-aprende-v2/src/ui-navigation-consistency.js"
+        "tecnica": "src/v2-familia/derivados/tecnica/ui-navigation-consistency.js",
+        "ba15": "src/v2-familia/derivados/ba15/ui-navigation-consistency.js"
+      },
+      "cambios": {
+        "tecnica": [
+          {
+            "motivo": "Mantener accesibles Oferta, Desarrollo y Gestión en la misma navegación de la aplicación escolar; Gestión requiere el permiso escolar de edición.",
+            "veces": 1,
+            "original": "    if(offer)offer.hidden=management;\n    if(proposal)proposal.hidden=management;\n    if(institutional)institutional.…",
+            "derivado": "    const schoolApp=window.__PCI_ESCUELA_VERIFICADA__===true;\n    if(offer)offer.hidden=schoolApp?false:management;\n …"
+          }
+        ],
+        "ba15": [
+          {
+            "motivo": "Mantener accesibles Oferta, Desarrollo y Gestión en la misma navegación de la aplicación escolar; Gestión requiere el permiso escolar de edición.",
+            "veces": 1,
+            "original": "    if(offer)offer.hidden=management;\n    if(proposal)proposal.hidden=management;\n    if(institutional)institutional.…",
+            "derivado": "    const schoolApp=window.__PCI_ESCUELA_VERIFICADA__===true;\n    if(offer)offer.hidden=schoolApp?false:management;\n …"
+          }
+        ]
+      },
+      "media": {
+        "archivo": "src/v2-familia/derivados/media/ui-navigation-consistency.js",
+        "cambios": [
+          {
+            "motivo": "Mantener accesibles Oferta, Desarrollo y Gestión en la misma navegación de la aplicación escolar; Gestión requiere el permiso escolar de edición.",
+            "veces": 1,
+            "original": "    if(offer)offer.hidden=management;\n    if(proposal)proposal.hidden=management;\n    if(institutional)institutional.…",
+            "derivado": "    const schoolApp=window.__PCI_ESCUELA_VERIFICADA__===true;\n    if(offer)offer.hidden=schoolApp?false:management;\n …"
+          }
+        ]
       }
     },
     {
