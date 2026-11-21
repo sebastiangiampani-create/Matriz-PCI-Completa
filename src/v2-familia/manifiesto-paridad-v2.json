@@ -164,7 +164,24 @@
         "tecnica": "src/v2-familia/v47-desarrollo-modalidad.js",
         "ba15": "src/v2-familia/v47-desarrollo-modalidad.js"
       },
-      "motivo": "Desarrollo curricular con bases de contenidos de la modalidad."
+      "motivo": "Desarrollo curricular con bases de contenidos de la modalidad.",
+      "media": {
+        "archivo": "src/v2-familia/derivados/media/v47-phase2-matrix.js",
+        "cambios": [
+          {
+            "motivo": "Agregar la lectura de orientaciones que V2 conserva en data/orientaciones/.",
+            "veces": 1,
+            "original": "async function loadFO(){",
+            "derivado": "// Orientaciones ausentes en curriculum_v96: V2 conserva sus bloques y ejes\n// en data/orientaciones/<archivo>.txt (e…"
+          },
+          {
+            "motivo": "Ciencias Naturales, Matemática y Física, Informática y Educación no tienen filas en curriculum_v96: se completan con los bloques y ejes de V2.",
+            "veces": 1,
+            "original": "if(m.v)rows=rows.filter(x=>x.variant===m.v);FO.set(fkey(),rows);return rows}",
+            "derivado": "if(m.v)rows=rows.filter(x=>x.variant===m.v);if(!rows.length&&m.f)rows=await loadLegacyOrientation(m.f,orientation);FO…"
+          }
+        ]
+      }
     },
     {
       "modulo": "v29-fo-rules",

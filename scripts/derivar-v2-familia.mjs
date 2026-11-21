@@ -109,6 +109,37 @@ const DERIVADOS={
   ]
 };
 
+/**
+ * Derivados para Media (revision-v2-embed.html). Solo correcciones de datos
+ * declaradas; la lógica de V2 no cambia.
+ */
+const MEDIA={nombre:'Educación Media',niveles:5,cuatrimestres:10};
+const DERIVADOS_MEDIA={
+  'v47-phase2-matrix':[
+    {de:'async function loadFO(){',veces:1,
+      a:`// Orientaciones ausentes en curriculum_v96: V2 conserva sus bloques y ejes
+// en data/orientaciones/<archivo>.txt (eje como «Eje · Subeje»).
+async function loadLegacyOrientation(file,orientation){
+  try{
+    const r=await fetch('data/orientaciones/'+file+'.txt',{cache:'force-cache'});
+    if(!r.ok)return [];
+    const rows=await unzip(await r.text());
+    return (Array.isArray(rows)?rows:[]).filter(x=>String(x?.id||'').trim()&&String(x?.text||'').trim()).map(x=>{
+      const [axis,...rest]=String(x.axis||'').trim().split(' · ');
+      const block=String(x.block||'').trim();
+      return {id:String(x.id).trim(),component:'FO',area:'Formación Orientada',orientation,suborientation:'',variant:'',
+        block,subject:block||'Formación Orientada',axis:String(axis||'').trim(),subaxis:rest.join(' · ').trim(),text:String(x.text).trim(),kind:''};
+    });
+  }catch{return []}
+}
+async function loadFO(){`,
+      motivo:'Agregar la lectura de orientaciones que V2 conserva en data/orientaciones/.'},
+    {de:'if(m.v)rows=rows.filter(x=>x.variant===m.v);FO.set(fkey(),rows);return rows}',veces:1,
+      a:'if(m.v)rows=rows.filter(x=>x.variant===m.v);if(!rows.length&&m.f)rows=await loadLegacyOrientation(m.f,orientation);FO.set(fkey(),rows);return rows}',
+      motivo:'Ciencias Naturales, Matemática y Física, Informática y Educación no tienen filas en curriculum_v96: se completan con los bloques y ejes de V2.'}
+  ]
+};
+
 /** Adaptaciones existentes en src/v2-familia (comunes a ambas modalidades). */
 const PREVIOS={
   'v19-map':{archivo:'src/v2-familia/v19-mapa-modalidad.js',motivo:'Filas, formatos, niveles y cuatrimestres de cada modalidad.'},
@@ -158,9 +189,9 @@ export async function secuenciaV2(){
 
 const sha=t=>createHash('sha256').update(t).digest('hex').slice(0,16);
 
-function aplicar(modulo,original,perfil){
+function aplicar(modulo,original,perfil,tabla=DERIVADOS){
   let texto=original;const cambios=[];
-  for(const r of DERIVADOS[modulo]){
+  for(const r of tabla[modulo]){
     const n=texto.split(r.de).length-1;
     if(n!==r.veces)throw Error(`${modulo}: se esperaban ${r.veces} apariciones y hay ${n} de «${r.de.slice(0,70)}»`);
     const a=typeof r.a==='function'?r.a(perfil):r.a;
@@ -204,6 +235,13 @@ export async function construir(){
       entrada.equivalentes={tecnica:PENDIENTES[modulo].tecnica,ba15:PENDIENTES[modulo].ba15};
     }else{
       entrada.estado='original';entrada.archivos={tecnica:ruta,ba15:ruta};
+    }
+    if(DERIVADOS_MEDIA[modulo]){
+      const {texto,cambios}=aplicar(modulo,original,MEDIA,DERIVADOS_MEDIA);
+      const destino=`${OUT}/media/${modulo}.js`;
+      const cabecera=`/* DERIVADO AUTOMÁTICO · no editar a mano.\n * Original: ${ruta} (V2 ${commit.slice(0,7)}).\n * Modalidad: ${MEDIA.nombre} (revision-v2-embed.html).\n * Cambios:\n${cambios.map(c=>` *  - ${c.motivo}`).join('\n')}\n * Regenerar: node scripts/derivar-v2-familia.mjs\n */\n`;
+      archivos.set(destino,cabecera+texto);
+      entrada.media={archivo:destino,cambios};
     }
     manifiesto.modulos.push(entrada);
   }

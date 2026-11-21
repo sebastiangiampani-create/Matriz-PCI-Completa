@@ -34,7 +34,8 @@
   try{
     const [htmlRaw,phase2Source,foAtomicSource,...moduleSources]=await Promise.all([
       fetchText('vendor/pci-sec-aprende-v2/app-core.html'),
-      fetchText('vendor/pci-sec-aprende-v2/src/v47-phase2-matrix.js'),
+      // Derivado de V2: completa las orientaciones ausentes en curriculum_v96 (ver manifiesto).
+      fetchText('src/v2-familia/derivados/media/v47-phase2-matrix.js'),
       fetchText('vendor/pci-sec-aprende-v2/src/v47-fo-content-atomicizer.js'),
       ...modulePaths.map(fetchText)
     ]);

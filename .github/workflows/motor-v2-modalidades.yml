@@ -51,6 +51,7 @@ jobs:
           node tests/v2-familia-portal-browser.mjs
           node tests/v2-tecnica-norma-browser.mjs
           node tests/v2-ba15-norma-browser.mjs
+          node tests/v2-media-orientaciones-browser.mjs
       - name: Capturas del mapa original adaptado
         if: always()
         uses: actions/upload-artifact@v4
