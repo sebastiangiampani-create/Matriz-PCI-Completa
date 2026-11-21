@@ -93,6 +93,72 @@ test('conecta el migrador real con opción B y los cuatro laboratorios simultán
   assert.deepEqual(salida.conflictos, []);
 });
 
+test('el plan histórico conserva su selección al pasar del migrador real al editor V2', () => {
+  const matrixRows = [{ id: 'm1', area: 'Matemática', subject: 'Matemática',
+    axis: 'Números', text: 'Operaciones con números racionales' }];
+  const v2FgRows = [{ ...matrixRows[0], id: 'fg-plan-real', year: 1, component: 'FG' }];
+  const planOriginal = { ...planVacio(), name: 'Plan histórico con selección',
+    contentIds: ['m1'], objectives: 'Explicar los procedimientos',
+    stages: { indagacion: { activities: 'Comparar las estrategias del grupo' } },
+    recursoPropio: { adjuntos: ['guia-original.pdf'] } };
+  const legacyState = { areas: { 'Matemática': { groups: [{
+    id: 'mat-plan-real', level: 1, name: 'Matemática 1.º', items: ['m1'],
+    plansBimestrales: [planOriginal]
+  }] } } };
+  const argumentos = { legacyState, matrixRows, v2FgRows,
+    model: { model: 'media', subjects: MOTOR_MEDIA }, orientationId: ORIENTACION };
+  const argumentosAntes = structuredClone(argumentos);
+  congelar(argumentos);
+  const propuesta = { ...migrarLegadoFgAV2(argumentos), fecha: FECHA };
+  const propuestaAntes = structuredClone(propuesta);
+  const origen = estado();
+  const origenAntes = structuredClone(origen);
+  congelar(propuesta);
+  congelar(origen);
+
+  const salida = aplicarMigracionEnEstadoV2(origen, propuesta);
+  const aplicado = mapa(salida).phase2V28.groups[SLOT];
+  assert.deepEqual(aplicado.origenesContenido, { 'fg-plan-real': ['m1'] });
+  assert.deepEqual(aplicado.plansBimestrales[0], {
+    ...planOriginal, contentIds: ['fg-plan-real'],
+    origen: 'pci-anterior', legacyGroupId: 'mat-plan-real'
+  });
+  // V38 solo marca la casilla si el ID seleccionado coincide con el del grupo.
+  assert.deepEqual(aplicado.contents.filter(id =>
+    aplicado.plansBimestrales[0].contentIds.includes(String(id))), ['fg-plan-real']);
+  assert.deepEqual(aplicado.grupoOriginal, legacyState.areas['Matemática'].groups[0]);
+  assert.deepEqual(argumentos, argumentosAntes);
+  assert.deepEqual(propuesta, propuestaAntes);
+  assert.deepEqual(origen, origenAntes);
+  assert.deepEqual(aplicarMigracionEnEstadoV2(salida, propuesta), salida);
+});
+
+test('el plan expande una homologación previa 1 a varios sin duplicar IDs V2 ya seleccionados', () => {
+  const matrixRows = [{ id: 'm1', area: 'Matemática', subject: 'Matemática',
+    axis: 'Números', text: 'Contenido histórico de operaciones y problemas' }];
+  const ids = ['fg-plan-operaciones', 'fg-plan-problemas'];
+  const v2FgRows = ids.map((id, i) => ({ ...matrixRows[0], id, year: 1,
+    component: 'FG', text: ['Operaciones con números racionales', 'Resolución de problemas'][i] }));
+  const contentIds = ['m1', ids[0], 'm1'];
+  const legacyState = { areas: { 'Matemática': { groups: [{
+    id: 'mat-plan-multiple', level: 1, name: 'Matemática 1.º', items: ['m1'],
+    plansBimestrales: [{ ...planVacio(), contentIds }]
+  }] } } };
+  const approvedMappings = { [JSON.stringify(['Matemática', 1, 'm1'])]: {
+    status: 'approved', area: 'Matemática', year: 1, matrixId: 'm1', referenceIds: ids,
+    reason: 'Homologación simulada aprobada previamente para esta prueba', reviewer: 'Prueba local'
+  } };
+  const propuesta = { ...migrarLegadoFgAV2({ legacyState, matrixRows, v2FgRows,
+    approvedMappings, model: { model: 'media', subjects: MOTOR_MEDIA },
+    orientationId: ORIENTACION }), fecha: FECHA };
+  const aplicado = mapa(aplicarMigracionEnEstadoV2(estado(), propuesta)).phase2V28.groups[SLOT];
+  assert.deepEqual(aplicado.origenesContenido, Object.fromEntries(ids.map(id => [id, ['m1']])));
+  assert.deepEqual(aplicado.contents, ids);
+  assert.deepEqual(aplicado.plansBimestrales[0].contentIds, ids);
+  assert.deepEqual(aplicado.grupoOriginal.plansBimestrales[0].contentIds, contentIds);
+  assert.deepEqual(propuesta.groups[SLOT].plansBimestrales[0].contentIds, contentIds);
+});
+
 test('asigna la opción A en un mapa sin trabajo y conserva la opción cuando no hay propuesta', () => {
   const salidaA = aplicarMigracionEnEstadoV2(estado({ socialOption: 'B' }),
     resultado(gruposSociales(['socialA-c5', 'socialA-c6']), { socialOption: 'A' }));

@@ -114,6 +114,35 @@ function prepararMapa(estado) {
   return mapa;
 }
 
+function adaptarContenidosDePlanes(grupo) {
+  const idsV2 = new Set(grupo.contents.map(String));
+  const equivalencias = new Map();
+  for (const [idV2, idsLegado] of Object.entries(grupo.origenesContenido || {})) {
+    if (!idsV2.has(idV2) || !Array.isArray(idsLegado)) continue;
+    for (const idLegado of idsLegado) {
+      const clave = String(idLegado);
+      if (!equivalencias.has(clave)) equivalencias.set(clave, new Set());
+      equivalencias.get(clave).add(idV2);
+    }
+  }
+  return { ...grupo, plansBimestrales: grupo.plansBimestrales.map(plan => {
+    if (!objeto(plan) || !Array.isArray(plan.contentIds)) return plan;
+    const seleccionados = new Set();
+    const contentIds = plan.contentIds.flatMap(id => {
+      const destinos = idsV2.has(String(id)) ? [id] : [...(equivalencias.get(String(id)) || [])];
+      // Sin equivalencia explícita se conserva la referencia original.
+      if (!destinos.length) return [id];
+      return destinos.filter(destino => {
+        const clave = String(destino);
+        if (seleccionados.has(clave)) return false;
+        seleccionados.add(clave);
+        return true;
+      });
+    });
+    return { ...plan, contentIds };
+  }) };
+}
+
 /**
  * @param {object} estadoV2 Estado global serializable { active, maps, ... }.
  * @param {object} resultadoMigracion Resultado íntegro de migrarLegadoFgAV2,
@@ -124,6 +153,8 @@ function prepararMapa(estado) {
  * Los conflictos quedan en maps[active].conflictos, con el grupo y sus materias
  * propuestos íntegros. Un slot con trabajo de Fase 1 o Fase 2 no se sobrescribe.
  * Los placeholders y planes automáticos vacíos sí pueden recibir la propuesta.
+ * En los planes aplicados, las selecciones históricas con equivalencia explícita
+ * usan los IDs V2 del grupo. grupoOriginal conserva íntegro el plan histórico.
  *
  * Un cambio de opción social con trabajo en 3.º queda en conflicto, tal como
  * protege v19-map al cambiar A/B. También se retienen los grupos que dependen de
@@ -176,7 +207,7 @@ export function aplicarMigracionEnEstadoV2(estadoV2, resultadoMigracion) {
     mapa.placements[slot] = resultado.placements[slot];
     if (resultado.placements[slot].length) cambioComposicion = true;
     // No añadir { data: grupo }: V2 construye ese descriptor al leer el estado.
-    mapa.phase2V28.groups[slot] = grupo;
+    mapa.phase2V28.groups[slot] = adaptarContenidosDePlanes(grupo);
   }
 
   if (cambioComposicion) mapa.valid = false;

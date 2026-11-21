@@ -110,8 +110,8 @@ const DERIVADOS={
 };
 
 /**
- * Derivados para Media (revision-v2-embed.html). Solo correcciones de datos
- * declaradas; la lógica de V2 no cambia.
+ * Derivados para Media (revision-v2-embed.html). Adaptaciones declaradas de
+ * catálogo y presentación; el cálculo de cobertura sigue a cargo de V91.
  */
 const MEDIA={nombre:'Educación Media',niveles:5,cuatrimestres:10};
 const DERIVADOS_MEDIA={
@@ -136,7 +136,29 @@ async function loadFO(){`,
       motivo:'Agregar la lectura de orientaciones que V2 conserva en data/orientaciones/.'},
     {de:'if(m.v)rows=rows.filter(x=>x.variant===m.v);FO.set(fkey(),rows);return rows}',veces:1,
       a:'if(m.v)rows=rows.filter(x=>x.variant===m.v);if(!rows.length&&m.f)rows=await loadLegacyOrientation(m.f,orientation);FO.set(fkey(),rows);return rows}',
-      motivo:'Ciencias Naturales, Matemática y Física, Informática y Educación no tienen filas en curriculum_v96: se completan con los bloques y ejes de V2.'}
+      motivo:'Ciencias Naturales, Matemática y Física, Informática y Educación no tienen filas en curriculum_v96: se completan con los bloques y ejes de V2.'},
+    {de:'function componentCoverage(a,component){const gs=ga(a),official=areaPool(a).filter(c=>c.component===component),officialIds=new Set(official.map(c=>c.id)),used=new Set(gs.flatMap(g=>g.data.contents||[]).filter(id=>officialIds.has(id)));return{used,total:official.length,percent:official.length?Math.round(used.size/official.length*100):0,component}}',veces:1,
+      a:`function componentCoverage(a,component){
+  const gs=ga(a),official=areaPool(a).filter(c=>c.component===component),officialIds=new Set(official.map(c=>c.id));
+  if(component==='FG'&&official.length){
+    const core=window.PCICoverageV91,used=new Set();
+    // La referencia canónica se resuelve en el nivel donde está ubicado cada contenido.
+    for(const g of gs)for(const id of g.data.contents||[]){
+      for(const row of core.canonicalForContent(findContent(id),g.year)){
+        if(officialIds.has(row.id))used.add(row.id);
+      }
+    }
+    const metric=core.trajectoryCoverage(a,gs);
+    return{used,total:metric.total,percent:metric.percent,component};
+  }
+  // La Formación Orientada conserva su cobertura de trayectoria y su bolsa separada.
+  const used=new Set(gs.flatMap(g=>g.data.contents||[]).filter(id=>officialIds.has(id)));
+  return{used,total:official.length,percent:official.length?Math.round(used.size/official.length*100):0,component};
+}`,
+      motivo:'El encabezado FG utiliza las referencias por nivel y las métricas de trayectoria de V91, conserva el Set de IDs y mantiene FO separada.'},
+    {de:'try{await Promise.all([loadFG(),loadFO()]);board()}catch(e)',veces:1,
+      a:'try{await Promise.all([loadFG(),loadFO()]);await window.PCICoverageV91.ready();board()}catch(e)',
+      motivo:'Esperar la base canónica de V91 antes de mostrar el encabezado; loadCurriculum no depende de openArea.'}
   ]
 };
 
