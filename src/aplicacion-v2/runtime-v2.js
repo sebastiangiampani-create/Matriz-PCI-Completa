@@ -242,6 +242,9 @@
       header.top.site-top .brand{min-width:0;gap:14px;flex:1 1 380px}header.top.site-top .row{flex-wrap:wrap}
       #pciV2BackSchool{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
       #pciV2ContextNotice{font-size:.68rem;line-height:1.5;overflow-wrap:anywhere}
+      /* El título sigue al aviso o al regreso: no debe compensar hacia arriba
+         el padding de la página ni cubrir esos elementos anteriores. */
+      .screen>.hero,#proposal .v28-hero{margin-top:0}
       #institutional .v71m-add,#institutional .v71m-teachers,#institutional .v71o-course-label,
       #institutional .v71o-subject-row,#institutional .v95-coord-form,
       #institutional .v110-coord-editor-grid,#institutional .v71m-teacher-main{min-width:0}
