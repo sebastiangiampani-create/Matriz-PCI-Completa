@@ -1,11 +1,20 @@
 /* PR #47: transporte simulado para revisar la aplicación real sin tocar Supabase.
-   Esta capa solo se incorpora a revision-pr47.html, nunca al portal institucional. */
+   Esta capa solo se incorpora a las páginas de revisión, nunca al portal institucional. */
 (() => {
   'use strict';
   const endpoint = 'https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-multipci';
   const storageKey = 'pci-pr47-preview-state-v1';
+  const entryPage = location.pathname.endsWith('/revision-v2-portal-real.html')
+    ? 'revision-v2-portal-real.html' : 'revision-pr47.html';
+  // La sesión ficticia no sustituye una sesión institucional del mismo origen.
+  const rawGet=Storage.prototype.getItem,rawSet=Storage.prototype.setItem,rawRemove=Storage.prototype.removeItem;
+  const scopedKey=(storage,key)=>storage===sessionStorage&&String(key)==='pci_access_session'
+    ? 'pci-pr47-access-session' : key;
+  Storage.prototype.getItem=function(key){return rawGet.call(this,scopedKey(this,key));};
+  Storage.prototype.setItem=function(key,value){return rawSet.call(this,scopedKey(this,key),value);};
+  Storage.prototype.removeItem=function(key){return rawRemove.call(this,scopedKey(this,key));};
   const schoolId = 1001;
-  const school = {school_id:schoolId,name:'Escuela N.º 99 · Revisión aislada PR #47',cue:'PREVIEW-47'};
+  const school = {school_id:schoolId,name:'Escuela de muestra ficticia · Revisión PR #47',cue:'PREVIEW-47'};
   const base = {
     schema:1, seq:20,
     pcis:[
@@ -31,6 +40,12 @@
     return structuredClone(base);
   }
   let state=load();
+  state.review=state.review&&typeof state.review==='object'?state.review:{};
+  // Registrar los borradores anteriores antes de que se abra cualquier iframe.
+  const priorDrafts=new Set(state.pcis.filter(p=>{
+    const prefix=p.model==='comun'?'pci-original-v2::':'pci-v2-modalidad::'+p.model+'::';
+    return localStorage.getItem(prefix+p.pci_id+'::pci-sa-v2-app-20260910-21')!==null;
+  }).map(p=>p.pci_id));
   const persist=()=>sessionStorage.setItem(storageKey,JSON.stringify(state));
   persist();
   // Sesión de prueba sin credenciales reales. No solicita ni usa usuario/clave.
@@ -100,17 +115,33 @@
     label.setAttribute('role','status');
     label.style.cssText='position:sticky;top:0;z-index:9999;text-align:center;background:#edf3f8;color:#12395c;border-bottom:1px solid #d8e1e8;padding:7px 12px;font:600 12px Archivo,system-ui,sans-serif';
     document.body.prepend(label);
-    for(const id of ['platformHomeLink','adminPanelLink','schoolPanelLink']){
-      const a=document.getElementById(id);
-      if(a){a.removeAttribute('href');a.style.display='none';}
-    }
-    // Volver a la escuela de esta revisión en lugar de abrir producción.
-    for(const id of ['schoolHomeLink','brandHomeLink']){
-      const a=document.getElementById(id);
-      if(a)a.href='revision-pr47.html?school=1001';
-    }
+    const protectLinks=()=>{
+      for(const id of ['platformHomeLink','adminPanelLink','schoolPanelLink','historicalPciLink','homeHistoricalPciLink']){
+        const a=document.getElementById(id);
+        if(a){if(a.hasAttribute('href'))a.removeAttribute('href');if(!a.hidden)a.hidden=true;a.style.display='none';}
+      }
+      for(const id of ['schoolHomeLink','brandHomeLink','authLoginLink']){
+        const a=document.getElementById(id),href=entryPage+'?school=1001';
+        if(a&&a.getAttribute('href')!==href)a.setAttribute('href',href);
+      }
+    };
+    protectLinks();
+    // El portal vuelve a componer sus enlaces al cambiar de PCI.
+    new MutationObserver(protectLinks).observe(document.body,{subtree:true,attributes:true,attributeFilter:['href','hidden']});
   },{once:true});
-  window.__pciPreviewPr47={isolated:true,schoolId,reset(){
-    state=structuredClone(base);persist();location.href='revision-pr47.html?school=1001';
+  window.__pciPreviewPr47={isolated:true,schoolId,entryPage,
+    getPci(id){return structuredClone(state.pcis.find(p=>p.pci_id===id)||null);},
+    hadLocalDraft(id){return priorDrafts.has(id);},
+    savedV2(id){
+      const row=Object.values(state.units).find(x=>x?.document?.pciId===id&&x.document.v2?.maps);
+      return row?structuredClone(row.document.v2):null;
+    },
+    readReview(id){return structuredClone(state.review[id]||null);},
+    rememberReview(id,patch){
+      if(!state.pcis.some(p=>p.pci_id===id))return;
+      state.review[id]={...(state.review[id]||{}),...structuredClone(patch)};persist();
+    },
+    reset(){
+    state=structuredClone(base);state.review={};persist();location.href=entryPage+'?school=1001';
   }};
 })();

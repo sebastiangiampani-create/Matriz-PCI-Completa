@@ -1,0 +1,40 @@
+name: Publicación de revisión V2 aislada
+
+on:
+  push:
+    branches: [test/publicar-revision-v2-20261121]
+
+permissions:
+  contents: read
+
+jobs:
+  revisar-paquete-simulado:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preparar distribución de revisión
+        run: node scripts/preparar-publicacion-revision-v2.mjs --out "$RUNNER_TEMP/pci-revision-dist"
+      - name: Preparar navegador de prueba
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium
+          fi
+      - name: Verificar portal, perfiles y planes en escritorio y celular
+        env:
+          PCI_PREVIEW_ROOT: ${{ runner.temp }}/pci-revision-dist
+        run: node tests/publicacion-revision-v2-browser.mjs
+      - name: Conservar resultados y capturas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: publicacion-revision-v2
+          path: test-artifacts/publicacion-revision-v2/
+          if-no-files-found: warn
+          retention-days: 7
