@@ -109,6 +109,6 @@ export function anualPrescriptoDeMateria(perfil,subject) {
 export function esMateriaAnualCorrecta(perfil,subject,year) {
   if(!subject || !perfil || ![4,5,6].includes(Number(year)))return false;
   const item=byYear(perfil,Number(year));
-  return Boolean(item&&annualPrescriptoDeMateria(perfil,subject) &&
+  return Boolean(item&&anualPrescriptoDeMateria(perfil,subject) &&
     subject.origin==='FO' && subject.field==='formacion_tecnica_especifica');
 }
