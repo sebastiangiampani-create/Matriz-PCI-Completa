@@ -104,24 +104,23 @@ try{
   assert.ok(phase2.fg>0,'La Fase 2 debe tener contenidos FG');
   assert.ok(phase2.fo>0,'La Fase 2 debe tener contenidos específicos de la modalidad');
   if(model==='tecnica'){
-    const coverageCheck=await page.evaluate(async()=>{
+    const checked=await page.evaluate(async()=>{
       const p=window.PCIPhase2V28;
       await p.loadCurriculum();
       const areas=[...new Set(window.V2ModalMap.rowDefs().map(x=>x.area).filter(Boolean))];
-      const findings=[];
+      const found=[];
       for(const area of areas){
-        const rows=p.getAreaPool(area),provisional=rows.filter(x=>x.documentalFragmentId);
-        if(!provisional.length)continue;
+        const rows=p.getAreaPool(area),rebuilt=rows.filter(x=>x.documentallyVerified===true);
+        if(!rebuilt.length)continue;
         const cv=p.getCoverage(area);
-        const excluded=cv.provisionalTotal+(cv.extra?.provisionalTotal||0);
-        const official=rows.filter(x=>x.component===cv.component&&!x.documentalFragmentId);
-        if(excluded<provisional.length)throw Error('Fragmentos provisionales incluidos en cobertura: '+area);
-        if(cv.total!==official.length)throw Error('Denominador de cobertura técnico incorrecto: '+area);
-        findings.push({area,provisional:provisional.length});
+        const componentRows=rows.filter(x=>x.component===cv.component&&!x.documentalFragmentId);
+        if(cv.total!==componentRows.length)
+          throw Error('La cobertura de '+area+' no incluye los contenidos recuperados desde PDF oficial');
+        found.push({area,reconstructed:rebuilt.length});
       }
-      return findings;
+      return found;
     });
-    assert.ok(coverageCheck.length>0,'La Fase 2 técnica debe distinguir fragmentos por revisar.');
+    assert.ok(checked.length>0,'La Fase 2 Técnica debe cargar contenidos del banco reconstruido.');
   }
   await page.screenshot({path:'test-artifacts/v2-modalidades/'+model+'-mapa.png',fullPage:true});
   // Fase 2 V2 real: elegir un contenido desde la bolsa, asignarlo al
