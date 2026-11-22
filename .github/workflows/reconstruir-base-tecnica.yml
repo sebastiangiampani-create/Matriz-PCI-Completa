@@ -1,0 +1,24 @@
+name: Reconstrucción geométrica de priorizados Técnica
+on:
+  push:
+    branches: [fix/rescate-constructor-v2-reglas-20261119]
+    paths:
+      - 'scripts/inspeccionar-pdf-tecnica.py'
+      - 'scripts/reconstruir-base-tecnica.py'
+      - '.github/workflows/reconstruir-base-tecnica.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnosticar-pdf:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar PyMuPDF
+        run: python -m pip install 'pymupdf>=1.24,<2'
+      - name: Verificar descarga y estructura geométrica de priorizados oficiales
+        run: python scripts/inspeccionar-pdf-tecnica.py
