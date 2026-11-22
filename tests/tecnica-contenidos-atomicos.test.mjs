@@ -25,7 +25,9 @@ const normalized= s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'
 
 test('el catálogo estructurado tiene referencias individuales, no páginas de PDF',async()=>{
  const rows=await cargarBancoAtomicoTecnica({fetcher:fetchLocal});
- assert.equal(BANCOS_ATOMICOS_TECNICA.length,25);
+ assert.equal(BANCOS_ATOMICOS_TECNICA.length,16);
+ assert.ok(BANCOS_ATOMICOS_TECNICA.every(x=>!x.startsWith('ingles-')),
+   'No convertir bancos de Inglés sin identificadores ni años verificables.');
  assert.ok(rows.length>500);
  assert.ok(rows.every(row=>row.id&&row.subject&&row.axis&&row.text));
  assert.equal(new Set(rows.map(r=>r.id)).size,rows.length);

@@ -16,7 +16,9 @@ export const BANCOS_ATOMICOS_TECNICA=Object.freeze([
  'ciencias-sociales-01','ciencias-sociales-02','ciencias-sociales-03','ciencias-sociales-04',
  'educacion-artistica',
  'educacion-fisica-01','educacion-fisica-02',
- 'ingles-1','ingles-2','ingles-3','ingles-4','ingles-5','ingles-6','ingles-7','ingles-8','ingles-9',
+ // Los bancos ingles-1..9 son arrays de cuatro columnas sin identificador,
+ // materia ni año verificado por contenido; no se homologan por inferencia.
+ // Lengua Adicional mantiene la base NES individual del constructor V2.
  'lengua-literatura',
  'matematica-01','matematica-02','matematica-03',
  'talleres','tecnologia-representacion'
