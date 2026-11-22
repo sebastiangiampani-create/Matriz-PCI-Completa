@@ -53,6 +53,21 @@ test('separación conservadora no convierte páginas ni indicadores en contenido
  assert.ok(r.contenidos.every(x=>x.provisional&&x.pedagogicallyReviewed===false));
 });
 
+test('una página sin texto extraído permanece pendiente sin convertirse en contenido',()=>{
+ const doc={schema:'pci-tecnica-priorizados/2',asignaturas:[{
+  id:'p-1',asignatura:'Prácticas Profesionalizantes',paginas:[
+   {pagina_pdf:98,anio_contextual_inferido:6,texto_pagina:'',pagina_sin_texto:true}
+  ]
+ }]};
+ const bank=[{id:'p-1@p98',sectionId:'p-1',page:98,year:6,
+  name:'Prácticas Profesionalizantes',source_url:'https://example.invalid/pp.pdf',
+  field:'practicas_profesionalizantes'}];
+ const result=desagregarPendientesTecnica(doc,bank,[{id:'p-1@p98'}]);
+ assert.equal(result.contenidos.length,0);
+ assert.equal(result.pendientes.length,1);
+ assert.equal(result.pendientes[0].reason,'pagina_sin_texto_extraido');
+});
+
 test('todas las especialidades conservan referencias y distinguen el inventario provisional',async()=>{
  const curated=await cargarBancoAtomicoTecnica({fetcher:fetchLocal});
  const stats={especialidades:0,referencias:0,pendientesOriginales:0,
