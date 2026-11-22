@@ -9,6 +9,8 @@ on:
       - pci-orientaciones.css
       - panel-*.html
       - src/aplicacion-v2/**
+      - src/tecnica/**
+      - src/normativa/**
       - src/pci-router.mjs
       - src/v2-familia/**
       - src/migracion/**
