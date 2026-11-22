@@ -11,6 +11,7 @@ import {technicalSubjectCards,technicalSubjectBank} from '../tecnica/espacio-tra
 import {auditarPriorizadosTecnica} from '../tecnica/auditoria-priorizados-2026.mjs';
 import {cargarBancoAtomicoTecnica,cotejarContenidosAtomicosTecnica} from '../tecnica/contenidos-atomicos-2026.mjs';
 import {desagregarPendientesTecnica} from '../tecnica/desagregacion-documental-2026.mjs';
+import {cargarBaseTecnicaReconstruida} from '../tecnica/base-contenidos-2026.mjs';
 import {BA15_NIVELES} from '../ba15/reglas-curriculares.mjs';
 import {loadBa15FgBase,BA15_FG_LEVEL_MAP} from '../ba15/priorizados-base.mjs';
 import {loadV2Fo,selectFoByOrientation} from '../integracion-curricular/catalogos.js';
@@ -19,6 +20,8 @@ const clone=v=>JSON.parse(JSON.stringify(v));
 const text=v=>String(v??'').trim();
 const safeId=id=>/^[a-z0-9_]{2,90}$/.test(text(id));
 const uni=a=>[...new Set(a.filter(Boolean))];
+const canonContent=v=>text(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+const contentKey=c=>[canonContent(c.subject),Number(c.year),canonContent(c.text)].join('|');
 function common(model,track,levels,subjects,fgContents,foContents,note){
  if(!['tecnica','ba15'].includes(model)||!text(track)||![4,6].includes(levels))throw Error('Perfil V2 inválido');
  const ids=subjects.map(s=>s.id);
@@ -140,11 +143,19 @@ export async function loadTechnicalV2Profile(specialtyId){
  const originalPages=bank; // Auditoría: conservar referencias por página en reporte, nunca como contenido seleccionable.
  const atomicRows=await cargarBancoAtomicoTecnica();
  const cotejo=cotejarContenidosAtomicosTecnica(document,originalPages,atomicRows);
- // Segunda pasada conservadora: solo páginas sin un contenido individual
- // del banco original. No convierte una página completa en contenido V2.
- const documental=desagregarPendientesTecnica(document,originalPages,cotejo.pendientes);
+ // Priorizar la base única reconstruida geométricamente desde el PDF oficial.
+ // Los cotejos previos conservan sus IDs para no romper planes guardados.
+ let reconstructed=null,documental=null;
+ try {reconstructed=await cargarBaseTecnicaReconstruida(document);}
+ catch(error){
+  if(!/^No está publicada la base técnica reconstruida/.test(String(error?.message||'')))throw error;
+  documental=desagregarPendientesTecnica(document,originalPages,cotejo.pendientes);
+ }
+ const candidates=reconstructed?.contenidos||documental.contenidos;
+ const known=new Set(cotejo.contenidos.map(contentKey));
+ const additional=candidates.filter(c=>{const key=contentKey(c);if(known.has(key))return false;known.add(key);return true;});
  const fgContents=[],foContents=[];
- for(const atomic of [...cotejo.contenidos,...documental.contenidos]){
+ for(const atomic of [...cotejo.contenidos,...additional]){
    const section= document.asignaturas.find(x=>x.id===atomic.sourceReference.split('@p')[0]);
    if(!section)throw Error('Falta la sección oficial del contenido '+atomic.id);
    const area=technicalContentArea(section,atomic.field,atomic.year,subjects);
@@ -167,15 +178,27 @@ export async function loadTechnicalV2Profile(specialtyId){
   }
  }
  const profile=common('tecnica',specialty.name,6,subjects,fgContents,foContents,
-  'Especialidad '+specialty.name+' · contenidos priorizados 2026 extraídos de PDF con página y fuente. La extracción requiere validación pedagógica; no equivale a homologación.');
+  'Especialidad '+specialty.name+' · contenidos rearmados desde las columnas originales de los PDF oficiales 2026, por materia y año. No implica homologación normativa automática.');
  profile.specialtyId=specialty.id;
  profile.specialtyProfile=resolverPerfilEspecialidadTecnica(specialty.id);
  profile.priorizados={...auditarPriorizadosTecnica(document,bank),
-  // Mantener el resumen del cotejo original para auditar su procedencia.
   contenidosAtomicos:cotejo.resumen,
-  desagregacionDocumental:documental.resumen,
-  pendientesDeAtomizacion:documental.pendientes.map(x=>({id:x.id,year:x.year,page:x.page,name:x.name,reason:x.reason})),
-  advertenciaRevision:'Los fragmentos documentales extraídos por columna son provisionales y requieren revisión pedagógica; no constituyen homologación oficial.'};
+  desagregacionDocumental:documental?.resumen||null,
+  baseReconstruida:reconstructed?{
+   contenidosExtraidos:reconstructed.contenidos.length,
+   nuevosSinDuplicar:additional.length,
+   contenidosHistoricosConservados:cotejo.contenidos.length,
+   conceptosUnicos:reconstructed.base.resumen?.conceptosUnicos,
+   materias:reconstructed.base.materias?.length,
+   incidencias:reconstructed.base.incidencias?.length||0,
+   fuente:document.fuente_url
+  }:null,
+  pendientesDeAtomizacion:reconstructed?
+   (reconstructed.base.incidencias||[]).map(x=>({id:'pagina-'+x.page,year:null,page:x.page,name:x.subject,reason:x.reason})):
+   documental.pendientes.map(x=>({id:x.id,year:x.year,page:x.page,name:x.name,reason:x.reason})),
+  advertenciaRevision:reconstructed?
+   'Base reconstruida de las columnas originales del PDF oficial. No equivale a homologación normativa automática.':
+   'Base antigua provisional hasta publicar el banco reconstruido.'};
  return profile;
 }
 export async function loadV2ModalProfile(params){
