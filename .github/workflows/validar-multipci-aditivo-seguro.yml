@@ -31,6 +31,8 @@ jobs:
                           $2 == "src/admin-escuelas-panel.mjs" ||
                           $2 == "panel-general.html" ||
                           $2 == "panel-escuela.html" ||
+                          $2 == "panel-accesos.html" ||
+                          $2 == "panel-usuarios.html" ||
                           $2 == "pci-orientaciones.html" ||
                           $2 == "pci-orientaciones.css" ||
                           $2 == "src/orientaciones-online.mjs" ||
@@ -40,6 +42,7 @@ jobs:
                           $2 == "src/constructor-v2-ui.mjs" ||
                           $2 == "src/integracion-curricular/constructor-mapa-unificado.mjs" ||
                           $2 == "src/normativa/adaptador-mapa-media-20261117.mjs" ||
+                          $2 == "src/normativa/composicion-pci-20261117.mjs" ||
                           $2 == "src/pci-fase-desarrollo-fg.mjs" ||
                           $2 == "src/pci-router.mjs" ||
                           $2 == "src/tecnica/espacio-trabajo-v2.mjs" ||
