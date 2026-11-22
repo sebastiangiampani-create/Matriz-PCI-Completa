@@ -448,6 +448,14 @@ async function modalFlow(page,record,model,levels){
   });
   assert.equal(await page.locator('#matrix [data-slot="'+probe.slot+'"] [data-map-id="'+probe.subject+'"]').count(),1);
   await capture(page,record.dispositivo+'-'+model+'-mapa.png');
+  if(model==='tecnica'){
+    await settle(page);
+    const name=record.dispositivo+'-tecnica-matriz-completa.png';
+    await page.locator('#matrix').screenshot({
+      path:resolve(artifacts,name),animations:'disabled'
+    });
+    report.capturas.push(name);
+  }
   await area(page,probe.area);
   const group=page.locator('#v28groups [data-g="'+probe.slot+'"]');
   await group.click();await page.locator('#v28list [data-c]').first().click();
