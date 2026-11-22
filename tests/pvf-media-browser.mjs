@@ -31,6 +31,9 @@ const cases=[
   {id:'literatura',name:'Literatura',compatible:false,
     A:{subjectId:'fo-literatura-5-0',name:'Proyecto de Mediación y/o Promoción de la Lectura y la Escritura',hours:3},
     B:{subjectId:'fo-literatura-5-1',name:'Proyecto de Mediación de la Lectura y la Escritura',hours:4}},
+  {id:'ciencias_naturales',name:'Ciencias Naturales',compatible:true,
+    A:{subjectId:'fo-ciencias-naturales-5-3',name:'Problemáticas científicas con impacto social',hours:2},
+    B:{subjectId:'fo-ciencias-naturales-5-3',name:'Problemáticas científicas con impacto social',hours:2}},
   {id:'arte_teatro',name:'Arte - Teatro',compatible:false,
     A:{subjectId:'fo-arte-teatro-5-2',name:'Producción en artes escénicas y gestión cultural',hours:4},
     B:{subjectId:'fo-arte-teatro-5-2',name:'Producción teatral y gestión cultural',hours:3}}
@@ -368,6 +371,77 @@ async function incompatibleExistingWork(page,record,scenario,extraId,expected){
     resueltoPorBoton:true,recuperacionSinBloqueoResidual:true,docentesConservados:true};
 }
 
+async function verifyCierreMedia(page,record,scenario,expected) {
+  assert.equal(await page.evaluate(()=>typeof PCIMediaCierre?.auditar),'function');
+  if (scenario.id!=='economia_administracion' && scenario.id!=='ciencias_naturales') return;
+  await offer(page);
+  const origen=await activeMap(page);
+  const names=scenario.id==='economia_administracion' ?
+    ['Contabilidad patrimonial y de Gestión','Derecho','Historia (orientada)','Tecnologías de la Información (orientada)'] :
+    ['Ecología','Energía, radiación y vida','Química, alimentación y salud',
+      'Historia (orientada)','Tecnologías de la Información (orientada)'];
+  const seeded=await page.evaluate(({names,naturales})=>{
+    const state=PCIAplicacionV2.snapshot(),map=state.maps[state.active],fo=subjects().filter(s=>s.origin==='FO'&&s.year===5);
+    const id=name=>{
+      const match=fo.filter(s=>s.name.toLowerCase()===name.toLowerCase());
+      if(match.length!==1)throw Error('Materia de 5.º ausente/ambigua: '+name);
+      return match[0].id;
+    };
+    const ids=names.map(id);
+    const lab=naturales?ids.slice(0,3):ids.slice(0,2);
+    const taller=naturales?ids.slice(3,5):ids.slice(2,4);
+    map.placements['foLab5-c9']=[...lab];map.placements['foLab5-c10']=[...lab];
+    map.placements['foTaller5-c9']=[...taller];map.placements['foTaller5-c10']=[...taller];
+    return PCIAplicacionV2.applyDraft(state);
+  },{names,naturales:scenario.id==='ciencias_naturales'});
+  await page.waitForFunction(()=>PCIMediaCierre.auditar().detalle.find(x=>x.slot==='foLab5-c9').hcConocidas>0);
+  const audit=await page.evaluate(()=>PCIMediaCierre.auditar());
+  assert.deepEqual(audit.errores,[],'La composición de quinto queda válida: '+JSON.stringify(audit));
+  assert.deepEqual(audit.pendientes,[],'Cargas horarias resueltas: '+JSON.stringify(audit));
+  assert.equal(audit.valido,true);
+  await assertDevelopment(page,expected);
+  await page.locator('#pciMediaCierre').scrollIntoViewIfNeeded();
+  await capture(page,record,'cierre-media-articulaciones');
+  if(scenario.id==='ciencias_naturales') {
+    assert.equal(await page.locator('#matrix [data-slot="naturales-c9"],#matrix [data-slot="naturales-c10"]').count(),0);
+    assert.equal(audit.detalle.find(x=>x.slot==='foLab5-c9').hcConocidas,12);
+    assert.equal(audit.detalle.find(x=>x.slot==='foLab5-c9').excepcionMasDe9,true);
+    const before=await activeMap(page);
+    await page.evaluate(()=>{
+      const doc=PCIAplicacionV2.snapshot(),m=doc.maps[doc.active];
+      m.placements['naturales-c9']=['fg-5-quimica'];
+      m.phase2V28.groups['naturales-c9']={name:'Plan histórico resguardable',contents:['original'],
+        plansBimestrales:[{number:1,name:'Plan histórico con contenido',objectives:'No borrar',contentIds:['original']}]};
+      return PCIAplicacionV2.applyDraft(doc);
+    });
+    assert.equal(await page.locator('#pciMediaCierre [role="alert"]').count(),1);
+    await page.locator('#pciMediaCierre button').filter({hasText:'Conservar copia'}).click();
+    const after=await activeMap(page);
+    assert.equal(after.placements['naturales-c9'],undefined);
+    assert.equal(after.phase2V28.groups['naturales-c9'],undefined);
+    assert.equal(after.resguardosNormativos.naturales5.length,1);
+    assert.equal(after.resguardosNormativos.naturales5[0].grupos['naturales-c9'].name,'Plan histórico resguardable');
+    assert.deepEqual(after.phase2V28.groups['proyecto-n5'],before.phase2V28.groups['proyecto-n5']);
+    await capture(page,record,'naturales5-resguardo-realizado');
+    await page.reload({waitUntil:'domcontentloaded'});await ready(page);await offer(page);
+    const recovered=await activeMap(page);
+    assert.deepEqual(recovered.resguardosNormativos.naturales5,after.resguardosNormativos.naturales5);
+    assert.deepEqual(recovered.phase2V28.groups['proyecto-n5'],before.phase2V28.groups['proyecto-n5']);
+    record.cierreMedia={naturalesC9C10NoDisponibles:true,
+      laboratorioFo12Horas:true,resguardoHistoricoSinPerdida:true};
+  } else {
+    await page.locator('#pciMediaCierre input[data-pvf-articulacion="foLab5-c9"]').check();
+    const changed=await activeMap(page);
+    assert.deepEqual(changed.placements,seeded.maps[seeded.active].placements);
+    assert.deepEqual(changed.phase2V28.groups['proyecto-n5'],expected.group);
+    assert.deepEqual(changed.pvfArticulaciones.espacios,['foLab5-c9']);
+    await page.reload({waitUntil:'domcontentloaded'});await ready(page);await offer(page);
+    assert.deepEqual((await activeMap(page)).pvfArticulaciones.espacios,['foLab5-c9']);
+    await assertDevelopment(page,expected);
+    record.cierreMedia={articulacionIndependiente:true,cuatroPlanesPreservados:true};
+  }
+}
+
 async function exercise(page,record,scenario,pci){
   await login(page,pci);
   record.guardadoInicial=await initialEnvelope(page,scenario,pci,{requireSaveEvent:true});
@@ -411,6 +485,7 @@ async function exercise(page,record,scenario,pci){
   await assertPrescription(page,scenario,scenario.compatible?'B':'A');await assertDevelopment(page,saved);
   // El caso de Literatura también simula un documento previo incongruente.
   if(scenario.id==='literatura')await incompatibleExistingWork(page,record,scenario,extraId,saved);
+  await verifyCierreMedia(page,record,scenario,saved);
   assert.deepEqual(record.errores,[],'Sin excepciones de JavaScript.');
   assert.deepEqual(record.recursosFallidos,[],'El paquete contiene todos los recursos solicitados.');
   assert.deepEqual(record.accionesInesperadas,[],'Sólo autenticación y lecturas simuladas.');
@@ -421,7 +496,7 @@ async function exercise(page,record,scenario,pci){
 try{
   report.distribucion=JSON.parse(execFileSync(process.execPath,
     ['scripts/preparar-publicacion-aplicacion-v2.mjs','--out',distribution],{cwd:root,encoding:'utf8'}));
-  for(const file of ['index.html','pci-orientaciones.html','src/aplicacion-v2/pvf-media.mjs','src/aplicacion-v2/pvf-media-runtime.js'])
+  for(const file of ['index.html','pci-orientaciones.html','src/aplicacion-v2/pvf-media.mjs','src/aplicacion-v2/pvf-media-runtime.js','src/aplicacion-v2/media-cierre.mjs','src/aplicacion-v2/media-cierre-runtime.js'])
     assert.ok((await readFile(join(distribution,file))).length,'El paquete debe incluir '+file);
   server=createServer(async(req,res)=>{
     try{

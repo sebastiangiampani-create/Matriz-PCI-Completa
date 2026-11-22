@@ -90,6 +90,12 @@
             "veces": 1,
             "original": "    const m=current();\n    m.placements=m.placements||{};",
             "derivado": "    const m=current();\n    // El puente identifica por referencia los mapas recibidos explícitamente.\n    if(window._…"
+          },
+          {
+            "motivo": "No prearmar Química FG de 5.º en Ciencias Naturales: esa orientación tiene ocho laboratorios FG, solo en C1–C8.",
+            "veces": 1,
+            "original": "    placePaired(5,'Química','naturales');",
+            "derivado": "    if(state.active!=='Ciencias Naturales')placePaired(5,'Química','naturales');"
           }
         ]
       }

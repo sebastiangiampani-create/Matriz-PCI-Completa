@@ -3,6 +3,7 @@
  * Modalidad: Educación Media (revision-v2-embed.html).
  * Cambios:
  *  - Conservar la composición de un mapa importado explícitamente, incluso vacío, sin impedir el prearmado habitual de un PCI nuevo.
+ *  - No prearmar Química FG de 5.º en Ciencias Naturales: esa orientación tiene ocho laboratorios FG, solo en C1–C8.
  * Regenerar: node scripts/derivar-v2-familia.mjs
  */
 (() => {
@@ -69,7 +70,7 @@
     placePaired(3,'Biología','naturales');
     placePaired(3,'Físico-Química','naturales');
     placePaired(4,'Física','naturales');
-    placePaired(5,'Química','naturales');
+    if(state.active!=='Ciencias Naturales')placePaired(5,'Química','naturales');
 
     // Ciencias Sociales. En 3.º se respeta la opción institucional elegida.
     placePaired(1,'Historia','social');

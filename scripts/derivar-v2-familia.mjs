@@ -147,7 +147,10 @@ const DERIVADOS_MEDIA={
   'v23-prearm':[
     {de:'    const m=current();\n    m.placements=m.placements||{};',veces:1,
       a:'    const m=current();\n    // El puente identifica por referencia los mapas recibidos explícitamente.\n    if(window.__pciPreserveImportedMap?.(m))return false;\n    m.placements=m.placements||{};',
-      motivo:'Conservar la composición de un mapa importado explícitamente, incluso vacío, sin impedir el prearmado habitual de un PCI nuevo.'}
+      motivo:'Conservar la composición de un mapa importado explícitamente, incluso vacío, sin impedir el prearmado habitual de un PCI nuevo.'},
+    {de:"    placePaired(5,'Química','naturales');",veces:1,
+      a:"    if(state.active!=='Ciencias Naturales')placePaired(5,'Química','naturales');",
+      motivo:'No prearmar Química FG de 5.º en Ciencias Naturales: esa orientación tiene ocho laboratorios FG, solo en C1–C8.'}
   ],
   'v47-phase2-matrix':[
     {de:'async function loadFO(){',veces:1,

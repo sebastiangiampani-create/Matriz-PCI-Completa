@@ -9,6 +9,7 @@ import { montarAvisoAceptacionV2 } from '../migracion/aviso-aceptacion-v2.mjs';
 import { migrarLegadoFgAV2, materiasMotorMedia } from '../migracion/legado-fg-a-v2.mjs';
 import { localizarRecursos } from './recursos.mjs';
 import * as pvfMedia from './pvf-media.mjs';
+import * as mediaCierre from './media-cierre.mjs';
 
 const RAIZ = new URL('../../', import.meta.url);
 const BASE_V2 = new URL('vendor/pci-sec-aprende-v2/', RAIZ);
@@ -174,7 +175,10 @@ export async function cargarAplicacionV2({ contexto, estadoInicial = null, vista
     // Media ya verificó; no se modifica ninguna regla curricular de la modalidad.
     modules.push({ modulo: 'ajustes-vista-media', archivo: 'src/v2-familia/ajustes-vista-media.js' });
     // Cerrar la composición prescripta después de las reglas generales del motor.
-    if (media) modules.push({ modulo: 'pvf-media-prescripto', archivo: 'src/aplicacion-v2/pvf-media-runtime.js' });
+    if (media) {
+      modules.push({ modulo: 'pvf-media-prescripto', archivo: 'src/aplicacion-v2/pvf-media-runtime.js' });
+      modules.push({ modulo: 'cierre-normativo-media', archivo: 'src/aplicacion-v2/media-cierre-runtime.js' });
+    }
     const corePath = media ? 'vendor/pci-sec-aprende-v2/app-core.html' : 'src/v2-familia/app-core-modalidad.html';
     const [html, runtime, materiasText, ...sources] = await Promise.all([
       texto(corePath), texto('src/aplicacion-v2/runtime-v2.js'),
@@ -198,7 +202,8 @@ export async function cargarAplicacionV2({ contexto, estadoInicial = null, vista
       fuenteLegado: fuenteLegado === null ? null : copiar(fuenteLegado),
       matrixRows: copiar(matrixRows), vista, volver: volver.href, alGuardarBorrador,
       migracion: { montarAvisoAceptacionV2, migrarLegadoFgAV2, materiasMotorMedia },
-      pvfMedia: media ? pvfMedia : null
+      pvfMedia: media ? pvfMedia : null,
+      mediaCierre: media ? mediaCierre : null
     };
     let core = instalarDocumento(localizarRecursos(html, RAIZ.href));
     instalado = true;
