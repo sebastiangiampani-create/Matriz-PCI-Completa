@@ -10,6 +10,7 @@ import {resolverPerfilEspecialidadTecnica} from '../tecnica/perfil-especialidad-
 import {technicalSubjectCards,technicalSubjectBank} from '../tecnica/espacio-trabajo-v2.mjs';
 import {auditarPriorizadosTecnica} from '../tecnica/auditoria-priorizados-2026.mjs';
 import {cargarBancoAtomicoTecnica,cotejarContenidosAtomicosTecnica} from '../tecnica/contenidos-atomicos-2026.mjs';
+import {desagregarPendientesTecnica} from '../tecnica/desagregacion-documental-2026.mjs';
 import {BA15_NIVELES} from '../ba15/reglas-curriculares.mjs';
 import {loadBa15FgBase,BA15_FG_LEVEL_MAP} from '../ba15/priorizados-base.mjs';
 import {loadV2Fo,selectFoByOrientation} from '../integracion-curricular/catalogos.js';
@@ -139,8 +140,11 @@ export async function loadTechnicalV2Profile(specialtyId){
  const originalPages=bank; // Auditoría: conservar referencias por página en reporte, nunca como contenido seleccionable.
  const atomicRows=await cargarBancoAtomicoTecnica();
  const cotejo=cotejarContenidosAtomicosTecnica(document,originalPages,atomicRows);
+ // Segunda pasada conservadora: solo páginas sin un contenido individual
+ // del banco original. No convierte una página completa en contenido V2.
+ const documental=desagregarPendientesTecnica(document,originalPages,cotejo.pendientes);
  const fgContents=[],foContents=[];
- for(const atomic of cotejo.contenidos){
+ for(const atomic of [...cotejo.contenidos,...documental.contenidos]){
    const section= document.asignaturas.find(x=>x.id===atomic.sourceReference.split('@p')[0]);
    if(!section)throw Error('Falta la sección oficial del contenido '+atomic.id);
    const area=technicalContentArea(section,atomic.field,atomic.year,subjects);
@@ -166,8 +170,12 @@ export async function loadTechnicalV2Profile(specialtyId){
   'Especialidad '+specialty.name+' · contenidos priorizados 2026 extraídos de PDF con página y fuente. La extracción requiere validación pedagógica; no equivale a homologación.');
  profile.specialtyId=specialty.id;
  profile.specialtyProfile=resolverPerfilEspecialidadTecnica(specialty.id);
- profile.priorizados={...auditarPriorizadosTecnica(document,bank),contenidosAtomicos:cotejo.resumen,
-  pendientesDeAtomizacion:cotejo.pendientes.map(x=>({id:x.id,year:x.year,page:x.page,name:x.name}))};
+ profile.priorizados={...auditarPriorizadosTecnica(document,bank),
+  // Mantener el resumen del cotejo original para auditar su procedencia.
+  contenidosAtomicos:cotejo.resumen,
+  desagregacionDocumental:documental.resumen,
+  pendientesDeAtomizacion:documental.pendientes.map(x=>({id:x.id,year:x.year,page:x.page,name:x.name,reason:x.reason})),
+  advertenciaRevision:'Los fragmentos documentales extraídos por columna son provisionales y requieren revisión pedagógica; no constituyen homologación oficial.'};
  return profile;
 }
 export async function loadV2ModalProfile(params){
