@@ -21,6 +21,8 @@ on:
       - 'tests/flujo-constructor-tres-modalidades.test.mjs'
       - 'tests/pci-desarrollo-resumen.test.mjs'
       - 'tests/multipci-portal-browser.mjs'
+      - 'tests/aplicacion-v2-browser.mjs'
+      - 'tests/aplicacion-v2-admin-browser.mjs'
       - 'tests/preview-pr47-browser.mjs'
       - 'tests/ba15-constructor.test.mjs'
       - 'tests/tecnica-integrada-v2.test.mjs'
@@ -88,12 +90,14 @@ jobs:
           else
             npx playwright install chromium
           fi
-      - name: Probar constructor real, historial, arrastre y vuelta de fases
+      - name: Probar aplicación escolar nativa, tres modalidades, arrastre e historial
         run: |
           mkdir -p test-artifacts/multipci-portal
-          node tests/v2-familia-portal-browser.mjs
-      - name: Revisar preview aislada PR47 sin conexión a Supabase
-        run: node tests/v2-integrado-portal-browser.mjs
+          node tests/aplicacion-v2-browser.mjs
+      - name: Verificar administración real y publicación aislada sin servicios remotos
+        run: |
+          node tests/aplicacion-v2-admin-browser.mjs
+          node --test tests/aplicacion-v2-publicacion.test.mjs
       - name: Guardar las capturas sin publicar en main
         if: always()
         uses: actions/upload-artifact@v4
