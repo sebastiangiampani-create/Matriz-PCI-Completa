@@ -407,7 +407,9 @@ async function modalFlow(page,record,model,levels){
     }
     assert.match(prescription.panelText,/Computación/);
     assert.match(prescription.panelText,/confirmar con el plan/i);
-    assert.match(prescription.panelText,/contenidos individuales cotejados/i);
+    assert.match(prescription.panelText,/contenidos individuales con cotejo textual previo/i);
+    assert.match(prescription.panelText,/fragmentos documentales adicionales/i);
+    assert.match(prescription.panelText,/referencias aún sin desagregación segura/i);
     const atomic=await page.evaluate(()=>{
       const data=window.__V2_MODAL.contents;
       const items=[...data.fg,...data.fo].filter(x=>x.sourceRow);
