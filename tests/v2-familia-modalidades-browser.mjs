@@ -133,7 +133,12 @@ try{
   });
   await page.evaluate(()=>window.screen('proposal'));
   if(model==='tecnica'){
+    // V2 ejecuta setTimeout(home,0) tras abrir la pantalla.
+    // Evitar que ese render diferido oculte la matriz antes de volver.
+    await page.locator('#v28home:not([hidden])').waitFor({state:'visible'});
+    await page.waitForTimeout(200);
     await page.locator('#v28full').click();
+    await page.locator('#v28matrix:not([hidden]) #v28mback').waitFor({state:'visible'});
     const terms=await page.locator('#v28matrix .v28-term').allTextContents();
     assert.equal(terms.length,12,'Fase 2 técnica debe mostrar sus doce cuatrimestres completos');
     assert.equal(terms[0],'C1');
