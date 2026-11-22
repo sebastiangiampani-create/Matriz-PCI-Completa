@@ -108,7 +108,7 @@ test('todas las especialidades conservan referencias y distinguen el inventario 
  console.log('DESAGREGACION_DOCUMENTAL_TECNICA_2026='+JSON.stringify(stats));
 });
 
-test('Fase 2 ofrece fragmentos por nivel en especialidad Computación, diferenciados de homologación',async()=>{
+test('Fase 2 usa el banco técnico recompuesto sin perder contenidos históricos',async()=>{
  const oldFetch=globalThis.fetch;
  globalThis.fetch=async url=>{
   try{
@@ -119,12 +119,17 @@ test('Fase 2 ofrece fragmentos por nivel en especialidad Computación, diferenci
  try{
   const {loadTechnicalV2Profile}=await import('../src/v2-familia/catalogos-modalidad.mjs');
   const profile=await loadTechnicalV2Profile('computacion');
-  const specifics=profile.contents.fo.filter(c=>c.documentalFragmentId);
-  assert.ok(specifics.some(c=>c.subject==='Base de Datos'&&c.year===4));
-  assert.ok(specifics.some(c=>c.subject==='Administración y Gestión de Base de Datos'&&c.year===5));
-  assert.ok(specifics.some(c=>c.subject==='Programación sobre Redes'&&c.year===6));
-  assert.ok(specifics.every(c=>c.provisional&&c.pedagogicallyReviewed===false));
-  assert.equal(profile.priorizados.desagregacionDocumental.contenidosIndividualesProvisionales,
-    [...profile.contents.fg,...profile.contents.fo].filter(c=>c.documentalFragmentId).length);
+  const reconstructed=profile.priorizados.baseReconstruida;
+  assert.ok(reconstructed,'Debe usarse el banco reconstruido desde el PDF oficial.');
+  assert.ok(reconstructed.contenidosExtraidos>1000);
+  const contents=[...profile.contents.fg,...profile.contents.fo];
+  const geom=contents.filter(c=>c.documentallyVerified===true);
+  assert.ok(geom.some(c=>c.subject==='Base de Datos'&&c.year===4));
+  assert.ok(geom.some(c=>c.subject==='Administración y Gestión de Base de Datos'&&c.year===5));
+  assert.ok(geom.some(c=>c.subject==='Programación sobre Redes'&&c.year===6));
+  assert.ok(contents.some(c=>c.sourceRow),'Debe conservar el cotejo anterior con su mismo ID.');
+  assert.ok(geom.every(c=>c.sourceValidation==='extraccion_geometrica_pdf_oficial'));
+  assert.ok(geom.every(c=>c.sourceReference&&c.page&&c.source));
+  assert.equal(profile.priorizados.desagregacionDocumental,null,'No volver a incorporar fragmentos antiguos no fiables.');
  }finally{globalThis.fetch=oldFetch}
 });
