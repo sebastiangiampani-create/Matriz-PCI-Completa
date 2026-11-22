@@ -51,35 +51,31 @@ node tests/v2-ba15-norma-browser.mjs
 - Lengua Adicional 1.º–5.º en Técnica desde la NES.
 - Ciclos de refresco del DOM corregidos (Tutoría y talleres de Artes); guardián actualizado con autorización.
 
-## Actualización 22/11/2026 · Técnica: auditoría y protección de Fase 2
- 
-### Cambios de este ciclo (PR #47 sin fusionar)
 
-- El motor V2 de Media permanece intacto; Técnica conserva 6 niveles y 12 cuatrimestres.
-- Los 10.422 contenidos con cotejo textual previo se conservan; no se reescriben las fuentes.
-- La segunda pasada reconoce 5.603 **fragmentos documentales provisionales** asociados a 1.042 referencias. Ninguno tiene el eje/subeje confirmado pedagógicamente; no llamarlos homologados.
-- Permanecen 163 referencias sin desagregación segura. Incluyen casos sin año explícito (Música, Diseño), páginas sin texto extraído (p. ej. Computación p. 98) y páginas con indicadores que no permiten reconstruir contenidos inequívocos.
-- Archivo de extracción conservadora: `src/tecnica/desagregacion-documental-2026.mjs`. Catálogo: `src/v2-familia/catalogos-modalidad.mjs`.
-- Informe detallado reproducible (por especialidad, materia, año, motivo, fuente y página): `node scripts/qa-tecnica-priorizados.mjs`, produce `test-artifacts/tecnica/auditoria-pendientes-2026.json`.
-- En Fase 2, las entradas provisionales están identificadas, llevan vínculo a página oficial del PDF y **no se incluyen en el porcentaje de cobertura cotejada**. No se borran las asignaciones guardadas.
-- No se modificó `main`, el `vendor/pci-sec-aprende-v2` ni la persistencia de Supabase.
+## Actualización 22/11/2026 · Reconstrucción integral de la base técnica desde los PDF oficiales
 
-### Verificación
+**Decisión pedagógica:** no pedir a usuarios ni docentes que revisen 5.603 registros. El banco se reconstruye desde los documentos originales y no validando fragmentos incompletos.
 
-```bash
-node scripts/derivar-v2-familia.mjs --check
-node scripts/qa-tecnica-priorizados.mjs
-node --test tests/tecnica-priorizados-2026.test.mjs tests/tecnica-contenidos-atomicos.test.mjs tests/tecnica-desagregacion-documental.test.mjs
-node tests/v2-familia-modalidades-browser.mjs
-node tests/aplicacion-v2-browser.mjs
-node tests/v2-tecnica-norma-browser.mjs
-```
+### Banco recompuesto instalado en la rama PR #47
 
-Los workflows `Motor V2 real por tres modalidades` y `Rescate constructor PCI V2` ya usan las pruebas del **portal nativo**, no las del iframe obsoleto. Rescate constructor dio verde. El recorrido de Técnica y sus prescripciones también fue satisfactorio en el navegador; la suite global conserva un fallo separado en `v2-ba15-norma-browser.mjs` (validación visual de BA+15, fuera de este cierre de Técnica). El guardián aditivo multi-PCI continúa rojo por diferencias previas del PR en `panel-accesos.html`, `panel-usuarios.html` y `src/normativa/composicion-pci-20261117.mjs`; **no se relajó el guardián**. La URL pública de revisión no está desplegada: no presentar como preview funcionando.
+- Los 26 PDF oficiales (octubre 2026) se leen directamente con PyMuPDF, identificando las columnas **Contenidos** e **Indicadores de logro** por sus coordenadas x/y, sin mezclarlas.
+- Se preservan títulos, cambios de materia dentro de una página (Música/Diseño p. 14), y la columna desplazada de **Prácticas Profesionalizantes** (Computación p. 97).
+- Los 26 archivos están en data/tecnica/base-curricular/<especialidad>.json y su índice en data/tecnica/base-curricular/indice.json. Se regeneran con python scripts/reconstruir-base-tecnica.py.
+- La versión actual produjo **61.114 registros** y **31.913 identificadores de concepto únicos**, con 1.111 secciones de materia en las 26 fuentes. Son registros extraídos del PDF, NO contenidos homologados oficialmente.
+- Cada entrada tiene materia, año, campo, eje/subeje **solo si el PDF los identifica**, texto, página, ID estable, hash de concepto, URL y SHA del PDF. Sin ejes inventados: 12.432 entradas sin eje explícito y 28.857 sin subeje explícito.
+- scripts/test-base-tecnica.py controla el catálogo 26/26, IDs, fuentes, separación de columnas, Música y Diseño en p. 14 y PP en p. 97.
+- src/tecnica/base-contenidos-2026.mjs verifica el banco. src/v2-familia/catalogos-modalidad.mjs **lo prioriza en Fase 2**, conservando IDs anteriores para no perder los planes ya guardados. Se evitan repeticiones exactas por materia/año.
+- La extracción vieja de 5.603 fragmentos y 163 referencias no es la fuente principal. Queda solamente como respaldo temporal si faltase la nueva base, y antecedente de auditoría.
+- Fase 1 conserva 6 niveles y C1 a C12. No se alteran Media V2, BA+15, Supabase ni datos escolares.
 
-### Bloqueos para dar por cerrada Técnica
+### Verificación y pendientes reales
 
-1. Revisar contra las páginas oficiales los 5.603 fragmentos provisionales y establecer ejes/subejes confiables; sin esto no equivale a un banco curricular homologado.
-2. Resolver o clasificar con evidencia las 163 referencias restantes, sin inventar año ni contenido. Hay referencias con página sin texto, no necesariamente una omisión curricular.
-3. Reconciliar el diff del PR para cumplir el guardián de integración multi-PCI y publicar una preview aislada verificable **antes** de fusionar.
-4. No trabajar BA+15 hasta cerrar la auditoría y las pruebas propias de Técnica.
+- GitHub Actions reconstruyó e instaló los 26 archivos en la rama de PR #47, **no en main**.
+- Pruebas: python scripts/test-base-tecnica.py y node --test tests/tecnica-base-normalizada.test.mjs tests/tecnica-desagregacion-documental.test.mjs.
+- La suite visual debe comprobar la carga efectiva en Fase 2, arrastre, restauración y múltiples PCI sin mezcla.
+- La base es documental; no se afirma aprobación normativa del Ministerio.
+- El PR sigue en borrador hasta resolver el guardián multi-PCI, verificar la interfaz y contar con una previsualización auténtica.
+
+### No repetir
+
+No solicitar aprobación individual de miles de registros. La tarea es **normalizar y cargar** el banco documental, conservando fuente y trazabilidad, sin cambiar la interfaz de Media ni los PCI escolares.
