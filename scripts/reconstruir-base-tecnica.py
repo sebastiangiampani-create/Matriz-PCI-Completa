@@ -185,7 +185,8 @@ def extract_document(meta):
             field=info["field"]
             subject=info["subject"]
             content_key=stable(subject,year,info["axis"],info["subaxis"],piece,prefix="tec-concepto")
-            original=stable(meta["especialidad_id"],info["sectionId"],year,piece,
+            original=stable(meta["especialidad_id"],info["sectionId"],year,
+                            info["axis"],info["subaxis"],info["page"],piece,
                             prefix="tec-contenido")
             serial+=1
             out.append({"id":original,"conceptId":content_key,"component":"FG" if field=="formacion_general" else "FO",
