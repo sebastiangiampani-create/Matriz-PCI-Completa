@@ -155,6 +155,11 @@ export function desagregarPendientesTecnica(document,bank,pendientes){
   const ref=refs.get(pending.id),section=ref&&sections.get(ref.sectionId);
   const page=section?.paginas?.find(p=>Number(p.pagina_pdf)===Number(ref.page));
   if(!ref||!section||!page)throw Error('Referencia oficial inexistente: '+pending.id);
+  // Una página sin texto no demuestra un contenido faltante. Se inventaría
+  // información si la tratáramos como contenido: conservar su advertencia.
+  if(!plain(page.texto_pagina)){
+   unresolved.push({...pending,reason:'pagina_sin_texto_extraido'});continue;
+  }
   if(!validYear(ref.year)){
    unresolved.push({...pending,reason:'sin_anio_verificable'});continue;
   }
