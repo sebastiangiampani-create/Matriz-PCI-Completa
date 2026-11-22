@@ -2,7 +2,7 @@ name: Aplicación V2 integrada por escuela
 
 on:
   push:
-    branches: [test/aplicacion-v2-integrada-20261121, test/cierre-media-pvf-naturales-20261121, test/perfiles-tecnica-anexo-20261121]
+    branches: [test/aplicacion-v2-integrada-20261121, test/cierre-media-pvf-naturales-20261121, test/perfiles-tecnica-anexo-20261121, test/priorizados-tecnica-sin-horas-20261121]
     paths:
       - index.html
       - pci-orientaciones.html
@@ -11,6 +11,7 @@ on:
       - src/aplicacion-v2/**
       - src/tecnica/**
       - src/normativa/**
+      - data/tecnica/priorizados/**
       - src/pci-router.mjs
       - src/v2-familia/**
       - src/migracion/**
@@ -24,6 +25,8 @@ on:
       - tests/pvf-media.test.mjs
       - tests/media-cierre.test.mjs
       - tests/tecnica-perfiles-2026.test.mjs
+      - tests/tecnica-priorizados-2026.test.mjs
+      - tests/v2-familia-catalogos-todos.test.mjs
       - tests/pvf-media-browser.mjs
       - .github/workflows/aplicacion-v2-integrada.yml
   workflow_dispatch:
@@ -53,6 +56,8 @@ jobs:
           tests/pvf-media.test.mjs
           tests/media-cierre.test.mjs
           tests/tecnica-perfiles-2026.test.mjs
+          tests/tecnica-priorizados-2026.test.mjs
+          tests/v2-familia-catalogos-todos.test.mjs
       - name: Preparar Playwright 1.55
         run: |
           npm install --no-save --package-lock=false playwright@1.55.0

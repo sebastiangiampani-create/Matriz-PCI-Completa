@@ -8,6 +8,7 @@
 import {findSpecialty,getAnnualSubjects} from '../tecnica/pautas-pci-20261005.mjs';
 import {resolverPerfilEspecialidadTecnica} from '../tecnica/perfil-especialidad-2026.mjs';
 import {technicalSubjectCards,technicalSubjectBank} from '../tecnica/espacio-trabajo-v2.mjs';
+import {auditarPriorizadosTecnica} from '../tecnica/auditoria-priorizados-2026.mjs';
 import {BA15_NIVELES} from '../ba15/reglas-curriculares.mjs';
 import {loadBa15FgBase,BA15_FG_LEVEL_MAP} from '../ba15/priorizados-base.mjs';
 import {loadV2Fo,selectFoByOrientation} from '../integracion-curricular/catalogos.js';
@@ -119,7 +120,8 @@ export async function loadTechnicalV2Profile(specialtyId){
  const subjects=cards.map(card=>({
     id:'tec-'+card.key,year:card.year,name:card.name,area:card.area,
     field:card.field,origin:card.field==='formacion_general'?'FG':'FO',
-    provisional:card.provisional,sourceHash:card.sourceSha
+    provisional:card.provisional,sourceHash:card.sourceSha,
+    sourcePages:card.pages||[],source:document.fuente_url
  }));
  const annual=getAnnualSubjects(specialty.id);
  if(annual)for(const year of [4,5,6]){
@@ -130,23 +132,26 @@ export async function loadTechnicalV2Profile(specialtyId){
        sourceHash:document.sha256_pdf,provisional:false});
    }
  }
+ // Fuente única para Fase 1 y Fase 2: mismo año de referencia.
+ // Si el año de página está vacío pero la sección tiene uno inequívoco,
+ // el banco lo conserva como inferido, nunca como año oficialmente confirmado.
  const fgContents=[],foContents=[];
- for(const section of document.asignaturas){
-   const field=text(section.campo_estimado);
+ const sections=new Map(document.asignaturas.map(section=>[section.id,section]));
+ for(const reference of bank){
+   const section=sections.get(reference.sectionId);
+   if(!section)throw Error('Referencia de contenido sin sección en el priorizado: '+reference.id);
+   const field=text(reference.field);
    const component=field==='formacion_general'?'FG':'FO';
-   for(const p of section.paginas||[]){
-     const year=Number(p.anio_contextual_inferido);
-     const y=Number.isInteger(year)&&year>=1&&year<=6?year:null;
-     const row={
-       id:section.id+'@p'+Number(p.pagina_pdf),component,year:y,
-       area:technicalContentArea(section,field,y,subjects),
-       subject:text(section.asignatura),axis:text(section.asignatura),
-       subaxis:'Página '+p.pagina_pdf+' · revisar selección curricular',
-       text:text(p.texto_pagina),source:document.fuente_url,
-       page:Number(p.pagina_pdf),field,provisional:!section.campo_verificado||!section.anio_verificado
-     };
-     (component==='FG'?fgContents:foContents).push(row);
-   }
+   const row={
+     id:reference.id,component,year:reference.year,
+     area:technicalContentArea(section,field,reference.year,subjects),
+     subject:text(section.asignatura),axis:text(section.asignatura),
+     subaxis:'Página '+reference.page+' · revisar selección curricular',
+     text:reference.text,source:reference.source_url,
+     page:reference.page,field,provisional:!section.campo_verificado||!section.anio_verificado,
+     sourceYearConfidence:reference.confidence
+   };
+   (component==='FG'?fgContents:foContents).push(row);
  }
  if(!subjects.length||!fgContents.length)throw Error('Catálogo técnico sin materias o contenidos de FG');
  // Lengua Adicional 1.º–5.º: troncal en Técnica (IF-2026-51169092, pág. 13).
@@ -167,6 +172,7 @@ export async function loadTechnicalV2Profile(specialtyId){
   'Especialidad '+specialty.name+' · contenidos priorizados 2026 extraídos de PDF con página y fuente. La extracción requiere validación pedagógica; no equivale a homologación.');
  profile.specialtyId=specialty.id;
  profile.specialtyProfile=resolverPerfilEspecialidadTecnica(specialty.id);
+ profile.priorizados=auditarPriorizadosTecnica(document,bank);
  return profile;
 }
 export async function loadV2ModalProfile(params){

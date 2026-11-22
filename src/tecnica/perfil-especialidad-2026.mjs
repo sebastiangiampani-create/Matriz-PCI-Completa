@@ -103,7 +103,7 @@ export function resolverPerfilEspecialidadTecnica(id){
     excepciones:especiales,
     variablesNoCertificadas:[
       'representacion_tercero','talleres_especialidad','integraciones_especialidad',
-      'practicas_profesionalizantes','cargas_horarias',
+      'practicas_profesionalizantes',
       ...(pendienteAnual?['espacio_anual_pendiente']:[])
     ],
     planParticularVerificado:false

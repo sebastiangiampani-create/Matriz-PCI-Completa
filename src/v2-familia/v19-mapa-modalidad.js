@@ -26,6 +26,7 @@ const SPECIALTY=String(CFG.specialtyId||'');
 const SIXTH_CORE=['computacion','administracion_empresas'].includes(SPECIALTY);
 const NORM=window.__PCI_NORMA||null;
 const TECH_PROFILE=CFG.model==='tecnica'?CFG.specialtyProfile||null:null;
+const TECH_PRIORIZADOS=CFG.model==='tecnica'?CFG.priorizados||null:null;
 const TECH_TOOL=window.__PCI_APLICACION_CONFIG?.tecnicaAnuales||null;
 const TECH_ANNUALS=TECH_PROFILE?.espacioAnual?.espacios||[];
 const normalizeTechnical=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -254,7 +255,9 @@ placed=function(slot){return (cur().placements[slot]||[]).map(id=>{
 renderBag=function(){
  const box=$id('bagContent'),m=cur(),year=Math.min(LV,Math.max(1,Number(m.bagYear)||1));m.bagYear=year;
  const set=allSubjects().filter(s=>s.year===year);
- let h='<div class="subhead">Materias de la modalidad · filtrar por nivel</div><div class="bag-filter">'+range(LV).map(n=>'<button type="button" data-bag-year="'+n+'" class="'+(n===year?'active':'')+'">'+n+'.º</button>').join('')+'</div>';
+ let h='<div class="subhead">Materias de la modalidad · filtrar por nivel</div>'+
+  (CFG.model==='tecnica'?'<p class="modal-rule-note">Materias extraídas de los contenidos priorizados oficiales 2026. Elegí el nivel y arrastrá cada materia al espacio correspondiente. Las agrupaciones se definen según las reglas de la especialidad; no se solicita carga horaria para armar el mapa.</p>':'')+
+  '<div class="bag-filter">'+range(LV).map(n=>'<button type="button" data-bag-year="'+n+'" class="'+(n===year?'active':'')+'">'+n+'.º</button>').join('')+'</div>';
  const groups=[{origin:'FG',label:'Formación General',list:set.filter(s=>s.origin==='FG')},{origin:'FO',label:CFG.model==='tecnica'?'Científico-Tecnológica y Técnico-Específica':'Formación Orientada',list:set.filter(s=>s.origin==='FO')},{origin:'CUSTOM',label:'Materias agregadas por la escuela',list:set.filter(s=>s.origin==='CUSTOM')}];
  for(const group of groups)if(group.list.length){
   h+='<section class="year"><div class="year-head"><strong>'+group.label+' · Nivel '+year+'</strong><span>C'+(year*2-1)+' / C'+year*2+'</span></div>';
@@ -359,7 +362,7 @@ function showNorma(result,label='IF-2026-51169092-GCABA-SSPIE'){
    'Composición validada con '+label)+'</strong>'+
   '<ul class="norma-list">'+items.slice(0,12).map(([k,x])=>'<li>'+k+': '+esc(x.message)+(x.page?(/^\d+\.\d/.test(String(x.page))?' (punto '+x.page+')':' (pág. '+x.page+')'):'')+'</li>').join('')+
   (items.length>12?'<li>… y '+(items.length-12)+' observaciones más.</li>':'')+
-  (unverified?'<li>Pendiente: '+unverified+' espacios sin carga horaria declarada en el catálogo (no se verifica el tope de 9 horas).</li>':'')+'</ul>';
+  (unverified&&CFG.model!=='tecnica'?'<li>Pendiente: '+unverified+' espacios sin carga horaria declarada en el catálogo (no se verifica el tope de 9 horas).</li>':'')+'</ul>';
 }
 const BA_SOURCE='RES-1375-MEDGC-25, Anexo I (IF-2025), 6.3 y 6.5';
 const BA_PLACEHOLDER=/^materias? de la orientaci[oó]n$/i;
@@ -474,13 +477,27 @@ function renderTechPrescriptionPanel(){
   'Espacios anuales prescriptos:';
  const warnings=check?.issues?.length?
   '<p><strong>Requiere revisión:</strong> '+esc(check.issues[0].message)+'</p>':'';
+ const prior=TECH_PRIORIZADOS;
+ const validSource=prior && /^https:\/\/static\.buenosaires\.gob\.ar\/sites\/default\/files\/2026-10\/[\w\-]+\.pdf$/.test(prior.fuente);
+ const unresolved=prior?.sinNivel||[];
+ const pending=unresolved.map(item=>'<li>'+esc(item.seccion)+' · página '+Number(item.pagina)+'</li>');
+ const sourceLine=prior?
+  '<p><strong>Fuente:</strong> contenidos priorizados oficiales de '+esc(TECH_PROFILE.name)+
+  ' · '+Number(prior.totalSecciones)+' secciones y '+Number(prior.totalReferencias)+
+  ' referencias de contenido ('+Number(prior.referenciasConNivel)+' con nivel identificable). '+
+  (validSource?'<a href="'+esc(prior.fuente)+'" target="_blank" rel="noopener noreferrer">Consultar PDF oficial</a>. ':'')+
+  '</p>'+ (unresolved.length?
+    '<details><summary>'+unresolved.length+' referencias sin año identificable · revisar antes de ubicarlas</summary>'+
+    '<ul class="norma-list">'+pending.slice(0,20).join('')+
+    (pending.length>20?'<li>… y '+(pending.length-20)+' referencias más en el catálogo original.</li>':'')+
+    '</ul></details>':'<p>Todas las referencias cuentan con un año identificable en la fuente extraída.</p>') : '';
  panel.innerHTML='<div class="subhead">Composición por especialidad · Anexo II</div>'+
   '<strong>'+esc(TECH_PROFILE.name)+'</strong><p>'+esc(stateDesc)+'</p>'+
-  (rows?'<ul class="norma-list">'+rows+'</ul>':'')+warnings+
+  (rows?'<ul class="norma-list">'+rows+'</ul>':'')+warnings+sourceLine+
   '<p>Matemática y Lengua Adicional: '+TECH_PROFILE.troncales.matematica.length+
   ' años. Sociales: '+TECH_PROFILE.sociales.total+' integraciones ('+
   TECH_PROFILE.sociales.obligatorios+' obligatorias y '+TECH_PROFILE.sociales.electivos+
-  ' electivas). Especialidad: confirmar con el plan sus talleres, integraciones, horas y prácticas.</p>';
+  ' electivas). Talleres, integraciones y prácticas se conforman con estas materias y la prescripción aplicable. No se exige consignar horas para construir el mapa. La integración de la Especialidad está exceptuada del máximo general de 9 HC; Sociales y Naturales conservan ese límite.</p>';
 }
 const previousRenderOffer=renderOffer;
 renderOffer=function(...args){const result=previousRenderOffer(...args);renderTechPrescriptionPanel();return result};
