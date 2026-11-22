@@ -2,13 +2,15 @@ name: Aplicación V2 integrada por escuela
 
 on:
   push:
-    branches: [test/aplicacion-v2-integrada-20261121, test/cierre-media-pvf-naturales-20261121]
+    branches: [test/aplicacion-v2-integrada-20261121, test/cierre-media-pvf-naturales-20261121, test/perfiles-tecnica-anexo-20261121]
     paths:
       - index.html
       - pci-orientaciones.html
       - pci-orientaciones.css
       - panel-*.html
       - src/aplicacion-v2/**
+      - src/tecnica/**
+      - src/normativa/**
       - src/pci-router.mjs
       - src/v2-familia/**
       - src/migracion/**
@@ -21,6 +23,7 @@ on:
       - tests/aplicacion-v2-admin-browser.mjs
       - tests/pvf-media.test.mjs
       - tests/media-cierre.test.mjs
+      - tests/tecnica-perfiles-2026.test.mjs
       - tests/pvf-media-browser.mjs
       - .github/workflows/aplicacion-v2-integrada.yml
   workflow_dispatch:
@@ -49,6 +52,7 @@ jobs:
           tests/v2-familia-paridad.test.mjs
           tests/pvf-media.test.mjs
           tests/media-cierre.test.mjs
+          tests/tecnica-perfiles-2026.test.mjs
       - name: Preparar Playwright 1.55
         run: |
           npm install --no-save --package-lock=false playwright@1.55.0
@@ -61,6 +65,8 @@ jobs:
         run: node tests/aplicacion-v2-browser.mjs
       - name: Probar acceso administrador sobre la publicación completa
         run: node tests/aplicacion-v2-admin-browser.mjs
+      - name: Comprobar las prescripciones técnicas en V2
+        run: node tests/v2-tecnica-norma-browser.mjs
       - name: Probar PVF prescripto de Media en escritorio y celular
         run: node tests/pvf-media-browser.mjs
       - name: Conservar evidencias y fallos de la aplicación integrada

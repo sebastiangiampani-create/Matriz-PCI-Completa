@@ -376,6 +376,56 @@ async function modalFlow(page,record,model,levels){
   assert.equal(await page.locator('#matrix .grid.levels .level').count(),levels);
   assert.equal(await page.locator('#matrix .term').count(),levels*2+1);
   assert.equal(await page.evaluate(()=>window.__V2_MODAL.model),model);
+  if(model==='tecnica'){
+    const original=await snapshot(page);
+    const prescription=await page.evaluate(()=>{
+      const profile=window.V2ModalMap.profile,rows=profile.espacioAnual.espacios,
+        list=window.__V2_MODAL.subjects,map=PCIAplicacionV2.snapshot().maps[PCIAplicacionV2.snapshot().active];
+      return {specialtyId:profile.specialtyId,terms:profile.terms,
+        slots:rows.map(x=>({
+          year:x.year,name:x.name,
+          ids:map.placements['anualEsp-n'+x.year]||[],
+          subject:list.find(s=>s.id===(map.placements['anualEsp-n'+x.year]||[])[0])
+        })),
+        pending:profile.variablesNoCertificadas,
+        annualBadge:document.querySelector('#matrix [data-slot="anualEsp-n4"] [data-space-name]')?.textContent,
+        panelText:document.querySelector('#techSpecialtyPrescription')?.textContent,
+        nonAnnual:rows.length&&list.find(s=>s.id===(map.placements['anualEsp-n4']||[])[0])
+      };
+    });
+    assert.equal(prescription.specialtyId,'computacion');
+    assert.equal(prescription.terms,12);
+    assert.equal(prescription.slots.length,3,'Las tres materias anuales de Computación son prescriptas.');
+    for(const slot of prescription.slots){
+      assert.equal(slot.ids.length,1);
+      assert.equal(slot.subject?.name,slot.name);
+      assert.equal(slot.subject?.year,slot.year);
+      assert.match(await page.locator('#matrix [data-slot="anualEsp-n'+slot.year+'"] [data-space-name]').innerText(),/Fija/);
+    }
+    assert.match(prescription.panelText,/Computación/);
+    assert.match(prescription.panelText,/confirmar con el plan/i);
+    assert.ok(prescription.pending.includes('integraciones_especialidad'));
+    const locked=await page.evaluate(()=>{
+      const map=PCIAplicacionV2.snapshot().maps[PCIAplicacionV2.snapshot().active],
+        id=map.placements['anualEsp-n4'][0],subject=window.__V2_MODAL.subjects.find(s=>s.id===id);
+      const wrongSlot=V2ModalMap.canAssign('foN3-c7',subject);
+      const remove=V2ModalMap.remove('anualEsp-n4',id);
+      const moved=V2ModalMap.move('anualEsp-n4','foN3-c7',id);
+      const now=PCIAplicacionV2.snapshot().maps[PCIAplicacionV2.snapshot().active];
+      return {wrongSlot,remove,moved,ids:now.placements['anualEsp-n4'],id};
+    });
+    assert.equal(locked.wrongSlot[0],false);
+    assert.equal(locked.remove,false);
+    assert.equal(locked.moved,false);
+    assert.deepEqual(locked.ids,[locked.id]);
+    assert.equal(original.maps[original.active].placements['anualEsp-n4'][0],locked.id);
+    await capture(page,record.dispositivo+'-tecnica-prescripciones.png');
+    await page.reload({waitUntil:'domcontentloaded'});await ready(page,ids.tecnica);
+    const persisted=await snapshot(page);
+    assert.deepEqual(persisted.maps[persisted.active].placements['anualEsp-n4'],[locked.id]);
+    record.prescripcionesTecnica={tresAnualesFijos:true,sinDuplicar:true,
+      prearmadoPersiste:true,planParticularPendiente:true};
+  }
   const probe=await page.evaluate(()=>{
     const subjects=window.__V2_MODAL.subjects,rows=V2ModalMap.rowDefs();
     const from=[...document.querySelectorAll('#bagContent [data-sub]')].find(node=>{

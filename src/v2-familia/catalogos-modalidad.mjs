@@ -6,6 +6,7 @@
  * a cuatro niveles según la equivalencia institucional establecida.
  */
 import {findSpecialty,getAnnualSubjects} from '../tecnica/pautas-pci-20261005.mjs';
+import {resolverPerfilEspecialidadTecnica} from '../tecnica/perfil-especialidad-2026.mjs';
 import {technicalSubjectCards,technicalSubjectBank} from '../tecnica/espacio-trabajo-v2.mjs';
 import {BA15_NIVELES} from '../ba15/reglas-curriculares.mjs';
 import {loadBa15FgBase,BA15_FG_LEVEL_MAP} from '../ba15/priorizados-base.mjs';
@@ -123,7 +124,7 @@ export async function loadTechnicalV2Profile(specialtyId){
  const annual=getAnnualSubjects(specialty.id);
  if(annual)for(const year of [4,5,6]){
    const name=text(annual[year]);if(!name)continue;
-   if(!subjects.some(s=>s.name===name&&s.year===year)){
+   if(!subjects.some(s=>s.name===name&&s.year===year&&s.field==='formacion_tecnica_especifica')){
      subjects.push({id:'tec-anual-'+specialty.id+'-'+year,year,name,
        area:'Espacio anual de la especialidad',field:'formacion_tecnica_especifica',origin:'FO',
        sourceHash:document.sha256_pdf,provisional:false});
@@ -162,8 +163,11 @@ export async function loadTechnicalV2Profile(specialtyId){
    }
   }
  }
- return common('tecnica',specialty.name,6,subjects,fgContents,foContents,
+ const profile=common('tecnica',specialty.name,6,subjects,fgContents,foContents,
   'Especialidad '+specialty.name+' · contenidos priorizados 2026 extraídos de PDF con página y fuente. La extracción requiere validación pedagógica; no equivale a homologación.');
+ profile.specialtyId=specialty.id;
+ profile.specialtyProfile=resolverPerfilEspecialidadTecnica(specialty.id);
+ return profile;
 }
 export async function loadV2ModalProfile(params){
  const model=text(params.model);

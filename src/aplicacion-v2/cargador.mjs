@@ -10,6 +10,7 @@ import { migrarLegadoFgAV2, materiasMotorMedia } from '../migracion/legado-fg-a-
 import { localizarRecursos } from './recursos.mjs';
 import * as pvfMedia from './pvf-media.mjs';
 import * as mediaCierre from './media-cierre.mjs';
+import * as tecnicaAnuales from '../tecnica/prescripciones-anuales-v2.mjs';
 
 const RAIZ = new URL('../../', import.meta.url);
 const BASE_V2 = new URL('vendor/pci-sec-aprende-v2/', RAIZ);
@@ -203,7 +204,8 @@ export async function cargarAplicacionV2({ contexto, estadoInicial = null, vista
       matrixRows: copiar(matrixRows), vista, volver: volver.href, alGuardarBorrador,
       migracion: { montarAvisoAceptacionV2, migrarLegadoFgAV2, materiasMotorMedia },
       pvfMedia: media ? pvfMedia : null,
-      mediaCierre: media ? mediaCierre : null
+      mediaCierre: media ? mediaCierre : null,
+      tecnicaAnuales: pci.model === 'tecnica' ? tecnicaAnuales : null
     };
     let core = instalarDocumento(localizarRecursos(html, RAIZ.href));
     instalado = true;

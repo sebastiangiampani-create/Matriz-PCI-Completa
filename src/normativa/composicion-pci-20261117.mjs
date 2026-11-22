@@ -255,8 +255,14 @@ export function validateFinalComposition({
     'Debe haber un espacio anual de especialidad en 4.º, 5.º y 6.º, salvo excepción documentada.',13);
   for(const year of [4,5,6]){
    const n=count(active,s=>y(s)===year&&fmt(s)==='integracion_especialidad');
-   bad(n<4||n>6,'TECH_SPECIALTY_INTEGRATIONS',
-     'La especialidad requiere de cuatro a seis integraciones en '+year+'.º.',18);
+   const official=officialPlan?.integracionesEspecialidadPorAnio?.[year];
+   if(Number.isInteger(official)&&official>=0){
+    bad(n!==official,'TECH_SPECIALTY_INTEGRATIONS_BY_PLAN',
+      'El plan oficial establece '+official+' integraciones de especialidad en '+year+'.º; hay '+n+'.',18);
+   }else{
+    review(true,'TECH_SPECIALTY_INTEGRATIONS_PLAN_PENDING',
+      'La referencia de 4 a 6 espacios en '+year+'.º es orientativa: confirmar la cantidad exacta con el plan de estudios.',18);
+   }
   }
   bad(pp.length>2,'TECH_PP_TOO_MANY','Solo se contempla una o dos Prácticas Profesionalizantes.',13);
   review(pp.length===0,'TECH_PP_PENDING',
