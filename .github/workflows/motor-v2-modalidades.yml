@@ -36,6 +36,11 @@ jobs:
           node scripts/derivar-v2-familia.mjs --check
           node --test tests/v2-familia-paridad.test.mjs
           node --test tests/v2-familia-catalogos-todos.test.mjs
+      - name: Auditar contenidos documentales técnicos y su trazabilidad en 26 especialidades
+        run: |
+          node --check src/tecnica/desagregacion-documental-2026.mjs
+          node --check tests/tecnica-desagregacion-documental.test.mjs
+          node --test tests/tecnica-priorizados-2026.test.mjs tests/tecnica-contenidos-atomicos.test.mjs tests/tecnica-desagregacion-documental.test.mjs
       - name: Instalar entorno Playwright
         shell: bash
         run: |
