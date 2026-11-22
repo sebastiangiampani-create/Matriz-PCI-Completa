@@ -407,9 +407,9 @@ async function modalFlow(page,record,model,levels){
     }
     assert.match(prescription.panelText,/Computación/);
     assert.match(prescription.panelText,/confirmar con el plan/i);
-    assert.match(prescription.panelText,/contenidos individuales con cotejo textual previo/i);
-    assert.match(prescription.panelText,/fragmentos documentales adicionales/i);
-    assert.match(prescription.panelText,/referencias aún sin desagregación segura/i);
+    assert.match(prescription.panelText,/Base curricular reconstruida/i);
+    assert.match(prescription.panelText,/contenidos individualizados directamente de los PDF oficiales/i);
+    assert.match(prescription.panelText,/conservaron.*IDs de contenidos anteriores/i);
     const atomic=await page.evaluate(()=>{
       const data=window.__V2_MODAL.contents;
       const items=[...data.fg,...data.fo].filter(x=>x.sourceRow);
