@@ -147,7 +147,10 @@ const DERIVADOS_MEDIA={
   'v23-prearm':[
     {de:'    const m=current();\n    m.placements=m.placements||{};',veces:1,
       a:'    const m=current();\n    // El puente identifica por referencia los mapas recibidos explícitamente.\n    if(window.__pciPreserveImportedMap?.(m))return false;\n    m.placements=m.placements||{};',
-      motivo:'Conservar la composición de un mapa importado explícitamente, incluso vacío, sin impedir el prearmado habitual de un PCI nuevo.'}
+      motivo:'Conservar la composición de un mapa importado explícitamente, incluso vacío, sin impedir el prearmado habitual de un PCI nuevo.'},
+    {de:"    placePaired(5,'Química','naturales');",veces:1,
+      a:"    if(state.active!=='Ciencias Naturales')placePaired(5,'Química','naturales');",
+      motivo:'No prearmar Química FG de 5.º en Ciencias Naturales: esa orientación tiene ocho laboratorios FG, solo en C1–C8.'}
   ],
   'v47-phase2-matrix':[
     {de:'async function loadFO(){',veces:1,
@@ -192,7 +195,10 @@ async function loadFO(){`,
       motivo:'El encabezado FG utiliza las referencias por nivel y las métricas de trayectoria de V91, conserva el Set de IDs y mantiene FO separada.'},
     {de:'try{await Promise.all([loadFG(),loadFO()]);board()}catch(e)',veces:1,
       a:'try{await Promise.all([loadFG(),loadFO()]);await window.PCICoverageV91.ready();board()}catch(e)',
-      motivo:'Esperar la base canónica de V91 antes de mostrar el encabezado; loadCurriculum no depende de openArea.'}
+      motivo:'Esperar la base canónica de V91 antes de mostrar el encabezado; loadCurriculum no depende de openArea.'},
+    {de:"  if(FG.length!==1126)throw Error(`La base de Formación General cargó ${FG.length} contenidos y se esperaban 1126.`);",veces:1,
+      a:"  if(FG.length!==1126)throw Error(`La base de Formación General cargó ${FG.length} contenidos y se esperaban 1126.`);\n  if(state.active==='Ciencias Naturales')FG=FG.filter(x=>!(x.area==='Ciencias Naturales'&&x.year===5));",
+      motivo:"Excluir de la vista curricular de Ciencias Naturales los contenidos FG de 5.º, porque sus laboratorios FG finalizan en C8; V91 conserva su implementación original."}
   ]
 };
 

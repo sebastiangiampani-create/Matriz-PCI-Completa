@@ -90,6 +90,12 @@
             "veces": 1,
             "original": "    const m=current();\n    m.placements=m.placements||{};",
             "derivado": "    const m=current();\n    // El puente identifica por referencia los mapas recibidos explícitamente.\n    if(window._…"
+          },
+          {
+            "motivo": "No prearmar Química FG de 5.º en Ciencias Naturales: esa orientación tiene ocho laboratorios FG, solo en C1–C8.",
+            "veces": 1,
+            "original": "    placePaired(5,'Química','naturales');",
+            "derivado": "    if(state.active!=='Ciencias Naturales')placePaired(5,'Química','naturales');"
           }
         ]
       }
@@ -202,6 +208,12 @@
             "veces": 1,
             "original": "try{await Promise.all([loadFG(),loadFO()]);board()}catch(e)",
             "derivado": "try{await Promise.all([loadFG(),loadFO()]);await window.PCICoverageV91.ready();board()}catch(e)"
+          },
+          {
+            "motivo": "Excluir de la vista curricular de Ciencias Naturales los contenidos FG de 5.º, porque sus laboratorios FG finalizan en C8; V91 conserva su implementación original.",
+            "veces": 1,
+            "original": "  if(FG.length!==1126)throw Error(`La base de Formación General cargó ${FG.length} contenidos y se esperaban 1126.`);",
+            "derivado": "  if(FG.length!==1126)throw Error(`La base de Formación General cargó ${FG.length} contenidos y se esperaban 1126.`);…"
           }
         ]
       }
