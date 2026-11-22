@@ -119,11 +119,11 @@ jobs:
           else
             npx playwright install chromium
           fi
-      - name: Simular escuela con Media y agregar BA +15 sin sobrescribir
+      - name: Comprobar las tres modalidades en la aplicación nativa (sin iframe ni escrituras reales)
         run: |
           mkdir -p test-artifacts/multipci-portal
-          node tests/v2-familia-portal-browser.mjs
-          node tests/pci-nueva-escuela-browser.mjs
+          node tests/aplicacion-v2-browser.mjs
+          node tests/aplicacion-v2-admin-browser.mjs
           node tests/vinculos-historicos-browser.mjs
       - name: Conservar captura del recorrido
         if: always()
