@@ -40,7 +40,7 @@ const contentHasYear=c=>Number.isInteger(Number(c?.year))&&Number(c.year)>=1&&Nu
 const levelKey=c=>contentHasYear(c)&&(c?.component==='FG'||CFG.model==='tecnica')?String(Number(c.year)):'FO';
 const levelLabel=c=>contentHasYear(c)&&(c?.component==='FG'||CFG.model==='tecnica')?`Nivel ${Number(c.year)}.º`:'Trayectoria orientada';
 const isDocumental=c=>CFG.model==='tecnica'&&Boolean(c?.documentalFragmentId);
-const pdfLink=c=>{const uri=String(c?.source||''),page=Number(c?.page);return isDocumental(c)&&/^https:\/\/static\.buenosaires\.gob\.ar\/sites\/default\/files\/2026-10\/[\w-]+\.pdf$/.test(uri)&&Number.isSafeInteger(page)&&page>0?`<a class="v28-loc" data-pdf="1" href="${esc2(uri)}#page=${page}" target="_blank" rel="noopener noreferrer">Ver página oficial del PDF</a>`:'';};
+const pdfLink=c=>{const uri=String(c?.source||''),page=Number(c?.page);return (isDocumental(c)||c?.documentallyVerified===true||c?.sourceValidation==='cotejo_textual_con_pdf_2026')&&/^https:\/\/static\.buenosaires\.gob\.ar\/sites\/default\/files\/2026-10\/[\w-]+\.pdf$/.test(uri)&&Number.isSafeInteger(page)&&page>0?`<a class="v28-loc" data-pdf="1" href="${esc2(uri)}#page=${page}" target="_blank" rel="noopener noreferrer">Ver página oficial del PDF</a>`:'';};
 const contentMeta=c=>[levelLabel(c),c?.subject,c?.axis,c?.subaxis,isDocumental(c)?'Fragmento PDF · revisión pedagógica pendiente':null].map(v=>String(v||'').trim()).filter(Boolean).join(' · ');
 function p2(){const m=cur();m.phase2V28=m.phase2V28||{groups:{}};m.phase2V28.groups=m.phase2V28.groups||{};m.phase2V28.customContents=Array.isArray(m.phase2V28.customContents)?m.phase2V28.customContents:[];return m.phase2V28}
 function rowArea(r){return r.area||null}
