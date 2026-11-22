@@ -32,8 +32,10 @@ for label,page_num in [("contenidos_tecnicos",84),("practicas",97),("musica",12)
         for line in b.get("lines",[]):
             txt="".join(span.get("text","") for span in line["spans"]).strip()
             if not txt:continue
+            span=line["spans"][0]
             l={"x":round(line["bbox"][0],1),"y":round(line["bbox"][1],1),
-              "x2":round(line["bbox"][2],1),"text":txt[:170]}
+              "x2":round(line["bbox"][2],1),"font":span.get("font"),"size":round(span.get("size",0),1),
+              "flags":span.get("flags"),"text":txt[:170]}
             lines.append(l)
     for l in sorted(lines,key=lambda x:x["y"])[:75]:
         print("TEXT",json.dumps(l,ensure_ascii=False),flush=True)
