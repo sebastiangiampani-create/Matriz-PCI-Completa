@@ -40,8 +40,9 @@ jobs:
         run: |
           node --check src/tecnica/desagregacion-documental-2026.mjs
           node --check tests/tecnica-desagregacion-documental.test.mjs
+          node --check tests/tecnica-base-normalizada.test.mjs
           node scripts/qa-tecnica-priorizados.mjs
-          node --test tests/tecnica-priorizados-2026.test.mjs tests/tecnica-contenidos-atomicos.test.mjs tests/tecnica-desagregacion-documental.test.mjs
+          node --test tests/tecnica-priorizados-2026.test.mjs tests/tecnica-contenidos-atomicos.test.mjs tests/tecnica-desagregacion-documental.test.mjs tests/tecnica-base-normalizada.test.mjs
       - name: Instalar entorno Playwright
         shell: bash
         run: |
