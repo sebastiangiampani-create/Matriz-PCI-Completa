@@ -533,9 +533,23 @@ function renderTechPrescriptionPanel(){
     '<strong>'+Number(documental.referenciasPendientes)+' referencias aún sin desagregación segura.</strong> ':
     Number(atom.referenciasPendientes)+' referencias pendientes de desagregación. ')+
   'Los fragmentos provisionales y los cotejos textuales no equivalen a homologación pedagógica oficial.</p>':'';
+ const stillPending=prior?.pendientesDeAtomizacion||[];
+ const detailPending=stillPending.length?
+  '<details><summary>Revisar '+stillPending.length+' referencias todavía sin contenidos individuales seguros</summary>'+
+  '<ul class="norma-list">'+stillPending.slice(0,80).map(x=>{
+    const p=Number(x.page),page=Number.isSafeInteger(p)&&p>0?p:null;
+    const label=esc(String(x.name||'Materia sin identificar'))+
+      ' · '+(x.year?'año '+Number(x.year):'año por verificar')+
+      (page?' · página '+page:'');
+    return '<li>'+(validSource&&page?
+      '<a href="'+esc(prior.fuente)+'#page='+page+'" target="_blank" rel="noopener noreferrer">'+label+'</a>':label)+
+      ' · '+(x.reason==='sin_anio_verificable'?'sin año verificable':'extracción de columnas ambigua')+'</li>';
+   }).join('')+
+   (stillPending.length>80?'<li>… y '+(stillPending.length-80)+' referencias adicionales. Consultar el catálogo completo.</li>':'')+
+   '</ul></details>':'';
  panel.innerHTML='<div class="subhead">Composición por especialidad · Anexo II</div>'+
   '<strong>'+esc(TECH_PROFILE.name)+'</strong><p>'+esc(stateDesc)+'</p>'+
-  (rows?'<ul class="norma-list">'+rows+'</ul>':'')+warnings+sourceLine+atomLine+
+  (rows?'<ul class="norma-list">'+rows+'</ul>':'')+warnings+sourceLine+atomLine+detailPending+
   '<p>Matemática y Lengua Adicional: '+TECH_PROFILE.troncales.matematica.length+
   ' años. Sociales: '+TECH_PROFILE.sociales.total+' integraciones ('+
   TECH_PROFILE.sociales.obligatorios+' obligatorias y '+TECH_PROFILE.sociales.electivos+
