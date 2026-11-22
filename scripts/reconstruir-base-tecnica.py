@@ -100,7 +100,7 @@ def lines_on(page):
             if not t:continue
             f=spans[0].get("font","")
             first=squish(spans[0].get("text",""))
-            split_topic=(len(spans)>1 and 289<float(l["bbox"][0])<744 and
+            split_topic=(len(spans)>1 and 260<float(l["bbox"][0])<744 and
               ("Bold" in f or bool(spans[0].get("flags",0)&16)) and
               8<=len(first)<=63 and len(first.split())>=2 and not first.endswith(".") and ":" not in first and
               all("Bold" not in z.get("font","") for z in spans[1:]) and
@@ -246,10 +246,10 @@ def extract_document(meta):
                     "axis":"" if changed else prev.get("axis",""),
                     "subaxis":"" if changed else prev.get("subaxis","")}
             else:state.setdefault(key,{"year":None,"axis":"","subaxis":""})
-            y_header=max((l["y"] for l in ll if lo<=l["y"]<hi and l["x"]>=290 and
+            y_header=max((l["y"] for l in ll if lo<=l["y"]<hi and l["x"]>=260 and
                          re.fullmatch(r"(?:Contenidos(?: priorizados)?|Conocimientos)",l["text"],re.I)),default=lo)
             body=[l for l in ll if max(lo+9 if has_title else lo,y_header+9)<=l["y"]<min(hi,495)
-                  and l["x"]>=289 and l["x"]<744
+                  and l["x"]>=260 and l["x"]<744
                   and not NOISE_RX.fullmatch(l["text"])]
             for line in body:
                 if is_section_topic(line):
