@@ -524,11 +524,15 @@ function renderTechPrescriptionPanel(){
     '<ul class="norma-list">'+pending.slice(0,20).join('')+
     (pending.length>20?'<li>… y '+(pending.length-20)+' referencias más en el catálogo original.</li>':'')+
     '</ul></details>':'<p>Todas las referencias cuentan con un año identificable en la fuente extraída.</p>') : '';
- const atom=prior?.contenidosAtomicos;
+ const atom=prior?.contenidosAtomicos,documental=prior?.desagregacionDocumental;
  const atomLine=atom?'<p><strong>Contenidos en Fase 2:</strong> '+
-  Number(atom.contenidosAtomicos)+' contenidos individuales cotejados con la extracción del PDF 2026. '+
-  Number(atom.referenciasPendientes)+' referencias pendientes de desagregación; esas páginas no se ofrecen como un solo contenido. '+
-  'Los contenidos cotejados siguen sujetos a revisión pedagógica de la fuente.</p>':'';
+  Number(atom.contenidosAtomicos)+' contenidos individuales con cotejo textual previo. '+
+  (documental?
+    Number(documental.contenidosIndividualesProvisionales)+' fragmentos documentales adicionales extraídos de '+
+    Number(documental.referenciasDesagregadas)+' referencias y pendientes de revisión pedagógica. '+
+    '<strong>'+Number(documental.referenciasPendientes)+' referencias aún sin desagregación segura.</strong> ':
+    Number(atom.referenciasPendientes)+' referencias pendientes de desagregación. ')+
+  'Los fragmentos provisionales y los cotejos textuales no equivalen a homologación pedagógica oficial.</p>':'';
  panel.innerHTML='<div class="subhead">Composición por especialidad · Anexo II</div>'+
   '<strong>'+esc(TECH_PROFILE.name)+'</strong><p>'+esc(stateDesc)+'</p>'+
   (rows?'<ul class="norma-list">'+rows+'</ul>':'')+warnings+sourceLine+atomLine+
