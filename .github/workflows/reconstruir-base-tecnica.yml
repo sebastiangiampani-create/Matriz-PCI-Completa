@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/inspeccionar-pdf-tecnica.py'
       - 'scripts/reconstruir-base-tecnica.py'
+      - 'scripts/test-base-tecnica.py'
       - '.github/workflows/reconstruir-base-tecnica.yml'
   workflow_dispatch:
 permissions:
@@ -23,6 +24,8 @@ jobs:
       - name: Atomizar y consolidar las 26 especialidades desde PDF oficiales
         run: |
           python scripts/reconstruir-base-tecnica.py --jobs 5
+      - name: Verificar coherencia de los contenidos y materias recuperadas
+        run: python scripts/test-base-tecnica.py
       - name: Conservar base curricular reconstruida e incidencias
         if: always()
         uses: actions/upload-artifact@v4
