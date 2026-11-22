@@ -24,6 +24,17 @@ jobs:
       - name: Diagnóstico geométrico de Prácticas Profesionalizantes
         run: |
           python scripts/inspeccionar-pdf-tecnica.py | awk '/PAGE practicas/{mostrar=1} /PAGE pagina_vacia/{mostrar=0} mostrar{print}'
+      - name: Comprobar materias que comparten página y PP en Computación
+        run: |
+          python scripts/reconstruir-base-tecnica.py --only computacion --output test-artifacts/tecnica/muestra
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('test-artifacts/tecnica/muestra/computacion.json').read_text())
+          for name,p in [('Música',14),('Diseño',14),('Prácticas Profesionalizantes',97)]:
+              rows=[x for x in d['contenidos'] if x['subject']==name and x['page']==p]
+              print('MUESTRA_PDF',name,p,len(rows),[(v['axis'],v['text'][:120]) for v in rows[:5]],flush=True)
+          PY
       - name: Atomizar y consolidar las 26 especialidades desde PDF oficiales
         run: |
           python scripts/reconstruir-base-tecnica.py --jobs 5
