@@ -95,7 +95,8 @@ test('la carga de materias y contenidos en V2 comparte año y referencia por pá
     assert.equal(content.year,row.year,'El contenido respeta el año de la fuente.');
     assert.equal(content.page,row.page);
     assert.equal(content.source,doc.fuente_url);
-    assert.ok(content.axis&&content.subaxis!==undefined&&content.text);
+    assert.ok(typeof content.axis==='string'&&typeof content.subaxis==='string'&&content.text,
+      'Los ejes no documentados permanecen vacíos en lugar de inventarse.');
     assert.ok(!/CONTENIDOS PRIORIZADOS/i.test(content.text));
    }
    assert.ok(profile.priorizados.contenidosAtomicos.referenciasPendientes>=0);
