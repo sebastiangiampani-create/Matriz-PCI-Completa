@@ -53,7 +53,6 @@ const profileRows=CFG.model==='tecnica'?[
  {k:'foTaller5',l:'Taller de la Especialidad (anual)',area:'Formación Técnico-Específica',format:'formativo',annual:true,allowedYears:[3,4,5,6]},
  {k:'anualEsp',l:'Espacio anual de la especialidad',area:'Formación Técnico-Específica',annual:true,allowedYears:TECH_PROFILE?TECH_ANNUALS.map(x=>x.year):[4,5,6]},
  {k:'foN3',l:'Espacios de integración de la Especialidad',area:'Formación Técnico-Específica',format:'integracion',a:t=>t>=7},
- {k:'fct',l:'Científico-Tecnológica · ubicación según plan de la especialidad',area:'Formación Científico-Tecnológica',format:'integracion',a:t=>true},
  {k:'practicas',l:'Prácticas Profesionalizantes (Proyecto de Vinculación con el Futuro)',area:'Prácticas Profesionalizantes',annual:true,allowedYears:[5,6]},
  {k:'otros',l:'Otros formatos pedagógicos',area:'Otros formatos pedagógicos',format:'otros',a:t=>true}
 ]:[
@@ -117,8 +116,6 @@ function techMember(r,s,level){
    if(fte)return [true,''];
    if(FLEX_SOCIAL.test(name))return [true,''];
    return [false,'Los espacios de integración de la Especialidad reorganizan la formación técnico-específica de 4.º a 6.º. Pág. 18.'];
-  case 'fct':
-   return area==='Formación Científico-Tecnológica'?[true,'']:[false,'Esta materia no es de Formación Científico-Tecnológica'];
   case 'practicas':
    return fieldOf(s)==='practicas_profesionalizantes'?[true,'']:[false,'Solo Prácticas Profesionalizantes, en 5.º o 6.º. Pág. 13.'];
   case 'otros':
@@ -171,7 +168,6 @@ function canAssign(slot,s){
  if(r.k==='anualEsp'&&fieldOf(s)==='formacion_tecnica_especifica')return [true,''];
  if(r.k==='foN3'&&s.origin==='FO'&&fieldOf(s)!=='practicas_profesionalizantes')return [true,''];
  if(r.k==='foTaller5'&&s.origin==='FO'&&fieldOf(s)==='formacion_tecnica_especifica')return [true,''];
- if(r.k==='fct'&&fieldOf(s)==='formacion_cientifico_tecnologica')return [true,''];
  if(r.k==='otros'&&/Tutoría|EDI|Espacios de Definición/i.test(s.name))return [true,''];
  if(r.k==='artes'&&/art/i.test(s.name))return [true,''];
  if(r.k==='ef'&&/educaci[oó]n f[ií]sica/i.test(s.name))return [true,''];
@@ -312,6 +308,7 @@ renderMatrix=function(){
    if(legacy.length)html+='<div class="legacy-strip"><strong>'+esc(r.l)+':</strong> materias ubicadas como cuatrimestrales en un borrador anterior. Arrastrarlas a la celda anual del nivel: '+legacy.map(k=>'<span class="drop legacy-out" data-slot="'+esc(k)+'">C'+slotTerm(k)+' '+placed(k)+'</span>').join(' ')+'</div>';
   }
  }
+ html+=renderLegacyScientificField();
  $id('matrix').innerHTML=html;
  $id('matrix').querySelectorAll('[data-slot]').forEach(el=>{
   el.ondragover=e=>{e.preventDefault();e.stopPropagation();el.classList.add('ready')};
@@ -396,11 +393,47 @@ function auditAnnuals(){
  }
  return {issues,expected:annuals};
 }
+const legacyFieldSlots=()=>{
+ if(CFG.model!=='tecnica')return [];
+ const map=cur(),p=map.placements||{},g=map.phase2V28?.groups||{};
+ const keys=[...new Set([...Object.keys(p),...Object.keys(g)])]
+  .filter(key=>/^fct-c(?:[1-9]|1[0-2])$/.test(key));
+ const hasWork=group=>{
+  const data=group?.data||group||{};
+  const contents=data.contents||group?.contents||[];
+  if(Array.isArray(contents)&&contents.length)return true;
+  if([data.objectives,data.synopsis,data.context].some(x=>String(x||'').trim()))return true;
+  return (data.plansBimestrales||[]).some(plan=>
+   (plan?.contentIds||[]).length||[plan?.objectives,plan?.synopsis].some(x=>String(x||'').trim())||
+   Object.values(plan?.stages||{}).some(stage=>
+    ['description','activities','resources','evidence'].some(k=>String(stage?.[k]||'').trim())));
+ };
+ return keys.filter(slot=>(p[slot]||[]).length>0||hasWork(g[slot]));
+};
+function renderLegacyScientificField(){
+ if(CFG.model!=='tecnica')return '';
+ const slots=legacyFieldSlots();
+ if(!slots.length)return '';
+ const details=slots.map(slot=>{
+   const ids=cur().placements?.[slot]||[];
+   const names=ids.map(id=>byIdInMap(id)?.name||id);
+   return '<li><strong>C'+slotTerm(slot)+'</strong>: '+esc(names.join(', ')||'Desarrollo curricular previo')+'</li>';
+ }).join('');
+ return '<section class="legacy-strip" role="note"><details><summary>'+
+   'Asignaciones anteriores del campo Científico-Tecnológico · '+slots.length+' espacio(s) para revisar</summary>'+
+   '<p>El campo Científico-Tecnológico es una clasificación del plan, no un formato curricular independiente. '+
+   'Estas asignaciones y sus planes permanecen guardados, pero no se habilitan nuevos espacios. '+
+   'Revisar su ubicación según la especialidad antes de validar el mapa.</p><ul>'+details+'</ul></details></section>';
+}
 function techAudit(){
  const plan=TECH_PROFILE?.espacioAnual.status==='no_definido_en_anexo'?
    {annualSpecialtyDefined:false}:null;
  const result=NORM.validateFinalComposition({model:'tecnica',specialtyId:SPECIALTY,
   spaces:techSpaces(),officialPlan:plan});
+ const legacy=legacyFieldSlots();
+ if(legacy.length)result.errors.push({code:'TECH_CIENTIFICO_TECNOLOGICA_LEGADO',
+   message:'Hay '+legacy.length+' asignaciones anteriores en una fila no prescripta. Se preservan para revisión.',
+   severity:'error',page:13});
  const fixed=auditAnnuals();
  if(fixed)for(const issue of fixed.issues)result.errors.push({
   code:'TECH_'+issue.code,message:issue.message,spaceId:issue.slot,
@@ -491,9 +524,14 @@ function renderTechPrescriptionPanel(){
     '<ul class="norma-list">'+pending.slice(0,20).join('')+
     (pending.length>20?'<li>… y '+(pending.length-20)+' referencias más en el catálogo original.</li>':'')+
     '</ul></details>':'<p>Todas las referencias cuentan con un año identificable en la fuente extraída.</p>') : '';
+ const atom=prior?.contenidosAtomicos;
+ const atomLine=atom?'<p><strong>Contenidos en Fase 2:</strong> '+
+  Number(atom.contenidosAtomicos)+' contenidos individuales cotejados con la extracción del PDF 2026. '+
+  Number(atom.referenciasPendientes)+' referencias pendientes de desagregación; esas páginas no se ofrecen como un solo contenido. '+
+  'Los contenidos cotejados siguen sujetos a revisión pedagógica de la fuente.</p>':'';
  panel.innerHTML='<div class="subhead">Composición por especialidad · Anexo II</div>'+
   '<strong>'+esc(TECH_PROFILE.name)+'</strong><p>'+esc(stateDesc)+'</p>'+
-  (rows?'<ul class="norma-list">'+rows+'</ul>':'')+warnings+sourceLine+
+  (rows?'<ul class="norma-list">'+rows+'</ul>':'')+warnings+sourceLine+atomLine+
   '<p>Matemática y Lengua Adicional: '+TECH_PROFILE.troncales.matematica.length+
   ' años. Sociales: '+TECH_PROFILE.sociales.total+' integraciones ('+
   TECH_PROFILE.sociales.obligatorios+' obligatorias y '+TECH_PROFILE.sociales.electivos+

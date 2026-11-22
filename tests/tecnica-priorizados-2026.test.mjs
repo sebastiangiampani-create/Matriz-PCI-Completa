@@ -82,13 +82,21 @@ test('la carga de materias y contenidos en V2 comparte año y referencia por pá
    const bank=technicalSubjectBank(doc);
    assert.equal(audit.totalReferencias,bank.length);
    assert.equal(audit.sinNivel.length,bank.filter(x=>x.year==null).length);
-   for(const row of bank.filter(x=>x.year!==null)){
-    const content=[...profile.contents.fg,...profile.contents.fo].find(c=>c.id===row.id);
-    assert.ok(content,'Falta contenido original '+row.id);
-    assert.equal(content.year,row.year,'Fase 2 debe usar mismo año que la materia '+row.id);
+   const contents=[...profile.contents.fg,...profile.contents.fo];
+   const references=new Map(bank.map(x=>[x.id,x]));
+   assert.ok(contents.length>0);
+   assert.equal(contents.some(x=>x.id.endsWith('@p'+x.page)),false,
+    'Una página de PDF no puede presentarse como contenido único.');
+   for(const content of contents.filter(x=>x.sourceReference)){
+    const row=references.get(content.sourceReference);
+    assert.ok(row,'La referencia oficial de origen debe existir.');
+    assert.equal(content.year,row.year,'El contenido respeta el año de la fuente.');
     assert.equal(content.page,row.page);
     assert.equal(content.source,doc.fuente_url);
+    assert.ok(content.axis&&content.subaxis!==undefined&&content.text);
+    assert.ok(!/CONTENIDOS PRIORIZADOS/i.test(content.text));
    }
+   assert.ok(profile.priorizados.contenidosAtomicos.referenciasPendientes>=0);
    for(const subject of profile.subjects.filter(s=>s.sourcePages?.length)){
     assert.ok(subject.sourcePages.every(p=>Number.isInteger(p)&&p>0));
     assert.equal(subject.source,doc.fuente_url);

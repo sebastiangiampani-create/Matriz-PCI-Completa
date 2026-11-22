@@ -394,6 +394,9 @@ async function modalFlow(page,record,model,levels){
       };
     });
     assert.equal(prescription.specialtyId,'computacion');
+    assert.equal(await page.evaluate(()=>V2ModalMap.rowDefs().some(x=>x.k==='fct')),false,
+      'La formación científico-tecnológica es un campo, no una fila curricular autónoma.');
+    assert.equal(await page.locator('#matrix .rowlabel').filter({hasText:'Científico-Tecnológica'}).count(),0);
     assert.equal(prescription.terms,12);
     assert.equal(prescription.slots.length,3,'Las tres materias anuales de Computación son prescriptas.');
     for(const slot of prescription.slots){
@@ -404,6 +407,18 @@ async function modalFlow(page,record,model,levels){
     }
     assert.match(prescription.panelText,/Computación/);
     assert.match(prescription.panelText,/confirmar con el plan/i);
+    assert.match(prescription.panelText,/contenidos individuales cotejados/i);
+    const atomic=await page.evaluate(()=>{
+      const data=window.__V2_MODAL.contents;
+      const items=[...data.fg,...data.fo].filter(x=>x.sourceRow);
+      return {total:items.length,containsPages:items.some(x=>/CONTENIDOS PRIORIZADOS|Educativos\.Educativos/i.test(x.text)),
+        fieldsMissing:items.some(x=>!x.year||!x.axis||!x.text||!x.sourceReference),
+        source:items[0]?.source};
+    });
+    assert.ok(atomic.total>50,'Fase 2 necesita contenidos individuales reales de Computación.');
+    assert.equal(atomic.containsPages,false,'No mostrar páginas completas como contenido.');
+    assert.equal(atomic.fieldsMissing,false,'Los contenidos requieren año, eje y fuente.');
+    record.contenidosTecnica=atomic;
     assert.ok(prescription.pending.includes('integraciones_especialidad'));
     const locked=await page.evaluate(()=>{
       const map=PCIAplicacionV2.snapshot().maps[PCIAplicacionV2.snapshot().active],

@@ -36,7 +36,7 @@ async function prepare(raw){
       throw Error('El destino debe estar vacío o no existir.');
   }
   const files=new Set(ROOT_FILES);
-  for(const dir of ['src','assets','data','vendor/pci-sec-aprende-v2'])await collect(dir,files);
+  for(const dir of ['src','assets','data','tecnica/data','vendor/pci-sec-aprende-v2'])await collect(dir,files);
   for(const path of [...files]){
     if(/school\d+-seed|preview-pr47|(?:^|\/)(?:supabase|tests?|test-artifacts|backups?)(?:\/|$)/i.test(path))
       files.delete(path);
