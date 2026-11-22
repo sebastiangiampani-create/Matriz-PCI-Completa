@@ -99,9 +99,22 @@ def lines_on(page):
             t=squish("".join(s.get("text","") for s in spans))
             if not t:continue
             f=spans[0].get("font","")
-            out.append({"x":float(l["bbox"][0]),"y":float(l["bbox"][1]),
-                        "text":t,"bold":"Bold" in f or bool(spans[0].get("flags",0)&16),
-                        "size":float(spans[0].get("size",0)),"font":f})
+            first=squish(spans[0].get("text",""))
+            split_topic=(len(spans)>1 and 289<float(l["bbox"][0])<744 and
+              ("Bold" in f or bool(spans[0].get("flags",0)&16)) and
+              8<=len(first)<=63 and len(first.split())>=2 and
+              all("Bold" not in z.get("font","") for z in spans[1:]) and
+              len(squish("".join(z.get("text","") for z in spans[1:])))>8)
+            if split_topic:
+                out.append({"x":float(spans[0]["bbox"][0]),"y":float(l["bbox"][1]),
+                    "text":first,"bold":True,"size":float(spans[0].get("size",0)),"font":f})
+                out.append({"x":float(spans[1]["bbox"][0]),"y":float(l["bbox"][1]),
+                    "text":squish("".join(z.get("text","") for z in spans[1:])),
+                    "bold":False,"size":float(spans[1].get("size",0)),"font":spans[1].get("font","")})
+            else:
+                out.append({"x":float(l["bbox"][0]),"y":float(l["bbox"][1]),
+                            "text":t,"bold":"Bold" in f or bool(spans[0].get("flags",0)&16),
+                            "size":float(spans[0].get("size",0)),"font":f})
     out.sort(key=lambda v:(round(v["y"],1),v["x"]))
     return out
 
@@ -214,12 +227,13 @@ def extract_document(meta):
                 ranges.append((y,hs[j+1][0] if j+1<len(hs) else 501,section,True))
             active=hs[-1][1]
         else:
-            if active:
-                ranges=[(65,501,active,False)]
-            elif len(sections_here)==1:
-                section=by_id[next(iter(sections_here))]
-                ranges=[(65,501,section,False)]
-                active=section
+            # Si el índice oficial cambia de materia y no hay un título
+            # detectable (p. ej. PP), NO atribuir la página al tema anterior.
+            if sections_here and active and active["id"] not in sections_here and len(sections_here)==1:
+                active=by_id[next(iter(sections_here))]
+            elif not active and len(sections_here)==1:
+                active=by_id[next(iter(sections_here))]
+            if active:ranges=[(65,501,active,False)]
         for lo,hi,section,has_title in ranges:
             if not section or lo>=hi:continue
             if pending and pending["sectionId"]!=section["id"]:flush()
@@ -227,7 +241,10 @@ def extract_document(meta):
             prev=state.get(key,{})
             year,confidence=year_of(meta,section,idx,ll,lo,min(hi,lo+95),prev.get("year"))
             if year is not None:
-                state[key]={"year":year,"axis":prev.get("axis",""),"subaxis":prev.get("subaxis","")}
+                changed=prev.get("year") not in (None,year)
+                state[key]={"year":year,
+                    "axis":"" if changed else prev.get("axis",""),
+                    "subaxis":"" if changed else prev.get("subaxis","")}
             else:state.setdefault(key,{"year":None,"axis":"","subaxis":""})
             y_header=max((l["y"] for l in ll if lo<=l["y"]<hi and l["x"]>=290 and
                          re.fullmatch(r"(?:Contenidos(?: priorizados)?|Conocimientos)",l["text"],re.I)),default=lo)
@@ -240,14 +257,17 @@ def extract_document(meta):
                     name=line["text"].rstrip(".")
                     # La tipografía distingue encabezados temáticos; la
                     # fuente no siempre los llama «eje» o «subeje».
-                    if not state[key]["axis"]:
+                    norm=canon(name)
+                    # Rótulos de sección son ejes; un encabezado descriptivo
+                    # dentro de la sección es subeje y no reemplaza el eje.
+                    is_major=(norm.startswith("seccion ") or norm.startswith("eje ") or
+                        norm in ("produccion","apreciacion","contextualizacion") or
+                        (len(name.split())<=2 and not state[key]["axis"]))
+                    if is_major or not state[key]["axis"]:
                         state[key]["axis"]=name
                         state[key]["subaxis"]=""
-                    elif not state[key]["subaxis"] and name!=state[key]["axis"]:
-                        state[key]["subaxis"]=name
                     else:
-                        state[key]["axis"]=name
-                        state[key]["subaxis"]=""
+                        state[key]["subaxis"]=name
                     continue
                 info={"sectionId":key,"subject":section["asignatura"],
                       "field":section["campo_estimado"],"year":year,
