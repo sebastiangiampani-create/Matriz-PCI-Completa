@@ -19,6 +19,8 @@ on:
       - tests/aplicacion-v2-documentos.test.mjs
       - tests/aplicacion-v2-publicacion.test.mjs
       - tests/aplicacion-v2-admin-browser.mjs
+      - tests/pvf-media.test.mjs
+      - tests/pvf-media-browser.mjs
       - .github/workflows/aplicacion-v2-integrada.yml
   workflow_dispatch:
 
@@ -44,6 +46,7 @@ jobs:
           tests/revision-aceptacion-v2.test.mjs
           tests/importacion-v2-prearmado.test.mjs
           tests/v2-familia-paridad.test.mjs
+          tests/pvf-media.test.mjs
       - name: Preparar Playwright 1.55
         run: |
           npm install --no-save --package-lock=false playwright@1.55.0
@@ -56,6 +59,8 @@ jobs:
         run: node tests/aplicacion-v2-browser.mjs
       - name: Probar acceso administrador sobre la publicación completa
         run: node tests/aplicacion-v2-admin-browser.mjs
+      - name: Probar PVF prescripto de Media en escritorio y celular
+        run: node tests/pvf-media-browser.mjs
       - name: Conservar evidencias y fallos de la aplicación integrada
         if: always()
         uses: actions/upload-artifact@v4

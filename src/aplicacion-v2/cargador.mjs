@@ -8,6 +8,7 @@ import { loadV2ModalProfile } from '../v2-familia/catalogos-modalidad.mjs';
 import { montarAvisoAceptacionV2 } from '../migracion/aviso-aceptacion-v2.mjs';
 import { migrarLegadoFgAV2, materiasMotorMedia } from '../migracion/legado-fg-a-v2.mjs';
 import { localizarRecursos } from './recursos.mjs';
+import * as pvfMedia from './pvf-media.mjs';
 
 const RAIZ = new URL('../../', import.meta.url);
 const BASE_V2 = new URL('vendor/pci-sec-aprende-v2/', RAIZ);
@@ -172,6 +173,8 @@ export async function cargarAplicacionV2({ contexto, estadoInicial = null, vista
     // encabezados flexibles y scroll del editor requieren el mismo ajuste que
     // Media ya verificó; no se modifica ninguna regla curricular de la modalidad.
     modules.push({ modulo: 'ajustes-vista-media', archivo: 'src/v2-familia/ajustes-vista-media.js' });
+    // Cerrar la composición prescripta después de las reglas generales del motor.
+    if (media) modules.push({ modulo: 'pvf-media-prescripto', archivo: 'src/aplicacion-v2/pvf-media-runtime.js' });
     const corePath = media ? 'vendor/pci-sec-aprende-v2/app-core.html' : 'src/v2-familia/app-core-modalidad.html';
     const [html, runtime, materiasText, ...sources] = await Promise.all([
       texto(corePath), texto('src/aplicacion-v2/runtime-v2.js'),
@@ -194,7 +197,8 @@ export async function cargarAplicacionV2({ contexto, estadoInicial = null, vista
       estadoInicial: estadoInicial === null ? null : copiar(estadoInicial),
       fuenteLegado: fuenteLegado === null ? null : copiar(fuenteLegado),
       matrixRows: copiar(matrixRows), vista, volver: volver.href, alGuardarBorrador,
-      migracion: { montarAvisoAceptacionV2, migrarLegadoFgAV2, materiasMotorMedia }
+      migracion: { montarAvisoAceptacionV2, migrarLegadoFgAV2, materiasMotorMedia },
+      pvfMedia: media ? pvfMedia : null
     };
     let core = instalarDocumento(localizarRecursos(html, RAIZ.href));
     instalado = true;
