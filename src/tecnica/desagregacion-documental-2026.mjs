@@ -43,6 +43,11 @@ export function resolverAnioReferenciaTecnica(section,page,previous=null){
  // Una sección con un único curso declarado prevalece sobre una inferencia
  // contextual contradictoria de página.
  if(years.length===1)return {year:years[0],confidence:'seccion_de_un_solo_anio'};
+ // El Anexo II ubica Educación Artística en primer año de Técnica;
+ // Música, Teatro y Diseño no crean cursos adicionales en la oferta.
+ if(section?.campo_estimado==='formacion_general'&&
+    ['musica','teatro','diseno'].includes(canon(section?.asignatura)))
+  return {year:1,confidence:'regla_arte_primer_anio_anexo_ii'};
  const own=Number(page?.anio_contextual_inferido);
  if(validYear(own))return {year:own,confidence:'inferido_pagina_pdf'};
  // La continuidad solo vale si se trata de páginas consecutivas de la MISMA sección.
