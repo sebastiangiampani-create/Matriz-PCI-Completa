@@ -511,7 +511,7 @@ function renderTechPrescriptionPanel(){
  const warnings=check?.issues?.length?
   '<p><strong>Requiere revisión:</strong> '+esc(check.issues[0].message)+'</p>':'';
  const prior=TECH_PRIORIZADOS;
- const validSource=prior && /^https:\/\/static\.buenosaires\.gob\.ar\/sites\/default\/files\/2026-10\/[\w\-]+\.pdf$/.test(prior.fuente);
+ const validSource=prior && /^https:\/\/static\.buenosaires\.gob\.ar\/sites\/default\/files\/2026-10\/[\w%\-]+\.pdf$/.test(prior.fuente);
  const unresolved=prior?.sinNivel||[];
  const pending=unresolved.map(item=>'<li>'+esc(item.seccion)+' · página '+Number(item.pagina)+'</li>');
  const sourceLine=prior?
