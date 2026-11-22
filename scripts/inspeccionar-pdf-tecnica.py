@@ -21,7 +21,7 @@ except Exception as error:
 
 pdf=fitz.open(stream=payload,filetype="pdf")
 print("DOCUMENT",len(pdf),"pages",flush=True)
-for label,page_num in [("contenidos_tecnicos",84),("practicas",97),("musica",12),("diseno",13)]:
+for label,page_num in [("contenidos_tecnicos",84),("practicas",96),("pagina_vacia",97),("musica",12),("diseno",13)]:
     if page_num>=len(pdf):continue
     page=pdf[page_num]
     print("PAGE",label,page_num+1,{"rect":[page.rect.width,page.rect.height]},flush=True)
