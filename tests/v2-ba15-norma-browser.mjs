@@ -58,7 +58,10 @@ try{
   assert.deepEqual(result.errors,[]);
   assert.equal(result.warnings.some(c=>c.startsWith('BA_HOURS_')),false,'El catálogo suma 38 horas por nivel');
   await page.locator('#validateBtn').click();
-  await page.waitForFunction(()=>/consistente con RES-1375-MEDGC-25/.test(document.querySelector('#validation')?.textContent||''));
+  // El mensaje vigente de V2 distingue la composición válida de una revisión
+  // pendiente de información oficial; no exige la etiqueta antigua del toast.
+  await page.waitForFunction(()=>/Composición (?:validada con|revisada, pendiente de plan oficial) ·? ?RES-1375-MEDGC-25/.test(document.querySelector('#validation')?.textContent||''));
+  assert.doesNotMatch(await page.locator('#validation').textContent(),/El mapa no cumple la norma/);
   await mkdir('test-artifacts/v2-modalidades',{recursive:true});
   await page.screenshot({path:'test-artifacts/v2-modalidades/ba15-norma.png',fullPage:true});
   assert.deepEqual(errors,[]);
