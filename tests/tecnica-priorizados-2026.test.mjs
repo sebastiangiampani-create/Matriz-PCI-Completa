@@ -46,16 +46,18 @@ test('las 26 especialidades tienen priorizados oficiales 2026, identificados y c
  console.log('AUDITORIA_PRIORIZADOS_TECNICA_2026='+JSON.stringify(summary));
 });
 
-test('el año de una sección inequívoca se aplica a sus páginas sin año propio, sin inventar años múltiples',async()=>{
+test('el año explícito del PDF prevalece sobre la inferencia de sección y no se inventan niveles',async()=>{
  const doc=await safeRead('administracion_empresas');
  const section=doc.asignaturas.find(x=>x.asignatura==='Física'&&x.anios_detectados.length===1&&x.anios_detectados[0]===3);
  assert.ok(section);
  const page=section.paginas.find(x=>x.anio_contextual_inferido==null);
- assert.ok(page,'La fuente tiene una página Física sin año propio pero sección única en 3.º.');
+ assert.ok(page,'La página de Física no tiene año contextual detectado.');
+ assert.match(page.texto_pagina,/FÍSICA[\s\S]*Segundo año/i,
+  'El propio documento ubica el comienzo de Física en segundo año.');
  const bank=technicalSubjectBank(doc);
  const matching=bank.find(x=>x.id===section.id+'@p'+page.pagina_pdf);
- assert.equal(matching.year,3);
- const card=technicalSubjectCards(bank).find(x=>x.id===section.id&&x.year===3);
+ assert.equal(matching.year,2,'Debe respetarse Segundo año, no el 3.º inferido para la sección.');
+ const card=technicalSubjectCards(bank).find(x=>x.id===section.id&&x.year===2);
  assert.ok(card);assert.ok(card.pages.includes(page.pagina_pdf));
  const unknown=bank.filter(x=>x.year==null);
  assert.equal(auditarPriorizadosTecnica(doc,bank).sinNivel.length,unknown.length);
