@@ -543,7 +543,7 @@ function renderTechPrescriptionPanel(){
       (page?' · página '+page:'');
     return '<li>'+(validSource&&page?
       '<a href="'+esc(prior.fuente)+'#page='+page+'" target="_blank" rel="noopener noreferrer">'+label+'</a>':label)+
-      ' · '+(x.reason==='sin_anio_verificable'?'sin año verificable':'extracción de columnas ambigua')+'</li>';
+      ' · '+(x.reason==='sin_anio_verificable'?'sin año verificable':x.reason==='pagina_sin_texto_extraido'?'página sin texto extraído · verificar PDF':'extracción de columnas ambigua')+'</li>';
    }).join('')+
    (stillPending.length>80?'<li>… y '+(stillPending.length-80)+' referencias adicionales. Consultar el catálogo completo.</li>':'')+
    '</ul></details>':'';
