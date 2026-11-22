@@ -52,6 +52,8 @@ jobs:
             echo "Base curricular ya actualizada."
           else
             git commit -m "data(tecnica): base atomizada de 26 PDF oficiales [skip ci]"
+            git fetch origin fix/rescate-constructor-v2-reglas-20261119
+            git rebase origin/fix/rescate-constructor-v2-reglas-20261119
             git push origin HEAD:fix/rescate-constructor-v2-reglas-20261119
           fi
       - name: Conservar base curricular reconstruida e incidencias
