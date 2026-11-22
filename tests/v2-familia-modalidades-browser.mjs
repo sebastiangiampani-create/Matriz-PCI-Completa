@@ -103,6 +103,26 @@ try{
   assert.ok(phase2.groups>15,'Fase 2 V2 debe generar agrupamientos desde el mapa del modelo');
   assert.ok(phase2.fg>0,'La Fase 2 debe tener contenidos FG');
   assert.ok(phase2.fo>0,'La Fase 2 debe tener contenidos específicos de la modalidad');
+  if(model==='tecnica'){
+    const coverageCheck=await page.evaluate(async()=>{
+      const p=window.PCIPhase2V28;
+      await p.loadCurriculum();
+      const areas=[...new Set(window.V2ModalMap.rowDefs().map(x=>x.area).filter(Boolean))];
+      const findings=[];
+      for(const area of areas){
+        const rows=p.getAreaPool(area),provisional=rows.filter(x=>x.documentalFragmentId);
+        if(!provisional.length)continue;
+        const cv=p.getCoverage(area);
+        const excluded=cv.provisionalTotal+(cv.extra?.provisionalTotal||0);
+        const official=rows.filter(x=>x.component===cv.component&&!x.documentalFragmentId);
+        if(excluded<provisional.length)throw Error('Fragmentos provisionales incluidos en cobertura: '+area);
+        if(cv.total!==official.length)throw Error('Denominador de cobertura técnico incorrecto: '+area);
+        findings.push({area,provisional:provisional.length});
+      }
+      return findings;
+    });
+    assert.ok(coverageCheck.length>0,'La Fase 2 técnica debe distinguir fragmentos por revisar.');
+  }
   await page.screenshot({path:'test-artifacts/v2-modalidades/'+model+'-mapa.png',fullPage:true});
   // Fase 2 V2 real: elegir un contenido desde la bolsa, asignarlo al
   // agrupamiento derivado del mapa y completar un plan bimestral.
