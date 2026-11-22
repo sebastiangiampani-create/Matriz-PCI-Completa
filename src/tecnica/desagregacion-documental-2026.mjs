@@ -37,12 +37,14 @@ export function anioDeclaradoEnPaginaTecnica(section,page){
  return result?YEARS[result[1].toLowerCase()]||null:null;
 }
 export function resolverAnioReferenciaTecnica(section,page,previous=null){
- const own=Number(page?.anio_contextual_inferido);
- if(validYear(own))return {year:own,confidence:'inferido_pagina_pdf'};
  const declared=anioDeclaradoEnPaginaTecnica(section,page);
  if(declared)return {year:declared,confidence:'encabezado_explicito_pdf'};
  const years=asArray(section?.anios_detectados).filter(validYear).map(Number);
+ // Una sección con un único curso declarado prevalece sobre una inferencia
+ // contextual contradictoria de página.
  if(years.length===1)return {year:years[0],confidence:'seccion_de_un_solo_anio'};
+ const own=Number(page?.anio_contextual_inferido);
+ if(validYear(own))return {year:own,confidence:'inferido_pagina_pdf'};
  // La continuidad solo vale si se trata de páginas consecutivas de la MISMA sección.
  if(previous&&Number(previous.page)+1===Number(page?.pagina_pdf)&&validYear(previous.year))
   return {year:Number(previous.year),confidence:'continuidad_misma_seccion'};
@@ -94,7 +96,8 @@ function extractFromPage(section,page,ref){
   contents.push({
    id:'tec-pdf:'+ref.sectionId+':p'+ref.page+':'+(++index),
    year:ref.year,component:ref.field==='formacion_general'?'FG':'FO',
-   subject:section.asignatura,area:ref.area,axis,subaxis:'',
+   subject:section.asignatura,area:ref.area,
+   axis:axis||'Eje sin identificar (revisión pendiente)',subaxis:'',axisVerified:false,
    text:clean,source:ref.source_url,page:ref.page,
    sourceReference:ref.id,documentalFragmentId:'pdf:'+ref.id+':'+index,
    field:ref.field,sourceYearConfidence:ref.confidence,
