@@ -497,7 +497,7 @@ function renderTechPrescriptionPanel(){
   '<p>Matemática y Lengua Adicional: '+TECH_PROFILE.troncales.matematica.length+
   ' años. Sociales: '+TECH_PROFILE.sociales.total+' integraciones ('+
   TECH_PROFILE.sociales.obligatorios+' obligatorias y '+TECH_PROFILE.sociales.electivos+
-  ' electivas). Talleres, integraciones y prácticas se conforman con estas materias y la prescripción aplicable. No se exige consignar horas para construir el mapa. La integración de la Especialidad está exceptuada del máximo general de 9 HC; Sociales y Naturales conservan ese límite.</p>';
+  ' electivas). Para talleres, integraciones y prácticas, confirmar con el plan de la especialidad las composiciones específicas. No se exige consignar horas para construir el mapa. La integración de la Especialidad está exceptuada del máximo general de 9 HC; Sociales y Naturales conservan ese límite.</p>';
 }
 const previousRenderOffer=renderOffer;
 renderOffer=function(...args){const result=previousRenderOffer(...args);renderTechPrescriptionPanel();return result};
