@@ -103,6 +103,7 @@ def lines_on(page):
             split_topic=(len(spans)>1 and 260<float(l["bbox"][0])<744 and
               ("Bold" in f or bool(spans[0].get("flags",0)&16)) and
               8<=len(first)<=63 and len(first.split())>=2 and not first.endswith(".") and ":" not in first and
+              not re.match(r"^(?:introducci[oó]n|noci[oó]n|concepto|definici[oó]n)\s+(?:a|al|de|del)\b",first,re.I) and
               all("Bold" not in z.get("font","") for z in spans[1:]) and
               len(squish("".join(z.get("text","") for z in spans[1:])))>8)
             if split_topic:
