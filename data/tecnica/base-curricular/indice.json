@@ -6,142 +6,142 @@
   "totales": {
     "especialidades": 26,
     "referenciasFuente": 1111,
-    "contenidos": 61662,
-    "conceptosUnicos": 30844,
+    "contenidos": 61114,
+    "conceptosUnicos": 31913,
     "sinAnio": 0,
-    "sinEjeExplicito": 20587,
-    "sinSubejeExplicito": 41826
+    "sinEjeExplicito": 12432,
+    "sinSubejeExplicito": 28857
   },
   "especialidades": [
     {
       "id": "administracion_empresas",
       "archivo": "administracion_empresas.json",
-      "contenidos": 1923
+      "contenidos": 1900
     },
     {
       "id": "automotores",
       "archivo": "automotores.json",
-      "contenidos": 2154
+      "contenidos": 2211
     },
     {
       "id": "computacion",
       "archivo": "computacion.json",
-      "contenidos": 1828
+      "contenidos": 1899
     },
     {
       "id": "construcciones",
       "archivo": "construcciones.json",
-      "contenidos": 2890
+      "contenidos": 2919
     },
     {
       "id": "diseno_artesanias",
       "archivo": "diseno_artesanias.json",
-      "contenidos": 2869
+      "contenidos": 2822
     },
     {
       "id": "diseno_comunicacion_publicitaria",
       "archivo": "diseno_comunicacion_publicitaria.json",
-      "contenidos": 3790
+      "contenidos": 3780
     },
     {
       "id": "diseno_interiores",
       "archivo": "diseno_interiores.json",
-      "contenidos": 2821
+      "contenidos": 2778
     },
     {
       "id": "diseno_produccion_grafica",
       "archivo": "diseno_produccion_grafica.json",
-      "contenidos": 2040
+      "contenidos": 1982
     },
     {
       "id": "electricidad",
       "archivo": "electricidad.json",
-      "contenidos": 2258
+      "contenidos": 2302
     },
     {
       "id": "electromecanica",
       "archivo": "electromecanica.json",
-      "contenidos": 2696
+      "contenidos": 2647
     },
     {
       "id": "electronica",
       "archivo": "electronica.json",
-      "contenidos": 2151
+      "contenidos": 2097
     },
     {
       "id": "geografo_matematico",
       "archivo": "geografo_matematico.json",
-      "contenidos": 2603
+      "contenidos": 2485
     },
     {
       "id": "industria_alimentos",
       "archivo": "industria_alimentos.json",
-      "contenidos": 1788
+      "contenidos": 1785
     },
     {
       "id": "industria_indumentaria",
       "archivo": "industria_indumentaria.json",
-      "contenidos": 2311
+      "contenidos": 2247
     },
     {
       "id": "industria_madera_mueble",
       "archivo": "industria_madera_mueble.json",
-      "contenidos": 2044
+      "contenidos": 1982
     },
     {
       "id": "industria_orfebreria",
       "archivo": "industria_orfebreria.json",
-      "contenidos": 2084
+      "contenidos": 2012
     },
     {
       "id": "jardineria_paisajismo_produccion_vegetal",
       "archivo": "jardineria_paisajismo_produccion_vegetal.json",
-      "contenidos": 2167
+      "contenidos": 2134
     },
     {
       "id": "mecanica",
       "archivo": "mecanica.json",
-      "contenidos": 2692
+      "contenidos": 2709
     },
     {
       "id": "metalurgia",
       "archivo": "metalurgia.json",
-      "contenidos": 2650
+      "contenidos": 2711
     },
     {
       "id": "optica",
       "archivo": "optica.json",
-      "contenidos": 2666
+      "contenidos": 2655
     },
     {
       "id": "ortesis_protesis",
       "archivo": "ortesis_protesis.json",
-      "contenidos": 2230
+      "contenidos": 2206
     },
     {
       "id": "procesos_productivos_inteligentes",
       "archivo": "procesos_productivos_inteligentes.json",
-      "contenidos": 2344
+      "contenidos": 2337
     },
     {
       "id": "produccion_multimedial",
       "archivo": "produccion_multimedial.json",
-      "contenidos": 2183
+      "contenidos": 2134
     },
     {
       "id": "quimica",
       "archivo": "quimica.json",
-      "contenidos": 2106
+      "contenidos": 2064
     },
     {
       "id": "refrigeracion_ventilacion_calefaccion_aire",
       "archivo": "refrigeracion_ventilacion_calefaccion_aire.json",
-      "contenidos": 2666
+      "contenidos": 2625
     },
     {
       "id": "tic",
       "archivo": "tic.json",
-      "contenidos": 1708
+      "contenidos": 1691
     }
   ]
 }
