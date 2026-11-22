@@ -9,7 +9,7 @@ on:
       - '.github/workflows/reconstruir-base-tecnica.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   diagnosticar-pdf:
     runs-on: ubuntu-24.04
@@ -26,6 +26,20 @@ jobs:
           python scripts/reconstruir-base-tecnica.py --jobs 5
       - name: Verificar coherencia de los contenidos y materias recuperadas
         run: python scripts/test-base-tecnica.py
+      - name: Instalar catálogo normalizado en la rama PR47 (nunca main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/rescate-constructor-v2-reglas-20261119'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/tecnica/base-curricular/*.json
+          if git diff --cached --quiet; then
+            echo "Base curricular ya actualizada."
+          else
+            git commit -m "data(tecnica): base atomizada de 26 PDF oficiales [skip ci]"
+            git push origin HEAD:fix/rescate-constructor-v2-reglas-20261119
+          fi
       - name: Conservar base curricular reconstruida e incidencias
         if: always()
         uses: actions/upload-artifact@v4
