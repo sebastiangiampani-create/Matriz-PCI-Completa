@@ -96,7 +96,7 @@ function extractFromPage(section,page,ref){
    year:ref.year,component:ref.field==='formacion_general'?'FG':'FO',
    subject:section.asignatura,area:ref.area,axis,subaxis:'',
    text:clean,source:ref.source_url,page:ref.page,
-   sourceReference:ref.id,sourceRow:'pdf:'+ref.id+':'+index,
+   sourceReference:ref.id,documentalFragmentId:'pdf:'+ref.id+':'+index,
    field:ref.field,sourceYearConfidence:ref.confidence,
    provisional:true,pedagogicallyReviewed:false,
    sourceValidation:'fragmento_columna_contenidos_pdf_pendiente_revision',
