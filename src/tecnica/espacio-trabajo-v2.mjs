@@ -7,6 +7,7 @@
 import {TECNICA,findSpecialty,getAnnualSubjects,technicalCalendar,
   validateTechnicalSpace,validateRelation,RULESET_ID} from './pautas-pci-20261005.mjs';
 import {validateFinalComposition} from '../normativa/composicion-pci-20261117.mjs';
+import {resolverAnioReferenciaTecnica} from './desagregacion-documental-2026.mjs';
 
 export const TECH_OFFER_VERSION='oferta-tecnica-v1';
 export const TECH_OFFER_SCHEMA='pci-oferta-tecnica-v1/1';
@@ -133,19 +134,20 @@ export function technicalSubjectBank(document){
  const rows=[];
  for(const section of document.asignaturas){
   const field=String(section.campo_estimado||'');
-  const sectionYears=asArr(section.anios_detectados).filter(y=>Number.isInteger(y)&&y>=1&&y<=6);
+  let previous=null;
   for(const pg of asArr(section.paginas)){
    const n=Number(pg.pagina_pdf);
    if(!Number.isSafeInteger(n)||n<1)continue;
-   // El año de cada página puede ser ambiguo: no inventar una asignación.
-   const raw=Number(pg.anio_contextual_inferido);
-   const y=Number.isInteger(raw)&&raw>=1&&raw<=6?raw:
-     sectionYears.length===1?sectionYears[0]:null;
+   // Priorizar el encabezado explícito del PDF y luego continuidad dentro
+   // de la misma sección. Los años dudosos no se asignan automáticamente.
+   const resolved=resolverAnioReferenciaTecnica(section,pg,previous);
+   const y=resolved.year;
+   previous={page:n,year:y};
    rows.push({
     id:section.id+'@p'+n,sectionId:section.id,name:section.asignatura,
     field,year:y,page:n,source_sha256:document.sha256_pdf,
     source_url:document.fuente_url,
-    text:String(pg.texto_pagina||''),confidence:y===null?'sin_anio':'inferido',
+    text:String(pg.texto_pagina||''),confidence:resolved.confidence,
     area:technicalAreaForSubject(section.asignatura,field)
    });
   }
