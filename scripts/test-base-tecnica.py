@@ -48,6 +48,8 @@ assert any(c["subject"]=="Diseño" and c["page"]==14 and
            "La página 14 contiene Diseño aunque también continúa Música."
 assert any(c["subject"]=="Música" and c["page"]==14 for c in computacion),\
            "La página 14 aún incluye Música, que no debe atribuirse a Diseño."
+assert any(c["subject"]=="Prácticas Profesionalizantes" and c["page"]==97 for c in computacion),\
+           "La página 97 debe incorporarse como Prácticas Profesionalizantes."
 assert not any(c["page"]==98 and c["subject"]=="Prácticas Profesionalizantes" for c in computacion),\
            "La página vacía 98 no es un contenido."
 
