@@ -46,7 +46,7 @@ test('las 26 especialidades tienen priorizados oficiales 2026, identificados y c
  console.log('AUDITORIA_PRIORIZADOS_TECNICA_2026='+JSON.stringify(summary));
 });
 
-test('el año de una sección inequívoca se aplica a sus páginas sin año propio, sin inventar años múltiples',()=>{
+test('el año de una sección inequívoca se aplica a sus páginas sin año propio, sin inventar años múltiples',async()=>{
  const doc=await safeRead('administracion_empresas');
  const section=doc.asignaturas.find(x=>x.asignatura==='Física'&&x.anios_detectados.length===1&&x.anios_detectados[0]===3);
  assert.ok(section);
