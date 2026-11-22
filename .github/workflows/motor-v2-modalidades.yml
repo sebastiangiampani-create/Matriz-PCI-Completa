@@ -40,6 +40,7 @@ jobs:
         run: |
           node --check src/tecnica/desagregacion-documental-2026.mjs
           node --check tests/tecnica-desagregacion-documental.test.mjs
+          node scripts/qa-tecnica-priorizados.mjs
           node --test tests/tecnica-priorizados-2026.test.mjs tests/tecnica-contenidos-atomicos.test.mjs tests/tecnica-desagregacion-documental.test.mjs
       - name: Instalar entorno Playwright
         shell: bash
@@ -62,5 +63,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: motor-v2-modalidades
-          path: test-artifacts/v2-modalidades
+          path: |
+            test-artifacts/v2-modalidades
+            test-artifacts/aplicacion-v2-integrada
+            test-artifacts/tecnica/auditoria-pendientes-2026.json
           retention-days: 7
