@@ -524,16 +524,21 @@ function renderTechPrescriptionPanel(){
     '<ul class="norma-list">'+pending.slice(0,20).join('')+
     (pending.length>20?'<li>… y '+(pending.length-20)+' referencias más en el catálogo original.</li>':'')+
     '</ul></details>':'<p>Todas las referencias cuentan con un año identificable en la fuente extraída.</p>') : '';
- const atom=prior?.contenidosAtomicos,documental=prior?.desagregacionDocumental;
- const atomLine=atom?'<p><strong>Contenidos en Fase 2:</strong> '+
-  Number(atom.contenidosAtomicos)+' contenidos individuales con cotejo textual previo. '+
-  (documental?
-    Number(documental.contenidosIndividualesProvisionales)+' fragmentos documentales adicionales extraídos de '+
-    Number(documental.referenciasDesagregadas)+' referencias y pendientes de revisión pedagógica. '+
-    '<strong>'+Number(documental.referenciasPendientes)+' referencias aún sin desagregación segura.</strong> ':
-    Number(atom.referenciasPendientes)+' referencias pendientes de desagregación. ')+
-  'Los fragmentos provisionales y los cotejos textuales no equivalen a homologación pedagógica oficial.</p>':'';
- const stillPending=prior?.pendientesDeAtomizacion||[];
+ const atom=prior?.contenidosAtomicos,documental=prior?.desagregacionDocumental,
+       reconstruida=prior?.baseReconstruida;
+ const atomLine=reconstruida?
+  '<p><strong>Base curricular reconstruida:</strong> '+
+  Number(reconstruida.contenidosExtraidos)+' contenidos individualizados directamente de los PDF oficiales, '+
+  Number(reconstruida.nuevosSinDuplicar)+' incorporados sin duplicar textos previamente cotejados. '+
+  'Se conservaron '+Number(reconstruida.contenidosHistoricosConservados)+' IDs de contenidos anteriores para proteger desarrollos ya guardados. '+
+  'No se requiere revisar registros uno por uno; la base no constituye homologación normativa automática.</p>':
+  atom?'<p><strong>Contenidos en Fase 2:</strong> '+
+   Number(atom.contenidosAtomicos)+' contenidos con cotejo previo. '+
+   (documental?Number(documental.contenidosIndividualesProvisionales)+' fragmentos provisionales y '+
+   Number(documental.referenciasPendientes)+' referencias pendientes. ':
+   Number(atom.referenciasPendientes)+' referencias por completar. ')+
+   'La base original queda como respaldo hasta que se publique el banco reconstruido.</p>':'';
+  const stillPending=prior?.pendientesDeAtomizacion||[];
  const detailPending=stillPending.length?
   '<details><summary>Revisar '+stillPending.length+' referencias todavía sin contenidos individuales seguros</summary>'+
   '<ul class="norma-list">'+stillPending.slice(0,80).map(x=>{
