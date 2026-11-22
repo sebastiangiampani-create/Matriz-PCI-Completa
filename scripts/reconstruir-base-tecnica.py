@@ -62,7 +62,7 @@ def get_documents():
 
 def load_pdf(meta):
     url=str(meta["fuente_url"])
-    if not re.fullmatch(r"https://static\.buenosaires\.gob\.ar/sites/default/files/2026-10/[\w.-]+\.pdf",url):
+    if not re.fullmatch(r"https://static\.buenosaires\.gob\.ar/sites/default/files/2026-10/[\w.%\-]+\.pdf",url):
         raise ValueError("Fuente oficial no autorizada: "+url)
     CACHE.mkdir(parents=True,exist_ok=True)
     target=CACHE/(meta["especialidad_id"]+".pdf")
