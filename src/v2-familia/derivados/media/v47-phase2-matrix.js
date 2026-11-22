@@ -6,6 +6,7 @@
  *  - Ciencias Naturales, Matemática y Física, Informática y Educación no tienen filas en curriculum_v96: se completan con los bloques y ejes de V2.
  *  - El encabezado FG utiliza las referencias por nivel y las métricas de trayectoria de V91, conserva el Set de IDs y mantiene FO separada.
  *  - Esperar la base canónica de V91 antes de mostrar el encabezado; loadCurriculum no depende de openArea.
+ *  - Excluir de la vista curricular de Ciencias Naturales los contenidos FG de 5.º, porque sus laboratorios FG finalizan en C8; V91 conserva su implementación original.
  * Regenerar: node scripts/derivar-v2-familia.mjs
  */
 (() => {
@@ -57,6 +58,7 @@ async function loadFG(){
     text:String(row.text||'').trim()
   }));
   if(FG.length!==1126)throw Error(`La base de Formación General cargó ${FG.length} contenidos y se esperaban 1126.`);
+  if(state.active==='Ciencias Naturales')FG=FG.filter(x=>!(x.area==='Ciencias Naturales'&&x.year===5));
   return FG;
 }
 async function loadFOAll(){

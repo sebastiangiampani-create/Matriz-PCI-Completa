@@ -404,6 +404,23 @@ async function verifyCierreMedia(page,record,scenario,expected) {
   await capture(page,record,'cierre-media-articulaciones');
   if(scenario.id==='ciencias_naturales') {
     assert.equal(await page.locator('#matrix [data-slot="naturales-c9"],#matrix [data-slot="naturales-c10"]').count(),0);
+    const cobertura=await page.evaluate(()=>{
+      const catalog=PCIPhase2V28.getFGCatalog(),area=catalog.filter(c=>c.area==='Ciencias Naturales');
+      const quimica=subjects().find(s=>s.origin==='FG'&&s.year===5&&s.name==='Química');
+      return {
+        contenidosInaplicables:area.filter(c=>c.year===5).length,
+        totalCatalogo:catalog.length,
+        coberturaTotal:PCICoverageV91.trajectoryCoverage('Ciencias Naturales',[]).total,
+        coberturaEsperada:area.length,
+        bolsaQuimica5:!!quimica&&[...document.querySelectorAll('#bagContent [data-sub]')]
+          .some(node=>node.dataset.sub===quimica.id)
+      };
+    });
+    assert.equal(cobertura.contenidosInaplicables,0);
+    assert.equal(cobertura.bolsaQuimica5,false,'La materia FG no aplicable no debe ofrecerse en la bolsa.');
+    assert.equal(cobertura.coberturaTotal,cobertura.coberturaEsperada,
+      'V91 calcula cobertura sobre la base efectiva de FG de la orientación.');
+    record.coberturaNaturales=cobertura;
     assert.equal(audit.detalle.find(x=>x.slot==='foLab5-c9').hcConocidas,12);
     assert.equal(audit.detalle.find(x=>x.slot==='foLab5-c9').excepcionMasDe9,true);
     const before=await activeMap(page);

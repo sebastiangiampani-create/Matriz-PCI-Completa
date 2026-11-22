@@ -48,6 +48,9 @@ test('Ciencias Naturales tiene exactamente ocho laboratorios FG C1-C8 y celdas n
   const generated=read('src/v2-familia/derivados/media/v23-prearm.js');
   assert.match(generator,/if\(state.active!==['"]Ciencias Naturales['"]\)placePaired\(5,'Química','naturales'\)/);
   assert.match(generated,/if\(state.active!==['"]Ciencias Naturales['"]\)placePaired\(5,'Química','naturales'\)/);
+  const derivadoFG=read('src/v2-familia/derivados/media/v47-phase2-matrix.js');
+  assert.match(derivadoFG,/if\(state.active==='Ciencias Naturales'\)FG=FG\.filter/);
+  assert.match(generator,/if\(state.active==='Ciencias Naturales'\)FG=FG\.filter/);
   const runtime=read('src/aplicacion-v2/media-cierre-runtime.js');
   assert.match(runtime,/t<=8/);assert.match(runtime,/MEDIA_NATURALES_QUINTO\.includes\(slot\)/);
 });

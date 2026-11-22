@@ -24,8 +24,21 @@
       return {...row,a:t=>t<=8 && (!acepta || acepta(t))};
     });
   };
+  const previoRenderBag=renderBag;
+  renderBag=function(...args) {
+    const result=previoRenderBag(...args);
+    if(naturaleza) {
+      const excluida=subjects().find(s=>s?.origin==='FG'&&Number(s.year)===5&&s.name==='Química');
+      if(excluida)document.querySelectorAll('#bagContent [data-sub]').forEach(node=>{
+        if(node.dataset.sub===excluida.id)node.remove();
+      });
+    }
+    return result;
+  };
   const previoValidTarget=validTarget;
   validTarget=function(slot,s) {
+    if(naturaleza&&s?.origin==='FG'&&Number(s.year)===5&&s.name==='Química')
+      return [false,'En la orientación Ciencias Naturales no corresponde la materia FG Química de 5.º; los laboratorios FG terminan en C8.'];
     if(naturaleza&&reglas.MEDIA_NATURALES_QUINTO.includes(slot))
       return [false,'La orientación Ciencias Naturales ofrece 8 laboratorios FG, de C1 a C8. No hay laboratorios FG en 5.º.'];
     return previoValidTarget(slot,s);
