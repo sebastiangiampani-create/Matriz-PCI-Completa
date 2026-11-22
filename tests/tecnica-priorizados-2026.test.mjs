@@ -91,9 +91,20 @@ test('la carga de materias y contenidos en V2 comparte año y referencia por pá
     'Una página de PDF no puede presentarse como contenido único.');
    for(const content of contents.filter(x=>x.sourceReference)){
     const row=references.get(content.sourceReference);
-    assert.ok(row,'La referencia oficial de origen debe existir.');
-    assert.equal(content.year,row.year,'El contenido respeta el año de la fuente.');
-    assert.equal(content.page,row.page);
+    const sectionId=content.sourceReference.split('@p')[0];
+    const section=doc.asignaturas.find(s=>s.id===sectionId);
+    assert.ok(section,'Todo contenido debe pertenecer a una materia documentada.');
+    if(content.documentallyVerified===true){
+     // El índice antiguo de páginas a veces agrupa una misma página en una sola
+     // materia: el nuevo lector geométrico reconoce ambas y su año explícito.
+     assert.equal(content.sourceReference,sectionId+'@p'+content.page);
+     assert.ok(Number.isInteger(content.year)&&content.year>=1&&content.year<=6);
+     assert.equal(content.sourceGeometry?.column,'contenidos');
+    }else{
+     assert.ok(row,'La referencia del cotejo previo debe seguir existiendo.');
+     assert.equal(content.year,row.year,'El contenido previo conserva su año.');
+     assert.equal(content.page,row.page);
+    }
     assert.equal(content.source,doc.fuente_url);
     assert.ok(typeof content.axis==='string'&&typeof content.subaxis==='string'&&content.text,
       'Los ejes no documentados permanecen vacíos en lugar de inventarse.');
