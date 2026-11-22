@@ -113,6 +113,14 @@ try{
     return {gid:g.id,area:g.area,year:g.year,term:g.term};
   });
   await page.evaluate(()=>window.screen('proposal'));
+  if(model==='tecnica'){
+    await page.locator('#v28full').click();
+    const terms=await page.locator('#v28matrix .v28-term').allTextContents();
+    assert.equal(terms.length,12,'Fase 2 técnica debe mostrar sus doce cuatrimestres completos');
+    assert.equal(terms[0],'C1');
+    assert.equal(terms[11],'C12');
+    await page.locator('#v28mback').click();
+  }
   await page.locator('#v28home [data-area]').filter({hasText:probe.area}).first().click();
   await page.locator('#v28board:not([hidden])').waitFor({timeout:20000});
   const group=page.locator('#v28groups [data-g="'+probe.gid+'"]');
