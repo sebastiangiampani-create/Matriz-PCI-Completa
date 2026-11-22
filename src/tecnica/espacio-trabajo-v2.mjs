@@ -168,8 +168,9 @@ export function technicalSubjectCards(bank,{year=null}={}){
   if(!result.has(key))result.set(key,{
    id:String(row.sectionId),key,year:y,name:String(row.name),
    area:String(row.area),field:String(row.field),sourceSha:String(row.source_sha256||''),
-   provisional:true
+   provisional:true,pages:[row.page]
   });
+  else if(!result.get(key).pages.includes(row.page))result.get(key).pages.push(row.page);
  }
  return [...result.values()].sort((a,b)=>a.year-b.year||
   a.area.localeCompare(b.area,'es')||a.name.localeCompare(b.name,'es'));
