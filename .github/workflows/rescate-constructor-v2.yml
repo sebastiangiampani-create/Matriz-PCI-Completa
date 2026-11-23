@@ -71,7 +71,9 @@ jobs:
       - name: Conservar originales escolares fuera del diff
         run: |
           git fetch origin main
-          git diff --quiet origin/main...HEAD -- app.js app.html app.css pci-model.js escuela-online.html tecnica/app.html supabase/functions/pci-multipci/index.ts
+          git diff --quiet origin/main...HEAD -- app.js app.html app.css pci-model.js escuela-online.html tecnica/app.html
+      - name: Probar compatibilidad segura de la función remota V1 y V2
+        run: node --test tests/pci-multipci-v2-contract.test.mjs tests/aplicacion-v2-documentos.test.mjs
 
   navegador-constructor-v2:
     runs-on: ubuntu-24.04
