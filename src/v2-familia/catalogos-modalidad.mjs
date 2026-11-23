@@ -96,7 +96,7 @@ export async function loadBa15V2Profile(orientationId){
  const legacyIds=new Set(subjects.map(x=>x.id));
  for(const year of [2,3,4])for(const name of legacyBlocks){
   const historicalKey=year+':'+name;
-  const legacyId='ba15-fo-'+historicalKey.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  const legacyId='ba15-fo-'+historicalKey.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
   if(legacyIds.has(legacyId))continue;
   legacyIds.add(legacyId);
   subjects.push({id:legacyId,name,year,origin:'FO',area:'Formación Orientada',field:'formacion_orientada',
