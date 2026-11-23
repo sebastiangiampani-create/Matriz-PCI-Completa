@@ -107,11 +107,58 @@ const educacionFisica=Object.freeze({
    materia('Gimnasia y movimiento expresivo II',3),materia('Proyecto II',3)])
  })
 });
+const artesVisuales=Object.freeze({
+ fuente:Object.freeze({"norma":"Diseño Curricular Arte · Artes Visuales aprobado RES-321/15","url":"https://buenosaires.gob.ar/areas/educacion/nes/pdf/2015/NES-CO-arte_artes-visuales-musica-teatro_w.pdf","paginas":[44,45],"estado":"cotejado_con_diseno_curricular_publicado"}),
+ comun:Object.freeze({3:Object.freeze([materia("Taller de artes visuales",4)])}),
+ A:Object.freeze({4:Object.freeze([materia("Taller de artes visuales",4),materia("Artes en contextos históricos",2),materia("Lenguajes artísticos combinados",3)]),5:Object.freeze([materia("Arte público y producción colectiva",4),materia("Arte, cultura y sociedad",2),materia("Producción artística y gestión cultural",3),materia("Artes visuales y multimedia",3)])}),
+ B:Object.freeze({4:Object.freeze([materia("Producción y análisis de la imagen",4),materia("Arte y sociedad",2),materia("Lenguajes combinados",3)]),5:Object.freeze([materia("Prácticas de arte público",4),materia("Historia de las artes",2),materia("Producción visual y gestión cultural",3),materia("Artes visuales y multimedia",3)])})
+});
+
+const arteMusica=Object.freeze({
+ fuente:Object.freeze({"norma":"Diseño Curricular Arte · Música aprobado RES-321/15","url":"https://buenosaires.gob.ar/areas/educacion/nes/pdf/2015/NES-CO-arte_artes-visuales-musica-teatro_w.pdf","paginas":[70,71],"estado":"cotejado_con_diseno_curricular_publicado"}),
+ comun:Object.freeze({3:Object.freeze([materia("Taller de música",4)])}),
+ A:Object.freeze({4:Object.freeze([materia("Taller de música",4),materia("Artes en contextos históricos",2),materia("Lenguajes artísticos combinados",3)]),5:Object.freeze([materia("Improvisación y ensambles musicales",4),materia("Arte, cultura y sociedad",2),materia("Gestión de proyectos y producción musical",3),materia("Música y multimedia",3)])}),
+ B:Object.freeze({4:Object.freeze([materia("Producción y apreciación musical",4),materia("Arte y sociedad",2),materia("Lenguajes combinados",3)]),5:Object.freeze([materia("Improvisación y ensambles musicales",4),materia("Historia de las artes",2),materia("Gestión cultural musical",3),materia("Música y multimedia",3)])})
+});
+
+const arteTeatro=Object.freeze({
+ fuente:Object.freeze({"norma":"Diseño Curricular Arte · Teatro aprobado RES-321/15","url":"https://buenosaires.gob.ar/areas/educacion/nes/pdf/2015/NES-CO-arte_artes-visuales-musica-teatro_w.pdf","paginas":[96,97],"estado":"cotejado_con_diseno_curricular_publicado"}),
+ comun:Object.freeze({3:Object.freeze([materia("Taller de Teatro",4)])}),
+ A:Object.freeze({4:Object.freeze([materia("Taller de Teatro",4),materia("Artes en contextos históricos",2),materia("Lenguajes artísticos combinados",3)]),5:Object.freeze([materia("Teatro y creación colectiva",3),materia("Arte, cultura y sociedad",2),materia("Producción en artes escénicas y gestión cultural",4),materia("Teatro y multimedia",3)])}),
+ B:Object.freeze({4:Object.freeze([materia("Producción y apreciación del teatro",4),materia("Arte y sociedad",2),materia("Lenguajes combinados",3)]),5:Object.freeze([materia("Teatro y puesta en escena",4),materia("Historia de las artes",2),materia("Producción teatral y gestión cultural",3),materia("Teatro y multimedia",3)])})
+});
+
+const agroAmbiente=Object.freeze({
+ fuente:Object.freeze({"norma":"Diseño Curricular Agro y Ambiente aprobado RES-321/15 · Anexo XII","url":"https://buenosaires.gob.ar/areas/educacion/recursos/NES-CO-agro-y-ambiente_w.pdf","paginas":[46,47],"estado":"cotejado_con_diseno_curricular_publicado"}),
+ comun:Object.freeze({3:Object.freeze([materia("Espacios agrarios",4)])}),
+ A:Object.freeze({4:Object.freeze([materia("Ecología",3),materia("Sociología rural",3),materia("Producciones agrarias",3)]),5:Object.freeze([materia("Agro y ambiente",3),materia("Economía orientada al agro",3),materia("El agro en la Ciudad",3),materia("Espacio de integración teórico-práctico",3)])}),
+ B:Object.freeze({4:Object.freeze([materia("El agro en la Ciudad",3),materia("Espacio de integración teórico-práctico",3),materia("Ecología",3)]),5:Object.freeze([materia("Economía y producción agraria",3),materia("El agro en la Ciudad",3),materia("Espacio de integración teórico-práctico",3),materia("Ambiente agrario",3)])})
+});
+
+const lenguas=Object.freeze({
+ fuente:Object.freeze({"norma":"RES-1189/MEGC/15 · Anexo IX (rectificatorio de 321/15)","url":"https://buenosaires.gob.ar/sites/default/files/media/document/2015/08/28/b061778fa67f2cf17834f094f414c6cbe109152c.pdf","paginas":[25],"estado":"cotejado_con_anexo_rectificado"}),
+ comun:Object.freeze({3:Object.freeze([materia("Lengua adicional B",4)])}),
+ A:Object.freeze({4:Object.freeze([materia("Lengua adicional B",3),materia("Profundización lengua adicional A",3),materia("Lengua y cultura",3)]),5:Object.freeze([materia("Lengua adicional B",3),materia("Profundización lengua adicional A",3),materia("Lengua adicional C",3),materia("Proyecto",3)])}),
+ B:Object.freeze({4:Object.freeze([materia("Lengua adicional B",3),materia("Profundización lengua adicional A",3),materia("Lingüística o Interculturalidad",3)]),5:Object.freeze([materia("Lengua adicional B",2),materia("Profundización lengua adicional A",3),materia("Lengua adicional C",3),materia("Proyecto",4)])})
+});
+
+const literatura=Object.freeze({
+ fuente:Object.freeze({"norma":"RES-321/MEGC/15 + RES-1189/MEGC/15 · Literatura","url":"https://buenosaires.gob.ar/areas/educacion/nes/pdf/2015/NES-CO-literatura_w.pdf","paginas":[47],"estado":"cotejado_con_diseno_curricular_publicado"}),
+ A:Object.freeze({3:Object.freeze([materia("Taller de Producción en Lenguajes: Literatura y otras Artes",4)]),4:Object.freeze([materia("Taller de Lectura y Escritura Literarias",3),materia("Taller de Gramática",3),materia("Literatura, Cultura y Sociedad",3)]),5:Object.freeze([materia("Proyecto de Mediación y/o Promoción de la Lectura y la Escritura",3),materia("Literatura y Problemáticas Culturales o Investigación Literaria",3),materia("Lectura Literaria en una Lengua Adicional / Arte, Cultura y Sociedad",3),materia("Análisis del Discurso",3)])}),
+ B:Object.freeze({3:Object.freeze([materia("Taller de Lectura y Escritura Literarias",4)]),4:Object.freeze([materia("Taller de Gramática",3),materia("Investigación Literaria",3),materia("Arte, Cultura y Sociedad",3)]),5:Object.freeze([materia("Literatura, Cultura y Sociedad",4),materia("Proyecto de Mediación de la Lectura y la Escritura",4),materia("Análisis del Discurso",4)])})
+});
+
 export const NES_PLANES_FO_COTEJADOS=Object.freeze({
  'Economía y Administración':economia,
  'Ciencias Sociales y Humanidades':sociales,
  'Turismo':turismo,
- 'Educación Física':educacionFisica
+ 'Educación Física':educacionFisica,
+ 'Arte - Artes Visuales':artesVisuales,
+ 'Arte - Música':arteMusica,
+ 'Arte - Teatro':arteTeatro,
+ 'Agro y Ambiente':agroAmbiente,
+ 'Lenguas':lenguas,
+ 'Literatura':literatura
 });
 const canon=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
