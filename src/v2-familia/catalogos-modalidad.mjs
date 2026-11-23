@@ -129,7 +129,8 @@ export async function loadBa15V2Profile(orientationId){
  profile.foEvidenciaResumen={
   total:ofertaNes.cotejos.length,
   verificadas:ofertaNes.cotejos.filter(x=>x.estado==='cotejado_fuente_primaria').length,
-  pendientes:ofertaNes.cotejos.filter(x=>x.estado!=='cotejado_fuente_primaria').length,
+  excepciones:ofertaNes.cotejos.filter(x=>x.estado==='cotejado_con_excepcion_horaria').length,
+  pendientes:ofertaNes.cotejos.filter(x=>x.estado==='pendiente_documental').length,
   hayDiferencias:ofertaNes.cotejos.some(x=>x.discrepancias&&
    (x.discrepancias.enCatalogoSinFuente?.length||x.discrepancias.enFuenteSinCatalogo?.length))
  };
