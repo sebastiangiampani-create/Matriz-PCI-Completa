@@ -49,11 +49,11 @@ try{
     const M=window.V2ModalMap,S=window.__V2_MODAL.subjects;
     const bio=S.find(s=>s.name==='Biología'&&s.year===1);
     M.assign('naturales-c1',bio.id);
-    const first=structuredClone(window.PCIAplicacionV2.snapshot().maps[window.PCIAplicacionV2.snapshot().active].placements);
+    const first=structuredClone(state.maps[state.active].placements);
     const unfinished=window.V2ModalNorma.evaluate().errors.map(e=>e.code);
     M.assign('naturales-c2',bio.id);
     M.remove('naturales-c1',bio.id);
-    const afterRemove=structuredClone(window.PCIAplicacionV2.snapshot().maps[window.PCIAplicacionV2.snapshot().active].placements);
+    const afterRemove=structuredClone(state.maps[state.active].placements);
     M.assign('naturales-c1',bio.id);
     return {firstC1:first['naturales-c1']?.includes(bio.id),
       firstC2:first['naturales-c2']?.includes(bio.id)||false,
@@ -91,8 +91,7 @@ try{
   assert.doesNotMatch(await page.locator('#validation').textContent(),/El mapa no cumple la norma/);
   assert.match(await page.locator('#validation').textContent(),/Falta contrastar las materias y los contenidos/);
   const audit=await page.evaluate(()=>{
-    const m=window.PCIAplicacionV2.snapshot();
-    return m.maps[m.active].normaComposicion;
+    return structuredClone(state.maps[state.active].normaComposicion);
   });
   assert.equal(audit.estado,'estructura_consistente_pendiente_homologacion');
   assert.equal(audit.homologated,false);
