@@ -88,6 +88,21 @@ export async function loadBa15V2Profile(orientationId){
  // No se atribuyen horas a cada materia si el plan BA +15 no las detalla.
  const oriName=o.name;
  subjects.push(...ofertaNes.subjects);
+ // Compatibilidad ADITIVA: los PCI BA +15 ya iniciados pueden conservar IDs
+ // de la bolsa previa, que había confundido bloques de Media con materias.
+ // Se retienen solo para lectura/revisión de asignaciones; no se ofrecen para
+ // nuevos arrastres ni se reescribe ningún borrador escolar.
+ const legacyBlocks=new Set(fo.map(row=>text(row.block||row.subject||'Formación Orientada')).filter(Boolean));
+ const legacyIds=new Set(subjects.map(x=>x.id));
+ for(const year of [2,3,4])for(const name of legacyBlocks){
+  const historicalKey=year+':'+name;
+  const legacyId='ba15-fo-'+historicalKey.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  if(legacyIds.has(legacyId))continue;
+  legacyIds.add(legacyId);
+  subjects.push({id:legacyId,name,year,origin:'FO',area:'Formación Orientada',field:'formacion_orientada',
+   legacyReference:true,referenceOnly:true,confirmedBa15Subject:false,weeklyHours:null,
+   sourceType:'bloque_fo_v2_historico',source:'Bolsa FO anterior · conservar para revisión'});
+ }
  const fgContents=fg.map(row=>({
    id:row.id,component:'FG',year:row.year,sourceYear:row.sourceYear,
    area:text(row.area),subject:text(row.subject),axis:text(row.axis),
