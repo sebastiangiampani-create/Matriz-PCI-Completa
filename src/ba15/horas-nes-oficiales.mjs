@@ -148,6 +148,19 @@ const literatura=Object.freeze({
  B:Object.freeze({3:Object.freeze([materia("Taller de Lectura y Escritura Literarias",4)]),4:Object.freeze([materia("Taller de Gramática",3),materia("Investigación Literaria",3),materia("Arte, Cultura y Sociedad",3)]),5:Object.freeze([materia("Literatura, Cultura y Sociedad",4),materia("Proyecto de Mediación de la Lectura y la Escritura",4),materia("Análisis del Discurso",4)])})
 });
 
+const comunicacion=Object.freeze({
+ fuente:Object.freeze({"norma":"RES-3510/MEGC/15 · Anexo de Comunicación","url":"https://documentosboletinoficial.buenosaires.gob.ar/publico/PE-RES-MEGC-MEGC-3510-15-ANX.pdf","paginas":[99,100],"estado":"cotejado_con_anexo_reformado"}),
+ A:Object.freeze({3:Object.freeze([materia("Introducción a la Comunicación",4)]),4:Object.freeze([materia("Teorías de la Comunicación",3),materia("Comunicación, Discursos Sociales y Medios",3),materia("Taller cuatrimestral de Producción en Lenguajes Multimediales",3)]),5:Object.freeze([materia("Seminario de Comunicación, Tecnología y Sociedad",3),materia("Taller cuatrimestral de Producción en Lenguajes Multimediales",5),materia("Proyecto de Comunicación",4)])}),
+ B:Object.freeze({3:Object.freeze([materia("Introducción al Estudio de la Comunicación",4)]),4:Object.freeze([materia("Teorías de la Comunicación",3),materia("Comunicación, Discursos Sociales y Medios",3),materia("Taller anual de Producción en Lenguajes",3)]),5:Object.freeze([materia("Comunicación, Cultura y Sociedad",3),materia("Taller anual de Producción Gráfica",2),materia("Taller anual de Producción en Lenguajes",3),materia("Proyecto de Comunicación",4)])})
+});
+
+const educacion=Object.freeze({
+ fuente:Object.freeze({"norma":"RES-321/MEGC/2015 · Anexo de Educación","url":"https://buenosaires.gob.ar/sites/default/files/media/document/2017/10/26/fedd40821b6e6335cfac94716114267412468d45.pdf","paginas":[39],"estado":"cotejado_con_diseno_curricular_publicado"}),
+ comun:Object.freeze({3:Object.freeze([materia("Educación y Sociedad",4)])}),
+ A:Object.freeze({4:Object.freeze([materia("Educación y Estado",3),materia("Sujeto de la Educación",3),materia("Perspectivas Pedagógicas",3)]),5:Object.freeze([materia("Proyecto",3),materia("Educación y Psicología",3),materia("Educación y Globalización",3),materia("Educación y Cultura",3)])}),
+ B:Object.freeze({4:Object.freeze([materia("Educación y Psicología",3),materia("Sujeto de la Educación",3),materia("Educación y Cultura",3)]),5:Object.freeze([materia("Proyecto",3),materia("Educación y Estado",3),materia("Educación y Globalización",3),materia("Perspectivas Pedagógicas",3)])})
+});
+
 export const NES_PLANES_FO_COTEJADOS=Object.freeze({
  'Economía y Administración':economia,
  'Ciencias Sociales y Humanidades':sociales,
@@ -158,7 +171,9 @@ export const NES_PLANES_FO_COTEJADOS=Object.freeze({
  'Arte - Teatro':arteTeatro,
  'Agro y Ambiente':agroAmbiente,
  'Lenguas':lenguas,
- 'Literatura':literatura
+ 'Literatura':literatura,
+ 'Comunicación':comunicacion,
+ 'Educación':educacion
 });
 const canon=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
