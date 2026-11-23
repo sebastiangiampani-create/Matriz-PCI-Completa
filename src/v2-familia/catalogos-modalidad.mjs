@@ -13,6 +13,7 @@ import {cargarBancoAtomicoTecnica,cotejarContenidosAtomicosTecnica} from '../tec
 import {desagregarPendientesTecnica} from '../tecnica/desagregacion-documental-2026.mjs';
 import {cargarBaseTecnicaReconstruida} from '../tecnica/base-contenidos-2026.mjs';
 import {BA15_NIVELES} from '../ba15/reglas-curriculares.mjs';
+import {BA15_FO_NORMA,auditarHorasFoBa15} from '../ba15/formacion-orientada-norma.mjs';
 import {loadBa15FgBase,BA15_FG_LEVEL_MAP} from '../ba15/priorizados-base.mjs';
 import {loadV2Fo,selectFoByOrientation} from '../integracion-curricular/catalogos.js';
 import {ORIENTATIONS} from '../integracion-curricular/bridge.js';
@@ -64,11 +65,17 @@ export async function loadBa15V2Profile(orientationId){
  // diseño curricular que Media, sin crear contenidos nuevos.
  if(!fo.length){fo=await loadV2OrientationFile(orientationId,o.name);foSource='V2 data/orientaciones/'+orientationId+'.txt';}
  if(fg.length!==1126)throw Error('La base BA +15 no conserva los 1.126 contenidos priorizados');
+ const foHours=auditarHorasFoBa15(BA15_NIVELES);
+ if(foHours.some(x=>!x.valido))throw Error('La carga horaria de Formación Orientada no coincide con RES-1375/MEDGC/25.');
  const subjects=[];
  for(let i=0;i<4;i++)for(const m of BA15_NIVELES[i]){
    const name=ba15Name(m.nombre);
    const id='ba15-fg-'+(i+1)+'-'+name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
-   subjects.push({id,name,year:i+1,origin:'FG',area:m.area,format:m.formato,weeklyHours:m.horas,field:'formacion_general'});
+   subjects.push({id,name,year:i+1,origin:'FG',area:m.area,format:m.formato,weeklyHours:m.horas,
+    field:m.area==='Formación Orientada'?'formacion_orientada':'formacion_general',
+    isOrientationHourBucket:/^materias? de la orientaci[oó]n$/i.test(m.nombre),
+    prescribedFrom:'RES-1375/MEDGC/25 · Anexo I · 6.3'});
+
  }
  // El catálogo de orientación es referencia para el nuevo modelo;
  // se conserva la identificación V2 y no se inventan materias de BA+15.
@@ -78,7 +85,11 @@ export async function loadBa15V2Profile(orientationId){
    const key=text(row.block||row.subject||'Formación Orientada');
    if(!key)continue;
    // Bloques FO de Media no establecen equivalencia horaria BA+15.
-   for(const year of [2,3,4])byYear.set(year+':'+key,{name:key,year,origin:'FO',field:'formacion_orientada',area:'Formación Orientada'});
+   for(const year of [2,3,4])byYear.set(year+':'+key,{
+    name:key,year,origin:'FO',field:'formacion_orientada',area:'Formación Orientada',
+    referenceOnly:true,referenceType:'bloque_contenidos_media',
+    sourcePlan:'NES · FO V2',confirmedBa15Subject:false,weeklyHours:null
+   });
  }
  for(const [key,row] of byYear)subjects.push({...row,id:'ba15-fo-'+key.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-')});
  const fgContents=fg.map(row=>({
@@ -89,10 +100,15 @@ export async function loadBa15V2Profile(orientationId){
  const foContents=fo.map(row=>({
    id:row.id,component:'FO',area:'Formación Orientada',subject:text(row.block||row.subject),
    axis:text(row.axis),subaxis:text(row.subaxis),text:text(row.text),
-   block:text(row.block),orientation:oriName,source:foSource+', mismo diseño que Media'
+   block:text(row.block),orientation:oriName,source:foSource+', referencia de contenidos sin homologación de materias',
+   referenceOnly:true,confirmedBa15Subject:false,levelBasis:'no_declarado_en_fuente_FO'
  }));
- return common('ba15',oriName,4,subjects,fgContents,foContents,
-  'Base de Formación General: 1126 contenidos originales con NES 1+2→Nivel 1; NES 3→N2; NES 4→N3; NES 5→N4. Oferta FO orientada por verificar contra plan BA+15.');
+ const profile=common('ba15',oriName,4,subjects,fgContents,foContents,
+  'FG: 1126 contenidos NES 1+2→Nivel I, 3→II, 4→III, 5→IV. FO: 4 h Nivel II; 9 h Nivel III; 12 h + Historia Orientada 2 h + TI Orientada 2 h Nivel IV. Los bloques FO V2 son referencias y NO materias homologadas.');
+ profile.foPlan=clone(BA15_FO_NORMA);
+ profile.foHoursAudit=clone(foHours);
+ profile.foSubjectStatus='bloques_de_referencia_pendientes_de_plan_por_orientacion';
+ return profile;
 }
 // Área de un contenido técnico = área curricular de su materia en el mapa
 // (IF-2026-51169092: Física y Química integran Ciencias Naturales; Matemática
