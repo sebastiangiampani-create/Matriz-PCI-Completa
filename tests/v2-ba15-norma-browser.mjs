@@ -44,24 +44,62 @@ try{
   await page.locator('#validateBtn').click();
   await page.locator('#validation .norma-list').waitFor({timeout:8000});
   assert.match(await page.locator('#validation').textContent(),/no cumple la norma RES-1375-MEDGC-25/);
-  // Estructura completa: cada materia de la estructura en su área y una de la orientación por nivel.
+  // Laboratorios y talleres BA +15 son cuatrimestrales: C1 no completa C2.
+  const semesters=await page.evaluate(()=>{
+    const M=window.V2ModalMap,S=window.__V2_MODAL.subjects;
+    const bio=S.find(s=>s.name==='Biología'&&s.year===1);
+    M.assign('naturales-c1',bio.id);
+    const first=structuredClone(window.PCIAplicacionV2.snapshot().maps[window.PCIAplicacionV2.snapshot().active].placements);
+    const unfinished=window.V2ModalNorma.evaluate().errors.map(e=>e.code);
+    M.assign('naturales-c2',bio.id);
+    M.remove('naturales-c1',bio.id);
+    const afterRemove=structuredClone(window.PCIAplicacionV2.snapshot().maps[window.PCIAplicacionV2.snapshot().active].placements);
+    M.assign('naturales-c1',bio.id);
+    return {firstC1:first['naturales-c1']?.includes(bio.id),
+      firstC2:first['naturales-c2']?.includes(bio.id)||false,
+      c2SurvivesRemoval:afterRemove['naturales-c2']?.includes(bio.id)||false,
+      incomplete:unfinished.some(code=>code==='BA_MISSING_1_C2')};
+  });
+  assert.deepEqual(semesters,{firstC1:true,firstC2:false,c2SurvivesRemoval:true,incomplete:true},
+    'Las celdas cuatrimestrales deben ser independientes y conservar las existentes.');
+  // Estructura completa: cada materia en su área de C impar y de C par; las troncales son anuales.
   const result=await page.evaluate(()=>{
     const M=window.V2ModalMap,S=window.__V2_MODAL.subjects,rows=M.rowDefs();
     for(const s of S.filter(x=>x.origin==='FG'||x.origin==='FO')){
       for(const r of rows){
         const slot=r.annual?r.k+'-n'+s.year:r.k+'-c'+(s.year*2-1);
-        if((r.annual||r.a(s.year*2-1))&&M.canAssign(slot,s)[0]){M.assign(slot,s.id);break}
+        if((r.annual||r.a(s.year*2-1))&&M.canAssign(slot,s)[0]){
+          M.assign(slot,s.id);
+          if(!r.annual){
+            const even=r.k+'-c'+(s.year*2);
+            if(r.a(s.year*2)&&M.canAssign(even,s)[0])M.assign(even,s.id);
+          }
+          break;
+        }
       }
     }
-    const x=window.V2ModalNorma.evaluate();return {errors:x.errors.map(e=>e.message),warnings:x.warnings.map(e=>e.code)};
+    const x=window.V2ModalNorma.evaluate();return {errors:x.errors.map(e=>e.message),warnings:x.warnings.map(e=>e.code),
+      structurallyConsistent:x.structurallyConsistent,homologated:x.homologated};
   });
   assert.deepEqual(result.errors,[]);
   assert.equal(result.warnings.some(c=>c.startsWith('BA_HOURS_')),false,'El catálogo suma 38 horas por nivel');
+  assert.equal(result.structurallyConsistent,true,'La estructura está completa en C1-C8.');
+  assert.equal(result.homologated,false,'El motor no debe afirmar homologación pedagógica FO.');
+  assert.ok(result.warnings.includes('BA_FO_REFERENCIA_PENDIENTE'),'Se declara el alcance documental FO.');
   await page.locator('#validateBtn').click();
-  // El mensaje vigente de V2 distingue la composición válida de una revisión
-  // pendiente de información oficial; no exige la etiqueta antigua del toast.
-  await page.waitForFunction(()=>/Composición (?:validada con|revisada, pendiente de plan oficial)(?: ·)? RES-1375-MEDGC-25/.test(document.querySelector('#validation')?.textContent||''));
+  await page.waitForFunction(()=>/Estructura curricular consistente · RES-1375-MEDGC-25/.test(document.querySelector('#validation')?.textContent||''));
   assert.doesNotMatch(await page.locator('#validation').textContent(),/El mapa no cumple la norma/);
+  assert.match(await page.locator('#validation').textContent(),/Falta contrastar las materias y los contenidos/);
+  const audit=await page.evaluate(()=>{
+    const m=window.PCIAplicacionV2.snapshot();
+    return m.maps[m.active].normaComposicion;
+  });
+  assert.equal(audit.estado,'estructura_consistente_pendiente_homologacion');
+  assert.equal(audit.homologated,false);
+  await page.locator('#rulesBtn').click().catch(()=>{});
+  const rules=await page.locator('#rulesModal').innerText();
+  assert.match(rules,/CCC acredita equivalencias/);
+  assert.match(rules,/formatos cuatrimestrales se organizan por separado/);
   await mkdir('test-artifacts/v2-modalidades',{recursive:true});
   await page.screenshot({path:'test-artifacts/v2-modalidades/ba15-norma.png',fullPage:true});
   assert.deepEqual(errors,[]);
