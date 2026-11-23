@@ -194,6 +194,32 @@ const matematicaFisica=Object.freeze({
    materia('Problemáticas de la Física Actual',4)])
  })
 });
+const informatica=Object.freeze({
+ fuente:Object.freeze({norma:'RES-1189/MEGC/15 · Anexo X, estructura de Informática',
+  url:'https://documentosboletinoficial.buenosaires.gob.ar/publico/PE-RES-MEGC-MEGC-1189-15.-ANX.pdf',
+  paginas:[150],estado:'cotejado_con_anexo_rectificado'}),
+ A:Object.freeze({
+  3:Object.freeze([materia('Tratamiento de Imágenes por Medios Informáticos',4)]),
+  4:Object.freeze([materia('Taller de Programación',3),materia('Bases de Datos',3),
+   materia('Estructura y Funcionamiento de los Sistemas Informáticos I',3)]),
+  5:Object.freeze([materia('Desarrollo de Aplicaciones Informáticas',4),
+   materia('Estructura y Funcionamiento de los Sistemas Informáticos II',2),
+   materia('Proyectos de Producción',4),
+   materia('Seminario optativo de Informática (TIC o producción de bienes y servicios)',2)])
+ }),
+ B:Object.freeze({
+  // Dos asignaturas cuatrimestrales dentro de UN cupo anual de 4 HC.
+  // No duplicar como 8 HC ni crear una asignatura anual ficticia.
+  3:Object.freeze([materia('Estructura y Funcionamiento de los Sistemas Informáticos I / Tratamiento de Imágenes (cuatrimestrales)',4)]),
+  4:Object.freeze([materia('Taller de Programación',4),materia('Bases de Datos',2),
+   materia('Estructura y Funcionamiento de los Sistemas Informáticos II',3)]),
+  5:Object.freeze([materia('Desarrollo de Aplicaciones Informáticas',4),
+   materia('Metodologías de Proyectos',2),
+   materia('Desarrollo de Proyectos de Producción',4),
+   materia('Seminario optativo de Informática (TIC o producción de bienes y servicios)',2)])
+ })
+});
+
 export const NES_PLANES_FO_COTEJADOS=Object.freeze({
  'Economía y Administración':economia,
  'Ciencias Sociales y Humanidades':sociales,
@@ -208,7 +234,8 @@ export const NES_PLANES_FO_COTEJADOS=Object.freeze({
  'Comunicación':comunicacion,
  'Educación':educacion,
  'Energía y Sustentabilidad':energiaSustentabilidad,
- 'Matemática y Física':matematicaFisica
+ 'Matemática y Física':matematicaFisica,
+ 'Informática':informatica
 });
 const canon=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
