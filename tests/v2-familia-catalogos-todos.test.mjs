@@ -12,6 +12,7 @@ const {loadV2ModalProfile}=await import('../src/v2-familia/catalogos-modalidad.m
 const {ORIENTATIONS}=await import('../src/integracion-curricular/bridge.js');
 const {BA15_FO_NORMA,auditarHorasFoBa15}=await import('../src/ba15/formacion-orientada-norma.mjs');
 const {BA15_NIVELES}=await import('../src/ba15/reglas-curriculares.mjs');
+const {nuevaDistribucionBa15,auditarDistribucionBa15}=await import('../src/ba15/ambientes-virtuales-105-2026.mjs');
 
 test('BA +15: todas las orientaciones tienen materias y contenidos de la orientación (bases de Media)', async()=>{
   for(const o of ORIENTATIONS){
@@ -145,6 +146,68 @@ test('BA +15: las otras orientaciones siguen pendientes sin asignación artifici
  assert.equal(p.foEvidenciaResumen.verificadas,0);
  assert.ok(p.subjects.filter(x=>x.sourceType==='asignatura_nes').every(x=>
   x.sourceWeeklyHours===null&&x.weeklyHours===null));
+});
+
+function completarHorasVirtualesValidadas(){
+ const cfg=nuevaDistribucionBa15();
+ cfg.aplicacion='aplica_anexo_ii_turno_noche';
+ for(let t=1;t<=8;t++){
+  let pendientes=11;
+  const espacios=BA15_NIVELES[Math.ceil(t/2)-1],campos={};
+  for(const m of espacios){
+   const max=(m.formato==='troncal')?Math.floor(m.horas*0.2):
+    (['Educación Física','Tutoría'].includes(m.nombre)?0:m.horas);
+   const asignadas=Math.min(max,pendientes);
+   campos[m.nombre]=asignadas;
+   pendientes-=asignadas;
+  }
+  assert.equal(pendientes,0,'El Nivel '+Math.ceil(t/2)+' debe admitir 11 HC asincrónicas.');
+  cfg.distribucion['c'+t]=campos;
+ }
+ return cfg;
+}
+test('BA +15: 27 horas presenciales + 11 asincrónicas por C1-C8, solo si Anexo II aplica',()=>{
+ const empty=nuevaDistribucionBa15();
+ const pending=auditarDistribucionBa15(empty);
+ assert.equal(pending.aplica,false);
+ assert.equal(pending.errores.length,0);
+ assert.ok(pending.advertencias.some(x=>/Anexo II/.test(x)));
+ empty.aplicacion='no_alcanzado';
+ const absent=auditarDistribucionBa15(empty);
+ assert.equal(absent.aplica,false);
+ assert.equal(absent.errores.length,0);
+ const valid=auditarDistribucionBa15(completarHorasVirtualesValidadas());
+ assert.equal(valid.aplica,true);
+ assert.equal(valid.completa,true);
+ assert.deepEqual(valid.errores,[]);
+ assert.equal(valid.periodos.length,8);
+ assert.ok(valid.periodos.every(x=>x.presenciales===27&&x.asincronicas===11));
+});
+test('BA +15: no superar virtualidad en troncales, Educación Física ni Tutoría',()=>{
+ const initial=completarHorasVirtualesValidadas();
+ const tooVirtual=structuredClone(initial);
+ tooVirtual.distribucion.c1['Matemática']=2;
+ let audit=auditarDistribucionBa15(tooVirtual);
+ assert.ok(audit.errores.some(x=>/Matemática.*80%/.test(x)));
+ const ef=structuredClone(initial);
+ ef.distribucion.c3['Educación Física']=1;
+ audit=auditarDistribucionBa15(ef);
+ assert.ok(audit.errores.some(x=>/Educación Física.*presencialidad completa/.test(x)));
+ const tutela=structuredClone(initial);
+ tutela.distribucion.c1['Tutoría']=1;
+ audit=auditarDistribucionBa15(tutela);
+ assert.ok(audit.errores.some(x=>/Tutoría.*presencialidad completa/.test(x)));
+});
+test('BA +15: detectar incompletos o total virtual incorrecto sin alterar la distribución original',()=>{
+ const valid=completarHorasVirtualesValidadas();
+ const snapshot=JSON.stringify(valid);
+ const miss=structuredClone(valid);
+ delete miss.distribucion.c5['Matemática'];
+ assert.ok(auditarDistribucionBa15(miss).errores.some(x=>/C5.*Matemática/.test(x)));
+ const wrong=structuredClone(valid);
+ wrong.distribucion.c8['Materias de la orientación']=(wrong.distribucion.c8['Materias de la orientación']||0)+1;
+ assert.ok(auditarDistribucionBa15(wrong).errores.some(x=>/C8.*27 HC/.test(x)));
+ assert.equal(JSON.stringify(valid),snapshot,'La auditoría no puede modificar los borradores.');
 });
 
 test('Técnica: todas las especialidades cargan seis niveles con formación técnico-específica', async()=>{
