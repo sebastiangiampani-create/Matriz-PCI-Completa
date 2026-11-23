@@ -44,14 +44,14 @@ export function construirMateriasOrientadasNesBa15({catalogo,orientacion}){
    const oldName=clean(names[i]||'');
    // No reutilizar el ID de otra asignatura: la fuente NES B había
    // atribuido materias de Comunicación al 4.º de Economía.
-   const changed=cotejo.estado==='cotejado_fuente_primaria'&&
+   const changed=['cotejado_fuente_primaria','cotejado_con_excepcion_horaria'].includes(cotejo.estado)&&
     oldName&&slug(oldName)!==slug(name);
    const prefix='ba15-nes-fo-'+slug(orientacion)+'-'+level+'-'+
     (alternative||'comun').toLowerCase()+'-';
    const id=prefix+(changed?'anexo321-':'')+i;
    if(seen.has(id))throw new Error('Materia NES repetida en el perfil: '+name);
    seen.add(id);
-   const verified=cotejo.estado==='cotejado_fuente_primaria';
+   const verified=['cotejado_fuente_primaria','cotejado_con_excepcion_horaria'].includes(cotejo.estado);
    subjects.push({
     id,name,year:level,sourceYear:nesYear,
     sourceModel:verified?'NES · RES-321/15 Anexo oficial':'NES · V2',
@@ -59,7 +59,7 @@ export function construirMateriasOrientadasNesBa15({catalogo,orientacion}){
     alternative:alternative||null,referenceOnly:false,sourceType:'asignatura_nes',
     confirmedBa15Subject:false,weeklyHours:null,
     sourceWeeklyHours:verified?Number(item.horasNes):null,
-    sourceHoursStatus:verified?'nes_documentada':'pendiente_documental',
+    sourceHoursStatus:verified?(cotejo.coincideCupo?'nes_documentada':'nes_documentada_excepcion_ba15'):'pendiente_documental',
     sourceUrl:verified?cotejo.fuente.url:null,
     sourcePages:verified?cotejo.fuente.paginas:[],
     source:verified?'RES-321/MEGC/2015 · Anexo VII':
@@ -80,6 +80,10 @@ export function construirMateriasOrientadasNesBa15({catalogo,orientacion}){
     });
    }
   }
+  if(cotejo.estado==='cotejado_con_excepcion_horaria')
+   warnings.push('Excepción '+orientacion+' '+nesYear+'º alternativa '+(alternative||'común')+
+    ': el Anexo NES prevé '+cotejo.sumaHorasNes+' HC y BA +15 prescribe '+
+    cotejo.cupoPrevisto+'. Se requiere adaptación curricular documentada; no homologar automáticamente.');
   if(cotejo.estado==='cotejado_fuente_primaria'&&
     (cotejo.discrepancias.enCatalogoSinFuente.length||
      cotejo.discrepancias.enFuenteSinCatalogo.length))
