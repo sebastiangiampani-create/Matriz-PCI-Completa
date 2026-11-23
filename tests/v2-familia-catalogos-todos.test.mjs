@@ -81,8 +81,9 @@ test('BA +15: Fase 1 toma las materias NES exactas según orientación y alterna
  assert.deepEqual(e.foAlternatives,['A'],'Sin alternativa B no se ofrecen asignaturas inventadas.');
 });
 
-test('BA +15: cotejo automático de cuatro orientaciones con fuente NES y sumas 4/9/12 por alternativa',async()=>{
- const verified=['economia_administracion','ciencias_sociales_humanidades','turismo','educacion_fisica'];
+test('BA +15: cotejo automático de diez orientaciones con fuente NES y sumas 4/9/12 por alternativa',async()=>{
+ const verified=['economia_administracion','ciencias_sociales_humanidades','turismo','educacion_fisica',
+  'arte_artes_visuales','arte_musica','arte_teatro','agro_ambiente','lenguas','literatura'];
  for(const orientation of verified){
   const p=await loadV2ModalProfile({model:'ba15',orientation});
   const records=p.foEvidenciaNes;
@@ -210,6 +211,23 @@ test('BA +15: detectar incompletos o total virtual incorrecto sin alterar la dis
  assert.equal(JSON.stringify(valid),snapshot,'La auditoría no puede modificar los borradores.');
 });
 
+test('BA +15: Literatura alternativa B posee materias distintas desde el Nivel II',async()=>{
+ const p=await loadV2ModalProfile({model:'ba15',orientation:'literatura'});
+ const list=p.subjects.filter(x=>x.origin==='FO'&&x.year===2&&!x.legacyReference);
+ assert.equal(list.some(x=>x.alternative===null),false);
+ assert.ok(list.some(x=>x.alternative==='A'&&x.name.startsWith('Taller de Producción en Lenguajes')));
+ assert.ok(list.some(x=>x.alternative==='B'&&x.name==='Taller de Lectura y Escritura Literarias'));
+ assert.ok(p.subjects.some(x=>x.legacyReference&&x.year===2));
+});
+test('BA +15: Orientación Agro y Ambiente conserva las excepciones institucionales sin inventar submaterias',async()=>{
+ const p=await loadV2ModalProfile({model:'ba15',orientation:'agro_ambiente'});
+ for(const alt of ['A','B']){
+  const list=p.subjects.filter(x=>x.origin==='FO'&&!x.legacyReference&&x.year===4&&x.alternative===alt);
+  assert.equal(list.reduce((n,x)=>n+x.sourceWeeklyHours,0),12);
+  assert.ok(list.some(x=>/Agro en la Ciudad/i.test(x.name)));
+  assert.ok(list.every(x=>x.confirmedBa15Subject===false));
+ }
+});
 test('Técnica: todas las especialidades cargan seis niveles con formación técnico-específica', async()=>{
   const ids=(await readdir(new URL('../data/tecnica/priorizados/',import.meta.url))).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5)).filter(id=>id!=='tecnologia_representacion');
   assert.ok(ids.length>=26);
