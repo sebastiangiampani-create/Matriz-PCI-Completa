@@ -126,6 +126,9 @@ function techMember(r,s,level){
 function baMember(r,s,level){
  const area=mappedArea(s),name=String(s.name||''),orient=s.origin==='FO'||areaOf(s)==='Formación Orientada';
  const no=msg=>[false,msg+' RES-1375-MEDGC-25, Anexo I, 6.5.'];
+ if(s.isOrientationHourBucket)return no('El cupo horario no es una materia; arrastrá las asignaturas NES de la bolsa FO.');
+ if(s.origin==='FO'&&s.alternative&&s.alternative!==(cur().alt||'A'))
+  return no('Esta materia corresponde a otra alternativa curricular; conservá el mapa y cambiá la alternativa antes de ubicarla.');
  switch(r.k){
   case 'lengua':return /^lengua y literatura$/i.test(name)?[true,'']:no('Solo Lengua y Literatura.');
   case 'matematica':return /^matem[aá]tica$/i.test(name)?[true,'']:no('Solo Matemática.');
@@ -190,7 +193,8 @@ function assignModal(slot,id){
  const s=byIdInMap(id),[ok,msg]=canAssign(slot,s);
  if(!ok){blocked(msg);return false}
  writePair(slot,id,true);cur().valid=false;picked=null;save();renderOffer();
- const t=slotTerm(slot);toast(t?s.name+' ubicada en C'+t+' y C'+(t%2?t+1:t-1):s.name+' ubicada en espacio anual');
+ const t=slotTerm(slot);toast(t?s.name+' ubicada en C'+t+
+  (CFG.model==='ba15'?'':' y C'+(t%2?t+1:t-1)):s.name+' ubicada en espacio anual');
  return true;
 }
 function moveModal(from,to,id){
@@ -252,22 +256,40 @@ placed=function(slot){return (cur().placements[slot]||[]).map(id=>{
 }).join('')};
 renderBag=function(){
  const box=$id('bagContent'),m=cur(),year=Math.min(LV,Math.max(1,Number(m.bagYear)||1));m.bagYear=year;
- const set=allSubjects().filter(s=>s.year===year);
+ const alternative=String(m.alt||'A');
+ const set=allSubjects().filter(s=>s.year===year&&!s.isOrientationHourBucket&&
+  (!s.alternative||s.alternative===alternative));
  let h='<div class="subhead">Materias de la modalidad · filtrar por nivel</div>'+
   (CFG.model==='tecnica'?'<p class="modal-rule-note">Materias extraídas de los contenidos priorizados oficiales 2026. Elegí el nivel y arrastrá cada materia al espacio correspondiente. Las agrupaciones se definen según las reglas de la especialidad; no se solicita carga horaria para armar el mapa.</p>':'')+
   '<div class="bag-filter">'+range(LV).map(n=>'<button type="button" data-bag-year="'+n+'" class="'+(n===year?'active':'')+'">'+n+'.º</button>').join('')+'</div>';
+ if(CFG.model==='ba15'){
+  h+='<p class="modal-rule-note">Materias de la orientación NES: 3.º→Nivel II, 4.º→III y 5.º→IV. Sus contenidos se consultan en Fase 2; todavía no se homologan automáticamente para BA +15.</p>';
+  if((CFG.foAlternatives||[]).length>1)
+   h+='<div class="bag-filter" role="group" aria-label="Alternativa curricular NES">'+
+    CFG.foAlternatives.map(a=>'<button type="button" data-fo-alt="'+esc(a)+'" class="'+
+      (a===alternative?'active':'')+'">Alternativa '+esc(a)+'</button>').join('')+'</div>';
+  if(alternative==='B'&&(CFG.foWarnings||[]).length)
+   h+='<p class="modal-rule-note"><strong>Advertencia sobre la fuente:</strong> '+
+    esc(CFG.foWarnings.join(' · '))+'</p>';
+ }
  const groups=[{origin:'FG',label:'Formación General',list:set.filter(s=>s.origin==='FG')},{origin:'FO',label:CFG.model==='tecnica'?'Científico-Tecnológica y Técnico-Específica':'Formación Orientada',list:set.filter(s=>s.origin==='FO')},{origin:'CUSTOM',label:'Materias agregadas por la escuela',list:set.filter(s=>s.origin==='CUSTOM')}];
  for(const group of groups)if(group.list.length){
   h+='<section class="year"><div class="year-head"><strong>'+group.label+' · Nivel '+year+'</strong><span>C'+(year*2-1)+' / C'+year*2+'</span></div>';
   h+=group.list.map(s=>{
    const used=usage(s.id);
-   return '<div class="subject '+(used.size>=2?'used-two':'')+'" draggable="true" data-sub="'+esc(s.id)+'"><span class="drag-handle">⠿</span><span><strong>'+esc(s.name)+'</strong><small>'+esc(CFG.model==='tecnica'?({'formacion_cientifico_tecnologica':'Científico-Tecnológica','formacion_tecnica_especifica':'Técnico-Específica','practicas_profesionalizantes':'Prácticas Profesionalizantes'}[s.field]||'Formación General'):(s.origin==='FO'?'Formación Orientada':'Formación General'))+'</small></span><span class="usage">'+usageLabel(s)+'</span></div>'
+   return '<div class="subject '+(used.size>=2?'used-two':'')+'" draggable="true" data-sub="'+esc(s.id)+'"><span class="drag-handle">⠿</span><span><strong>'+esc(s.name)+'</strong><small>'+esc(CFG.model==='tecnica'?({'formacion_cientifico_tecnologica':'Científico-Tecnológica','formacion_tecnica_especifica':'Técnico-Específica','practicas_profesionalizantes':'Prácticas Profesionalizantes'}[s.field]||'Formación General'):(s.origin==='FO'?'Materia NES '+s.sourceYear+'º · '+(s.alternative?'alternativa '+s.alternative:'común')+' · por verificar BA +15':'Formación General'))+'</small></span><span class="usage">'+usageLabel(s)+'</span></div>'
   }).join('');
   h+='</section>';
  }
  if(!set.length)h+='<p>No hay materias para este nivel en la base de referencia.</p>';
  box.innerHTML=h;
  box.querySelectorAll('[data-bag-year]').forEach(el=>el.onclick=()=>{m.bagYear=Number(el.dataset.bagYear);save();renderBag()});
+ box.querySelectorAll('[data-fo-alt]').forEach(el=>el.onclick=()=>{
+  const next=el.dataset.foAlt;
+  if(next===m.alt||!(CFG.foAlternatives||[]).includes(next))return;
+  m.alt=next;m.valid=false;save();renderOffer();
+  toast('Alternativa '+next+': se conserva el mapa anterior para revisar, sin sobrescribir asignaciones.');
+ });
  box.querySelectorAll('[data-sub]').forEach(el=>{const id=el.dataset.sub;
   el.ondragstart=e=>e.dataTransfer.setData('text/plain','subject:'+encodeURIComponent(id));
   el.onclick=()=>{picked=id;box.querySelectorAll('.subject').forEach(x=>x.classList.toggle('selected',x===el));toast('Materia seleccionada: tocá el destino del mapa')};
