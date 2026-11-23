@@ -176,6 +176,24 @@ const energiaSustentabilidad=Object.freeze({
  })
 });
 
+const matematicaFisica=Object.freeze({
+ fuente:Object.freeze({norma:'RES-321/MEGC/15 · Anexo y plan de Matemática y Física · RES-105/SSPLINED/16',
+  url:'https://documentosboletinoficial.buenosaires.gob.ar/publico/PE-RES-MEDGC-SSPLINED-105-16-ANX-1.pdf',
+  paginas:[1,2],estado:'cotejado_con_anexo_oficial'}),
+ comun:Object.freeze({3:Object.freeze([materia('Laboratorio (taller)',4)])}),
+ A:Object.freeze({
+  4:Object.freeze([materia('Ciencia en Contexto',3),materia('Laboratorio de Matemática (taller)',3),
+   materia('Física y Tecnología',3)]),
+  5:Object.freeze([materia('Lógica y Filosofía de la Ciencia',4),
+   materia('Matemática para la Física (taller)',4),materia('Problemáticas de la Física Actual',4)])
+ }),
+ B:Object.freeze({
+  4:Object.freeze([materia('Lógica y Filosofía de la Ciencia',3),materia('Laboratorio de Matemática (taller)',3),
+   materia('Física y Tecnología',3)]),
+  5:Object.freeze([materia('Ciencia en Contexto',4),materia('Matemática para la Física (taller)',4),
+   materia('Problemáticas de la Física Actual',4)])
+ })
+});
 export const NES_PLANES_FO_COTEJADOS=Object.freeze({
  'Economía y Administración':economia,
  'Ciencias Sociales y Humanidades':sociales,
@@ -189,7 +207,8 @@ export const NES_PLANES_FO_COTEJADOS=Object.freeze({
  'Literatura':literatura,
  'Comunicación':comunicacion,
  'Educación':educacion,
- 'Energía y Sustentabilidad':energiaSustentabilidad
+ 'Energía y Sustentabilidad':energiaSustentabilidad,
+ 'Matemática y Física':matematicaFisica
 });
 const canon=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
