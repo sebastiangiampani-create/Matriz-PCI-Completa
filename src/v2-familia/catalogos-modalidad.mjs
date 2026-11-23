@@ -13,6 +13,7 @@ import {cargarBancoAtomicoTecnica,cotejarContenidosAtomicosTecnica} from '../tec
 import {desagregarPendientesTecnica} from '../tecnica/desagregacion-documental-2026.mjs';
 import {cargarBaseTecnicaReconstruida} from '../tecnica/base-contenidos-2026.mjs';
 import {BA15_NIVELES} from '../ba15/reglas-curriculares.mjs';
+import {BA15_AMBIENTES_105} from '../ba15/ambientes-virtuales-105-2026.mjs';
 import {BA15_FO_NORMA,auditarHorasFoBa15} from '../ba15/formacion-orientada-norma.mjs';
 import {construirMateriasOrientadasNesBa15} from '../ba15/materias-orientacion-nes.mjs';
 import {loadBa15FgBase,BA15_FG_LEVEL_MAP} from '../ba15/priorizados-base.mjs';
@@ -117,6 +118,7 @@ export async function loadBa15V2Profile(orientationId){
  const profile=common('ba15',oriName,4,subjects,fgContents,foContents,
   'FG: 1126 contenidos NES 1+2→I, 3→II, 4→III, 5→IV. FO: materias del plan NES por orientación y alternativa A/B (3.º→II, 4.º→III, 5.º→IV), con cupos 4, 9 y 12+2+2 HC. Fase 2 usa bloques FO de referencia; no se declara homologación BA +15.');
  profile.foPlan=clone(BA15_FO_NORMA);
+ profile.ambientesVirtualesNorma=clone(BA15_AMBIENTES_105);
  profile.foHoursAudit=clone(foHours);
  profile.foSubjectStatus='materias_nes_por_nivel_y_alternativa_pendientes_de_validacion_ba15';
  profile.foAlternatives=clone(ofertaNes.alternativas);
