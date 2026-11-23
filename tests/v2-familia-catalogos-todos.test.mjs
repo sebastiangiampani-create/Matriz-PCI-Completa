@@ -10,6 +10,8 @@ globalThis.fetch=async url=>{
 };
 const {loadV2ModalProfile}=await import('../src/v2-familia/catalogos-modalidad.mjs');
 const {ORIENTATIONS}=await import('../src/integracion-curricular/bridge.js');
+const {BA15_FO_NORMA,auditarHorasFoBa15}=await import('../src/ba15/formacion-orientada-norma.mjs');
+const {BA15_NIVELES}=await import('../src/ba15/reglas-curriculares.mjs');
 
 test('BA +15: todas las orientaciones tienen materias y contenidos de la orientación (bases de Media)', async()=>{
   for(const o of ORIENTATIONS){
@@ -27,6 +29,27 @@ test('BA +15: equivalencia de niveles con Media (1.º y 2.º→1, 3.º→2, 4.º
   const esperado={1:1,2:1,3:2,4:3,5:4};
   assert.equal(p.contents.fg.length,1126);
   for(const c of p.contents.fg)assert.equal(c.year,esperado[c.sourceYear],`${c.id}: ${c.sourceYear}.º debe ir a Nivel ${esperado[c.sourceYear]}`);
+});
+
+test('BA +15: las franjas FO oficiales son 0, 4, 9, 12+2+2 horas y los bloques Media no son materias',async()=>{
+ const hours=auditarHorasFoBa15(BA15_NIVELES);
+ assert.ok(hours.every(x=>x.valido),'La estructura BA +15 debe coincidir con el Anexo I 6.3');
+ assert.deepEqual(BA15_FO_NORMA.niveles.map(p=>p.horasFoTotales),[0,4,9,16]);
+ assert.deepEqual(BA15_FO_NORMA.niveles.map(p=>p.horasOrientacion),[0,4,9,12]);
+ assert.deepEqual(BA15_FO_NORMA.niveles[3].materiasFijas.map(x=>x.horas),[2,2]);
+ const altered=structuredClone(BA15_NIVELES);
+ altered[2].find(x=>x.nombre==='Materias de la orientación').horas=8;
+ assert.equal(auditarHorasFoBa15(altered)[2].valido,false,'No homologar una estructura con horas FO alteradas');
+ const p=await loadV2ModalProfile({model:'ba15',orientation:'economia_administracion'});
+ assert.deepEqual(p.foHoursAudit.map(x=>x.valido),[true,true,true,true]);
+ assert.equal(p.foSubjectStatus,'bloques_de_referencia_pendientes_de_plan_por_orientacion');
+ assert.equal(p.foPlan.homologacionAutomatica,false);
+ for(const subject of p.subjects.filter(x=>x.origin==='FO')){
+  assert.equal(subject.referenceOnly,true,'Un bloque FO v96 no es materia oficial de BA +15');
+  assert.equal(subject.confirmedBa15Subject,false);
+  assert.equal(subject.weeklyHours,null,'No inventar horas por bloque');
+ }
+ assert.ok(p.contents.fo.every(x=>x.referenceOnly===true&&x.levelBasis==='no_declarado_en_fuente_FO'));
 });
 
 test('Técnica: todas las especialidades cargan seis niveles con formación técnico-específica', async()=>{
