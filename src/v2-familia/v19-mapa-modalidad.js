@@ -368,26 +368,42 @@ const BA_SOURCE='RES-1375-MEDGC-25, Anexo I (IF-2025), 6.3 y 6.5';
 const BA_PLACEHOLDER=/^materias? de la orientaci[oó]n$/i;
 function baEvaluate(){
  const errors=[],warnings=[],placements=cur().placements;
- // Las troncales -n ocupan los dos cuatrimestres del nivel; el resto solo
- // participa del cuatrimestre preciso al que fue asignado.
+ // El Anexo I 6.3 y 6.5 prescribe materias, áreas y 38 h por NIVEL.
+ // No prescribe repetir una materia en cada cuatrimestre del mapa del PCI.
+ const placedInLevel=y=>new Set(Object.entries(placements)
+  .filter(([slot,ids])=>ids?.length&&slotYear(slot)===y)
+  .flatMap(([,ids])=>ids));
  const placedInTerm=term=>new Set(Object.entries(placements)
   .filter(([slot,ids])=>ids?.length&&(slotTerm(slot)===term||(!slotTerm(slot)&&slotYear(slot)===Math.ceil(term/2))))
   .flatMap(([,ids])=>ids));
  for(let y=1;y<=LV;y++){
   const req=allSubjects().filter(x=>x.year===y&&x.origin==='FG');
+  const inLevel=placedInLevel(y);
   const hours=req.reduce((a,x)=>a+(Number(x.weeklyHours)||0),0);
   if(hours!==38)errors.push({code:'BA_HOURS_'+y,message:'El catálogo del Nivel '+y+' suma '+hours+' h; la estructura establece 38 horas cátedra.',page:'6.3'});
+  for(const x of req.filter(x=>!BA_PLACEHOLDER.test(x.name)))
+   if(!inLevel.has(x.id))errors.push({code:'BA_MISSING_'+y,
+    message:'Nivel '+y+': falta ubicar '+x.name+' ('+x.weeklyHours+' h).',page:'6.3'});
+  if(y>=2){
+   const orientation=Object.entries(placements).some(([slot,ids])=>
+    /^foN3-c\d+$/.test(slot)&&slotYear(slot)===y&&ids?.some(id=>byIdInMap(id)?.origin==='FO'));
+   if(!orientation)errors.push({code:'BA_ORIENTATION_'+y,
+    message:'Nivel '+y+': falta incorporar materias propias de la orientación.',page:'6.5'});
+  }
+  // Diagnóstico pedagógico por cuatrimestre: alerta, NO infracción normativa.
+  // Permite que una materia integre laboratorios distintos en C impar y C par.
   for(const term of [y*2-1,y*2]){
    const inTerm=placedInTerm(term);
-   for(const x of req.filter(x=>!BA_PLACEHOLDER.test(x.name)))
-    if(!inTerm.has(x.id))errors.push({code:'BA_MISSING_'+y+'_C'+term,
-     message:'Nivel '+y+' C'+term+': falta ubicar '+x.name+' ('+x.weeklyHours+' h).',page:'6.3'});
-   if(y>=2){
-    const orientation=Object.entries(placements).some(([slot,ids])=>
-     slot==='foN3-c'+term&&ids?.some(id=>byIdInMap(id)?.origin==='FO'));
-    if(!orientation)errors.push({code:'BA_ORIENTATION_'+y+'_C'+term,
-     message:'Nivel '+y+' C'+term+': el Área de la Orientación debe incluir un espacio FO propio.',page:'6.5'});
+   for(const [area,code] of [['Ciencias Naturales','NAT'],['Ciencias Sociales','SOC']]){
+    const areaSubjects=req.filter(x=>x.area===area);
+    if(areaSubjects.length&&!areaSubjects.some(x=>inTerm.has(x.id)))
+     warnings.push({code:'BA_'+code+'_C'+term,
+      message:'C'+term+': sin asignaturas del área '+area+'. Revisar su organización cuatrimestral en el PCI.',page:'6.5'});
    }
+   if(y>=2&&!Object.entries(placements).some(([slot,ids])=>
+    slot==='foN3-c'+term&&ids?.some(id=>byIdInMap(id)?.origin==='FO')))
+    warnings.push({code:'BA_FO_C'+term,
+     message:'C'+term+': sin espacio específico FO; revisar distribución de la orientación dentro del nivel.',page:'6.5'});
   }
  }
  warnings.push({code:'BA_FO_REFERENCIA_PENDIENTE',message:'Los contenidos orientados provienen de Media V2. Falta contrastar las materias y los contenidos con el plan BA +15 de cada orientación.',page:'6.5'});
