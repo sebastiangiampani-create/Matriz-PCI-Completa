@@ -393,6 +393,57 @@ function showNorma(result,label='IF-2026-51169092-GCABA-SSPIE'){
 const BA_SOURCE='RES-1375-MEDGC-25, Anexo I (IF-2025), 6.3 y 6.5';
 const BA_PLACEHOLDER=/^materias? de la orientaci[oó]n$/i;
 const BA_FO_PLAN=CFG.model==='ba15'?CFG.foPlan?.niveles||[]:[];
+// La RES-105/SSGDA/26 SOLO alcanza turno noche de escuelas de su Anexo II.
+function baVirtualState(){
+ const m=cur();
+ if(!m.ba15Ambientes||typeof m.ba15Ambientes!=='object')
+  m.ba15Ambientes={aplicacion:'pendiente_confirmacion',distribucion:{}};
+ if(!m.ba15Ambientes.distribucion||typeof m.ba15Ambientes.distribucion!=='object')
+  m.ba15Ambientes.distribucion={};
+ return m.ba15Ambientes;
+}
+function baVirtualAudit(){
+ const cfg=baVirtualState(),rule=CFG.ambientesVirtualesNorma||{},
+  errores=[],advertencias=[],periodos=[];
+ if(cfg.aplicacion==='no_alcanzado')
+  return {aplica:false,completa:true,errores,advertencias,periodos};
+ if(cfg.aplicacion!=='aplica_anexo_ii_turno_noche'){
+  advertencias.push({code:'BA_VIRTUAL_ALCANCE',message:'Confirmar si el turno noche de esta escuela está incluido en el Anexo II de RES-105/SSGDA/2026.'});
+  return {aplica:false,completa:false,errores,advertencias,periodos};
+ }
+ for(let t=1;t<=8;t++){
+  const y=Math.ceil(t/2),registros=allSubjects().filter(x=>x.year===y&&x.origin==='FG'),
+   campo=cfg.distribucion['c'+t]||{},detalle=[];
+  for(const subject of registros){
+   const horas=Number(subject.weeklyHours),raw=campo[subject.name],
+    complete=raw!==undefined&&raw!==null&&raw!=='',
+    asin=complete?Number(raw):null,
+    valid=complete&&Number.isInteger(asin)&&asin>=0&&asin<=horas;
+   if(!valid)errores.push({code:'BA_VIRTUAL_INCOMPLETA_C'+t,
+    message:'C'+t+': indicar horas asincrónicas enteras (0 a '+horas+') de '+subject.name+'.'});
+   else{
+    const presencial=horas-asin;
+    if(subject.format==='troncal'&&100*presencial/horas+1e-8<(rule.porcentajePresencialTroncal||80))
+     errores.push({code:'BA_VIRTUAL_TRONCAL_C'+t,
+      message:'C'+t+': '+subject.name+' debe conservar al menos 80% presencial.'});
+    if(['Educación Física','Tutoría'].includes(subject.name)&&asin!==0)
+     errores.push({code:'BA_VIRTUAL_PRESENCIAL_C'+t,
+      message:'C'+t+': '+subject.name+' requiere presencialidad completa.'});
+   }
+   detalle.push({nombre:subject.name,horas,presenciales:valid?horas-asin:null,
+    asincronicas:valid?asin:null,completo:valid});
+  }
+  const completo=detalle.length>0&&detalle.every(x=>x.completo),
+   presenciales=completo?detalle.reduce((n,x)=>n+x.presenciales,0):null,
+   asincronicas=completo?detalle.reduce((n,x)=>n+x.asincronicas,0):null;
+  if(completo&&(presenciales!==27||asincronicas!==11))
+   errores.push({code:'BA_VIRTUAL_TOTAL_C'+t,message:'C'+t+
+    ': se requieren 27 HC presenciales + 11 HC asincrónicas; hay '+presenciales+' + '+asincronicas+'.'});
+  periodos.push({cuatrimestre:t,nivel:y,completo,presenciales,asincronicas,detalle});
+ }
+ return {aplica:true,completa:periodos.every(x=>x.completo),errores,advertencias,periodos};
+}
+
 function baEvaluate(){
  const errors=[],warnings=[],placements=cur().placements;
  // El Anexo I 6.3 y 6.5 prescribe materias, áreas y 38 h por NIVEL.
@@ -466,7 +517,10 @@ function baEvaluate(){
  if((cur().alt||'A')==='B'&&(CFG.foWarnings||[]).length)
   warnings.push({code:'BA_FO_FUENTE_B_PENDIENTE',
    message:CFG.foWarnings.join(' '),page:'6.3'});
- warnings.push({code:'BA_PRESENCIAL',message:'Para el turno noche (SSGDA-105-26): troncales ≥80% presencial; laboratorios y talleres 60–70%; Educación Física y Tutoría 100% presencial; EDI 100% asincrónico. La distribución se define en la grilla horaria.',page:'4.1'});
+ const ambientes=baVirtualAudit();
+ if(ambientes.aplica)errors.push(...ambientes.errores);
+ else warnings.push(...ambientes.advertencias);
+ warnings.push({code:'BA_AMBIENTES_ALCANCE',message:'La distribución 27 HC presenciales + 11 asincrónicas de RES-105/SSGDA/26 se aplica solo a escuelas de turno noche del Anexo II.',page:'105/2026'});
  return {ruleSet:'ba15-res-1375-25/1',source:BA_SOURCE,errors,warnings,
   structurallyConsistent:errors.length===0,valid:false,homologated:false};
 }
