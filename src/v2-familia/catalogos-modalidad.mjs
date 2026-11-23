@@ -13,6 +13,9 @@ import {cargarBancoAtomicoTecnica,cotejarContenidosAtomicosTecnica} from '../tec
 import {desagregarPendientesTecnica} from '../tecnica/desagregacion-documental-2026.mjs';
 import {cargarBaseTecnicaReconstruida} from '../tecnica/base-contenidos-2026.mjs';
 import {BA15_NIVELES} from '../ba15/reglas-curriculares.mjs';
+import {BA15_AMBIENTES_105} from '../ba15/ambientes-virtuales-105-2026.mjs';
+import {BA15_FO_NORMA,auditarHorasFoBa15} from '../ba15/formacion-orientada-norma.mjs';
+import {construirMateriasOrientadasNesBa15} from '../ba15/materias-orientacion-nes.mjs';
 import {loadBa15FgBase,BA15_FG_LEVEL_MAP} from '../ba15/priorizados-base.mjs';
 import {loadV2Fo,selectFoByOrientation} from '../integracion-curricular/catalogos.js';
 import {ORIENTATIONS} from '../integracion-curricular/bridge.js';
@@ -64,23 +67,43 @@ export async function loadBa15V2Profile(orientationId){
  // diseño curricular que Media, sin crear contenidos nuevos.
  if(!fo.length){fo=await loadV2OrientationFile(orientationId,o.name);foSource='V2 data/orientaciones/'+orientationId+'.txt';}
  if(fg.length!==1126)throw Error('La base BA +15 no conserva los 1.126 contenidos priorizados');
+ const foHours=auditarHorasFoBa15(BA15_NIVELES);
+ if(foHours.some(x=>!x.valido))throw Error('La carga horaria de Formación Orientada no coincide con RES-1375/MEDGC/25.');
+ const nesResponse=await fetch('vendor/pci-sec-aprende-v2/data/materias-v2.json',{cache:'force-cache'});
+ if(!nesResponse.ok)throw Error('No se pudo cargar el catálogo de materias FO NES del V2 original.');
+ const ofertaNes=construirMateriasOrientadasNesBa15({
+  catalogo:await nesResponse.json(),orientacion:o.name
+ });
  const subjects=[];
  for(let i=0;i<4;i++)for(const m of BA15_NIVELES[i]){
    const name=ba15Name(m.nombre);
    const id='ba15-fg-'+(i+1)+'-'+name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
-   subjects.push({id,name,year:i+1,origin:'FG',area:m.area,format:m.formato,weeklyHours:m.horas,field:'formacion_general'});
+   subjects.push({id,name,year:i+1,origin:'FG',area:m.area,format:m.formato,weeklyHours:m.horas,
+    field:m.area==='Formación Orientada'?'formacion_orientada':'formacion_general',
+    isOrientationHourBucket:/^materias? de la orientaci[oó]n$/i.test(m.nombre),
+    prescribedFrom:'RES-1375/MEDGC/25 · Anexo I · 6.3'});
+
  }
- // El catálogo de orientación es referencia para el nuevo modelo;
- // se conserva la identificación V2 y no se inventan materias de BA+15.
+ // Las asignaturas de Fase 1 provienen del plan NES de la orientación
+ // por año y alternativa A/B. Los bloques FO v96 permanecen SOLO para Fase 2.
+ // No se atribuyen horas a cada materia si el plan BA +15 no las detalla.
  const oriName=o.name;
- const byYear=new Map();
- for(const row of fo){
-   const key=text(row.block||row.subject||'Formación Orientada');
-   if(!key)continue;
-   // Bloques FO de Media no establecen equivalencia horaria BA+15.
-   for(const year of [2,3,4])byYear.set(year+':'+key,{name:key,year,origin:'FO',field:'formacion_orientada',area:'Formación Orientada'});
+ subjects.push(...ofertaNes.subjects);
+ // Compatibilidad ADITIVA: los PCI BA +15 ya iniciados pueden conservar IDs
+ // de la bolsa previa, que había confundido bloques de Media con materias.
+ // Se retienen solo para lectura/revisión de asignaciones; no se ofrecen para
+ // nuevos arrastres ni se reescribe ningún borrador escolar.
+ const legacyBlocks=new Set(fo.map(row=>text(row.block||row.subject||'Formación Orientada')).filter(Boolean));
+ const legacyIds=new Set(subjects.map(x=>x.id));
+ for(const year of [2,3,4])for(const name of legacyBlocks){
+  const historicalKey=year+':'+name;
+  const legacyId='ba15-fo-'+historicalKey.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  if(legacyIds.has(legacyId))continue;
+  legacyIds.add(legacyId);
+  subjects.push({id:legacyId,name,year,origin:'FO',area:'Formación Orientada',field:'formacion_orientada',
+   legacyReference:true,referenceOnly:true,confirmedBa15Subject:false,weeklyHours:null,
+   sourceType:'bloque_fo_v2_historico',source:'Bolsa FO anterior · conservar para revisión'});
  }
- for(const [key,row] of byYear)subjects.push({...row,id:'ba15-fo-'+key.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-')});
  const fgContents=fg.map(row=>({
    id:row.id,component:'FG',year:row.year,sourceYear:row.sourceYear,
    area:text(row.area),subject:text(row.subject),axis:text(row.axis),
@@ -89,10 +112,33 @@ export async function loadBa15V2Profile(orientationId){
  const foContents=fo.map(row=>({
    id:row.id,component:'FO',area:'Formación Orientada',subject:text(row.block||row.subject),
    axis:text(row.axis),subaxis:text(row.subaxis),text:text(row.text),
-   block:text(row.block),orientation:oriName,source:foSource+', mismo diseño que Media'
+   block:text(row.block),orientation:oriName,source:foSource+', referencia de contenidos sin homologación de materias',
+   referenceOnly:true,confirmedBa15Subject:false,levelBasis:'no_declarado_en_fuente_FO'
  }));
- return common('ba15',oriName,4,subjects,fgContents,foContents,
-  'Base de Formación General: 1126 contenidos originales con NES 1+2→Nivel 1; NES 3→N2; NES 4→N3; NES 5→N4. Oferta FO orientada por verificar contra plan BA+15.');
+ const profile=common('ba15',oriName,4,subjects,fgContents,foContents,
+  'FG: 1126 contenidos NES 1+2→I, 3→II, 4→III, 5→IV. FO: materias del plan NES por orientación y alternativa A/B (3.º→II, 4.º→III, 5.º→IV), con cupos 4, 9 y 12+2+2 HC. Fase 2 usa bloques FO de referencia; no se declara homologación BA +15.');
+ profile.foPlan=clone(BA15_FO_NORMA);
+ profile.ambientesVirtualesNorma=clone(BA15_AMBIENTES_105);
+ profile.foHoursAudit=clone(foHours);
+ profile.foSubjectStatus='materias_nes_por_nivel_y_alternativa_pendientes_de_validacion_ba15';
+ profile.foAlternatives=clone(ofertaNes.alternativas);
+ profile.foWarnings=clone(ofertaNes.warnings);
+ // Cotejo de fuentes NES por orientación y alternativa, sin homologar
+ // automáticamente las horas del Régimen BA +15.
+ profile.foEvidenciaNes=clone(ofertaNes.cotejos);
+ profile.foEvidenciaResumen={
+  total:ofertaNes.cotejos.length,
+  verificadas:ofertaNes.cotejos.filter(x=>x.estado==='cotejado_fuente_primaria').length,
+  excepciones:ofertaNes.cotejos.filter(x=>x.estado==='cotejado_con_excepcion_horaria').length,
+  pendientes:ofertaNes.cotejos.filter(x=>x.estado==='pendiente_documental').length,
+  hayDiferencias:ofertaNes.cotejos.some(x=>x.discrepancias&&
+   (x.discrepancias.enCatalogoSinFuente?.length||x.discrepancias.enFuenteSinCatalogo?.length))
+ };
+
+ profile.foSource={sourceFile:ofertaNes.sourceFile,version:ofertaNes.sourceVersion,
+  levelMap:{3:2,4:3,5:4},defaultAlternative:ofertaNes.defaultAlternative,
+  scope:'Plan NES de referencia. No incluye horas individuales ni homologación BA +15.'};
+ return profile;
 }
 // Área de un contenido técnico = área curricular de su materia en el mapa
 // (IF-2026-51169092: Física y Química integran Ciencias Naturales; Matemática

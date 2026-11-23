@@ -143,7 +143,8 @@ try{
     assert.equal(terms.length,12,'Fase 2 técnica debe mostrar sus doce cuatrimestres completos');
     assert.equal(terms[0],'C1');
     assert.equal(terms[11],'C12');
-    await page.locator('#v28mback').click();
+    await page.locator('#v28matrix #v28mback').evaluate(el=>el.click());
+    await page.locator('#v28home:not([hidden])').waitFor({state:'visible',timeout:12000});
   }
   await page.locator('#v28home [data-area]').filter({hasText:probe.area}).first().click();
   await page.locator('#v28board:not([hidden])').waitFor({timeout:20000});

@@ -176,11 +176,11 @@ test('permisos institucionales no convierten school_admin ni perfiles V2 en edit
     assert.deepEqual(permisosSesion({role}),{puedeEditar:false,puedeDeclarar:false});
 });
 
-test('el cliente no inicia red automáticamente ni expone guardar V2 ni el token',async()=>{
+test('el cliente no inicia red automáticamente, requiere permisos para guardar V2 y no expone el token',async()=>{
   const {cliente,calls}=mockClient({saved:sessionRecord({role:'admin',permissions:['pci.edit']}),
     verified:{role:'school_admin',permissions:[],school_ids:[],all_schools:false}});
   assert.equal(calls.length,0);
-  assert.equal(cliente.guardarUnidad,undefined);
+  assert.equal(typeof cliente.guardarUnidad,'function');
   const verified=await cliente.validarSesion();
   assert.equal(verified.role,'school_admin');
   assert.deepEqual(verified.permissions,[]);
@@ -193,6 +193,48 @@ test('el cliente no inicia red automáticamente ni expone guardar V2 ni el token
   assert.equal(calls[0].url.includes('token-sintetico'),false);
 });
 
+test('el guardado remoto V2 exige revisión y confirma la unidad correcta de cada PCI',async()=>{
+ const c=context(),original=state(),prior=structuredClone(original);
+ const mock=mockClient({handle:body=>{
+  if(body.action!=='save-school-pci-unit')return {};
+  assert.equal(body.school_id,1017);
+  assert.equal(body.pci_id,UUID1);
+  assert.equal(body.component,'oferta');
+  assert.equal(body.unit_kind,'map');
+  assert.equal(body.unit_id,'mapa-original-v2-v1');
+  assert.equal(body.base_version,'v2-original-embedded-v1');
+  assert.equal(body.expected_revision,3);
+  assert.deepEqual(body.document.v2,original);
+  assert.equal(body.document.legacySha256,c.pci.legacy_sha256);
+  assert.equal(body.document.shiftId,'manana');
+  return {ok:true,revision:4};
+ }});
+ await mock.cliente.validarSesion();
+ await assert.rejects(()=>mock.cliente.guardarUnidad(c,original,{expected_revision:-1}),{code:'REVISION_INVALIDA'});
+ assert.equal(mock.calls.length,1);
+ assert.deepEqual(await mock.cliente.guardarUnidad(c,original,{expected_revision:3}),
+  {ok:true,revision:4});
+ assert.equal(mock.calls.length,2);
+ assert.deepEqual(original,prior,'El guardado no modifica las raíces institucionales ni el mapa');
+});
+test('un conflicto 409 no se reintenta ni se transforma en guardado exitoso',async()=>{
+ const c=context(),mock=mockClient({handle:()=>({status:409,data:{error:'Otra persona modificó el documento.'}})});
+ await mock.cliente.validarSesion();
+ await assert.rejects(()=>mock.cliente.guardarUnidad(c,state(),{expected_revision:2}),{status:409});
+ assert.equal(mock.calls.length,2);
+});
+test('el guardado remoto V2 requiere permisos de edición y alcance escolar',async()=>{
+ const c=context();
+ const read=mockClient({verified:{role:'user',permissions:['pci.view'],all_schools:false,school_ids:[1017]}});
+ await read.cliente.validarSesion();
+ await assert.rejects(()=>read.cliente.guardarUnidad(c,state(),{expected_revision:0}),{code:'SIN_PERMISO'});
+ assert.equal(read.calls.length,1);
+ const other=context();other.school.id=1055;other.pci.school_id=1055;
+ const school=mockClient({verified:{role:'editor',permissions:[],school_ids:[],all_schools:false}});
+ await school.cliente.validarSesion();
+ await assert.rejects(()=>school.cliente.guardarUnidad(other,state(),{expected_revision:0}),{code:'ESCUELA_NO_AUTORIZADA'});
+ assert.equal(school.calls.length,1);
+});
 test('sesión ausente o rechazada no habilita lecturas ni revela credenciales',async()=>{
   const absent=mockClient({saved:null});
   await assert.rejects(()=>absent.cliente.validarSesion(),{code:'SESION_REQUERIDA',status:401});
