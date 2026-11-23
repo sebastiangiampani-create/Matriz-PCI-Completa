@@ -81,9 +81,9 @@ test('BA +15: Fase 1 toma las materias NES exactas según orientación y alterna
  assert.deepEqual(e.foAlternatives,['A'],'Sin alternativa B no se ofrecen asignaturas inventadas.');
 });
 
-test('BA +15: cotejo automático de doce orientaciones con fuente NES y sumas 4/9/12 por alternativa',async()=>{
+test('BA +15: cotejo automático de catorce orientaciones con fuente NES y sumas 4/9/12 por alternativa',async()=>{
  const verified=['economia_administracion','ciencias_sociales_humanidades','turismo','educacion_fisica',
-  'arte_artes_visuales','arte_musica','arte_teatro','agro_ambiente','lenguas','literatura','comunicacion','educacion'];
+  'arte_artes_visuales','arte_musica','arte_teatro','agro_ambiente','lenguas','literatura','comunicacion','educacion','matematica_fisica','informatica'];
  for(const orientation of verified){
   const p=await loadV2ModalProfile({model:'ba15',orientation});
   const records=p.foEvidenciaNes;
@@ -248,6 +248,32 @@ test('BA +15: Energía y Sustentabilidad tiene un único plan oficial 4/9/12',as
   assert.equal(official.reduce((n,x)=>n+x.sourceWeeklyHours,0),sums[idx]);
   assert.ok(official.every(x=>x.confirmedBa15Subject===false));
  }
+});
+test('BA +15: Ciencias Naturales conserva la excepción curricular NES 4/5/16 sin forzar 4/9/12',async()=>{
+ const p=await loadV2ModalProfile({model:'ba15',orientation:'ciencias_naturales'});
+ assert.equal(p.foEvidenciaResumen.excepciones,4,'Dos franjas diferentes por alternativa A/B');
+ assert.equal(p.foEvidenciaResumen.pendientes,0);
+ for(const alt of ['A','B']){
+  const data=p.foEvidenciaNes.filter(x=>x.alternativa===alt);
+  assert.ok(data.some(x=>x.anio===4&&x.estado==='cotejado_con_excepcion_horaria'&&
+   x.sumaHorasNes===5&&x.cupoPrevisto===9));
+  assert.ok(data.some(x=>x.anio===5&&x.estado==='cotejado_con_excepcion_horaria'&&
+   x.sumaHorasNes===16&&x.cupoPrevisto===12));
+ }
+ assert.ok(p.subjects.some(s=>s.origin==='FO'&&s.sourceHoursStatus==='nes_documentada_excepcion_ba15'));
+ assert.ok(p.subjects.filter(s=>s.origin==='FO'&&!s.legacyReference).every(s=>s.confirmedBa15Subject===false&&s.weeklyHours===null));
+ assert.ok(p.foWarnings.some(w=>/adaptación curricular documentada/i.test(w)));
+});
+test('BA +15: Informática registra dos talleres cuatrimestrales en un único cupo de 4 HC en Nivel II B',async()=>{
+ const p=await loadV2ModalProfile({model:'ba15',orientation:'informatica'});
+ const b=p.subjects.filter(s=>s.origin==='FO'&&!s.legacyReference&&s.year===2&&s.alternative==='B');
+ assert.equal(b.length,1);
+ assert.equal(b[0].sourceWeeklyHours,4);
+ assert.match(b[0].name,/cuatrimestrales/);
+ assert.equal(b[0].confirmedBa15Subject,false);
+ const seminars=p.subjects.filter(s=>s.origin==='FO'&&!s.legacyReference&&s.year===4&&/Seminario optativo/.test(s.name));
+ assert.equal(seminars.length,2);
+ assert.ok(seminars.every(s=>s.sourceWeeklyHours===2));
 });
 test('Técnica: todas las especialidades cargan seis niveles con formación técnico-específica', async()=>{
   const ids=(await readdir(new URL('../data/tecnica/priorizados/',import.meta.url))).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5)).filter(id=>id!=='tecnologia_representacion');
