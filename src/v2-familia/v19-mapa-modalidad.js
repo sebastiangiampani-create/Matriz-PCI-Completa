@@ -417,10 +417,13 @@ function baEvaluate(){
     .flatMap(([,ids])=>ids.map(byIdInMap).filter(x=>x?.origin==='FO'));
    if(!orientados.length)errors.push({code:'BA_ORIENTATION_'+y,
     message:'Nivel '+y+': falta incorporar una propuesta de Formación Orientada.',page:'6.5'});
-   if(orientados.length&&orientados.every(x=>x.referenceOnly!==false)){
-    warnings.push({code:'BA_FO_BLOQUES_REFERENCIA_'+y,
-     message:'Nivel '+y+': los bloques de Media son referencias de contenidos, no asignaturas homologadas. El plan NES de esta orientación debe identificar las materias que componen las '+plan?.horasOrientacion+' h cátedra.',page:'6.3'});
-   }
+   if(orientados.some(x=>x.alternative&&x.alternative!==(cur().alt||'A')))
+    errors.push({code:'BA_FO_ALTERNATIVA_'+y,message:'Nivel '+y+
+     ': hay materias de otra alternativa NES. Conservar y revisar antes de validar.',page:'6.5'});
+   if(orientados.some(x=>x.confirmedBa15Subject!==true))
+    warnings.push({code:'BA_FO_MATERIAS_NES_PENDIENTES_'+y,
+     message:'Nivel '+y+': hay materias identificadas en el plan NES ('+plan?.horasOrientacion+
+     ' HC de orientación), pero sus horas individuales y la correspondencia específica con BA +15 requieren verificación.',page:'6.3'});
   }
   // Diagnóstico pedagógico por cuatrimestre: alerta, NO infracción normativa.
   // Permite que una materia integre laboratorios distintos en C impar y C par.
@@ -438,7 +441,10 @@ function baEvaluate(){
      message:'C'+term+': sin espacio específico FO; revisar distribución de la orientación dentro del nivel.',page:'6.5'});
   }
  }
- warnings.push({code:'BA_FO_REFERENCIA_PENDIENTE',message:'Los contenidos orientados provienen de Media V2 como referencias. Faltan identificar y contrastar las materias reales de cada orientación en las franjas prescriptas (Nivel II 4 h; Nivel III 9 h; Nivel IV 12 h, más Historia Orientada 2 h y TI Orientada 2 h).',page:'6.3'});
+ warnings.push({code:'BA_FO_REFERENCIA_PENDIENTE',message:'La bolsa de Fase 1 contiene materias NES del bachillerato por año y alternativa; la Fase 2 contiene bloques de referencia FO de Media V2. Falta verificar las cargas individuales y la correspondencia oficial del plan BA +15 con los cupos: II 4 h, III 9 h y IV 12+2+2 h.',page:'6.3'});
+ if((cur().alt||'A')==='B'&&(CFG.foWarnings||[]).length)
+  warnings.push({code:'BA_FO_FUENTE_B_PENDIENTE',
+   message:CFG.foWarnings.join(' '),page:'6.3'});
  warnings.push({code:'BA_PRESENCIAL',message:'Para el turno noche (SSGDA-105-26): troncales ≥80% presencial; laboratorios y talleres 60–70%; Educación Física y Tutoría 100% presencial; EDI 100% asincrónico. La distribución se define en la grilla horaria.',page:'4.1'});
  return {ruleSet:'ba15-res-1375-25/1',source:BA_SOURCE,errors,warnings,
   structurallyConsistent:errors.length===0,valid:false,homologated:false};
@@ -643,9 +649,10 @@ function renderBa15OrientationPanel(){
   '<p>Composición prescripta por nivel; el Anexo I (6.3) fija las cargas horarias, '+
   'pero las materias específicas dependen del diseño NES de la orientación de esta escuela.</p>'+
   '<ul class="norma-list">'+rows.join('')+'</ul>'+
-  '<p><strong>Atención:</strong> la bolsa FO incluye bloques de contenidos de Media V2 como referencias, '+
-  'no como asignaturas oficialmente homologadas de BA +15. La escuela debe identificar '+
-  'las materias correspondientes a sus cargas y asociar los contenidos.</p>'+
+  '<p><strong>Fase 1:</strong> la bolsa FO muestra las materias NES por orientación, año y alternativa A/B. '+
+  'No se asignan horas individuales automáticamente porque falta verificar su distribución específica en BA +15.</p>'+
+  '<p><strong>Fase 2:</strong> los bloques FO de Media V2 son referencias de contenidos para vincular '+
+  'a las materias; no se consideran materias homologadas del régimen BA +15.</p>'+
   '<p><small>El CCC corresponde a la acreditación de saberes previos de 1.º año NES '+
   'y no suma cuatrimestres ni materias a este mapa C1–C8.</small></p>';
 }
