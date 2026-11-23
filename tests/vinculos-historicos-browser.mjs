@@ -74,24 +74,32 @@ try{
  assert.deepEqual(saved.assignments.find(a=>a.id==='t1').pci_ids,[ids[2]]);
  assert.equal(JSON.stringify(historical),original,'El histórico nunca se modifica');
  await page.screenshot({path:'test-artifacts/multipci-portal/asignacion-fg-a-varios-y-especificas.png',fullPage:true});
- await page.locator('.school-offer-card').filter({hasText:'Comunicación Mañana'}).locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
- await page.locator('#v2OriginalPane:not([hidden])').waitFor({timeout:20000});
- const preview=page.locator('#pciHistoricLinks');
- assert.match(await preview.textContent(),/3 contenidos y 2 planes|3 contenidos y 2 planes/);
- await preview.locator('summary').first().evaluate(el=>el.click());
- assert.ok((await preview.textContent()).includes('Comunicación y medios'),'El vínculo histórico sigue protegido sin mostrar otra matriz.');
- assert.equal(await page.locator('#areaList').getByText('Otros formatos pedagógicos').count(),0,'El FO específico no se convierte automáticamente en FG');
- assert.match(await preview.textContent(),/Trabajo de comprensión lectora|Lengua trabajada/);
- await page.locator('#editor [data-back-to-school]').click();
- await page.locator('#empty:not([hidden])').waitFor();
- await page.locator('.school-offer-card').filter({hasText:'Economía Tarde'}).locator('button[aria-label^="Abrir Mapa de la Oferta"]').click();
- await page.locator('#v2OriginalPane:not([hidden])').waitFor({timeout:20000});
- const econ=await page.locator('#pciHistoricLinks').textContent();
- assert.match(econ,/Lengua trabajada|2 contenidos y 1 planes/);
- assert.doesNotMatch(econ,/Comunicación y medios|Robótica de Taller/);
- await page.reload({waitUntil:'domcontentloaded'});
- await page.locator('#v2OriginalPane:not([hidden])').waitFor({timeout:20000});
- assert.equal(revision,1,'Volver al PCI no agrega guardados');
+ // El inicio institucional conserva el historial en tarjetas diferenciadas.
+ const tile=name=>page.locator('#schoolPciCards .school-offer-card').filter({hasText:name}).first();
+ await tile('Comunicación Mañana').waitFor({timeout:20000});
+ assert.match(await tile('Comunicación Mañana').innerText(),/Histórico vinculado: 1 FG · 1 orientación · 0 Técnica · 2 planes/);
+ assert.match(await tile('Economía Tarde').innerText(),/Histórico vinculado: 1 FG · 0 orientación · 0 Técnica · 1 planes/);
+ assert.match(await tile('Técnica Mecánica Noche').innerText(),/Histórico vinculado: 1 FG · 0 orientación · 1 Técnica · 2 planes/);
+ // La interfaz nueva abre un documento PCI nativo, sin iframe, y conserva el mapa original.
+ await tile('Comunicación Mañana').locator('a[aria-label^="1 · Constructor curricular"]').click();
+ await page.waitForFunction(()=>document.body.dataset.pciV2Ready==='true',null,{timeout:60000});
+ await page.locator('#offer.active').waitFor({timeout:30000});
+ assert.equal(await page.evaluate(()=>window.PCIAplicacionV2?.contexto?.pci?.pci_id),ids[0]);
+ assert.equal(await page.locator('iframe').count(),0,'No debe reaparecer el antiguo mapa embebido.');
+ assert.equal(await page.evaluate(()=>{
+  const state=window.PCIAplicacionV2.snapshot();
+  return !!state.maps[state.active]?.migracionLegado;
+ }),false,'El histórico no se incorpora sin aceptación explícita.');
+ await page.screenshot({path:'test-artifacts/multipci-portal/vinculos-pci-nativo.png',fullPage:false});
+ await page.goto('http://127.0.0.1:'+port+'/pci-orientaciones.html?school=1017',{waitUntil:'domcontentloaded'});
+ await tile('Economía Tarde').waitFor({timeout:30000});
+ assert.doesNotMatch(await tile('Economía Tarde').innerText(),/1 orientación · 1 Técnica/);
+ await tile('Economía Tarde').locator('a[aria-label^="1 · Constructor curricular"]').click();
+ await page.waitForFunction(()=>document.body.dataset.pciV2Ready==='true',null,{timeout:60000});
+ assert.equal(await page.evaluate(()=>window.PCIAplicacionV2?.contexto?.pci?.pci_id),ids[1],
+   'La segunda orientación debe abrir su propio PCI.');
+ assert.equal(revision,1,'Abrir otros PCI no agrega guardados de vínculos históricos.');
+ assert.equal(writes,1,'Ninguna navegación vuelve a guardar vínculos.');
  assert.equal(JSON.stringify(historical),original);
  assert.deepEqual(pageErrors,[],'No deben aparecer errores JS en el recorrido: '+pageErrors.join(' | '));
  console.log('E2E OK: FG a TODOS, orientada a Comunicación y técnica a Mecánica, persistencia y resguardo histórico.');
