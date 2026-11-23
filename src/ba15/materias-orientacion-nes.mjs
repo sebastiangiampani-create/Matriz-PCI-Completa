@@ -65,7 +65,7 @@ export function construirMateriasOrientadasNesBa15({catalogo,orientacion}){
     source:verified?'RES-321/MEGC/2015 · Anexo VII':
      'vendor/pci-sec-aprende-v2/data/materias-v2.json'
    });
-   if(changed){
+   if(changed&&nesYear!==3){
     const legacyId=prefix+i;
     if(seen.has(legacyId))throw new Error('ID curricular histórico duplicado: '+legacyId);
     seen.add(legacyId);
@@ -87,7 +87,39 @@ export function construirMateriasOrientadasNesBa15({catalogo,orientacion}){
      (alternative||'común')+': el catálogo V2 difiere del Anexo VII. '+
      'Se ofrecen las materias oficiales; las antiguas conservan sus IDs para revisión.');
  };
- append(data['3'],3,null);
+ // Una misma orientación puede tener una asignatura distinta en el 3.º
+ // de la NES según A/B (p. ej., Turismo y Educación Física). En BA +15
+ // esto equivale al Nivel II y requiere filtrar también por alternativa.
+ const evidenciaA=cotejarHorasNesOrientadas({
+  orientacion,alternativa:'A',anio:3,materiasReferencia:data['3']
+ });
+ const evidenciaB=cotejarHorasNesOrientadas({
+  orientacion,alternativa:'B',anio:3,materiasReferencia:data['3']
+ });
+ const differentThird=evidenciaA.estado==='cotejado_fuente_primaria'&&
+  evidenciaB.estado==='cotejado_fuente_primaria'&&
+  JSON.stringify(evidenciaA.materias.map(x=>slug(x.nombre)))!==
+  JSON.stringify(evidenciaB.materias.map(x=>slug(x.nombre)));
+ if(differentThird){
+  // Conservar los IDs "comun" usados antes de conocer la distinción A/B.
+  for(let i=0;i<data['3'].length;i++){
+   const oldName=clean(data['3'][i]);
+   if(!oldName)continue;
+   const id='ba15-nes-fo-'+slug(orientacion)+'-2-comun-'+i;
+   if(seen.has(id))throw new Error('ID histórico duplicado: '+id);
+   seen.add(id);
+   subjects.push({id,name:oldName,year:2,sourceYear:3,origin:'FO',
+    field:'formacion_orientada',area:'Formación Orientada',
+    alternative:null,referenceOnly:true,legacyReference:true,
+    sourceType:'materia_nes_historica_sin_alternativa',
+    confirmedBa15Subject:false,weeklyHours:null,sourceWeeklyHours:null,
+    replacementByAlternative:{A:'A',B:'B'},
+    source:'Mapa V2 BA +15 anterior · conservar para revisión'});
+  }
+  for(const alt of alternativas)append(data['3'],3,alt);
+  warnings.push('Nivel II de '+orientacion+': las alternativas A/B difieren desde 3.º NES. '+
+   'Los borradores previos en la fila común se conservan para revisión.');
+ }else append(data['3'],3,null);
  for(const alt of alternativas){
   append(data[alt]['4'],4,alt);
   append(data[alt]['5'],5,alt);
