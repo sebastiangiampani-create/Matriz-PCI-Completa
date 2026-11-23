@@ -48,7 +48,7 @@ function contextoPublico(contexto) {
       puedeEditar: contexto.permissions?.puedeEditar === true,
       puedeDeclarar: contexto.permissions?.puedeDeclarar === true
     },
-    remotoDisponible: false,
+    remotoDisponible: contexto.remotoDisponible === true,
     avisoPersistencia: String(contexto.avisoPersistencia || ''),
     avisoHistorico: String(contexto.avisoHistorico || '')
   };
