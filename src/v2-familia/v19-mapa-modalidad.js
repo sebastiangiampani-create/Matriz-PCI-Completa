@@ -487,6 +487,11 @@ function baEvaluate(){
      errors.push({code:'BA_FO_CUPO_COTEJADO_'+y,
       message:'Nivel '+y+': materias ubicadas '+total+' HC NES documentadas; el Anexo I prevé '+
        plan.horasOrientacion+' HC de orientación. Corregir composición o revisar borrador histórico.',page:'6.3'});
+   }else if(proof?.estado==='cotejado_con_excepcion_horaria'){
+    errors.push({code:'BA_FO_ADECUACION_NATURALES_'+y,
+     message:'Nivel '+y+': Ciencias Naturales NES suma '+proof.sumaHorasNes+
+      ' HC y BA +15 prescribe '+plan.horasOrientacion+
+      ' HC. Es necesaria una adaptación curricular documentada; no se pueden reasignar horas automáticamente.',page:'6.3'});
    }else warnings.push({code:'BA_FO_HORAS_DOCUMENTALES_PENDIENTES_'+y,
     message:'Nivel '+y+': falta cotejar las horas individuales de esta orientación y alternativa con el Anexo NES. No se homologan automáticamente.',page:'6.3'});
    if(orientados.some(x=>x.legacyReference))
