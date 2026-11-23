@@ -27,6 +27,13 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(origin+'/revision-v2-modalidad.html?model=ba15&orientation=economia_administracion&pci=pci-norma-ba15-economia&school=Escuela+de+prueba',{waitUntil:'domcontentloaded'});
   await page.locator('#offer.active').waitFor({timeout:30000});
+  const foPlan=await page.locator('#ba15OrientationPlan').innerText();
+  assert.match(foPlan,/Nivel II.*4 HC/);
+  assert.match(foPlan,/Nivel III.*9 HC/);
+  assert.match(foPlan,/Nivel IV.*12 HC/);
+  assert.match(foPlan,/Historia Orientada 2 HC/);
+  assert.match(foPlan,/no como asignaturas oficialmente homologadas/);
+
   const checks=await page.evaluate(()=>{
     const M=window.V2ModalMap,S=window.__V2_MODAL.subjects;
     const by=(n,y)=>S.find(s=>s.name===n&&s.year===y&&s.origin==='FG');
