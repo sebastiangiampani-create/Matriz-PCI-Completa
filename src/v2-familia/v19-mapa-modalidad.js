@@ -279,7 +279,9 @@ renderBag=function(){
   h+='<section class="year"><div class="year-head"><strong>'+group.label+' · Nivel '+year+'</strong><span>C'+(year*2-1)+' / C'+year*2+'</span></div>';
   h+=group.list.map(s=>{
    const used=usage(s.id);
-   return '<div class="subject '+(used.size>=2?'used-two':'')+'" draggable="true" data-sub="'+esc(s.id)+'"><span class="drag-handle">⠿</span><span><strong>'+esc(s.name)+'</strong><small>'+esc(CFG.model==='tecnica'?({'formacion_cientifico_tecnologica':'Científico-Tecnológica','formacion_tecnica_especifica':'Técnico-Específica','practicas_profesionalizantes':'Prácticas Profesionalizantes'}[s.field]||'Formación General'):(s.origin==='FO'?'Materia NES '+s.sourceYear+'º · '+(s.alternative?'alternativa '+s.alternative:'común')+' · por verificar BA +15':'Formación General'))+'</small></span><span class="usage">'+usageLabel(s)+'</span></div>'
+   return '<div class="subject '+(used.size>=2?'used-two':'')+'" draggable="true" data-sub="'+esc(s.id)+'"><span class="drag-handle">⠿</span><span><strong>'+esc(s.name)+'</strong><small>'+esc(CFG.model==='tecnica'?({'formacion_cientifico_tecnologica':'Científico-Tecnológica','formacion_tecnica_especifica':'Técnico-Específica','practicas_profesionalizantes':'Prácticas Profesionalizantes'}[s.field]||'Formación General'):(s.origin==='FO'?'Materia NES '+s.sourceYear+'º · '+(s.alternative?'alternativa '+s.alternative:'común')+
+     (s.sourceHoursStatus==='nes_documentada'?' · '+s.sourceWeeklyHours+' HC NES (Anexo cotejado)':' · horas NES pendientes')+
+     ' · no homologada BA +15':'Formación General'))+'</small></span><span class="usage">'+usageLabel(s)+'</span></div>'
   }).join('');
   h+='</section>';
  }
@@ -422,6 +424,20 @@ function baEvaluate(){
    if(orientados.some(x=>x.alternative&&x.alternative!==(cur().alt||'A')))
     errors.push({code:'BA_FO_ALTERNATIVA_'+y,message:'Nivel '+y+
      ': hay materias de otra alternativa NES. Conservar y revisar antes de validar.',page:'6.5'});
+   // Sumatoria de asignaturas distintas: una materia en C impar y par NO
+   // duplica horas. Solo se aplica si el Anexo NES está efectivamente cotejado.
+   const proof=(CFG.foEvidenciaNes||[]).find(x=>x.anio===y+1&&
+    (x.alternativa===(cur().alt||'A')||x.alternativa==='comun'));
+   if(proof?.estado==='cotejado_fuente_primaria'){
+    const ids=new Map(orientados.filter(x=>x.sourceHoursStatus==='nes_documentada')
+     .map(x=>[x.id,x]));
+    const total=[...ids.values()].reduce((n,x)=>n+Number(x.sourceWeeklyHours||0),0);
+    if(total!==plan.horasOrientacion)
+     errors.push({code:'BA_FO_CUPO_COTEJADO_'+y,
+      message:'Nivel '+y+': materias ubicadas '+total+' HC NES documentadas; el Anexo I prevé '+
+       plan.horasOrientacion+' HC de orientación. Corregir composición o revisar borrador histórico.',page:'6.3'});
+   }else warnings.push({code:'BA_FO_HORAS_DOCUMENTALES_PENDIENTES_'+y,
+    message:'Nivel '+y+': falta cotejar las horas individuales de esta orientación y alternativa con el Anexo NES. No se homologan automáticamente.',page:'6.3'});
    if(orientados.some(x=>x.legacyReference))
     warnings.push({code:'BA_FO_BLOQUES_HISTORICOS_'+y,
      message:'Nivel '+y+': se conservan ubicaciones de bloques FO antiguos. Sustituirlos por materias NES al revisar el PCI sin eliminar sus planes anteriores.',page:'6.5'});
@@ -650,12 +666,19 @@ function renderBa15OrientationPanel(){
    (item.horasOrientacion?Number(item.horasOrientacion)+' HC de materias propias de la orientación':'sin Formación Orientada')+
    extra+'</li>';
  });
+ const activeAlt=String(cur().alt||'A');
+ const audit=(CFG.foEvidenciaNes||[]).filter(x=>x.alternativa==='comun'||x.alternativa===activeAlt);
+ const auditList=audit.length?'<ul class="norma-list">'+audit.map(x=>
+   '<li>Nivel '+['','I','II','III','IV'][x.anio-1]+' · '+esc(x.estado==='cotejado_fuente_primaria'?
+    (x.sumaHorasNes+' HC NES cotejadas · '+x.fuente.norma):
+    'horas individuales pendientes de fuente oficial')+'</li>').join('')+'</ul>':'';
  panel.innerHTML='<div class="subhead">Formación Orientada · Resolución 1375/2025</div>'+
   '<p>Composición prescripta por nivel; el Anexo I (6.3) fija las cargas horarias, '+
   'pero las materias específicas dependen del diseño NES de la orientación de esta escuela.</p>'+
   '<ul class="norma-list">'+rows.join('')+'</ul>'+
   '<p><strong>Fase 1:</strong> la bolsa FO muestra las materias NES por orientación, año y alternativa A/B. '+
-  'No se asignan horas individuales automáticamente porque falta verificar su distribución específica en BA +15.</p>'+
+  'Las horas NES documentadas se distinguen de las que faltan cotejar y no implican homologación automática BA +15.</p>'+
+  '<p><strong>Alternativa '+esc(activeAlt)+' · evidencia NES:</strong></p>'+auditList+
   '<p><strong>Fase 2:</strong> los bloques FO de Media V2 son referencias de contenidos para vincular '+
   'a las materias; no se consideran materias homologadas del régimen BA +15.</p>'+
   '<p><small>El CCC corresponde a la acreditación de saberes previos de 1.º año NES '+
