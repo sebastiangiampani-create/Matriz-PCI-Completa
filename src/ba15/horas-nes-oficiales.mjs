@@ -47,9 +47,9 @@ const economia=Object.freeze({
 
 const sociales=Object.freeze({
  fuente:Object.freeze({
-  norma:'RES-321/MEGC/2015, Anexo VI',
-  url:'https://buenosaires.gob.ar/sites/default/files/media/document/2015/08/28/7779c38b6ce192c024a019e4c39fa1998324b6ef.pdf',
-  paginas:Object.freeze([47,48]),estado:'cotejado_con_anexo_oficial'
+  norma:'RES-321/MEGC/2015, Anexo VI rectificado por RES-1189/MEGC/2015',
+  url:'https://buenosaires.gob.ar/sites/default/files/media/document/2015/08/28/b2f87f5f9a500cbfcff4d1a6718aba51faeb81ac.pdf',
+  paginas:Object.freeze([25]),estado:'cotejado_con_anexo_rectificado'
  }),
  comun:Object.freeze({3:Object.freeze([
   materia('Introducción a las Ciencias Sociales y a las Humanidades',4)
@@ -68,9 +68,9 @@ const sociales=Object.freeze({
 });
 const turismo=Object.freeze({
  fuente:Object.freeze({
-  norma:'RES-321/MEGC/2015, Anexo XI',
-  url:'https://buenosaires.gob.ar/sites/default/files/media/document/2015/08/28/a5e30541ee6ee87fe9e0cf70a6b85003e22747af.pdf',
-  paginas:Object.freeze([46]),estado:'cotejado_con_anexo_oficial'
+  norma:'RES-321/MEGC/2015, Anexo XI rectificado por RES-1189/MEGC/2015',
+  url:'https://buenosaires.gob.ar/sites/default/files/media/document/2015/08/28/a457a78462d548464537a8aa8cf6d3dad5ed1200.pdf',
+  paginas:Object.freeze([21,22]),estado:'cotejado_con_anexo_rectificado'
  }),
  A:Object.freeze({
   3:Object.freeze([materia('Introducción al turismo',4)]),
