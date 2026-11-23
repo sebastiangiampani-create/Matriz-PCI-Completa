@@ -93,17 +93,47 @@ async function authorizedPci(s,body,requireEdit=false){
 }
 function allowedUnit(p,body){
  const component=body.component,kind=body.unit_kind,base=body.base_version;
- const combos={
+ const existing={
   comun:[['fg','area','fg-sec-aprende-v2/1'],['oferta','map','oferta-pci-orientacion-v1'],['fo','space','fo-sec-aprende-v2/1']],
   tecnica:[['oferta','map','oferta-tecnica-v1'],['fo','space','fo-tecnica-v1']],
   ba15:[['oferta','map','oferta-ba15-constructor-v1']]
  };
- return (combos[p.model]||[]).some(x=>x[0]===component&&x[1]===kind&&x[2]===base)
-   &&typeof body.unit_id==='string'&&body.unit_id.length>0&&body.unit_id.length<=240;
+ const v2={
+  comun:['mapa-original-v2-v1','v2-original-embedded-v1'],
+  tecnica:['mapa-v2-familia-tecnica-v1','v2-familia-tecnica-20261120/1'],
+  ba15:['mapa-v2-familia-ba15-v1','v2-familia-ba15-20261120/1']
+ }[p.model];
+ const validId=typeof body.unit_id==='string'&&body.unit_id.length>0&&body.unit_id.length<=240;
+ return validId&&(
+  (existing[p.model]||[]).some(x=>x[0]===component&&x[1]===kind&&x[2]===base)||
+  (component==='oferta'&&kind==='map'&&v2&&body.unit_id===v2[0]&&base===v2[1])
+ );
 }
 function documentIsScoped(p,body){
  const d=body.document;
  if(!object(d))return false;
+ // Sobre completo del motor V2 por PCI. No se admite un documento
+ // ajeno, ni mezclas de orientaciones/turnos, ni modificación de la identidad.
+ const v2Versions={
+  comun:'v2-original-embedded-v1',
+  tecnica:'v2-familia-tecnica-20261120/1',
+  ba15:'v2-familia-ba15-20261120/1'
+ };
+ if(body.component==='oferta'&&body.unit_kind==='map'&&
+    body.base_version===v2Versions[p.model]){
+  const v=d.v2;
+  return d.schema===body.base_version&&d.model===p.model
+   &&Number(d.schoolId)===Number(p.school_id)
+   &&d.pciId===p.pci_id&&d.orientationId===p.orientation_id
+   &&d.shiftId===p.shift_id&&d.processId===p.process_id
+   &&d.legacySha256===p.legacy_sha256
+   &&object(v)&&typeof v.active==='string'&&v.active.length>0&&v.active.length<=150
+   &&Array.isArray(v.selected)&&v.selected.length===1&&v.selected[0]===v.active
+   &&object(v.maps)&&Object.keys(v.maps).length===1&&object(v.maps[v.active])
+   &&(!v.maps[v.active].placements||object(v.maps[v.active].placements))
+   &&(!v.institutional||object(v.institutional));
+ }
+ // Mantener compatibilidad 1:1 con los documentos anteriores.
  if(p.model==='ba15'){
   return body.component==='oferta'&&d.schema==='ba15-constructor-v1'
    &&Number(d.schoolId)===Number(p.school_id)&&d.pciId===p.pci_id
