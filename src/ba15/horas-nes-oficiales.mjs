@@ -220,6 +220,28 @@ const informatica=Object.freeze({
  })
 });
 
+// EXCEPCIÓN real de Ciencias Naturales: el diseño NES prevé 4/5/16
+// HC de materias FO (y además Historia y TI orientadas 2+2 en 5.º),
+// no 4/9/12. No trasladar esas horas automáticamente a BA +15.
+const cienciasNaturales=Object.freeze({
+ fuente:Object.freeze({norma:'RES-321/MEGC/15 · Anexo V Ciencias Naturales',
+  url:'https://buenosaires.gob.ar/sites/default/files/media/document/2015/08/28/7e39add72a745c76d27b045fdf4334dc3db026f0.pdf',
+  paginas:[53,54],estado:'cotejado_con_excepcion_horaria'}),
+ comun:Object.freeze({3:Object.freeze([materia('Historia de la vida y de la Tierra',4)])}),
+ A:Object.freeze({
+  4:Object.freeze([materia('Ecología',3),materia('Filosofía de la Ciencia y la Tecnología',2)]),
+  5:Object.freeze([materia('Partículas, energía y cosmología',4),materia('Radiación y vida',4),
+   materia('Química, alimentación y salud',4),materia('Problemáticas científicas con impacto social',2),
+   materia('Arte y ciencia (Arte y ciencias naturales / Literatura, cine y ciencia)',2)])
+ }),
+ B:Object.freeze({
+  4:Object.freeze([materia('Estructura del Universo',3),materia('Filosofía de la Ciencia y la Tecnología',2)]),
+  5:Object.freeze([materia('Ecología',4),materia('Energía, radiación y vida',4),
+   materia('Química, alimentación y salud',4),materia('Problemáticas científicas con impacto social',2),
+   materia('Arte y ciencia (Arte y ciencias naturales / Literatura, cine y ciencia)',2)])
+ })
+});
+
 export const NES_PLANES_FO_COTEJADOS=Object.freeze({
  'Economía y Administración':economia,
  'Ciencias Sociales y Humanidades':sociales,
@@ -235,7 +257,8 @@ export const NES_PLANES_FO_COTEJADOS=Object.freeze({
  'Educación':educacion,
  'Energía y Sustentabilidad':energiaSustentabilidad,
  'Matemática y Física':matematicaFisica,
- 'Informática':informatica
+ 'Informática':informatica,
+ 'Ciencias Naturales':cienciasNaturales
 });
 const canon=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
@@ -257,13 +280,16 @@ export function cotejarHorasNesOrientadas({orientacion,alternativa,anio,materias
    fuente:null};
  }
  const sumaHorasNes=documentadas.reduce((acc,m)=>acc+m.horas,0);
- if(sumaHorasNes!==minutas[year])
+ const excepcionNaturales=orientacion==='Ciencias Naturales'&&
+  ((year===4&&sumaHorasNes===5)||(year===5&&sumaHorasNes===16));
+ if(sumaHorasNes!==minutas[year]&&!excepcionNaturales)
   throw new Error('La tabla documental '+orientacion+' '+year+' no coincide con la franja FO de '+minutas[year]+' HC.');
  const actuales=new Set(nombresReferencia.map(canon)),oficiales=new Set(documentadas.map(m=>canon(m.nombre)));
  const noOficiales=nombresReferencia.filter(x=>!oficiales.has(canon(x)));
  const faltantes=documentadas.filter(x=>!actuales.has(canon(x.nombre))).map(x=>x.nombre);
- return {estado:'cotejado_fuente_primaria',orientacion,alternativa:alt,anio:year,
-  cupoPrevisto:minutas[year],sumaHorasNes,coincideCupo:true,
+ return {estado:excepcionNaturales?'cotejado_con_excepcion_horaria':'cotejado_fuente_primaria',orientacion,alternativa:alt,anio:year,
+  cupoPrevisto:minutas[year],sumaHorasNes,coincideCupo:!excepcionNaturales,
+  requiereAdaptacionBa15:excepcionNaturales,
   discrepancias:{enCatalogoSinFuente:noOficiales,enFuenteSinCatalogo:faltantes},
   materias:documentadas.map(m=>({nombre:m.nombre,horasNes:m.horas,estado:'nes_documentada'})),
   fuente:{...plan.fuente}};
