@@ -738,12 +738,78 @@ function renderBa15OrientationPanel(){
   '<p><small>El CCC corresponde a la acreditación de saberes previos de 1.º año NES '+
   'y no suma cuatrimestres ni materias a este mapa C1–C8.</small></p>';
 }
+function renderBa15VirtualPanel(){
+ if(CFG.model!=='ba15')return;
+ const hero=$id('offer')?.querySelector('.hero');if(!hero)return;
+ let panel=$id('ba15VirtualPanel');
+ if(!panel){
+  panel=document.createElement('section');panel.id='ba15VirtualPanel';
+  panel.className='card';($id('ba15OrientationPlan')||hero).after(panel);
+ }
+ const open=[...panel.querySelectorAll('details[open]')].map(x=>Number(x.dataset.c));
+ const config=baVirtualState(),audit=baVirtualAudit();
+ let html='<div class="subhead">Presencialidad y actividades virtuales · RES-105/SSGDA/2026</div>'+
+  '<p><strong>27 HC presenciales + 11 HC asincrónicas semanales</strong>: '+
+  'se aplica solo al turno noche de las escuelas incluidas en el Anexo II. '+
+  'Las actividades asincrónicas no son obligatoriamente videollamadas en vivo.</p>'+
+  '<label for="ba15AmbientesAlcance">¿Está alcanzada esta escuela y turno?</label> '+
+  '<select id="ba15AmbientesAlcance">'+[
+   ['pendiente_confirmacion','Pendiente de confirmar con Anexo II'],
+   ['aplica_anexo_ii_turno_noche','Sí, turno noche incluido en Anexo II'],
+   ['no_alcanzado','No, no está alcanzado por esta resolución']
+  ].map(([value,label])=>'<option value="'+value+'"'+
+   (config.aplicacion===value?' selected':'')+'>'+esc(label)+'</option>').join('')+
+  '</select>';
+ if(audit.aplica){
+  const passed=audit.periodos.filter(x=>x.completo&&x.presenciales===27&&x.asincronicas===11).length;
+  html+='<p>Ingresá las <strong>horas asincrónicas</strong> de cada espacio. Las presenciales '+
+   'se calculan automáticamente. La Formación Orientada figura como cupo global '+
+   'hasta completar las materias individuales.</p>'+
+   '<p><strong>Cuatrimestres con distribución 27 + 11:</strong> '+passed+' de 8.</p>';
+  for(const item of audit.periodos){
+   const t=item.cuatrimestre,period=config.distribucion['c'+t]||{};
+   const expand=open.length?open.includes(t):t===1;
+   html+='<details data-c="'+t+'"'+(expand?' open':'')+'><summary><strong>Nivel '+
+    item.nivel+' · C'+t+'</strong> · '+(item.completo?
+    item.presenciales+' HC presenciales + '+item.asincronicas+' HC asincrónicas':
+    'distribución pendiente')+'</summary><div style="overflow-x:auto"><table style="width:100%">'+
+    '<thead><tr><th>Espacio curricular</th><th>Total HC</th>'+
+    '<th>HC asincrónicas</th><th>HC presenciales</th></tr></thead><tbody>';
+   for(const e of item.detalle){
+    const raw=period[e.nombre],value=raw===undefined||raw===null?'':String(raw);
+    html+='<tr><td>'+esc(e.nombre)+'</td><td>'+e.horas+'</td>'+
+     '<td><input type="number" min="0" max="'+e.horas+'" step="1" data-vterm="'+t+
+     '" data-vname="'+esc(e.nombre)+'" aria-label="C'+t+' horas asincrónicas de '+esc(e.nombre)+
+     '" value="'+esc(value)+'" style="width:5rem"></td><td>'+
+     (e.presenciales===null?'—':e.presenciales)+'</td></tr>';
+   }
+   html+='</tbody></table></div></details>';
+  }
+  if(audit.errores.length)
+   html+='<p><strong>Revisión:</strong> '+audit.errores.length+
+    ' observaciones. '+esc(audit.errores.slice(0,3).map(e=>e.message).join(' · '))+'</p>';
+ }else if(audit.advertencias.length)
+  html+='<p>'+esc(audit.advertencias.map(e=>e.message).join(' '))+'</p>';
+ panel.innerHTML=html;
+ panel.querySelector('#ba15AmbientesAlcance').onchange=e=>{
+  config.aplicacion=e.target.value;cur().valid=false;save();renderBa15VirtualPanel();
+ };
+ panel.querySelectorAll('[data-vterm]').forEach(el=>el.onchange=()=>{
+  const term='c'+el.dataset.vterm,name=el.dataset.vname;
+  if(!config.distribucion[term])config.distribucion[term]={};
+  if(el.value==='')delete config.distribucion[term][name];
+  else config.distribucion[term][name]=Number(el.value);
+  cur().valid=false;save();renderBa15VirtualPanel();
+ });
+}
+
 const previousRenderOffer=renderOffer;
 renderOffer=function(...args){const result=previousRenderOffer(...args);
- renderTechPrescriptionPanel();renderBa15OrientationPanel();return result};
+ renderTechPrescriptionPanel();renderBa15OrientationPanel();renderBa15VirtualPanel();return result};
 if(CFG.model==='tecnica')window.addEventListener('pci-app-ready',()=>{
  prearmTechnicalAnnuals();renderTechPrescriptionPanel();
 });
+window.V2ModalVirtual={evaluate:baVirtualAudit,state:baVirtualState,render:renderBa15VirtualPanel};
 window.V2ModalMap={model:CFG.model,levels:LV,terms:TERMS,rowDefs,canAssign,
  assign:assignModal,move:moveModal,remove:removeModal,
  profile:TECH_PROFILE,auditAnnuals,prearmAnnuals:prearmTechnicalAnnuals};
