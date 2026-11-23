@@ -117,6 +117,39 @@ try{
   const rules=await page.locator('#rulesModal').textContent();
   assert.match(rules,/CCC acredita equivalencias/);
   assert.match(rules,/formatos cuatrimestrales se organizan por separado/);
+  // La virtualidad de RES-105/26 no se activa automáticamente en todas las escuelas.
+  assert.equal(await page.locator('#ba15AmbientesAlcance').inputValue(),'pendiente_confirmacion');
+  assert.equal(await page.evaluate(()=>window.V2ModalVirtual.evaluate().aplica),false);
+  await page.locator('#ba15AmbientesAlcance').selectOption('no_alcanzado');
+  assert.equal(await page.evaluate(()=>window.V2ModalVirtual.evaluate().errores.length),0);
+  await page.locator('#ba15AmbientesAlcance').selectOption('aplica_anexo_ii_turno_noche');
+  const initialVirtual=await page.evaluate(()=>window.V2ModalVirtual.evaluate());
+  assert.equal(initialVirtual.aplica,true);
+  assert.ok(initialVirtual.errores.some(x=>x.code==='BA_VIRTUAL_INCOMPLETA_C1'));
+  const virtualValid=await page.evaluate(()=>{
+    const cfg=window.V2ModalVirtual.state(),subjects=window.__V2_MODAL.subjects;
+    for(let c=1;c<=8;c++){
+      let remaining=11;
+      const level=Math.ceil(c/2),d={};
+      for(const s of subjects.filter(x=>x.origin==='FG'&&x.year===level)){
+        const max=s.format==='troncal'?Math.floor(s.weeklyHours*.2):
+          ['Educación Física','Tutoría'].includes(s.name)?0:s.weeklyHours;
+        const count=Math.min(max,remaining);
+        d[s.name]=count;remaining-=count;
+      }
+      if(remaining!==0)throw Error('La estructura no admite distribuir las 11 HC virtuales en C'+c);
+      cfg.distribucion['c'+c]=d;
+    }
+    window.V2ModalVirtual.render();
+    const result=window.V2ModalVirtual.evaluate();
+    return {errors:result.errores,complete:result.completa,totals:result.periodos.map(x=>
+      [x.presenciales,x.asincronicas]),persisted:!!state.maps[state.active].ba15Ambientes};
+  });
+  assert.deepEqual(virtualValid.errors,[],'Distribución 27/11 válida en cada C.');
+  assert.equal(virtualValid.complete,true);
+  assert.equal(virtualValid.persisted,true);
+  assert.deepEqual(virtualValid.totals,Array(8).fill([27,11]));
+  assert.match(await page.locator('#ba15VirtualPanel').innerText(),/8 de 8/);
   await mkdir('test-artifacts/v2-modalidades',{recursive:true});
   await page.screenshot({path:'test-artifacts/v2-modalidades/ba15-norma.png',fullPage:true});
   assert.deepEqual(errors,[]);
