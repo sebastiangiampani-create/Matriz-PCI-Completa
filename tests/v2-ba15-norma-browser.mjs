@@ -32,8 +32,16 @@ try{
   assert.match(foPlan,/Nivel III.*9 HC/);
   assert.match(foPlan,/Nivel IV.*12 HC/);
   assert.match(foPlan,/Historia Orientada 2 HC/);
-  assert.match(foPlan,/no como asignaturas oficialmente homologadas/);
+  assert.match(foPlan,/bolsa FO muestra las materias NES/);
+  assert.match(foPlan,/Fase 2.*bloques FO de Media V2/);
 
+  // La alternativa B se puede inspeccionar sin perder la A ni tocar otros PCI.
+  await page.locator('#bagContent [data-bag-year="3"]').click();
+  await page.locator('#bagContent [data-fo-alt="B"]').click();
+  assert.equal(await page.evaluate(()=>state.maps[state.active].alt),'B');
+  assert.match(await page.locator('#bagContent').innerText(),/Advertencia sobre la fuente/);
+  await page.locator('#bagContent [data-fo-alt="A"]').click();
+  assert.equal(await page.evaluate(()=>state.maps[state.active].alt),'A');
   const checks=await page.evaluate(()=>{
     const M=window.V2ModalMap,S=window.__V2_MODAL.subjects;
     const by=(n,y)=>S.find(s=>s.name===n&&s.year===y&&s.origin==='FG');
@@ -95,12 +103,12 @@ try{
   assert.equal(result.structurallyConsistent,true,'La estructura está completa en C1-C8.');
   assert.equal(result.homologated,false,'El motor no debe afirmar homologación pedagógica FO.');
   assert.ok(result.warnings.includes('BA_FO_REFERENCIA_PENDIENTE'),'Se declara el alcance documental FO.');
-  for(const y of [2,3,4])assert.ok(result.warnings.includes('BA_FO_BLOQUES_REFERENCIA_'+y),
-    'Los bloques de Media no deben contabilizarse como materias homologadas en Nivel '+y);
+  for(const y of [2,3,4])assert.ok(result.warnings.includes('BA_FO_MATERIAS_NES_PENDIENTES_'+y),
+    'Las materias NES todavía no deben presentarse como homologadas en BA +15 · Nivel '+y);
   await page.locator('#validateBtn').click();
   await page.waitForFunction(()=>/Estructura curricular consistente · RES-1375-MEDGC-25/.test(document.querySelector('#validation')?.textContent||''));
   assert.doesNotMatch(await page.locator('#validation').textContent(),/El mapa no cumple la norma/);
-  assert.match(await page.locator('#validation').textContent(),/Faltan identificar y contrastar las materias reales/);
+  assert.match(await page.locator('#validation').textContent(),/Falta verificar las cargas individuales/);
   const audit=await page.evaluate(()=>{
     return structuredClone(state.maps[state.active].normaComposicion);
   });
