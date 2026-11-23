@@ -66,7 +66,7 @@ test('BA +15: las franjas FO oficiales son 0, 4, 9, 12+2+2 horas y los bloques M
 
 test('BA +15: Fase 1 toma las materias NES exactas según orientación y alternativa',async()=>{
  const p=await loadV2ModalProfile({model:'ba15',orientation:'economia_administracion'});
- const nivel2=p.subjects.filter(s=>s.origin==='FO'&&s.year===2);
+ const nivel2=p.subjects.filter(s=>s.origin==='FO'&&s.year===2&&!s.legacyReference);
  assert.deepEqual(nivel2.map(x=>x.name),['Organizaciones']);
  assert.ok(nivel2.every(x=>x.alternative===null&&x.sourceYear===3));
  assert.ok(p.subjects.some(x=>x.origin==='FO'&&x.year===3&&x.alternative==='A'&&x.name==='Sistemas Administrativos'));
