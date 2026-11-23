@@ -1,0 +1,80 @@
+/**
+ * Evidencia documental por asignatura para el Régimen BA +15.
+ *
+ * Fuente primaria: RES-321/MEGC/2015, Anexo VII,
+ * "Bachillerato con orientación en Economía y Administración",
+ * páginas impresas 53-54, sección Alternativas de Estructura Curricular.
+ * RES-1375/MEDGC/25, Anexo I, 6.3 incorpora la estructura NES de 38 HC.
+ *
+ * Este registro conserva SEPARADOS dos hechos:
+ *   - Horas NES verificadas en el documento de la orientación.
+ *   - Homologación BA +15: NO afirmada por la mera coincidencia de horas NES.
+ * Nunca se imputan horas a una materia sin respaldo documental.
+ */
+const fuenteEconomia=Object.freeze({
+  norma:'RES-321/MEGC/2015, Anexo VII',
+  url:'https://buenosaires.gob.ar/sites/default/files/media/document/2015/08/28/743757bb6d7cce0611bc87ce520ab1bd46349615.pdf',
+  paginas:Object.freeze([53,54]),
+  estado:'cotejado_con_anexo_oficial'
+});
+const materia=(nombre,horas)=>Object.freeze({nombre,horas});
+const economia=Object.freeze({
+  fuente:fuenteEconomia,
+  comun:Object.freeze({
+    3:Object.freeze([materia('Organizaciones',4)])
+  }),
+  A:Object.freeze({
+    4:Object.freeze([
+      materia('Economía',3),materia('Sistemas Administrativos',3),
+      materia('Sistemas de Información Contable',3)
+    ]),
+    5:Object.freeze([
+      materia('Economía',3),materia('Proyecto Organizacional',3),
+      materia('Contabilidad Patrimonial y de Gestión',3),materia('Derecho',3)
+    ])
+  }),
+  B:Object.freeze({
+    4:Object.freeze([
+      materia('Economía',3),materia('Sistemas Administrativos',3),
+      materia('Sistemas de Información Contable',3)
+    ]),
+    5:Object.freeze([
+      materia('Economía / Administración',3),materia('Proyecto Organizacional',3),
+      materia('Contabilidad Patrimonial y de Gestión',3),materia('Derecho',3)
+    ])
+  })
+});
+export const NES_PLANES_FO_COTEJADOS=Object.freeze({
+ 'Economía y Administración':economia
+});
+const canon=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+const fijo=name=>/^(historia orientada|tecnologias? de la informacion orientada)\b/.test(canon(name));
+const minutas={3:4,4:9,5:12};
+export function cotejarHorasNesOrientadas({orientacion,alternativa,anio,materiasReferencia=[]}){
+ const year=Number(anio),alt=alternativa==null?null:String(alternativa);
+ if(![3,4,5].includes(year)||year!==3&&!['A','B'].includes(alt))
+  throw new RangeError('Año o alternativa curricular NES inválidos.');
+ if(!Array.isArray(materiasReferencia))
+  throw new TypeError('La referencia de materias debe ser una lista.');
+ const plan=NES_PLANES_FO_COTEJADOS[orientacion];
+ const documentadas=plan?.[year===3?'comun':alt]?.[year];
+ const nombresReferencia=materiasReferencia.map(x=>String(x||'').trim()).filter(x=>x&&!fijo(x));
+ if(!documentadas){
+  return {estado:'pendiente_documental',orientacion,alternativa:alt,anio:year,
+   cupoPrevisto:minutas[year],sumaHorasNes:null,coincideCupo:null,discrepancias:[],
+   materias:nombresReferencia.map(nombre=>({nombre,horasNes:null,estado:'pendiente_documental'})),
+   fuente:null};
+ }
+ const sumaHorasNes=documentadas.reduce((acc,m)=>acc+m.horas,0);
+ if(sumaHorasNes!==minutas[year])
+  throw new Error('La tabla documental '+orientacion+' '+year+' no coincide con la franja FO de '+minutas[year]+' HC.');
+ const actuales=new Set(nombresReferencia.map(canon)),oficiales=new Set(documentadas.map(m=>canon(m.nombre)));
+ const noOficiales=nombresReferencia.filter(x=>!oficiales.has(canon(x)));
+ const faltantes=documentadas.filter(x=>!actuales.has(canon(x.nombre))).map(x=>x.nombre);
+ return {estado:'cotejado_fuente_primaria',orientacion,alternativa:alt,anio:year,
+  cupoPrevisto:minutas[year],sumaHorasNes,coincideCupo:true,
+  discrepancias:{enCatalogoSinFuente:noOficiales,enFuenteSinCatalogo:faltantes},
+  materias:documentadas.map(m=>({nombre:m.nombre,horasNes:m.horas,estado:'nes_documentada'})),
+  fuente:{...plan.fuente}};
+}
