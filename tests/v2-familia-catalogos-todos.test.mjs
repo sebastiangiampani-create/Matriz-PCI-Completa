@@ -42,14 +42,36 @@ test('BA +15: las franjas FO oficiales son 0, 4, 9, 12+2+2 horas y los bloques M
  assert.equal(auditarHorasFoBa15(altered)[2].valido,false,'No homologar una estructura con horas FO alteradas');
  const p=await loadV2ModalProfile({model:'ba15',orientation:'economia_administracion'});
  assert.deepEqual(p.foHoursAudit.map(x=>x.valido),[true,true,true,true]);
- assert.equal(p.foSubjectStatus,'bloques_de_referencia_pendientes_de_plan_por_orientacion');
+ assert.equal(p.foSubjectStatus,'materias_nes_por_nivel_y_alternativa_pendientes_de_validacion_ba15');
+ assert.equal(p.foSource.levelMap[3],2);
+ assert.equal(p.foSource.levelMap[4],3);
+ assert.equal(p.foSource.levelMap[5],4);
+ assert.ok(p.foAlternatives.includes('A'));
  assert.equal(p.foPlan.homologacionAutomatica,false);
  for(const subject of p.subjects.filter(x=>x.origin==='FO')){
-  assert.equal(subject.referenceOnly,true,'Un bloque FO v96 no es materia oficial de BA +15');
-  assert.equal(subject.confirmedBa15Subject,false);
-  assert.equal(subject.weeklyHours,null,'No inventar horas por bloque');
+  assert.equal(subject.referenceOnly,false,'Fase 1 debe usar asignaturas NES, no bloques de contenidos');
+  assert.equal(subject.sourceType,'asignatura_nes');
+  assert.equal(subject.confirmedBa15Subject,false,'La materia NES no equivale a homologación BA +15');
+  assert.equal(subject.year,subject.sourceYear-1);
+  assert.equal(subject.weeklyHours,null,'No inventar horas por asignatura');
+  if(subject.year>2)assert.ok(['A','B'].includes(subject.alternative));
  }
  assert.ok(p.contents.fo.every(x=>x.referenceOnly===true&&x.levelBasis==='no_declarado_en_fuente_FO'));
+});
+
+test('BA +15: Fase 1 toma las materias NES exactas según orientación y alternativa',async()=>{
+ const p=await loadV2ModalProfile({model:'ba15',orientation:'economia_administracion'});
+ const nivel2=p.subjects.filter(s=>s.origin==='FO'&&s.year===2);
+ assert.deepEqual(nivel2.map(x=>x.name),['Organizaciones']);
+ assert.ok(nivel2.every(x=>x.alternative===null&&x.sourceYear===3));
+ assert.ok(p.subjects.some(x=>x.origin==='FO'&&x.year===3&&x.alternative==='A'&&x.name==='Sistemas Administrativos'));
+ assert.ok(p.subjects.some(x=>x.origin==='FO'&&x.year===4&&x.alternative==='A'&&x.name==='Proyecto Organizacional'));
+ assert.ok(p.subjects.some(x=>x.origin==='FO'&&x.year===3&&x.alternative==='B'));
+ assert.ok(p.foWarnings.some(x=>/Alternativa B/.test(x)),'Conservar la advertencia del catálogo NES sobre Economía B.');
+ assert.equal(p.subjects.filter(s=>s.origin==='FO'&&s.year===4&&/historia.*orientad/i.test(s.name)).length,0,'Historia Orientada ya está prescrita por BA +15.');
+ assert.equal(p.subjects.filter(s=>s.origin==='FO'&&s.year===4&&/tecnolog.*informaci.*orientad/i.test(s.name)).length,0,'TI Orientada ya está prescrita por BA +15.');
+ const e=await loadV2ModalProfile({model:'ba15',orientation:'energia_sustentabilidad'});
+ assert.deepEqual(e.foAlternatives,['A'],'Sin alternativa B no se ofrecen asignaturas inventadas.');
 });
 
 test('Técnica: todas las especialidades cargan seis niveles con formación técnico-específica', async()=>{
