@@ -33,7 +33,7 @@ try{
   assert.match(foPlan,/Nivel IV.*12 HC/);
   assert.match(foPlan,/Historia Orientada 2 HC/);
   assert.match(foPlan,/bolsa FO muestra las materias NES/);
-  assert.match(foPlan,/Fase 2.*bloques FO de Media V2/);
+  assert.match(foPlan,/Fase 2: los bloques FO de Media son referencias/);
 
   // La alternativa B se puede inspeccionar sin perder la A ni tocar otros PCI.
   await page.locator('#bagContent [data-bag-year="3"]').click();
