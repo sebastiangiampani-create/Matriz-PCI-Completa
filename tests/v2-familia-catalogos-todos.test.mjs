@@ -60,7 +60,8 @@ test('BA +15: las franjas FO oficiales son 0, 4, 9, 12+2+2 horas y los bloques M
  const old=p.subjects.filter(x=>x.legacyReference);
  assert.ok(old.length>0,'Conservar identificadores de las referencias FO de borradores antiguos.');
  assert.ok(old.every(x=>x.referenceOnly===true&&x.confirmedBa15Subject===false));
- assert.ok(old.every(x=>x.id.startsWith('ba15-fo-')),'Los IDs de la versión anterior permanecen legibles.');
+ assert.ok(old.every(x=>x.id.startsWith('ba15-fo-')||x.id.startsWith('ba15-nes-fo-')),
+  'Permanecen legibles los IDs históricos tanto de bloques FO como de materias NES A/B.');
 
 });
 
