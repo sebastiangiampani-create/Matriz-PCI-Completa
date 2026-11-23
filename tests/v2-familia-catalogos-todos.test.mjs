@@ -238,6 +238,17 @@ test('BA +15: Comunicación alternativa A requiere talleres cuatrimestrales, B t
  assert.ok(b.some(s=>s.year===4&&s.name==='Taller anual de Producción Gráfica'&&s.sourceWeeklyHours===2));
  assert.ok(p.foWarnings.some(x=>/Nivel II/.test(x)));
 });
+test('BA +15: Energía y Sustentabilidad tiene un único plan oficial 4/9/12',async()=>{
+ const p=await loadV2ModalProfile({model:'ba15',orientation:'energia_sustentabilidad'});
+ assert.deepEqual(p.foAlternatives,['A']);
+ assert.equal(p.foEvidenciaResumen.pendientes,0);
+ const sums=[4,9,12];
+ for(const [idx,level] of [2,3,4].entries()){
+  const official=p.subjects.filter(x=>x.origin==='FO'&&!x.legacyReference&&x.year===level);
+  assert.equal(official.reduce((n,x)=>n+x.sourceWeeklyHours,0),sums[idx]);
+  assert.ok(official.every(x=>x.confirmedBa15Subject===false));
+ }
+});
 test('Técnica: todas las especialidades cargan seis niveles con formación técnico-específica', async()=>{
   const ids=(await readdir(new URL('../data/tecnica/priorizados/',import.meta.url))).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5)).filter(id=>id!=='tecnologia_representacion');
   assert.ok(ids.length>=26);
