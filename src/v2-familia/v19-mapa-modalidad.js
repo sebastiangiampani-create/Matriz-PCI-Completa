@@ -604,8 +604,32 @@ function renderTechPrescriptionPanel(){
   TECH_PROFILE.sociales.obligatorios+' obligatorias y '+TECH_PROFILE.sociales.electivos+
   ' electivas). Para talleres, integraciones y prácticas, confirmar con el plan de la especialidad las composiciones específicas. No se exige consignar horas para construir el mapa. La integración de la Especialidad está exceptuada del máximo general de 9 HC; Sociales y Naturales conservan ese límite.</p>';
 }
+function renderBa15OrientationPanel(){
+ if(CFG.model!=='ba15'||!BA_FO_PLAN.length)return;
+ const hero=$id('offer')?.querySelector('.hero');if(!hero)return;
+ let panel=$id('ba15OrientationPlan');
+ if(!panel){panel=document.createElement('section');panel.id='ba15OrientationPlan';
+  panel.className='card';hero.after(panel);}
+ const rows=BA_FO_PLAN.map(item=>{
+  const fixed=item.materiasFijas||[];
+  const extra=fixed.length?' + '+fixed.map(x=>esc(x.nombre)+' '+Number(x.horas)+' HC').join(' + '):'';
+  return '<li><strong>Nivel '+['I','II','III','IV'][item.nivel-1]+'</strong>: '+
+   (item.horasOrientacion?Number(item.horasOrientacion)+' HC de materias propias de la orientación':'sin Formación Orientada')+
+   extra+'</li>';
+ });
+ panel.innerHTML='<div class="subhead">Formación Orientada · Resolución 1375/2025</div>'+
+  '<p>Composición prescripta por nivel; el Anexo I (6.3) fija las cargas horarias, '+
+  'pero las materias específicas dependen del diseño NES de la orientación de esta escuela.</p>'+
+  '<ul class="norma-list">'+rows.join('')+'</ul>'+
+  '<p><strong>Atención:</strong> la bolsa FO incluye bloques de contenidos de Media V2 como referencias, '+
+  'no como asignaturas oficialmente homologadas de BA +15. La escuela debe identificar '+
+  'las materias correspondientes a sus cargas y asociar los contenidos.</p>'+
+  '<p><small>El CCC corresponde a la acreditación de saberes previos de 1.º año NES '+
+  'y no suma cuatrimestres ni materias a este mapa C1–C8.</small></p>';
+}
 const previousRenderOffer=renderOffer;
-renderOffer=function(...args){const result=previousRenderOffer(...args);renderTechPrescriptionPanel();return result};
+renderOffer=function(...args){const result=previousRenderOffer(...args);
+ renderTechPrescriptionPanel();renderBa15OrientationPanel();return result};
 if(CFG.model==='tecnica')window.addEventListener('pci-app-ready',()=>{
  prearmTechnicalAnnuals();renderTechPrescriptionPanel();
 });
