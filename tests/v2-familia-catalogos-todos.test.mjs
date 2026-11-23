@@ -81,9 +81,9 @@ test('BA +15: Fase 1 toma las materias NES exactas según orientación y alterna
  assert.deepEqual(e.foAlternatives,['A'],'Sin alternativa B no se ofrecen asignaturas inventadas.');
 });
 
-test('BA +15: cotejo automático de diez orientaciones con fuente NES y sumas 4/9/12 por alternativa',async()=>{
+test('BA +15: cotejo automático de doce orientaciones con fuente NES y sumas 4/9/12 por alternativa',async()=>{
  const verified=['economia_administracion','ciencias_sociales_humanidades','turismo','educacion_fisica',
-  'arte_artes_visuales','arte_musica','arte_teatro','agro_ambiente','lenguas','literatura'];
+  'arte_artes_visuales','arte_musica','arte_teatro','agro_ambiente','lenguas','literatura','comunicacion','educacion'];
  for(const orientation of verified){
   const p=await loadV2ModalProfile({model:'ba15',orientation});
   const records=p.foEvidenciaNes;
@@ -227,6 +227,16 @@ test('BA +15: Orientación Agro y Ambiente conserva las excepciones instituciona
   assert.ok(list.some(x=>/Agro en la Ciudad/i.test(x.name)));
   assert.ok(list.every(x=>x.confirmedBa15Subject===false));
  }
+});
+test('BA +15: Comunicación alternativa A requiere talleres cuatrimestrales, B talleres anuales y otra introducción',async()=>{
+ const p=await loadV2ModalProfile({model:'ba15',orientation:'comunicacion'});
+ const a=p.subjects.filter(s=>s.origin==='FO'&&!s.legacyReference&&s.alternative==='A');
+ const b=p.subjects.filter(s=>s.origin==='FO'&&!s.legacyReference&&s.alternative==='B');
+ assert.ok(a.some(s=>s.year===2&&s.name==='Introducción a la Comunicación'));
+ assert.ok(b.some(s=>s.year===2&&s.name==='Introducción al Estudio de la Comunicación'));
+ assert.ok(a.some(s=>s.year===4&&s.name==='Taller cuatrimestral de Producción en Lenguajes Multimediales'&&s.sourceWeeklyHours===5));
+ assert.ok(b.some(s=>s.year===4&&s.name==='Taller anual de Producción Gráfica'&&s.sourceWeeklyHours===2));
+ assert.ok(p.foWarnings.some(x=>/Nivel II/.test(x)));
 });
 test('Técnica: todas las especialidades cargan seis niveles con formación técnico-específica', async()=>{
   const ids=(await readdir(new URL('../data/tecnica/priorizados/',import.meta.url))).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5)).filter(id=>id!=='tecnologia_representacion');
