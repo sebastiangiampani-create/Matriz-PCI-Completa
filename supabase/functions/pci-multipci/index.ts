@@ -129,7 +129,7 @@ function documentIsScoped(p,body){
    &&d.legacySha256===p.legacy_sha256
    &&object(v)&&typeof v.active==='string'&&v.active.length>0&&v.active.length<=150
    &&Array.isArray(v.selected)&&v.selected.length===1&&v.selected[0]===v.active
-   &&object(v.maps)&&Object.keys(v.maps).length===1&&object(v.maps[v.active])
+   &&object(v.maps)&&Object.keys(v.maps).length>0&&Object.keys(v.maps).length<=80&&object(v.maps[v.active])
    &&(!v.maps[v.active].placements||object(v.maps[v.active].placements))
    &&(!v.institutional||object(v.institutional));
  }
