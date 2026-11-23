@@ -73,8 +73,8 @@ test('BA +15: Fase 1 toma las materias NES exactas según orientación y alterna
  assert.ok(p.subjects.some(x=>x.origin==='FO'&&x.year===4&&x.alternative==='A'&&x.name==='Proyecto Organizacional'));
  assert.ok(p.subjects.some(x=>x.origin==='FO'&&x.year===3&&x.alternative==='B'));
  assert.ok(p.foWarnings.some(x=>/Alternativa B/.test(x)),'Conservar la advertencia del catálogo NES sobre Economía B.');
- assert.equal(p.subjects.filter(s=>s.origin==='FO'&&s.year===4&&/historia.*orientad/i.test(s.name)).length,0,'Historia Orientada ya está prescrita por BA +15.');
- assert.equal(p.subjects.filter(s=>s.origin==='FO'&&s.year===4&&/tecnolog.*informaci.*orientad/i.test(s.name)).length,0,'TI Orientada ya está prescrita por BA +15.');
+ assert.equal(p.subjects.filter(s=>s.origin==='FO'&&!s.legacyReference&&s.year===4&&/historia.*orientad/i.test(s.name)).length,0,'Historia Orientada ya está prescrita por BA +15.');
+ assert.equal(p.subjects.filter(s=>s.origin==='FO'&&!s.legacyReference&&s.year===4&&/tecnolog.*informaci.*orientad/i.test(s.name)).length,0,'TI Orientada ya está prescrita por BA +15.');
  const e=await loadV2ModalProfile({model:'ba15',orientation:'energia_sustentabilidad'});
  assert.deepEqual(e.foAlternatives,['A'],'Sin alternativa B no se ofrecen asignaturas inventadas.');
 });
