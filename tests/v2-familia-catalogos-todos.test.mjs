@@ -48,7 +48,7 @@ test('BA +15: las franjas FO oficiales son 0, 4, 9, 12+2+2 horas y los bloques M
  assert.equal(p.foSource.levelMap[5],4);
  assert.ok(p.foAlternatives.includes('A'));
  assert.equal(p.foPlan.homologacionAutomatica,false);
- for(const subject of p.subjects.filter(x=>x.origin==='FO')){
+ for(const subject of p.subjects.filter(x=>x.origin==='FO'&&!x.legacyReference)){
   assert.equal(subject.referenceOnly,false,'Fase 1 debe usar asignaturas NES, no bloques de contenidos');
   assert.equal(subject.sourceType,'asignatura_nes');
   assert.equal(subject.confirmedBa15Subject,false,'La materia NES no equivale a homologación BA +15');
@@ -57,6 +57,11 @@ test('BA +15: las franjas FO oficiales son 0, 4, 9, 12+2+2 horas y los bloques M
   if(subject.year>2)assert.ok(['A','B'].includes(subject.alternative));
  }
  assert.ok(p.contents.fo.every(x=>x.referenceOnly===true&&x.levelBasis==='no_declarado_en_fuente_FO'));
+ const old=p.subjects.filter(x=>x.legacyReference);
+ assert.ok(old.length>0,'Conservar identificadores de las referencias FO de borradores antiguos.');
+ assert.ok(old.every(x=>x.referenceOnly===true&&x.confirmedBa15Subject===false));
+ assert.ok(old.every(x=>x.id.startsWith('ba15-fo-')),'Los IDs de la versión anterior permanecen legibles.');
+
 });
 
 test('BA +15: Fase 1 toma las materias NES exactas según orientación y alternativa',async()=>{
