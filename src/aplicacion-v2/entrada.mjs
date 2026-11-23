@@ -127,9 +127,37 @@ async function iniciar() {
     ? await loadMatrixContents({base:new URL('data', location.href).href})
     : [];
   estado('Abriendo el constructor y el desarrollo curricular…');
+  // Escrituras V2 serializadas y con control optimista de revisiones.
+  // El borrador local se escribe PRIMERO. Un error de red o conflicto 409
+  // nunca destruye esa copia, ni se reintenta sin reconciliar las versiones.
+  let colaRemota=Promise.resolve(),bloqueoRemoto=null,secuencia=0;
+  const alGuardarBorrador=estadoV2=>{
+    const actual=++secuencia;
+    guardarBorrador(contexto,estadoV2,{revisionRemota:contexto.revisionRemota});
+    if(!contexto.remotoDisponible)return true;
+    const op=colaRemota.catch(()=>{}).then(async()=>{
+      if(bloqueoRemoto)throw bloqueoRemoto;
+      try{
+        const res=await cliente.guardarUnidad(contexto,estadoV2,{
+          expected_revision:contexto.revisionRemota
+        });
+        contexto.revisionRemota=res.revision;
+        // Si llegó otra modificación durante la red, nunca sobrescribir
+        // su borrador local con una versión anterior del documento.
+        if(actual===secuencia)
+          guardarBorrador(contexto,estadoV2,{revisionRemota:res.revision});
+        return true;
+      }catch(err){
+        bloqueoRemoto=err;
+        throw err;
+      }
+    });
+    colaRemota=op;
+    return op;
+  };
   await cargarAplicacionV2({
     contexto, estadoInicial, vista:route.view, fuenteLegado, matrixRows,
-    alGuardarBorrador:estadoV2 => guardarBorrador(contexto, estadoV2, {revisionRemota:contexto.revisionRemota}),
+    alGuardarBorrador,
   });
 }
 
