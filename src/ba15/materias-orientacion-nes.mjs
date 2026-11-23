@@ -31,7 +31,7 @@ export function construirMateriasOrientadasNesBa15({catalogo,orientacion}){
  const subjects=[],seen=new Set(),warnings=[],cotejos=[];
  const append=(names,nesYear,alternative)=>{
   const cotejo=cotejarHorasNesOrientadas({
-   orientacion,alternativa,anio:nesYear,materiasReferencia:names
+   orientacion,alternativa:alternative,anio:nesYear,materiasReferencia:names
   });
   cotejos.push({anio:nesYear,alternativa:alternative||'comun',estado:cotejo.estado,
    cupoPrevisto:cotejo.cupoPrevisto,sumaHorasNes:cotejo.sumaHorasNes,
