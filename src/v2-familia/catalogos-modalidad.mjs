@@ -121,6 +121,17 @@ export async function loadBa15V2Profile(orientationId){
  profile.foSubjectStatus='materias_nes_por_nivel_y_alternativa_pendientes_de_validacion_ba15';
  profile.foAlternatives=clone(ofertaNes.alternativas);
  profile.foWarnings=clone(ofertaNes.warnings);
+ // Cotejo de fuentes NES por orientación y alternativa, sin homologar
+ // automáticamente las horas del Régimen BA +15.
+ profile.foEvidenciaNes=clone(ofertaNes.cotejos);
+ profile.foEvidenciaResumen={
+  total:ofertaNes.cotejos.length,
+  verificadas:ofertaNes.cotejos.filter(x=>x.estado==='cotejado_fuente_primaria').length,
+  pendientes:ofertaNes.cotejos.filter(x=>x.estado!=='cotejado_fuente_primaria').length,
+  hayDiferencias:ofertaNes.cotejos.some(x=>x.discrepancias&&
+   (x.discrepancias.enCatalogoSinFuente?.length||x.discrepancias.enFuenteSinCatalogo?.length))
+ };
+
  profile.foSource={sourceFile:ofertaNes.sourceFile,version:ofertaNes.sourceVersion,
   levelMap:{3:2,4:3,5:4},defaultAlternative:ofertaNes.defaultAlternative,
   scope:'Plan NES de referencia. No incluye horas individuales ni homologación BA +15.'};
