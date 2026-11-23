@@ -96,8 +96,7 @@ try{
   });
   assert.equal(audit.estado,'estructura_consistente_pendiente_homologacion');
   assert.equal(audit.homologated,false);
-  await page.locator('#rulesBtn').click().catch(()=>{});
-  const rules=await page.locator('#rulesModal').innerText();
+  const rules=await page.locator('#rulesModal').textContent();
   assert.match(rules,/CCC acredita equivalencias/);
   assert.match(rules,/formatos cuatrimestrales se organizan por separado/);
   await mkdir('test-artifacts/v2-modalidades',{recursive:true});
