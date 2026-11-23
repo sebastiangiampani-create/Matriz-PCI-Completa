@@ -1,5 +1,5 @@
 /** Cliente institucional. El token permanece privado; ningún método se ejecuta al importar. */
-import {identidadPci,contratoV2,validarDocumentoV2} from './documentos.mjs';
+import {identidadPci,contratoV2,validarDocumentoV2,crearDocumentoV2} from './documentos.mjs';
 import {HISTORIC_LINK_SCHEMA} from '../vinculos-historicos.mjs';
 
 const API='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-multipci';
@@ -167,6 +167,26 @@ export function crearClienteEscuela({fetchImpl=globalThis.fetch,storage=globalTh
       throw error('DOCUMENTO_V2_INCOMPATIBLE','La unidad remota utiliza otra versión curricular.',409);
     return {...copy(result),revision,document:validarDocumentoV2(result.document,contexto)};
   }
+  /** Guarda el documento V2 completo en la unidad aislada de SU PCI.
+   * La revisión es obligatoria: una modificación concurrente devuelve 409.
+   * La UI conserva el borrador local y exige conciliar antes de reintentar.
+   */
+  async function guardarUnidad(contexto,estado,{expected_revision}={}){
+    const identity=identidadPci(contexto),id=scope(identity.schoolId);
+    if(!permisosSesion(session).puedeEditar)
+      throw error('SIN_PERMISO','La sesión institucional no permite modificar el PCI.',403);
+    if(!Number.isSafeInteger(expected_revision)||expected_revision<0)
+      throw error('REVISION_INVALIDA','Falta la revisión remota previa para guardar.');
+    const contract=contratoV2(identity.model),documento=crearDocumentoV2(estado,contexto);
+    const result=await request('save-school-pci-unit',{
+      school_id:id,pci_id:identity.pciId,component:contract.component,
+      unit_kind:contract.unitKind,unit_id:contract.unitId,
+      base_version:contract.baseVersion,expected_revision,document:documento
+    });
+    if(result.ok!==true||revisionOf(result.revision,true)!==expected_revision+1)
+      throw error('GUARDADO_NO_CONFIRMADO','El servidor no confirmó una nueva revisión de este PCI.',409);
+    return {...copy(result),revision:Number(result.revision)};
+  }
   /** Alta explícita del formulario existente; no guarda documentos V2 ni legado. */
   async function crearPci(schoolId,fields){
     const id=scope(schoolId);
@@ -196,5 +216,5 @@ export function crearClienteEscuela({fetchImpl=globalThis.fetch,storage=globalTh
     return copy(result);
   }
   return Object.freeze({validarSesion,listarEscuelas,listarPcis,obtenerPci,obtenerVinculos,
-    obtenerUnidad,crearPci,guardarVinculos});
+    obtenerUnidad,guardarUnidad,crearPci,guardarVinculos});
 }
