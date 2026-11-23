@@ -89,8 +89,9 @@ try{
  await editor.selectOption('#orientation','economia_administracion');
  await editor.selectOption('#pciShift','manana');
  await editor.locator('#formCreatePci button[type="submit"]').click();
- await editor.locator('#offerPane:not([hidden])').waitFor({timeout:25000});
- await editor.waitForFunction(()=>document.querySelector('#mapBody')?.children.length===14,null,{timeout:20000});
+ await editor.locator('#v2OriginalPane:not([hidden])').waitFor({timeout:25000});
+ await editor.frameLocator('#v2OriginalFrame').locator('#matrix .grid.levels').waitFor({timeout:30000});
+  assert.equal(await editor.frameLocator('#v2OriginalFrame').locator('#matrix .grid.levels .level').count(),5);
  assert.equal(created,1,'Debe persistirse un primer PCI');
  assert.deepEqual([lastCreate.school_id,lastCreate.model,lastCreate.shift_id,lastCreate.orientation_id],
    [schoolId,'comun','manana','economia_administracion']);
@@ -112,10 +113,10 @@ try{
  await referente.selectOption('#orientation','comunicacion');
  await referente.selectOption('#pciShift','tarde');
  await referente.locator('#formCreatePci button[type="submit"]').click();
- await referente.locator('#offerPane:not([hidden])').waitFor({timeout:25000});
+ await referente.locator('#v2OriginalPane:not([hidden])').waitFor({timeout:25000});
  assert.equal(created,2,'El referente debe crear un PCI dentro de su propia escuela');
  assert.equal(pcis.length,2,'Debe conservarse el PCI anterior');
- assert.equal(await referente.locator('#saveOffer').isDisabled(),true,'El referente no puede editar contenidos del PCI');
+ assert.equal(await referente.locator('#v2OriginalSave').isDisabled(),true,'El referente no puede guardar contenidos V2 del PCI');
  assert.equal(saveLegacy,0,'El referente no debe escribir FG histórica');
  await referente.screenshot({path:'test-artifacts/multipci-portal/prueba-referente-declara-orientacion.png',fullPage:false});
  // Camino 3: el enlace al editor viejo redirige una escuela nueva, sin guardarla.

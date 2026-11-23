@@ -37,7 +37,7 @@ export function inheritFgComposition({unit,composition,pci,area}){
  if(composition?.pciId!==pci.pci_id||Number(composition?.schoolId)!==Number(pci.school_id)||
    composition?.orientationId!==pci.orientation_id)
    throw Error('La composición de la Fase 1 pertenece a otro PCI.');
- const next=copy(unit),historical=copy(unit.groups),added=[],conflicts=[];
+ const next=copy(unit),historical=copy(unit.groups),added=[],updated=[],conflicts=[];
  const candidates=list(composition.groups).filter(g=>g.area===area&&
    list(g.members).some(m=>m.component==='FG'));
  for(const g of candidates){
@@ -47,11 +47,27 @@ export function inheritFgComposition({unit,composition,pci,area}){
    year:Number(m.year),hours:m.hours??null
   }));
   if(same){
-   // La Fase 2 ya desarrollada se conserva ante cambios de la Fase 1.
-   // Para modificar la composición se requiere conciliación explícita.
-   const old=JSON.stringify(list(same.curricularSubjects).map(m=>m.id).sort());
+   // Solo completar la composición de una plantilla FG ya existente,
+   // y solo si no contiene trabajo curricular. Nunca alterar planes.
+   const previous=list(same.curricularSubjects);
+   const old=JSON.stringify(previous.map(m=>m.id).sort());
    const current=JSON.stringify(members.map(m=>m.id).sort());
-   if(old!==current)conflicts.push(String(g.name));
+   if(old===current)continue;
+   const noContents=list(same.items).length===0;
+   const noTexts=!['objective','objectives','synopsis','context','practiceAxis','summary']
+    .some(k=>typeof same[k]==='string'&&same[k].trim());
+   const noPlanWork=list(same.plansBimestrales).every(p=>
+    !['objectives','synopsis','context'].some(k=>typeof p?.[k]==='string'&&p[k].trim())&&
+    !list(p?.contentIds).length &&
+    !Object.values(p?.stages||{}).some(stage=>typeof stage==='string'?stage.trim():
+     Object.values(stage||{}).some(value=>typeof value==='string'&&value.trim())));
+   if(g.source==='historical-copy'&&String(g.legacyGroupId)===String(same.id)&&
+     previous.length===0&&noContents&&noTexts&&noPlanWork){
+    same.curricularSubjects=members;
+    updated.push(String(g.name));
+   }else{
+    conflicts.push(String(g.name));
+   }
    continue;
   }
   next.groups.push({
@@ -65,5 +81,5 @@ export function inheritFgComposition({unit,composition,pci,area}){
  }
  // Importante: no quitar grupos existentes que ya no figuren en el mapa.
  if(next.groups.length<historical.length)throw Error('No se puede perder trabajo anterior.');
- return {unit:next,added,conflicts,changed:added.length>0};
+ return {unit:next,added,updated,conflicts,changed:added.length>0||updated.length>0};
 }

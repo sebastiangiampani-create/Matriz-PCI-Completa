@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {migrateState} from '../pci-model.js';
 import {
   COMPOSITION_VERSION,ROWS,fgSubjectsByYear,historicGroups,
   compositionFor,createGrouping,placeSubject,removeSubject,removeGrouping,
-  arrangementWarnings,withComposition,quarterYear,pairedTerm
+  arrangementWarnings,withComposition,quarterYear,pairedTerm,subjectArea,mapRow
 } from '../src/integracion-curricular/constructor-mapa-unificado.mjs';
 
 const refs={subjects:JSON.parse(await readFile(new URL('../data/integracion-curricular/referencia-v2/materias-v2.json',import.meta.url),'utf8'))};
@@ -111,4 +112,118 @@ test('El editor escolar no incluye altas institucionales y el API conserva la re
  assert.ok(!html.includes('id="showNewSchool"'));
  assert.ok(!html.includes('id="formNewSchool"'));
  assert.match(edge,/if\(s\.role!=='admin'\)return err\('Solo administración\.',403\)/);
+});
+
+test('Rescate V2: bloquear formato contrario a la prescripción del área',()=>{
+ const initial=compositionFor(createWorkspace(),pci);
+ assert.throws(()=>createGrouping(initial,{year:3,term:5,kind:'taller',
+  area:'Ciencias Sociales',name:'Formato incorrecto'}),/formato prescripto|se organiza como laboratorio/);
+ assert.throws(()=>createGrouping(initial,{year:1,term:1,kind:'laboratorio',
+  area:'Matemática',name:'Troncal incorrecta'}),/se organiza como troncal/);
+});
+test('Rescate V2: una troncal se ubica una sola vez por nivel y ocupa los dos cuatrimestres',()=>{
+ let draft=compositionFor(createWorkspace(),pci);
+ draft=createGrouping(draft,{year:1,term:2,kind:'troncal',area:'Matemática',name:'Matemática nivel 1'});
+ assert.deepEqual([draft.groups[0].term,draft.groups[0].endTerm],[1,2]);
+ assert.throws(()=>createGrouping(draft,{year:1,term:1,kind:'troncal',
+  area:'Matemática',name:'Matemática duplicada'}),/ya tiene un espacio troncal/);
+});
+test('Rescate V2: materia no se duplica dentro del cuatrimestre por cambiar formato',()=>{
+ let draft=compositionFor(createWorkspace(),pci);
+ draft=createGrouping(draft,{year:3,term:5,kind:'laboratorio',
+  area:'Ciencias Naturales',name:'Naturales',replicate:false});
+ draft=createGrouping(draft,{year:3,term:5,kind:'otro',
+  area:'Otros formatos',name:'Otro formato',replicate:false});
+ const subject={id:'fg:3:biologia',name:'Biología',component:'FG',year:3,
+  area:'Ciencias Naturales',hours:3};
+ draft=placeSubject(draft,{groupId:draft.groups[0].id,subject});
+ assert.throws(()=>placeSubject(draft,{groupId:draft.groups[1].id,subject}),
+ /ya figura en C5/);
+});
+test('Rescate V2: bloquear de inmediato laboratorios que superan nueve horas',()=>{
+ let draft=createGrouping(compositionFor(createWorkspace(),pci),{year:3,term:5,
+  kind:'laboratorio',area:'Ciencias Naturales',name:'Naturales',replicate:false});
+ const add=(id,name,hours)=>({id,name,hours,year:3,area:'Ciencias Naturales',component:'FG'});
+ draft=placeSubject(draft,{groupId:draft.groups[0].id,subject:add('q','Química',5)});
+ assert.throws(()=>placeSubject(draft,{groupId:draft.groups[0].id,subject:add('b','Biología',5)}),
+ /9 horas/);
+ assert.deepEqual(draft.groups[0].members.map(m=>m.id),['q']);
+});
+test('Rescate V2: Sociales 3.º admite hasta dos laboratorios por cuatrimestre',()=>{
+ let draft=compositionFor(createWorkspace(),pci);
+ draft=createGrouping(draft,{year:3,term:5,kind:'laboratorio',
+  area:'Ciencias Sociales',name:'Sociales A',replicate:true});
+ draft=createGrouping(draft,{year:3,term:5,kind:'laboratorio',
+  area:'Ciencias Sociales',name:'Sociales B',replicate:true});
+ assert.throws(()=>createGrouping(draft,{year:3,term:5,kind:'laboratorio',
+  area:'Ciencias Sociales',name:'Sociales C',replicate:true}),/no tres/);
+});
+test('Rescate V2: la bolsa conserva las horas oficiales como metadato interno',async()=>{
+ const hours=JSON.parse(await readFile(new URL('../data/integracion-curricular/referencia-v2/horas-v2.json',import.meta.url),'utf8'));
+ const subjects=fgSubjectsByYear({...refs,hours},3);
+ assert.equal(subjects.find(s=>s.name==='Matemática')?.hours,4);
+ assert.equal(subjects.find(s=>s.name==='Historia')?.hours,2);
+});
+
+test('Naturales orientada: 8 laboratorios FG C1-C8; nunca taller FG de Naturales',()=>{
+  const naturalPci={...pci,orientation_id:'ciencias_naturales'};
+  const ws={orientations:{ciencias_naturales:{
+    fg:{mode:'conservar',areas:{}},fo:{spaces:[]}
+  }}};
+  const initial=compositionFor(ws,naturalPci);
+  let draft=initial;
+  for(let year=1;year<=4;year++){
+    draft=createGrouping(draft,{year,term:year*2-1,
+      kind:'laboratorio',area:'Ciencias Naturales',
+      name:'Laboratorio FG Naturales '+year+'º'});
+  }
+  assert.equal(draft.groups.length,8);
+  assert.deepEqual(draft.groups.map(x=>x.term).sort((a,b)=>a-b),
+    [1,2,3,4,5,6,7,8]);
+  assert.throws(()=>createGrouping(draft,{year:5,term:9,kind:'laboratorio',
+      area:'Ciencias Naturales',name:'Laboratorio FG fuera de oferta'}),/ocho laboratorios FG/);
+  assert.throws(()=>createGrouping(draft,{year:2,term:3,kind:'taller',
+      area:'Ciencias Naturales',name:'Taller FG inválido'}),/formato prescripto/);
+  const regular=compositionFor({orientations:{comunicacion:{
+    fg:{mode:'conservar',areas:{}},fo:{spaces:[]}
+  }}},pci);
+  assert.doesNotThrow(()=>createGrouping(regular,{year:5,term:9,
+    kind:'laboratorio',area:'Ciencias Naturales',name:'FG otras orientaciones'}));
+  assert.equal(initial.groups.length,0);
+  assert.equal(ws.orientations.ciencias_naturales.fo.spaces.length,0);
+});
+
+test('Orientación Naturales: ocultar solo plantillas genéricas vacías C9/C10 sin borrar histórico',()=>{
+  const historical=migrateState({});
+  const ws={orientations:{ciencias_naturales:{
+    fg:{areas:historical.areas},fo:{spaces:[]}
+  }}};
+  const before=JSON.stringify(ws);
+  const naturalGroups=historicGroups(ws,'ciencias_naturales')
+    .filter(g=>g.area==='Ciencias Naturales');
+  assert.deepEqual(naturalGroups.map(g=>g.startTerm),[1,2,3,4,5,6,7,8]);
+  assert.equal(ws.orientations.ciencias_naturales.fg.areas['Ciencias Naturales'].groups.length,10);
+  assert.equal(JSON.stringify(ws),before,'No se reescribió el estado original');
+  const worked=structuredClone(ws);
+  worked.orientations.ciencias_naturales.fg.areas['Ciencias Naturales'].groups[8].items=['priorizado-historico'];
+  const retained=historicGroups(worked,'ciencias_naturales')
+    .filter(g=>g.area==='Ciencias Naturales');
+  assert.equal(retained.length,9);
+  assert.equal(retained.find(g=>g.startTerm===9).contents,1);
+});
+
+test('Educación Física nunca se clasifica como Ciencias Naturales, ni su taller como laboratorio',()=>{
+  assert.equal(subjectArea('Educación Física'),'Educación Física');
+  assert.equal(subjectArea('Física'),'Ciencias Naturales');
+  assert.equal(mapRow('Educación Física','workshop'),'Talleres FG · Educación Física');
+  assert.equal(mapRow('Ciencias Naturales','laboratory'),'Laboratorios FG · Naturales');
+  const initial=migrateState({});
+  const ws={orientations:{ciencias_naturales:{fg:{areas:initial.areas},fo:{spaces:[]}}}};
+  const all=historicGroups(ws,'ciencias_naturales');
+  const natural=all.filter(g=>g.row==='Laboratorios FG · Naturales');
+  const education=all.filter(g=>g.row==='Talleres FG · Educación Física');
+  assert.equal(natural.length,8,'Ciencias Naturales orientada solo muestra ocho laboratorios FG.');
+  assert.equal(education.length,10,'Los diez talleres de Educación Física aparecen en su propia fila.');
+  assert.ok(natural.every(g=>g.kind==='laboratory'));
+  assert.ok(education.every(g=>g.kind==='workshop'));
 });

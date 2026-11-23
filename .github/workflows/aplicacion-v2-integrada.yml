@@ -1,0 +1,87 @@
+name: Aplicación V2 integrada por escuela
+
+on:
+  push:
+    branches: [test/aplicacion-v2-integrada-20261121, test/cierre-media-pvf-naturales-20261121, test/perfiles-tecnica-anexo-20261121, test/priorizados-tecnica-sin-horas-20261121, test/tecnica-contenidos-atomicos-20261121]
+    paths:
+      - index.html
+      - pci-orientaciones.html
+      - pci-orientaciones.css
+      - panel-*.html
+      - src/aplicacion-v2/**
+      - src/tecnica/**
+      - src/normativa/**
+      - data/tecnica/priorizados/**
+      - tecnica/data/**
+      - src/pci-router.mjs
+      - src/v2-familia/**
+      - src/migracion/**
+      - scripts/derivar-v2-familia.mjs
+      - scripts/preparar-publicacion-aplicacion-v2.mjs
+      - assets/**
+      - tests/aplicacion-v2-browser.mjs
+      - tests/aplicacion-v2-documentos.test.mjs
+      - tests/aplicacion-v2-publicacion.test.mjs
+      - tests/aplicacion-v2-admin-browser.mjs
+      - tests/pvf-media.test.mjs
+      - tests/media-cierre.test.mjs
+      - tests/tecnica-perfiles-2026.test.mjs
+      - tests/tecnica-priorizados-2026.test.mjs
+      - tests/tecnica-contenidos-atomicos.test.mjs
+      - tests/v2-familia-catalogos-todos.test.mjs
+      - tests/pvf-media-browser.mjs
+      - .github/workflows/aplicacion-v2-integrada.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  escuela-nativa-sin-servicios-reales:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar documentos, permisos, migración y paridad
+        run: >-
+          node --test
+          tests/aplicacion-v2-documentos.test.mjs
+          tests/aplicacion-v2-publicacion.test.mjs
+          tests/migracion-legado-fg.test.mjs
+          tests/aplicar-migracion-v2.test.mjs
+          tests/revision-aceptacion-v2.test.mjs
+          tests/importacion-v2-prearmado.test.mjs
+          tests/v2-familia-paridad.test.mjs
+          tests/pvf-media.test.mjs
+          tests/media-cierre.test.mjs
+          tests/tecnica-perfiles-2026.test.mjs
+          tests/tecnica-priorizados-2026.test.mjs
+          tests/tecnica-contenidos-atomicos.test.mjs
+          tests/v2-familia-catalogos-todos.test.mjs
+      - name: Preparar Playwright 1.55
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium
+          fi
+      - name: Probar escuela, tres modalidades y planes en escritorio y celular
+        run: node tests/aplicacion-v2-browser.mjs
+      - name: Probar acceso administrador sobre la publicación completa
+        run: node tests/aplicacion-v2-admin-browser.mjs
+      - name: Comprobar las prescripciones técnicas en V2
+        run: node tests/v2-tecnica-norma-browser.mjs
+      - name: Probar PVF prescripto de Media en escritorio y celular
+        run: node tests/pvf-media-browser.mjs
+      - name: Conservar evidencias y fallos de la aplicación integrada
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aplicacion-v2-integrada
+          path: test-artifacts/aplicacion-v2-integrada/
+          if-no-files-found: warn
+          retention-days: 7

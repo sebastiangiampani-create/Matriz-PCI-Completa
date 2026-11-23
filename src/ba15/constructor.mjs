@@ -1,10 +1,17 @@
 import {BA15_NIVELES,BA15_CCC,validarBa15} from './reglas-curriculares.mjs';
+import {BA15_FG_BASE_VERSION,BA15_FG_SOURCE_VERSION,BA15_FG_LEVEL_MAP,BA15_FG_LEVELS} from './priorizados-base.mjs';
 export const BA15_TERMS=Object.freeze(Array.from({length:8},(_,i)=>Object.freeze({id:'C'+(i+1),nivel:Math.floor(i/2)+1,numero:i+1})));
 const copy=v=>JSON.parse(JSON.stringify(v));
 const validTerm=(n,level)=>Number.isInteger(n)&&n>=1&&n<=8&&Math.floor((n-1)/2)+1===level;
 export function crearBorradorBa15({pciId,schoolId,orientationId,shiftId}){
  if(!pciId||!schoolId||!orientationId||!shiftId)throw Error('Falta identificar escuela, PCI, orientación o turno.');
  return {schema:'ba15-constructor-v1',pciId:String(pciId),schoolId:Number(schoolId),orientationId:String(orientationId),shiftId:String(shiftId),
+  priorizadosFGBase:{
+   version:BA15_FG_BASE_VERSION,
+   source:BA15_FG_SOURCE_VERSION,
+   yearToBa15Level:{...BA15_FG_LEVEL_MAP},
+   levels:BA15_FG_LEVELS.map(x=>({level:x.level,sourceYears:[...x.sourceYears]}))
+  },
   niveles:BA15_NIVELES.map((bank,i)=>({
    nivel:i+1,
    asignaturas:bank.map((e,j)=>({id:'n'+(i+1)+'s'+(j+1),nombre:e.nombre,horas:e.horas,area:e.area,formatoOriginal:e.formato})),
@@ -36,9 +43,13 @@ export function validarBorradorBa15(draft){
    for(const member of e.miembros){
     const subject=level.asignaturas.find(s=>s.id===member);
     if(!subject){errors.push('Espacio '+e.id+': materia ajena al nivel.');continue;}
-    const key=e.term+':'+member;
-    if(seen.has(key))errors.push('Nivel '+(index+1)+': materia repetida en C'+e.term+': '+subject.nombre);
-    seen.set(key,e.id);
+    const terms=e.formato==='troncal'&&e.duration==='anual'?
+      [index*2+1,index*2+2]:[e.term];
+    for(const term of terms){
+      const key=term+':'+member;
+      if(seen.has(key))errors.push('Nivel '+(index+1)+': materia repetida en C'+term+': '+subject.nombre);
+      seen.set(key,e.id);
+    }
    }
    if(!e.miembros.length)warnings.push('Espacio '+e.nombre+' sin materias asignadas.');
    if(!e.articulacion&&e.miembros.some(id=>level.asignaturas.find(s=>s.id===id)?.formatoOriginal==='taller'))
@@ -58,14 +69,34 @@ export function crearEspacioBa15(draft,{nivel,term,nombre,formato}){
  if(!String(nombre||'').trim())throw Error('Ingresá nombre del espacio.');
  const next=copy(draft),level=next.niveles[nivel-1];if(!level)throw Error('Nivel inexistente.');
  const id='esp-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9);
- level.espacios.push({id,term,nombre:String(nombre).trim(),formato,miembros:[],articulacion:'',
+ const annual=formato==='troncal';
+ // Un troncal es anual: ocupa el par del nivel, con un solo ID y cuatro planes.
+ // Los espacios históricos sin duration siguen legibles y no se migran al abrir.
+ const startTerm=annual?2*nivel-1:term;
+ level.espacios.push({id,term:startTerm,endTerm:annual?startTerm+1:startTerm,
+  duration:annual?'anual':'cuatrimestral',nombre:String(nombre).trim(),
+  formato,miembros:[],articulacion:'',
   planes:Array.from({length:4},(_,i)=>({numero:i+1,nombre:'Plan '+(i+1),objetivos:'',contenidos:[],etapas:{punto_partida:'',indagacion:'',produccion:'',evaluacion:''}}))});
  return next;
 }
 export function asignarMateriaBa15(draft,{nivel,espacioId,materiaId}){
  const next=copy(draft),level=next.niveles[nivel-1],space=level?.espacios.find(x=>x.id===espacioId);
- if(!space||!level.asignaturas.some(s=>s.id===materiaId))throw Error('Materia o espacio de otro nivel.');
- if(level.espacios.some(e=>e.term===space.term&&e.miembros.includes(materiaId)))throw Error('La materia ya está asignada en este cuatrimestre.');
+ const subject=level?.asignaturas.find(s=>s.id===materiaId);
+ if(!space||!subject)throw Error('Materia o espacio de otro nivel.');
+ // Formatos expresamente prescriptos por el plan BA +15: una troncal
+ // no puede arrastrarse a un taller ni viceversa.
+ if(['troncal','taller'].includes(subject.formatoOriginal)&&
+    space.formato!==subject.formatoOriginal)
+   throw Error('Acción no permitida: '+subject.nombre+' corresponde a un espacio '+
+     subject.formatoOriginal+'. Revisá la fila del mapa antes de asignarla.');
+ if(space.formato==='troncal'&&
+    (subject.formatoOriginal!=='troncal'||space.nombre!==subject.nombre))
+   throw Error('Acción no permitida: cada troncal anual conserva su propia materia y fila del mapa.');
+ const occupied=e=>e.formato==='troncal'&&e.duration==='anual'?
+  [2*nivel-1,2*nivel]:[e.term];
+ if(level.espacios.some(e=>e.miembros.includes(materiaId)&&
+   occupied(e).some(term=>occupied(space).includes(term))))
+  throw Error('La materia ya está asignada en este cuatrimestre.');
  space.miembros.push(materiaId);return next;
 }
 export function actualizarEspacioBa15(draft,{nivel,espacioId,changes}){

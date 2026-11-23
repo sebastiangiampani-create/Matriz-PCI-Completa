@@ -163,8 +163,12 @@
       hint.style.fontWeight = '750';
       description.insertAdjacentElement('afterend', hint);
     }
-    hint.hidden = current?.current !== AREA;
-    hint.textContent = 'Podés crear varios talleres de Artes en el mismo cuatrimestre. Cada taller mantiene sus propios contenidos y sus 2 planes bimestrales.';
+    const hidden = current?.current !== AREA;
+    if (hint.hidden !== hidden) hint.hidden = hidden;
+    const text = 'Podés crear varios talleres de Artes en el mismo cuatrimestre. Cada taller mantiene sus propios contenidos y sus 2 planes bimestrales.';
+    // Escribir solo si cambia: reasignar textContent dispara el propio
+    // MutationObserver y generaba un ciclo de refresco permanente.
+    if (hint.textContent !== text) hint.textContent = text;
   }
 
   function ensureDeleteButtons() {

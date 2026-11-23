@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCI · Constructor original V2 integrado en Matriz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#12395c;--band:#edf3f8;--line:#d8e1e8;--mint:#83ded3;--mint-dark:#126e65}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font:14px Archivo,Arial,sans-serif;background:#fff}
+header{border-bottom:1px solid var(--line);padding:13px max(20px,calc((100vw - 1600px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header strong{font-size:1rem}header small{display:block;margin-top:5px;color:#5f7382}
+main{max-width:1700px;margin:auto;padding:20px 22px 40px}
+h1{font-size:clamp(1.5rem,3vw,2.35rem);margin:0 0 7px}p{line-height:1.45}
+.hero{background:var(--band);border-radius:0 0 22px 22px;padding:20px 22px;margin-bottom:18px}
+.caption{font-size:.72rem;text-transform:uppercase;font-weight:900;letter-spacing:.08em;color:var(--mint-dark)}
+.pick{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0}
+button{font:inherit;cursor:pointer;border-radius:999px;padding:10px 13px;font-weight:800;border:1px solid var(--ink);background:white;color:var(--ink)}
+button.active{background:var(--ink);color:white}
+.preview{border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:0 14px 34px rgba(18,57,92,.08)}
+.preview-title{padding:12px 15px;background:var(--band);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;font-weight:800}
+iframe{display:block;width:100%;min-height:1080px;border:0;background:white}
+.meta{font-size:.76rem;color:#5f7382;margin:10px 0}
+#status{font-size:.77rem;color:#126e65}
+</style>
+</head><body>
+<header><div><strong>PCI Secundaria Aprende · Matriz</strong><small>Constructor original V2 · copia inalterada en rama aislada</small></div>
+<div><span id="status" role="status">Iniciando copia V2…</span></div></header>
+<main>
+<section class="hero">
+<div class="caption">Fase 1 · Constructor original</div>
+<h1>Mapa de la Oferta V2</h1>
+<p>Esta vista ejecuta los archivos originales de V2, no una recreación visual. La copia pertenece al repositorio Matriz PCI Completa. Elegí un PCI de muestra: cada uno mantiene su borrador separado.</p>
+<div class="pick" role="group" aria-label="PCI para revisión">
+<button data-pci="demo-comunicacion-manana" data-orientation="Comunicación" data-shift="Mañana" class="active" type="button">Mañana · Comunicación</button>
+<button data-pci="demo-turismo-tarde" data-orientation="Turismo" data-shift="Tarde" type="button">Tarde · Turismo</button>
+<button data-pci="demo-economia-noche" data-orientation="Economía y Administración" data-shift="Noche" type="button">Noche · Economía y Administración</button>
+</div>
+<p class="meta">Modo de prueba: únicamente Media. Técnica (6 niveles) y BA +15 (4 niveles) todavía requieren su adaptación al motor original y no se presentan como terminados. No se conecta con Supabase.</p>
+</section>
+<section class="preview" aria-label="Aplicación V2 original">
+<div class="preview-title"><span id="pciLabel">PCI Comunicación · turno mañana</span><span>Referencia original: V2</span></div>
+<iframe id="originalV2" title="Constructor curricular original PCI Secundaria Aprende V2"></iframe>
+</section>
+</main>
+<script>
+(()=>{
+ 'use strict';
+ const iframe=document.getElementById('originalV2'),status=document.getElementById('status');
+ const label=document.getElementById('pciLabel'),buttons=[...document.querySelectorAll('[data-pci]')];
+ let active=null;
+ const store='pci-v2-original-demo::';
+ function open(button){
+   const pci=button.dataset.pci,orientation=button.dataset.orientation,shift=button.dataset.shift;
+   if(!/^[\w-]+$/.test(pci))throw Error('PCI inválido.');
+   active={pci,orientation,shift};
+   buttons.forEach(b=>b.classList.toggle('active',b===button));
+   label.textContent='PCI '+orientation+' · turno '+shift.toLowerCase();
+   status.textContent='Cargando código V2 original…';
+   const params=new URLSearchParams({pci,orientation,school:'Escuela N.º 99 · '+shift});
+   iframe.src='revision-v2-embed.html?'+params;
+ }
+ window.addEventListener('message',event=>{
+   if(event.origin!==location.origin||event.source!==iframe.contentWindow)return;
+   const msg=event.data||{};
+   if(!active||msg.pci!==active.pci)return;
+   if(msg.type==='V2_ORIGINAL_READY'){
+     let data=null;try{data=JSON.parse(sessionStorage.getItem(store+active.pci)||'null')}catch{}
+     if(data?.maps)iframe.contentWindow.postMessage({type:'V2_IMPORT',pci:active.pci,document:data},location.origin);
+     status.textContent='V2 original cargado · PCI aislado';
+   }
+   if(msg.type==='V2_ORIGINAL_SAVED'){
+     if(msg.document?.maps){
+       sessionStorage.setItem(store+active.pci,JSON.stringify(msg.document));
+       status.textContent='Borrador V2 guardado en esta sesión';
+     }
+   }
+ });
+ buttons.forEach(b=>b.addEventListener('click',()=>open(b)));
+ open(buttons[0]);
+})();
+</script></body></html>

@@ -23,7 +23,7 @@ async function waitForServer() {
 
 async function waitForApp(page, browserErrors, screenshotName) {
   await page.goto(`${BASE_URL}/app.html`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(8_000);
+  await page.waitForTimeout(12_000);
   if (await page.locator('#loading').count()) {
     const loadingText = await page.locator('#loading').innerText();
     await page.screenshot({ path: `${ARTIFACTS}/${screenshotName}`, fullPage: true });
@@ -31,6 +31,7 @@ async function waitForApp(page, browserErrors, screenshotName) {
   }
   await page.waitForFunction(() => document.querySelector('#structureStatus')?.textContent.includes('C5 y C6'));
   await page.waitForFunction(() => window.PCIApp?.getData?.().filter((item) => item.area === 'Tutoría').length === 35);
+  await page.waitForFunction(() => window.__pciCurriculumUiReady === true);
 }
 
 function collectBrowserErrors(page) {
@@ -73,11 +74,11 @@ try {
   await page.goto(`${BASE_URL}/escuela.html?school=1`, { waitUntil: 'networkidle' });
   await page.waitForSelector('#gateTitle');
   assert.match(await page.locator('#gateTitle').textContent(), /Escuela de muestra 1/);
-  assert.equal(await page.locator('.credit').count(), 1, 'El acceso de escuela debe mostrar la autoría.');
+  assert.equal(await page.locator('#gateForm img[alt="Escuela de Maestros"]').count(), 1, 'El acceso debe conservar la marca institucional; la autoría se verifica en la matriz.');
   await page.screenshot({ path: `${ARTIFACTS}/02-acceso-escuela-1.png`, fullPage: true });
 
   await waitForApp(page, browserErrors, '03-error-carga.png');
-  assert.equal(await page.locator('.site-credit').count(), 1, 'La matriz debe mostrar la autoría.');
+  assert.equal(await page.locator('.site-footer img[alt="Escuela de Maestros"]').count(), 1, 'La matriz debe conservar el pie institucional.');
   assert.match(await page.locator('#coverageHint').textContent(), /más de un espacio/);
   assert.equal(
     await page.evaluate(() => window.PCIApp.getData().filter((item) => item.area === 'Tutoría').length),
@@ -88,15 +89,12 @@ try {
   await page.evaluate(() => window.PCIApp.openArea('Artes'));
   await page.waitForSelector('#board.active');
   await page.waitForFunction(() => document.querySelector('#boardAlert')?.textContent.includes('Regla curricular de Artes'));
-  assert.equal(await page.locator('[data-pci-art-language]').count(), 3, 'Artes debe ofrecer tres lenguajes para elegir dos.');
-  await page.locator('[data-pci-art-language="Artes Visuales"]').check();
-  await page.locator('[data-pci-art-language="Música"]').check();
-  await page.waitForFunction(() => document.querySelector('[data-pci-art-language="Teatro"]')?.disabled === true);
-  assert.deepEqual(
-    await page.evaluate(() => window.PCIApp.getState().curriculumRules.artLanguages),
-    ['Artes Visuales', 'Música'],
-  );
+  for (const axis of ['Producción', 'Apreciación', 'Contextualización']) {
+    assert.match(await page.locator('#boardAlert').textContent(), new RegExp(axis));
+  }
   assert.match(await page.locator('#coverageHint').textContent(), /tres ejes/);
+  assert.equal(await page.locator('[data-pci-art-language]').count(), 0,
+    'La validación vigente de Artes no exige seleccionar lenguajes.');
   await page.screenshot({ path: `${ARTIFACTS}/03-artes-regla-curricular.png`, fullPage: true });
 
   await page.evaluate(() => window.PCIApp.openArea('Educación Física'));

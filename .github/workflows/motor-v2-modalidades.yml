@@ -1,0 +1,92 @@
+name: Motor V2 real por tres modalidades
+on:
+  push:
+    branches:
+      - feature/v2-tres-modalidades-sin-superposicion-20261120
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tecnica-v2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar que Media sigue textual y que las variantes compilan
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object vendor/pci-sec-aprende-v2/app-core.html)" = a318ca1730857d0394113f5f079387183f348048
+          test "$(git hash-object vendor/pci-sec-aprende-v2/src/v19-map.js)" = e1a72cc683e875a414c631c9727ce1a725378df6
+          node --check src/v2-familia/catalogos-modalidad.mjs
+          node --check src/v2-familia/v19-mapa-modalidad.js
+          node --check src/v2-familia/v47-desarrollo-modalidad.js
+          node --check tests/v2-familia-modalidades-browser.mjs
+          node --check tests/aplicacion-v2-browser.mjs
+          node --check scripts/derivar-v2-familia.mjs
+          node --check tests/v2-tecnica-norma-browser.mjs
+          node --check tests/v2-ba15-norma-browser.mjs
+      - name: Paridad módulo por módulo con V2 (derivados al día y vendor intacto)
+        run: |
+          node scripts/derivar-v2-familia.mjs --check
+          node --test tests/v2-familia-paridad.test.mjs
+          node --test tests/v2-familia-catalogos-todos.test.mjs
+      - name: Auditar contenidos documentales técnicos y su trazabilidad en 26 especialidades
+        run: |
+          node --check src/tecnica/desagregacion-documental-2026.mjs
+          node --check tests/tecnica-desagregacion-documental.test.mjs
+          node --check tests/tecnica-base-normalizada.test.mjs
+          node scripts/qa-tecnica-priorizados.mjs
+          node --test tests/tecnica-priorizados-2026.test.mjs tests/tecnica-contenidos-atomicos.test.mjs tests/tecnica-desagregacion-documental.test.mjs tests/tecnica-base-normalizada.test.mjs
+      - name: Instalar entorno Playwright
+        shell: bash
+        run: |
+          npm install --no-save playwright@1.55.0
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install chromium
+          fi
+      - name: Probar Técnica 12 C, portal nativo y regresión visual de las tres modalidades
+        run: |
+          node tests/v2-familia-modalidades-browser.mjs
+          node tests/aplicacion-v2-browser.mjs
+          node tests/v2-tecnica-norma-browser.mjs
+          node tests/v2-media-orientaciones-browser.mjs
+      - name: Capturas del mapa original adaptado
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: motor-v2-modalidades
+          path: |
+            test-artifacts/v2-modalidades
+            test-artifacts/aplicacion-v2-integrada
+            test-artifacts/tecnica/auditoria-pendientes-2026.json
+          retention-days: 7
+
+
+  ba15-norma:
+    # Independiente de Técnica: mantener el fallo visible sin mezclar
+    # la auditoría técnica con el alcance pendiente de BA +15.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preparar Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install chromium
+          fi
+      - name: Validar la normativa BA +15 sin modificar su motor
+        run: node tests/v2-ba15-norma-browser.mjs

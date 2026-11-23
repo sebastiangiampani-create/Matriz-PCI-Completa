@@ -1,0 +1,59 @@
+name: Migración FG a V2 - Paso 3 aislado
+
+on:
+  push:
+    branches: [test/migracion-v2-paso3-20261121]
+    paths:
+      - src/migracion/**
+      - revision-v2-embed.html
+      - scripts/derivar-v2-familia.mjs
+      - src/v2-familia/derivados/media/v23-prearm.js
+      - src/v2-familia/manifiesto-paridad-v2.json
+      - tests/revision-aceptacion-v2.test.mjs
+      - tests/importacion-v2-prearmado.test.mjs
+      - tests/aviso-aceptacion-v2-browser.mjs
+      - .github/workflows/migracion-v2-paso3.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  aceptacion-sin-supabase:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar revisión pura, migrador, adaptador y paridad
+        run: node --test tests/revision-aceptacion-v2.test.mjs tests/importacion-v2-prearmado.test.mjs tests/aplicar-migracion-v2.test.mjs tests/migracion-legado-fg.test.mjs tests/v2-familia-paridad.test.mjs
+      - name: Preparar navegador de prueba
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium
+          fi
+      - name: Verificar que se conserva el paso 2
+        run: node tests/migracion-v2-browser.mjs
+      - name: Verificar aceptación en escritorio y celular
+        run: node tests/aviso-aceptacion-v2-browser.mjs
+      - name: Conservar resultados y capturas del paso 3
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migracion-v2-paso3
+          path: test-artifacts/migracion-v2-paso3/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Conservar regresión del paso 2
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migracion-v2-paso2-regresion
+          path: test-artifacts/migracion-v2/
+          if-no-files-found: warn
+          retention-days: 7

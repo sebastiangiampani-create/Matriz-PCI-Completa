@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#15374a">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+  <title>Revisión PR47 · PCI V2 original integrado</title>
+  <link rel="stylesheet" href="app.css?v=20260902-1">
+  <link rel="stylesheet" href="pci-orientaciones.css?v=20261119-phase2-v2-1">
+  <link rel="stylesheet" href="src/v2-original-map-appearance.css?v=20261120-v2-1">
+  <link rel="stylesheet" href="src/v2-integrated-portal.css?v=1">
+</head>
+<body>
+  <header class="site-top no-print">
+    <a class="brand" id="brandHomeLink" href="pci-orientaciones.html" aria-label="Volver al inicio curricular de esta escuela">
+      <img src="assets/em-logo-header.svg?v=20260902" alt="Escuela de Maestros">
+    </a>
+    <div class="top-right">
+      <a class="pill-btn" id="schoolHomeLink" href="pci-orientaciones.html">← Inicio de la escuela</a>
+      <a class="text-button pci-upper-link" id="platformHomeLink" href="index.html">Plataforma</a>
+      <a class="text-button pci-upper-link" id="adminPanelLink" href="panel-general.html">Administración</a>
+      <a class="text-button pci-upper-link" id="schoolPanelLink" href="panel-escuela.html">Panel institucional</a>
+      <img class="ba" src="assets/ba-logo.png?v=20260827" alt="Buenos Aires Ciudad">
+    </div>
+  </header>
+  <main>
+    <section class="section-heading hero-band pci-hero">
+      <div><span class="eyebrow">PCI Secundaria Aprende</span><h1>Organización curricular de la escuela</h1>
+      <p>Elegí el turno y la orientación o especialidad para continuar con el Mapa de la Oferta y el Desarrollo Curricular.</p></div>
+      <span id="status" role="status" aria-live="polite" class="status">Comprobando conexión…</span>
+    </section>
+    <div id="fatal" class="warning" hidden></div>
+    <section id="authRequired" class="panel card login-required" hidden aria-labelledby="loginRequiredTitle">
+      <div>
+        <span class="eyebrow">Acceso institucional</span>
+        <h2 id="loginRequiredTitle">Ingresá para continuar con los PCI de tu escuela</h2>
+        <p id="authHelp" class="muted">Usá el mismo acceso que ya tenés en la plataforma. No es necesario registrar nuevamente tu escuela.</p>
+        <p class="muted">Para abrir la organización curricular desde un enlace externo, iniciá sesión en esta misma pestaña.</p>
+      </div>
+      <a id="authLoginLink" class="button primary" href="index.html?continuar=pci">Ingresar a Organización curricular</a>
+    </section>
+    <div class="layout" id="app" hidden>
+      <aside class="content-bag card sidebar" aria-label="Selección curricular de la escuela">
+        <div class="school-toolbar">
+          <div class="school-chooser">
+            <label for="school">Escuela</label>
+            <select id="school" aria-label="Elegir escuela"></select>
+            <p id="schoolLabel" class="muted"></p>
+          </div>
+          <label class="school-shift" for="turnFilter">Turno
+            <select id="turnFilter"><option value="todos">Todos los turnos</option></select>
+          </label>
+          <div class="school-top-actions">
+            <button type="button" id="btnAddPci" class="btn primary">+ Agregar PCI</button>
+            <a id="historicalPciLink" class="button secondary" href="escuela-online.html">Consultar FG anterior</a>
+          </div>
+        </div>
+        <p id="pciCounts" class="muted" aria-live="polite">Cargando proyectos…</p>
+        <div class="pci-side-list">
+          <h2>Orientaciones y especialidades</h2>
+          <div id="pciList" class="pciList"></div>
+        </div>
+        <form id="formCreatePci" class="formCard" hidden>
+          <h3>Sumar una orientación o especialidad</h3>
+          <label>Modelo curricular<select id="pciModel">
+              <option value="comun">Educación Media · Orientación</option>
+              <option value="tecnica">Educación Técnica · Especialidad</option>
+              <option value="ba15">BA +15 · Secundaria +15</option>
+            </select></label>
+          <label id="mediaOrientationGroup">Orientación de Media / BA +15<select id="orientation" required></select></label>
+          <label id="technicalSpecialtyGroup" hidden>Especialidad técnica (denominación de las pautas)
+            <select id="specialtyName" required disabled><option value="" selected>Seleccionar especialidad técnica</option></select>
+            <small>La especialidad tiene nombre propio. No confundirla con los espacios anuales de 4.º, 5.º y 6.º.</small></label>
+          <label>Turno<select id="pciShift" required>
+              <option value="manana">Mañana</option>
+              <option value="tarde">Tarde</option>
+              <option value="vespertino">Vespertino</option>
+              <option value="noche">Noche</option>
+            </select></label>
+          <label>Nombre del PCI<input id="pciTitleInput" maxlength="150" required placeholder="Ej.: Economía · Turno Mañana"></label>
+          <p class="note">Media y Técnica comparten la misma interfaz de planificación. Cada PCI conserva su modalidad, su especialidad u orientación, sus planes y un guardado independiente. Los contenidos técnicos requieren contrastar el plan de estudios particular antes de homologarse.</p>
+          <div class="actions"><button type="submit" class="btn primary">Crear PCI</button><button type="button" class="btn" id="cancelPci">Cancelar</button></div>
+        </form>
+      </aside>
+      <section class="workspace">
+        <div id="empty" class="panel card">
+          <div class="school-home-intro">
+            <div><span class="eyebrow">1 · Organización curricular</span><h2 id="schoolOverviewName">Orientaciones y especialidades</h2>
+              <p class="muted">Continuá un PCI existente o agregá uno nuevo. Cada turno y modelo conserva su propio desarrollo.</p></div>
+            <div id="schoolSummary" class="schoolSummary" aria-label="Resumen de los PCI"></div>
+          </div>
+          <div class="school-history-link">
+            <div><strong>Formación General anterior, si existe</strong><p>Las escuelas que ya trabajaron su Formación General conservan sus contenidos y planes. Una institución nueva empieza creando su primer PCI.</p></div>
+            <a id="homeHistoricalPciLink" class="button secondary" href="escuela-online.html">Consultar FG anterior</a>
+          </div>
+          <section id="historicAssignmentSection" class="historic-assign-card" hidden aria-labelledby="historicAssignmentTitle">
+            <div class="historic-assign-head">
+              <div>
+                <span class="eyebrow">VINCULACIÓN · TRABAJO ANTERIOR</span>
+                <h3 id="historicAssignmentTitle">¿A qué PCI corresponde lo que ya trabajamos?</h3>
+                <p id="historicAssignmentSummary" class="muted">La FG común puede asignarse a uno, varios o todos los PCI. Los desarrollos de una orientación o especialidad solo a los PCI de esa opción. El original permanece intacto.</p>
+              </div>
+              <button id="editHistoricLinks" type="button" class="btn secondary">Asignar trabajo anterior</button>
+            </div>
+            <div id="historicAssignmentEditor" hidden>
+              <p class="muted">Elegí los agrupamientos históricos y sus destinatarios. Los cambios se aplican únicamente al presionar <strong>Guardar asignaciones</strong>; no se borran contenidos ni planes previos.</p>
+              <div class="historic-assign-toolbar">
+                <label><input type="checkbox" id="historicShowEmpty"/> Mostrar también agrupamientos vacíos de plantilla</label>
+                <span id="historicAssignmentRevision" class="muted"></span>
+              </div>
+              <div id="historicAssignmentRows" aria-live="polite"></div>
+              <div class="actions">
+                <button type="button" id="saveHistoricLinks" class="btn primary">Guardar asignaciones</button>
+                <button type="button" id="cancelHistoricLinks" class="btn">Cancelar</button>
+              </div>
+              <p id="historicAssignmentMessage" class="note" role="status" aria-live="polite"></p>
+            </div>
+          </section>
+                    <div id="schoolPciCards" class="schoolPciCards" aria-live="polite"></div>
+        </div>
+        <section id="ba15Pending" class="panel card" hidden>
+          <button type="button" class="text-button backToSchool" data-back-to-school>← Volver a orientaciones</button>
+          <span class="eyebrow">Secundaria BA +15 · Régimen propio</span>
+          <h2 id="ba15Name">PCI BA +15</h2>
+          <p id="ba15Info" class="muted"></p>
+          <div id="ba15HistoricLinks" class="historic-pci-preview" hidden></div>
+          <div class="note"><strong>Mapa oficial BA +15 · Resolución 1375/MEDGC/25, Anexo I.</strong>
+            Cuatro niveles, ocho cuatrimestres (C1–C8), 38 horas cátedra semanales por nivel, formación general y orientada y talleres articulados.
+            Fase 1: construí el mapa por drag & drop. Fase 2: desarrollá contenidos, objetivos, secuencias y planes en una instancia diferente. Ningún contenido histórico se reemplaza. La aprobación normativa final requiere revisión.</div>
+          <div id="ba15Metrics" class="metrics" aria-live="polite"></div>
+          <nav id="ba15Navigation" class="navtabs" aria-label="Niveles BA +15"></nav>
+          <div id="ba15Map" class="mapScroll"></div>
+          <div id="ba15Validation" class="note" aria-live="polite"></div>
+          
+          <h3>Constructor curricular por cuatrimestre</h3>
+          <div id="ba15Builder" aria-label="Constructor curricular de BA +15"></div>
+           <section id="ba15Development" class="ba15-development-workspace" aria-label="Fase 2 · Desarrollo curricular BA +15" hidden></section>
+          <details class="note" style="margin-top:18px"><summary><strong>Información institucional complementaria · Reconocimiento de saberes previos (CCC)</strong></summary><p>El Ciclo de Complementación Curricular se consulta de forma independiente del constructor. No constituye un nivel adicional, no ocupa C1–C8, no se incorpora como formato ni se suma a la cobertura del mapa curricular.</p></details>
+
+          <p class="muted">Norma: <a href="https://documentosboletinoficial.buenosaires.gob.ar/publico/PE-RES-MEDGC-MEDGC-1375-25-ANX-2.pdf" target="_blank" rel="noopener noreferrer">Anexo I IF-2025-44785236-GCABA-SSPIE</a>. Los componentes propios de cada orientación deben contrastarse con su plan oficial.</p>
+        </section>
+        <section id="technicalPending" class="panel card" hidden>
+          <button type="button" class="text-button backToSchool" data-back-to-school>← Volver a orientaciones</button>
+          <span class="eyebrow">Educación Técnica · Especialidad</span>
+          <h2 id="technicalName">PCI técnico</h2>
+          <p id="technicalInfo" class="muted"></p>
+          <div class="note"><strong>Reglas finales del Anexo II 17/11/2026 incorporadas para revisión.</strong>
+            El PCI y su origen histórico se conservan. El mapa C1–C12 permite revisar las reglas generales y las excepciones por especialidad. No se habilitan guardados curriculares técnicos hasta contrastar el plan de estudios particular de la especialidad. No se aplican las reglas de Bachillerato.</div>
+          <iframe id="technicalRulesFrame" title="Mapa técnico C1–C12 y reglas de composición" referrerpolicy="no-referrer" loading="lazy" style="width:100%;min-height:950px;border:1px solid #d5e2e8;border-radius:12px;margin-top:14px" src="about:blank"></iframe>
+        </section>
+        <section id="editor" hidden>
+          <button type="button" class="text-button backToSchool" data-back-to-school>← Volver a orientaciones</button>
+          <div class="panel card">
+            <div class="topline"><div><span class="eyebrow" id="pciTag">Orientación</span><h2 id="pciName"></h2><p id="pciInfo" class="muted"></p></div>
+              <button type="button" id="downloadOriginal" class="btn">Descargar FG original</button></div>
+            <div class="metrics" id="metrics"></div>
+            <div class="pci-phase-flow" aria-label="Secuencia curricular por PCI">
+              <span><strong>1</strong> Construcción curricular completa</span>
+              <span class="pci-phase-arrow" aria-hidden="true">›</span>
+              <span><strong>2</strong> Desarrollo curricular</span>
+            </div>
+            <div class="navtabs" role="tablist" aria-label="Fases del PCI">
+              <button type="button" class="tab active" data-tab="oferta">1 · Constructor curricular</button>
+              <button type="button" class="tab" data-tab="desarrollo">2 · Desarrollo curricular</button>
+              <button type="button" class="tab phase-detail-tab" data-tab="fg">Editar FG</button>
+              <button type="button" class="tab phase-detail-tab" data-tab="fo">Editar FO</button>
+            </div>
+            <div id="pciHistoricLinks" class="historic-pci-preview" hidden></div>
+            <p id="pciPhaseState" class="pci-phase-state" role="status" aria-live="polite"></p>
+            <div id="message" class="message" role="status" aria-live="polite"></div>
+          </div>
+          <section class="panel card pane" id="developmentPane" hidden>
+            <div class="topline"><div>
+              <span class="eyebrow">2 · DESARROLLO CURRICULAR SEGÚN PCI</span>
+              <h3>Espacios heredados del mapa de la oferta</h3>
+              <p class="muted">Elegí un espacio. Se conservan los contenidos, objetivos, secuencias y los cuatro planes de aprendizaje anteriores. La composición curricular se modifica únicamente en el Constructor.</p>
+            </div></div>
+            <div id="developmentStats" class="pci-development-stats" aria-live="polite"></div>
+            <div class="pci-development-filters">
+              <label>Nivel <select id="developmentLevel"><option value="todos">Todos los niveles</option></select></label>
+              <label>Formación <select id="developmentFormation"><option value="todos">FG + FO</option><option value="FG">Formación General</option><option value="FO">Formación Orientada</option></select></label>
+            </div>
+            <div id="developmentCards" class="pci-development-cards"></div>
+            <section class="pci-development-levels">
+              <h4>Indicadores del Desarrollo Curricular V2</h4>
+              <div id="developmentCoverage" aria-live="polite"></div>
+            </section>
+          </section>
+          <div class="panel card pane" id="fgPane" hidden>
+            <button type="button" class="text-button backToDevelopment" data-back-to-development>← Volver a espacios curriculares</button>
+            <div class="topline"><div><span class="eyebrow">FG Matriz histórica → FG V2</span><h3>Formación General por área</h3><p class="muted">Los contenidos y las secuencias anteriores se importan sin cambiar el documento original. Las equivalencias V2 se identifican automáticamente.</p></div></div>
+            <div class="split original-workspace">
+              <div id="areaList" class="areaList content-bag card"></div>
+              <div id="areaEditor">
+                <p class="muted">Elegí un área para revisar sus agrupamientos y guardar la copia propia de esta orientación.</p>
+              </div>
+            </div>
+          </div>
+          <div class="panel pane" id="offerPane" hidden>
+            <div class="topline"><div><span class="eyebrow">Formación General + Formación Orientada</span><h3>Mapa de la Oferta · C1 a C10</h3><p class="muted">Distribución de laboratorios, talleres y Proyecto de Vinculación. Las materias de FO se seleccionan según la orientación y su carga horaria.</p></div><div class="actions"><label>Alternativa FO <select id="foAlternative"><option value="A">Alternativa A</option><option value="B">Alternativa B</option></select></label><label>Sociales 3.º <select id="socialOption" aria-label="Opción de laboratorios de Ciencias Sociales">
+<option value="">Elegir composición</option>
+<option value="10">10 laboratorios · uno en C5 y uno en C6</option>
+<option value="12">12 laboratorios · dos en C5 y dos en C6</option>
+</select></label><button type="button" id="confirmFoContents" class="btn">Validar y confirmar contenidos</button><button type="button" id="saveOffer" class="btn primary">Guardar mapa</button></div></div>
+            <div class="constructor-v2-intro">
+              <strong>Constructor curricular completo · una copia por PCI y orientación</strong>
+              <p>Bolsa de materias FG y FO, agrupamientos por nivel y cuatrimestre, troncales, laboratorios y talleres. La FG histórica aparece en el mapa y conserva sus contenidos y planes. Las reorganizaciones nuevas quedan como propuesta independiente; no reemplazan lo ya trabajado.</p>
+            </div>
+            <div class="constructor-shell">
+              <aside id="constructorBag" class="content-bag card constructor-side" aria-label="Bolsa curricular de materias">
+                <div class="builder-head"><h4>Bolsa de materias</h4><span id="constructorBankCount" class="pill"></span></div>
+                <div class="builder-filters">
+                  <label> Nivel
+                    <select id="constructorLevel"><option value="1">1.º</option><option value="2">2.º</option><option value="3">3.º</option><option value="4">4.º</option><option value="5">5.º</option></select>
+                  </label>
+                  <label>Formación
+                    <select id="constructorBankType"><option value="FG">Formación General</option><option value="FO">Formación Orientada</option></select>
+                  </label>
+                  <label class="builder-search">Buscar materia
+                    <input id="constructorSearch" type="search" placeholder="Materia, área, orientación…">
+                  </label>
+                </div>
+                <div id="constructorSubjectBank" class="constructor-subject-list" aria-live="polite"></div>
+                <div class="constructor-add-card">
+                  <h4>Armar agrupamiento</h4>
+                  <label>Área
+                    <select id="constructorArea"></select>
+                  </label>
+                  <label>Formato
+                    <select id="constructorKind">
+                      <option value="laboratorio">Laboratorio FG</option>
+                      <option value="taller">Taller FG</option>
+                      <option value="troncal">Troncal anual</option>
+                      <option value="integrado">Laboratorio integrado FG–FO</option>
+                      <option value="otro">Otros formatos</option>
+                    </select>
+                  </label>
+                  <label>Cuatrimestre
+                    <select id="constructorTerm"></select>
+                  </label>
+                  <label>Nombre del agrupamiento
+                    <input id="constructorName" maxlength="120" placeholder="Ej.: Laboratorio de Ciencias Sociales">
+                  </label>
+                  <label class="constructor-pair"><input id="constructorMirror" type="checkbox" checked> Replicar materias en el cuatrimestre par</label>
+                  <button id="constructorCreate" type="button" class="btn primary">+ Crear agrupamiento en este PCI</button>
+                  <p class="muted">Para editar, elegí una materia de la bolsa o arrastrala a un agrupamiento. La propuesta se guarda solo al pulsar «Guardar mapa».</p>
+                </div>
+              </aside>
+              <div class="constructor-board">
+                <div class="builder-map-heading">
+                  <div><h4>Mapa completo de la oferta · C1–C10</h4><p class="muted">Materia por año. Las troncales anuales ocupan dos cuatrimestres; los laboratorios y talleres conservan sus espacios cuatrimestrales.</p></div>
+                  <span id="constructorSelectedSubject" class="builder-selected-subject">Seleccioná una materia de la bolsa</span>
+                </div>
+                <div class="mapScroll"><table class="mapTable constructor-matrix"><thead id="mapHead"></thead><tbody id="mapBody"></tbody></table></div>
+                <p id="constructorWarnings" class="note" aria-live="polite"></p>
+                <details class="builder-fo-details"><summary>Materias FO y contenidos por espacio · detalle</summary>
+                  <div class="offerGrid" id="offerGrid"></div>
+                </details>
+              </div>
+            </div>
+            <p id="offerValidation" class="note"></p>
+            <div class="pci-phase-next">
+              <p>La Fase 2 usa los espacios y agrupamientos de esta orientación. Guardá y revisá la composición antes de pasar al desarrollo de contenidos y planes.</p>
+              <button id="continueDevelopment" type="button" class="btn primary" disabled>Continuar al Desarrollo Curricular</button>
+            </div>
+          </div>
+          <section id="v2OriginalPane" class="panel pane" hidden aria-label="Constructor V2 original integrado al PCI">
+            <div class="topline">
+              <div><span class="eyebrow">1 · CONSTRUCTOR CURRICULAR ORIGINAL V2</span>
+                <h3 id="v2OriginalTitle">Mapa de la Oferta · V2 original</h3>
+                <p class="muted">Se ejecuta el constructor auténtico de V2 copiado dentro de esta Matriz. Cada PCI y turno tiene un borrador independiente. No se sustituyen mapas ni desarrollos históricos.</p>
+              </div>
+              <div class="actions"><button type="button" id="v2OriginalSave" class="btn primary">Guardar constructor V2 en este PCI</button></div>
+            </div>
+            <p class="note" id="v2OriginalStatus" role="status" aria-live="polite">Cargando constructor original…</p>
+            <details class="note"><summary>Consultar mapa anterior y conciliación de contenidos</summary>
+              <p>El mapa anterior del PCI sigue disponible sin modificaciones. Las composiciones V2 originales no se convierten automáticamente en el formato del constructor anterior; antes de desarrollar o publicar se requiere conciliación.</p>
+              <button id="v2ShowLegacyMap" type="button" class="btn">Mostrar mapa anterior de este PCI (solo consulta)</button>
+            </details>
+            <iframe id="v2OriginalFrame" title="Constructor original de PCI Secundaria Aprende V2" referrerpolicy="same-origin" style="display:block;width:100%;height:1130px;border:1px solid #d8e1e8;border-radius:16px;margin-top:12px;background:#fff" src="about:blank"></iframe>
+          </section>
+          <div class="panel pane" id="foPane" hidden>
+            <button type="button" class="text-button backToDevelopment" data-back-to-development>← Volver a espacios curriculares</button>
+            <div class="topline"><div><span class="eyebrow">FO · Desarrollo curricular</span><h3>Planes de aprendizaje</h3><p class="muted">Cada espacio FO guarda sus objetivos, sinopsis y las cuatro etapas de cada plan, con control de versiones.</p></div></div>
+            <div class="split">
+              <div id="foSpaces" class="areaList content-bag card"></div>
+              <div id="foEditor"><p class="muted">Elegí un espacio FO a la izquierda para desarrollar sus planes.</p></div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+  <footer class="site-footer no-print">
+    <img class="logo-blanco" src="assets/em-logo-footer.svg?v=20260902" alt="Escuela de Maestros">
+    <img class="ministerio" src="assets/ministerio-footer.svg?v=20260902" alt="Ministerio de Educación · Buenos Aires Ciudad">
+  </footer>
+  <script src="src/preview-pr47-mock.js"></script>
+  <script type="module" src="src/orientaciones-online.mjs?v=20261119-legacy-links-1"></script>
+</body>
+</html>
