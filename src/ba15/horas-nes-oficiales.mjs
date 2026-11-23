@@ -44,8 +44,74 @@ const economia=Object.freeze({
     ])
   })
 });
+
+const sociales=Object.freeze({
+ fuente:Object.freeze({
+  norma:'RES-321/MEGC/2015, Anexo VI',
+  url:'https://buenosaires.gob.ar/sites/default/files/media/document/2015/08/28/7779c38b6ce192c024a019e4c39fa1998324b6ef.pdf',
+  paginas:Object.freeze([47,48]),estado:'cotejado_con_anexo_oficial'
+ }),
+ comun:Object.freeze({3:Object.freeze([
+  materia('Introducción a las Ciencias Sociales y a las Humanidades',4)
+ ])}),
+ A:Object.freeze({
+  4:Object.freeze([materia('Psicología',3),materia('Antropología Cultural',3),materia('Sociología',3)]),
+  5:Object.freeze([materia('Geografía Ambiental y Política',3),materia('Sociedad y Estado',3),
+   materia('Historia Cultural Latinoamericana',3),materia('Proyecto',3)])
+ }),
+ B:Object.freeze({
+  4:Object.freeze([materia('Psicología',3),materia('Antropología Cultural',3),materia('Lógica',3)]),
+  5:Object.freeze([materia('Teoría Social y Política',3),materia('Ambientes y Territorios',3),
+   materia('Movimientos Culturales Latinoamericanos Contemporáneos / La CABA y su Historia',3),
+   materia('Proyecto',3)])
+ })
+});
+const turismo=Object.freeze({
+ fuente:Object.freeze({
+  norma:'RES-321/MEGC/2015, Anexo XI',
+  url:'https://buenosaires.gob.ar/sites/default/files/media/document/2015/08/28/a5e30541ee6ee87fe9e0cf70a6b85003e22747af.pdf',
+  paginas:Object.freeze([46]),estado:'cotejado_con_anexo_oficial'
+ }),
+ A:Object.freeze({
+  3:Object.freeze([materia('Introducción al turismo',4)]),
+  4:Object.freeze([materia('Servicios turísticos',3),materia('Turismo y territorio',3),materia('Turismo y comunicación',3)]),
+  5:Object.freeze([materia('Seminario sobre turismo y sociedad',3),materia('Segunda lengua adicional',2),
+   materia('Servicios turísticos',3),materia('Proyecto de turismo comunitario',4)])
+ }),
+ B:Object.freeze({
+  3:Object.freeze([materia('Turismo y sociedad',4)]),
+  4:Object.freeze([materia('Servicios turísticos I',3),materia('Servicios turísticos II',3),
+   materia('Turismo y territorio',3)]),
+  5:Object.freeze([materia('Segunda lengua adicional',2),materia('Servicios turísticos III',4),
+   materia('Comunicación turística',2),materia('Proyecto de turismo comunitario',4)])
+ })
+});
+const educacionFisica=Object.freeze({
+ fuente:Object.freeze({
+  norma:'RES-321/MEGC/2015, Anexo VIII',
+  url:'https://buenosaires.gob.ar/sites/default/files/media/document/2015/08/28/555154d978211587a6808669f00df2deb2115f5b.pdf',
+  paginas:Object.freeze([51,52]),estado:'cotejado_con_anexo_oficial'
+ }),
+ A:Object.freeze({
+  3:Object.freeze([materia('Deportes abiertos y cerrados I',4)]),
+  4:Object.freeze([materia('Deportes abiertos y cerrados II',3),
+   materia('Gimnasia y movimiento expresivo I',3),materia('Proyecto I',3)]),
+  5:Object.freeze([materia('Deportes abiertos',3),materia('Gimnasia y movimiento expresivo II',3),
+   materia('Proyecto II',3),materia('Recreación y prácticas ludomotrices',3)])
+ }),
+ B:Object.freeze({
+  3:Object.freeze([materia('Deportes abiertos y cerrados',4)]),
+  4:Object.freeze([materia('Gimnasia y movimiento expresivo',3),
+   materia('Proyecto I',3),materia('Recreación y prácticas ludomotrices',3)]),
+  5:Object.freeze([materia('Deportes abiertos',4),materia('Deportes cerrados',2),
+   materia('Gimnasia y movimiento expresivo II',3),materia('Proyecto II',3)])
+ })
+});
 export const NES_PLANES_FO_COTEJADOS=Object.freeze({
- 'Economía y Administración':economia
+ 'Economía y Administración':economia,
+ 'Ciencias Sociales y Humanidades':sociales,
+ 'Turismo':turismo,
+ 'Educación Física':educacionFisica
 });
 const canon=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
@@ -58,7 +124,7 @@ export function cotejarHorasNesOrientadas({orientacion,alternativa,anio,materias
  if(!Array.isArray(materiasReferencia))
   throw new TypeError('La referencia de materias debe ser una lista.');
  const plan=NES_PLANES_FO_COTEJADOS[orientacion];
- const documentadas=plan?.[year===3?'comun':alt]?.[year];
+ const documentadas=year===3?(plan?.[alt||'comun']?.[3]||plan?.comun?.[3]):plan?.[alt]?.[year];
  const nombresReferencia=materiasReferencia.map(x=>String(x||'').trim()).filter(x=>x&&!fijo(x));
  if(!documentadas){
   return {estado:'pendiente_documental',orientacion,alternativa:alt,anio:year,
