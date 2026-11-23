@@ -127,6 +127,7 @@ function baMember(r,s,level){
  const area=mappedArea(s),name=String(s.name||''),orient=s.origin==='FO'||areaOf(s)==='Formación Orientada';
  const no=msg=>[false,msg+' RES-1375-MEDGC-25, Anexo I, 6.5.'];
  if(s.isOrientationHourBucket)return no('El cupo horario no es una materia; arrastrá las asignaturas NES de la bolsa FO.');
+ if(s.legacyReference)return no('Este bloque FO histórico se conserva para revisión del trabajo anterior, pero no se asigna como materia nueva.');
  if(s.origin==='FO'&&s.alternative&&s.alternative!==(cur().alt||'A'))
   return no('Esta materia corresponde a otra alternativa curricular; conservá el mapa y cambiá la alternativa antes de ubicarla.');
  switch(r.k){
@@ -252,12 +253,13 @@ placed=function(slot){return (cur().placements[slot]||[]).map(id=>{
  const fixed=CFG.model==='tecnica'&&lockedAnnual(slot,id);
  return '<div class="placed '+(s.origin==='FO'?'fo':'')+'" draggable="'+(fixed?'false':'true')+'" data-map-id="'+esc(id)+'" data-from="'+esc(slot)+'">'+
  (fixed?'<span class="map-grip" aria-hidden="true">✓</span>':'<span class="map-grip">⠿</span>')+esc(s.name)+
+ (s.legacyReference?'<small style="display:inline-block;margin-left:6px">Referencia histórica · revisar</small>':'')+
  (fixed?'<small style="display:inline-block;margin-left:6px">Fija</small>':'<button data-rm="'+esc(id)+'" data-slot="'+esc(slot)+'">×</button>')+'</div>'
 }).join('')};
 renderBag=function(){
  const box=$id('bagContent'),m=cur(),year=Math.min(LV,Math.max(1,Number(m.bagYear)||1));m.bagYear=year;
  const alternative=String(m.alt||'A');
- const set=allSubjects().filter(s=>s.year===year&&!s.isOrientationHourBucket&&
+ const set=allSubjects().filter(s=>s.year===year&&!s.isOrientationHourBucket&&!s.legacyReference&&
   (!s.alternative||s.alternative===alternative));
  let h='<div class="subhead">Materias de la modalidad · filtrar por nivel</div>'+
   (CFG.model==='tecnica'?'<p class="modal-rule-note">Materias extraídas de los contenidos priorizados oficiales 2026. Elegí el nivel y arrastrá cada materia al espacio correspondiente. Las agrupaciones se definen según las reglas de la especialidad; no se solicita carga horaria para armar el mapa.</p>':'')+
@@ -420,6 +422,9 @@ function baEvaluate(){
    if(orientados.some(x=>x.alternative&&x.alternative!==(cur().alt||'A')))
     errors.push({code:'BA_FO_ALTERNATIVA_'+y,message:'Nivel '+y+
      ': hay materias de otra alternativa NES. Conservar y revisar antes de validar.',page:'6.5'});
+   if(orientados.some(x=>x.legacyReference))
+    warnings.push({code:'BA_FO_BLOQUES_HISTORICOS_'+y,
+     message:'Nivel '+y+': se conservan ubicaciones de bloques FO antiguos. Sustituirlos por materias NES al revisar el PCI sin eliminar sus planes anteriores.',page:'6.5'});
    if(orientados.some(x=>x.confirmedBa15Subject!==true))
     warnings.push({code:'BA_FO_MATERIAS_NES_PENDIENTES_'+y,
      message:'Nivel '+y+': hay materias identificadas en el plan NES ('+plan?.horasOrientacion+
