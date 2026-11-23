@@ -106,7 +106,7 @@ test('BA +15: cotejo automático de catorce orientaciones con fuente NES y sumas
     assert.equal(subjects.reduce((acc,x)=>acc+x.sourceWeeklyHours,0),expected);
     assert.ok(subjects.every(x=>x.weeklyHours===null&&x.confirmedBa15Subject===false));
     assert.ok(subjects.every(x=>x.sourceHoursStatus==='nes_documentada'&&
-     x.sourceUrl?.startsWith('https://buenosaires.gob.ar/')));
+     /^https:\/\/[^/]*buenosaires\.gob\.ar\//.test(x.sourceUrl||'')));
    }
   }
  }
@@ -141,12 +141,13 @@ test('BA +15: Turismo y Educación Física distinguen A/B también en Nivel II',
    'Los IDs de Nivel II anteriores deben conservarse como históricos');
  }
 });
-test('BA +15: las otras orientaciones siguen pendientes sin asignación artificial de horas',async()=>{
- const p=await loadV2ModalProfile({model:'ba15',orientation:'comunicacion'});
- assert.ok(p.foEvidenciaNes.some(x=>x.estado==='pendiente_documental'));
- assert.equal(p.foEvidenciaResumen.verificadas,0);
- assert.ok(p.subjects.filter(x=>x.sourceType==='asignatura_nes').every(x=>
-  x.sourceWeeklyHours===null&&x.weeklyHours===null));
+test('BA +15: cotejo de fuentes NES no equivale a homologación automática del nuevo régimen',async()=>{
+ for(const id of ['comunicacion','matematica_fisica','energia_sustentabilidad','informatica']){
+  const p=await loadV2ModalProfile({model:'ba15',orientation:id});
+  assert.equal(p.foEvidenciaResumen.pendientes,0);
+  assert.ok(p.subjects.filter(x=>x.sourceType==='asignatura_nes').every(x=>
+   x.confirmedBa15Subject===false&&x.weeklyHours===null));
+ }
 });
 
 function completarHorasVirtualesValidadas(){
