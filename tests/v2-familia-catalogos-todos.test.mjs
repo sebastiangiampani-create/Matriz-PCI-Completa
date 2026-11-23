@@ -79,6 +79,73 @@ test('BA +15: Fase 1 toma las materias NES exactas según orientación y alterna
  assert.deepEqual(e.foAlternatives,['A'],'Sin alternativa B no se ofrecen asignaturas inventadas.');
 });
 
+test('BA +15: cotejo automático de cuatro orientaciones con fuente NES y sumas 4/9/12 por alternativa',async()=>{
+ const verified=['economia_administracion','ciencias_sociales_humanidades','turismo','educacion_fisica'];
+ for(const orientation of verified){
+  const p=await loadV2ModalProfile({model:'ba15',orientation});
+  const records=p.foEvidenciaNes;
+  const altA=p.foAlternatives.includes('A');
+  const altB=p.foAlternatives.includes('B');
+  assert.equal(altA,true,orientation+' sin alternativa A');
+  assert.equal(altB,true,orientation+' sin alternativa B');
+  assert.equal(p.foEvidenciaResumen.pendientes,0,orientation+' con carga NES sin fuente cotejada');
+  for(const alt of ['A','B']){
+   for(const [year,level,expected] of [[3,2,4],[4,3,9],[5,4,12]]){
+    const record=records.find(r=>r.anio===year&&
+     (r.alternativa===alt||(year===3&&r.alternativa==='comun')));
+    assert.ok(record,orientation+' '+alt+' '+year+' sin cotejo');
+    assert.equal(record.estado,'cotejado_fuente_primaria');
+    assert.equal(record.sumaHorasNes,expected);
+    assert.equal(record.coincideCupo,true);
+    const subjects=p.subjects.filter(x=>x.origin==='FO'&&!x.legacyReference&&x.year===level&&
+     (x.alternative===alt||x.alternative===null));
+    assert.ok(subjects.length>0,orientation+' '+alt+' nivel '+level);
+    assert.equal(subjects.reduce((acc,x)=>acc+x.sourceWeeklyHours,0),expected);
+    assert.ok(subjects.every(x=>x.weeklyHours===null&&x.confirmedBa15Subject===false));
+    assert.ok(subjects.every(x=>x.sourceHoursStatus==='nes_documentada'&&
+     x.sourceUrl?.startsWith('https://buenosaires.gob.ar/')));
+   }
+  }
+ }
+});
+test('BA +15: fuente NES corrige materias erróneas, sin reasignar IDs de borradores',async()=>{
+ for(const orientacion of ['economia_administracion','ciencias_sociales_humanidades']){
+  const p=await loadV2ModalProfile({model:'ba15',orientation:orientacion});
+  const official=p.subjects.filter(x=>x.origin==='FO'&&x.year===3&&x.alternative==='B'&&!x.legacyReference);
+  assert.ok(official.some(x=>x.name==='Psicología'||x.name==='Economía'));
+  assert.ok(!official.some(x=>/Comunicaci[oó]n|Arte y sociedad|Teatro/i.test(x.name)),
+   'El Anexo oficial no tiene materias de Comunicación/Artes en el 4.º de esta orientación');
+  const old=p.subjects.filter(x=>x.origin==='FO'&&x.year===3&&x.alternative==='B'&&x.legacyReference);
+  assert.ok(old.length>=2,'Se preservan referencias de asignaturas erróneas en mapas anteriores');
+  assert.ok(old.every(x=>x.id.startsWith('ba15-nes-fo-')&&x.replacementSubjectId));
+  assert.ok(p.foEvidenciaResumen.hayDiferencias);
+ }
+});
+test('BA +15: Turismo y Educación Física distinguen A/B también en Nivel II',async()=>{
+ const expectations=[
+  ['turismo','Introducción al turismo','Turismo y sociedad'],
+  ['educacion_fisica','Deportes abiertos y cerrados I','Deportes abiertos y cerrados']
+ ];
+ for(const [orientation,a,b] of expectations){
+  const p=await loadV2ModalProfile({model:'ba15',orientation});
+  const first=p.subjects.filter(x=>x.origin==='FO'&&x.year===2&&!x.legacyReference);
+  assert.ok(first.some(x=>x.alternative==='A'&&x.name===a),orientation+' A incorrecta');
+  assert.ok(first.some(x=>x.alternative==='B'&&x.name===b),orientation+' B incorrecta');
+  assert.equal(first.some(x=>x.alternative===null),false,'Nivel II no es común para esta orientación');
+  assert.equal(first.filter(x=>x.alternative==='A').reduce((n,x)=>n+x.sourceWeeklyHours,0),4);
+  assert.equal(first.filter(x=>x.alternative==='B').reduce((n,x)=>n+x.sourceWeeklyHours,0),4);
+  assert.ok(p.subjects.some(x=>x.year===2&&x.legacyReference&&x.alternative===null),
+   'Los IDs de Nivel II anteriores deben conservarse como históricos');
+ }
+});
+test('BA +15: las otras orientaciones siguen pendientes sin asignación artificial de horas',async()=>{
+ const p=await loadV2ModalProfile({model:'ba15',orientation:'comunicacion'});
+ assert.ok(p.foEvidenciaNes.some(x=>x.estado==='pendiente_documental'));
+ assert.equal(p.foEvidenciaResumen.verificadas,0);
+ assert.ok(p.subjects.filter(x=>x.sourceType==='asignatura_nes').every(x=>
+  x.sourceWeeklyHours===null&&x.weeklyHours===null));
+});
+
 test('Técnica: todas las especialidades cargan seis niveles con formación técnico-específica', async()=>{
   const ids=(await readdir(new URL('../data/tecnica/priorizados/',import.meta.url))).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5)).filter(id=>id!=='tecnologia_representacion');
   assert.ok(ids.length>=26);
