@@ -84,7 +84,7 @@
     const serial = JSON.stringify(document);
     if (!force && serial === reported) return Promise.resolve(!draftFailure);
     const seq = ++draftSequence;
-    status('Conservando borrador local…');
+    status(publicContext.remotoDisponible ? 'Guardando borrador en Supabase…' : 'Conservando borrador local…');
     let result;
     try { result = config.alGuardarBorrador(copy(document)); }
     catch (error) { result = Promise.reject(error); }
@@ -92,7 +92,7 @@
       if (seq !== draftSequence) return !draftFailure;
       reported = serial;
       draftFailure = false;
-      status('Borrador guardado en este navegador');
+      status(publicContext.remotoDisponible ? 'Borrador confirmado en Supabase y respaldado en este navegador' : 'Borrador guardado en este navegador');
       window.dispatchEvent(new CustomEvent('pci-borrador-local', { detail: {
         pciId: publicContext.pci.pci_id, guardado: true
       } }));
@@ -100,7 +100,7 @@
     }, error => {
       if (seq !== draftSequence) return false;
       draftFailure = true;
-      status('No se pudo conservar el borrador: ' + String(error.message || error), true);
+      status((publicContext.remotoDisponible ? 'Borrador local conservado; guardado remoto falló: ' : 'No se pudo conservar el borrador: ') + String(error.message || error), true);
       window.dispatchEvent(new CustomEvent('pci-borrador-local', { detail: {
         pciId: publicContext.pci.pci_id, guardado: false
       } }));
