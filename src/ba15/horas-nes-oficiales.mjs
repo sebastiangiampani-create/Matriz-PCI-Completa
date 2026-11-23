@@ -161,6 +161,21 @@ const educacion=Object.freeze({
  B:Object.freeze({4:Object.freeze([materia("Educación y Psicología",3),materia("Sujeto de la Educación",3),materia("Educación y Cultura",3)]),5:Object.freeze([materia("Proyecto",3),materia("Educación y Estado",3),materia("Educación y Globalización",3),materia("Perspectivas Pedagógicas",3)])})
 });
 
+const energiaSustentabilidad=Object.freeze({
+ fuente:Object.freeze({norma:'RES-2370/MEDGC/2022 · Anexo Curricular Energía y Sustentabilidad',
+  url:'https://documentosboletinoficial.buenosaires.gob.ar/publico/PE-RES-MEDGC-MEDGC-2370-22-ANX.pdf',
+  paginas:[36,37],estado:'cotejado_con_anexo_oficial'}),
+ comun:Object.freeze({3:Object.freeze([materia('Taller de modelización en Producción de energía y consumo',4)])}),
+ A:Object.freeze({
+  4:Object.freeze([materia('Observatorio de participación ciudadana en Energía y calidad de vida',3),
+   materia('Taller de modelización en Cuidado del ambiente, ciencia y tecnología',4),
+   materia('Seminario de Políticas en energía, ciencia y tecnología',2)]),
+  5:Object.freeze([materia('Taller de modelización en Recursos energéticos, ciencia y tecnología',4),
+   materia('Observatorio de participación ciudadana en Matriz energética y leyes ambientales',4),
+   materia('Proyecto: Consumidores/as y productores/as',4)])
+ })
+});
+
 export const NES_PLANES_FO_COTEJADOS=Object.freeze({
  'Economía y Administración':economia,
  'Ciencias Sociales y Humanidades':sociales,
@@ -173,7 +188,8 @@ export const NES_PLANES_FO_COTEJADOS=Object.freeze({
  'Lenguas':lenguas,
  'Literatura':literatura,
  'Comunicación':comunicacion,
- 'Educación':educacion
+ 'Educación':educacion,
+ 'Energía y Sustentabilidad':energiaSustentabilidad
 });
 const canon=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
   .toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
