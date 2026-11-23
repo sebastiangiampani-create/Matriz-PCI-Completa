@@ -50,7 +50,7 @@ try{
     const bio=S.find(s=>s.name==='Biología'&&s.year===1);
     M.assign('naturales-c1',bio.id);
     const first=structuredClone(state.maps[state.active].placements);
-    const unfinished=window.V2ModalNorma.evaluate().errors.map(e=>e.code);
+    const unfinished=window.V2ModalNorma.evaluate();
     M.assign('naturales-c2',bio.id);
     M.remove('naturales-c1',bio.id);
     const afterRemove=structuredClone(state.maps[state.active].placements);
@@ -58,11 +58,13 @@ try{
     return {firstC1:first['naturales-c1']?.includes(bio.id),
       firstC2:first['naturales-c2']?.includes(bio.id)||false,
       c2SurvivesRemoval:afterRemove['naturales-c2']?.includes(bio.id)||false,
-      incomplete:unfinished.some(code=>code==='BA_MISSING_1_C2')};
+      warningC2:unfinished.warnings.some(w=>w.code==='BA_NAT_C2'),
+      doesNotDemandDuplication:!unfinished.errors.some(e=>e.code==='BA_MISSING_1_C2')};
   });
-  assert.deepEqual(semesters,{firstC1:true,firstC2:false,c2SurvivesRemoval:true,incomplete:true},
+  assert.deepEqual(semesters,{firstC1:true,firstC2:false,c2SurvivesRemoval:true,
+    warningC2:true,doesNotDemandDuplication:true},
     'Las celdas cuatrimestrales deben ser independientes y conservar las existentes.');
-  // Estructura completa: cada materia en su área de C impar y de C par; las troncales son anuales.
+  // Estructura completa: cada materia en su nivel; la institución puede variar los laboratorios entre C impar y C par.
   const result=await page.evaluate(()=>{
     const M=window.V2ModalMap,S=window.__V2_MODAL.subjects,rows=M.rowDefs();
     for(const s of S.filter(x=>x.origin==='FG'||x.origin==='FO')){
