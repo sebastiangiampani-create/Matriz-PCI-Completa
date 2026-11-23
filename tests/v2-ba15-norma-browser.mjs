@@ -88,10 +88,12 @@ try{
   assert.equal(result.structurallyConsistent,true,'La estructura está completa en C1-C8.');
   assert.equal(result.homologated,false,'El motor no debe afirmar homologación pedagógica FO.');
   assert.ok(result.warnings.includes('BA_FO_REFERENCIA_PENDIENTE'),'Se declara el alcance documental FO.');
+  for(const y of [2,3,4])assert.ok(result.warnings.includes('BA_FO_BLOQUES_REFERENCIA_'+y),
+    'Los bloques de Media no deben contabilizarse como materias homologadas en Nivel '+y);
   await page.locator('#validateBtn').click();
   await page.waitForFunction(()=>/Estructura curricular consistente · RES-1375-MEDGC-25/.test(document.querySelector('#validation')?.textContent||''));
   assert.doesNotMatch(await page.locator('#validation').textContent(),/El mapa no cumple la norma/);
-  assert.match(await page.locator('#validation').textContent(),/Falta contrastar las materias y los contenidos/);
+  assert.match(await page.locator('#validation').textContent(),/Faltan identificar y contrastar las materias reales/);
   const audit=await page.evaluate(()=>{
     return structuredClone(state.maps[state.active].normaComposicion);
   });
