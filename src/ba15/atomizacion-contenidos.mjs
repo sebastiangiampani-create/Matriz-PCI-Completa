@@ -11,6 +11,24 @@ const text=value=>String(value??'').trim();
 const cleanSpace=value=>text(value).replace(/\s+/g,' ').trim();
 const MIN=34;
 const SPLIT=/(?<=[.;!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])|\n(?=\s*[•●▪‣]|\s*[0-9]+[.)]\s)/u;
+// Agrupa ítems explícitos breves sin reinterpretarlos. Conserva los
+// delimitadores en el texto, la secuencia y la posibilidad de reconstruir la
+// fuente exactamente después de normalizar espacios.
+function agruparEnunciados(items,{target=115}={}){
+ const out=[];let current='';
+ for(const candidate of items){
+  const part=cleanSpace(candidate);if(!part)continue;
+  if(!current){current=part;continue;}
+  if(current.length<target&&current.length+1+part.length<=target+75)
+   current+=' '+part;
+  else{out.push(current);current=part;}
+ }
+ if(current)out.push(current);
+ if(out.length>1&&out[out.length-1].length<MIN){
+  const last=out.pop();out[out.length-1]+=' '+last;
+ }
+ return out;
+}
 
 /** Extrae literalmente oraciones/subenunciados; retorna [] si el corte no es seguro. */
 export function fragmentarContenidoFuente(value,{minLength=145,maxFragments=12}={}){
@@ -28,12 +46,32 @@ export function fragmentarContenidoFuente(value,{minLength=145,maxFragments=12}=
  // Los ítems separados mediante guiones o viñetas conservan el marcador
  // del ítem siguiente. Solo se usa cuando no existe una fragmentación previa.
  const bullets=raw.split(/\s+(?=[-–•]\s+[A-ZÁÉÍÓÚÑ])/u).map(cleanSpace).filter(Boolean);
- const parts=valid(historic)?historic:valid(semicolon)?semicolon:valid(bullets)?bullets:[];
- if(!parts.length)return [];
- // Comprobación: no se incorporó ninguna palabra que no estuviera en el texto.
- const original=cleanSpace(raw),joined=parts.join(parts===semicolon?'; ':' ');
- if(original!==joined)return [];
- return parts;
+ // La primera etapa conserva íntegras las decisiones históricas y, por
+ // consiguiente, TODOS los identificadores de fragmentos ya publicados.
+ const historicas=valid(historic)?historic:valid(semicolon)?semicolon:valid(bullets)?bullets:[];
+ if(historicas.length){
+  const joined=historicas.join(historicas===semicolon?'; ':' ');
+  return cleanSpace(raw)===joined?historicas:[];
+ }
+ // Segunda etapa ADITIVA: en los catálogos hay listas de muchas funciones
+ // comunicativas («pedir…; expresar…; describir…») con ítems cortos. La
+ // regla anterior los descartaba por el mínimo de caracteres por ítem.
+ // Separar únicamente en delimitadores explícitos y agrupar adyacentes.
+ const detailed=[
+  raw.split(/(?<=;)\s+(?=\S)/u),
+  historic,
+  raw.split(/\s+(?=[•●▪‣\-–—]\s+\S)/u),
+  raw.split(/\s+(?=(?:[0-9]{1,2}[.)]|[a-z][.)])\s+[A-ZÁÉÍÓÚÑ])/u),
+  raw.split(/\n\s*\n/u)
+ ];
+ const validNew=parts=>parts.length>=2&&parts.length<=Math.max(maxFragments,64)&&
+  parts.every(p=>p.length>=MIN&&p.split(/\s+/).length>=5);
+ for(const items of detailed){
+  if(items.length<2)continue;
+  const parts=agruparEnunciados(items);
+  if(validNew(parts)&&parts.join(' ')===cleanSpace(raw))return parts;
+ }
+ return [];
 }
 
 /** Mantiene los originales en el catálogo de referencia, para recuperar IDs guardados. */
