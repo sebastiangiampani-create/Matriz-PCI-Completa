@@ -261,16 +261,20 @@ export function montarEscuela({contexto,escuelas=[],pcis=[],vinculos=null,client
   $('brandHomeLink').href=href();
   const from=new URLSearchParams(location.search).get('from');
   const back=$('schoolHomeLink');
-  if(from==='panel-general'){
+  const adminSession=session.role==='admin'||session.role==='user';
+  const institutionSession=session.role==='school_admin';
+  if(from==='panel-general'||(!from&&adminSession)){
     back.hidden=false;
     back.href='panel-general.html';
     back.textContent='← Volver a Administración';
-  }else if(from==='panel-escuela'){
+  }else if(from==='panel-escuela'||(!from&&institutionSession)){
     back.hidden=false;
-    back.href='panel-escuela.html?school='+encodeURIComponent(schoolId);
+    back.href='panel-escuela.html?school='+encodeURIComponent(schoolId)+(adminSession?'&admin=1':'');
     back.textContent='← Volver al panel institucional';
   }else{
-    back.hidden=true;
+    back.hidden=false;
+    back.href='index.html';
+    back.textContent='← Volver a la plataforma';
   }
   const permissions=Array.isArray(session.permissions)?session.permissions:[];
   const admin=session.role==='admin'||session.role==='user'&&
