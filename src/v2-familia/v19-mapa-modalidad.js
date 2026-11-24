@@ -883,9 +883,22 @@ function renderBa15VirtualPanel(){
  });
 }
 
+function renderBa15RulesAccess(){
+ if(CFG.model!=='ba15')return;
+ const hero=$id('offer')?.querySelector('.hero');if(!hero)return;
+ let link=$id('ba15RulesAccess');
+ if(!link){
+  link=document.createElement('button');link.id='ba15RulesAccess';link.type='button';
+  link.className='btn soft small';link.textContent='Consultar normativa BA +15';
+  link.style.cssText='margin-top:8px;font-size:.72rem;padding:7px 11px';
+  link.onclick=()=>{const modal=$id('rulesModal');if(modal)modal.classList.add('open');};
+  hero.append(link);
+ }
+}
 const previousRenderOffer=renderOffer;
 renderOffer=function(...args){const result=previousRenderOffer(...args);
- renderTechPrescriptionPanel();renderBa15OrientationPanel();renderBa15VirtualPanel();return result};
+ renderTechPrescriptionPanel();renderBa15OrientationPanel();renderBa15VirtualPanel();
+ renderBa15RulesAccess();return result};
 if(CFG.model==='tecnica')window.addEventListener('pci-app-ready',()=>{
  prearmTechnicalAnnuals();renderTechPrescriptionPanel();
 });
