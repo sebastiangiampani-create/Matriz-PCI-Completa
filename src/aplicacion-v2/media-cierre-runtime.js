@@ -9,7 +9,6 @@
     throw Error('No está disponible el cierre normativo de Media.');
   const editable=cfg.contexto.permissions.puedeEditar===true;
   const naturaleza=cfg.contexto.pci.orientation_id===reglas.MEDIA_NATURALES_ORIENTACION;
-  const slots=reglas.MEDIA_FO_QUINTO;
   const current=()=>ensure(state.active);
   const copy=x=>structuredClone(x);
   let horas=null,errorHoras=null,articulacionAbierta=false;
@@ -61,14 +60,6 @@
     current().valid=false;
     toast(message,true);
   }
-  function actualizarRelacion(slot,checked) {
-    if(!editable) return false;
-    const mapa=current(),update=reglas.cambiarArticulacionPvf(mapa,slot,checked);
-    mapa.pvfArticulaciones=update.pvfArticulaciones;
-    mapa.valid=false;
-    save();renderOffer();
-    return true;
-  }
   function resguardar() {
     if(!editable || !naturaleza) return false;
     const mapa=current(),result=reglas.resguardarNaturalesQuinto(mapa,{
@@ -113,32 +104,8 @@
     }
     panel.replaceChildren();
     const stateAudit=audit();
-    const heading=make('summary','Proyecto de Vinculación · articulación FO 5.º ('+stateAudit.articulaciones.length+' espacios vinculados)');
-    const help=make('p','Podés vincular pedagógicamente los laboratorios y talleres de FO con el proyecto anual prescripto. No se trasladan materias ni se fusionan espacios: cada espacio conserva sus planes bimestrales, evaluación, calificación y horas. El proyecto conserva sus cuatro planes bimestrales.');
-    panel.append(heading,help);
-    const grid=make('div',undefined,'pci-media-cierre-grid');
-    for(const slot of slots) {
-      const term=slot.endsWith('c9')?'C9':'C10';
-      const tipo=slot.startsWith('foLab')?'Laboratorio':'Taller';
-      const details=stateAudit.detalle.find(item=>item.slot===slot);
-      const name=tipo+' FO '+term;
-      const row=make('label',undefined,'pci-media-cierre-option');
-      const box=document.createElement('input');box.type='checkbox';
-      box.dataset.pvfArticulacion=slot;
-      box.checked=stateAudit.articulaciones.includes(slot);
-      box.disabled=!editable;
-      box.onchange=()=>actualizarRelacion(slot,box.checked);
-      const wrap=make('span',undefined,'pci-media-cierre-text');
-      wrap.append(make('strong',name));
-      const sum=details ? details.cantidad+' materias · '+details.hcConocidas+' HC'+
-        (details.horasPendientes?' · '+details.horasPendientes+' cargas pendientes':'') : 'Composición pendiente';
-      wrap.append(make('small',sum));
-      row.append(box,wrap);
-      grid.append(row);
-    }
-    panel.append(grid);
-    const footer=make('p','Regla: mínimo dos materias de FO del mismo año por laboratorio/taller. Máximo 9 HC por espacio, salvo los espacios de FO de 5.º de Ciencias Naturales. Las horas del Proyecto de Vinculación no se duplican en los espacios articulados.','pci-media-cierre-help');
-    panel.append(footer);
+    const heading=make('summary','Revisión normativa de 5.º año');
+    panel.append(heading);
     if(naturaleza)panel.append(make('p','Ciencias Naturales: los 8 laboratorios FG terminan en C8. En 5.º no existen las celdas de laboratorio FG de Naturales.','pci-media-cierre-help'));
     if(errorHoras)panel.append(make('p','No se pudo cargar la base oficial de horas: '+errorHoras,'pci-media-cierre-warning'));
     const previous=current().resguardosNormativos?.naturales5 || [];
@@ -168,8 +135,12 @@
     if(extras.length)panel.append(make('p','Revisar: '+extras.map(x=>x.mensaje).join(' '),'pci-media-cierre-warning'));
     // No abrir un bloque extenso por defecto; las advertencias que exigen
     // actuación sí deben mostrarse sin interacción adicional.
-    panel.open=articulacionAbierta||Boolean(errorHoras)||(naturaleza&&
+    const tieneIncidencias=Boolean(errorHoras)||previous.length>0||(naturaleza&&
       (irregular.ubicaciones.length||irregular.grupos.length||irregular.propios))||extras.length>0;
+    // Sin incidencias, el Proyecto de Vinculación NO presenta panel de opciones.
+    // Toda articulación se deriva del mapa al ejecutar Validar oferta.
+    panel.hidden=!tieneIncidencias;
+    panel.open=tieneIncidencias;
   }
   const previoRenderOffer=renderOffer;
   renderOffer=function(...args) {
@@ -187,19 +158,6 @@
     }
     return previoValidateOffer(...args);
   };
-  function decorarFase2() {
-    const group=document.querySelector('#v28groups [data-g="proyecto-n5"] .v28-subjects');
-    if(!group)return;
-    let text=group.querySelector('[data-pvf-articulaciones]');
-    if(!text) {
-      text=make('small',undefined,'pci-media-cierre-plan');
-      text.dataset.pvfArticulaciones='true';group.append(text);
-    }
-    const pairs=current().pvfArticulaciones?.espacios || [];
-    text.textContent=pairs.length ? 'Articulación pedagógica con '+pairs.length+
-      ' espacios FO de 5.º (planes y calificaciones independientes)' :
-      'Puede articular pedagógicamente con espacios FO de 5.º (sin fusionar planes)';
-  }
   const css=document.createElement('style');
   css.textContent='#offer .matrix-card{display:flex;flex-direction:column}#offer .matrix-card>.pci-media-cierre{order:20}' +
     '.pci-media-cierre{margin:9px 0;padding:8px 12px;border:1px solid var(--l);border-radius:12px;background:#fff}' +
@@ -214,15 +172,14 @@
     '.pci-media-cierre-plan{display:block;flex-basis:100%;font-size:.65rem;color:var(--muted)}' +
     '@media(max-width:650px){.pci-media-cierre-grid{grid-template-columns:minmax(0,1fr)}}';
   document.head.appendChild(css);
-  window.addEventListener('pci-phase2-groups-rendered',decorarFase2);
   window.addEventListener('pci-app-ready',()=>{
     fetch('data/horas-v2.json?v=media-cierre-20261121',{cache:'force-cache'}).then(r=>{
       if(!r.ok)throw Error('No se recibió la base de horas de Media.');
       return r.json();
     }).then(data=>{horas=data;errorHoras=null;buildPanel();},
       error=>{errorHoras=String(error.message||error);buildPanel();});
-    buildPanel();decorarFase2();
+    buildPanel();
   });
-  window.PCIMediaCierre=Object.freeze({auditar:audit,articular:actualizarRelacion,
+  window.PCIMediaCierre=Object.freeze({auditar:audit,
     resguardarNaturales:resguardar,render:buildPanel});
 })();

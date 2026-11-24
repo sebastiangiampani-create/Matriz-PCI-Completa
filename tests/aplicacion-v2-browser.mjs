@@ -305,11 +305,14 @@ async function mediaFlow(page,record){
   const layout=await page.evaluate(()=>{
     const panel=document.querySelector('#pciMediaCierre');
     const validation=document.querySelector('#validation');
-    return {pvfElement:panel?.tagName,
-      validationBeforePvf:!!validation&&!!panel&&validation.getBoundingClientRect().bottom<=panel.getBoundingClientRect().top};
+    return {pvfElement:panel?.tagName,pvfHidden:panel?.hidden,
+      manualChoices:document.querySelectorAll('[data-pvf-articulacion]').length,
+      hasValidation:!!validation};
   });
-  assert.equal(layout.pvfElement,'DETAILS','Articulación de 5.º debe poder minimizarse');
-  assert.equal(layout.validationBeforePvf,true,'La validación no debe aparecer al final de la articulación');
+  assert.equal(layout.pvfElement,'DETAILS');
+  assert.equal(layout.pvfHidden,true,'Sin incidencias no debe mostrarse un panel de opciones de PVF');
+  assert.equal(layout.manualChoices,0,'La articulación no permite selección manual');
+  assert.equal(layout.hasValidation,true,'La validación del mapa debe continuar disponible');
   const before=await snapshot(page);
   assert.equal(before.maps[before.active].migracionLegado,undefined,'Preparar el aviso no incorpora datos.');
   assert.equal(before.maps[before.active].phase2V28?.groups?.['socialB-c5']?.contents?.length||0,0);

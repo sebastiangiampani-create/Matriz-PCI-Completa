@@ -97,20 +97,22 @@ export function auditarCierreMedia(mapa,{orientacionId,orientacion,materias=[],c
     detalle.push({slot,cantidad:ids.length,hcConocidas:hc,horasPendientes:desconocidas,
       excepcionMasDe9:esNaturales});
   }
-  const relacion = mapa.pvfArticulaciones;
-  if (relacion !== undefined) {
-    if (!objeto(relacion) || relacion.version !== MEDIA_ARTICULACION_VERSION ||
-      !Array.isArray(relacion.espacios) || relacion.espacios.some(s=>!MEDIA_FO_QUINTO.includes(s)) ||
-      new Set(relacion.espacios).size !== relacion.espacios.length) {
-      errores.push(falta('MEDIA_PVF_ARTICULACION_INVALIDA',
-        'La articulación de PVF debe señalar espacios existentes de FO de 5.º, sin duplicaciones.','proyecto-n5'));
-    } else for (const slot of relacion.espacios) {
-      if (!(mapa.placements?.[slot] || []).length) errores.push(falta('MEDIA_PVF_ARTICULACION_VACIA',
-        'No se puede articular con un espacio de FO sin materias.','proyecto-n5'));
-    }
-  }
+  // La articulación es una consecuencia de la composición validada,
+  // no una decisión adicional que la escuela deba marcar en casilleros.
+  // Los metadatos manuales históricos se conservan sin aplicarlos ni
+  // sobrescribirlos: la validación usa exclusivamente las ubicaciones reales.
+  const articulaciones = MEDIA_FO_QUINTO.filter(slot => {
+    const ids = mapa.placements?.[slot];
+    if (!Array.isArray(ids) || ids.length < 2 || new Set(ids).size !== ids.length) return false;
+    return ids.every(id => {
+      const s = sujeto(materias,id);
+      return s?.origin === 'FO' && Number(s.year) === 5 &&
+        id !== idProyecto && !idsProyecto.includes(id);
+    });
+  });
   return {valido:errores.length===0 && pendientes.length===0,errores,pendientes,detalle,
-    naturalesQuinto:heredado,articulaciones:[...(relacion?.espacios || [])]};
+    naturalesQuinto:heredado,articulaciones:errores.length||pendientes.length?[]:articulaciones};
+
 }
 
 export function cambiarArticulacionPvf(mapa,slot,activada) {
