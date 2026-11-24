@@ -39,7 +39,11 @@ const lockedAnnual=(slot,id)=>{
   return !!(String(slot)==='anualEsp-n'+year&&spec&&subject&&
     prescribedForSubject(subject) && subject.origin==='FO'&&fieldOf(subject)==='formacion_tecnica_especifica');
 };
-const techRepresentationYears=[1,2,...(TECH_PROFILE?.planParticularVerificado===true && (CFG.subjects||[]).some(x=>x.year===3&&/representaci/i.test(x.name))?[3]:[])];
+// El PDF puede contener representación en 3.º. Permitir trabajarla
+// como opción visible y PROVISIONAL, sin declararla prescripta si el plan
+// particular todavía no está verificado.
+const techRepresentationThird=Boolean((CFG.subjects||[]).some(x=>x.year===3&&/representaci/i.test(x.name)));
+const techRepresentationYears=[1,2,...(techRepresentationThird?[3]:[])];
 const profileRows=CFG.model==='tecnica'?[
  {k:'lengua',l:'Lengua y Literatura',area:'Lengua y Literatura',annual:true,allowedYears:[1,2,3,4,5]},
  {k:'matematica',l:'Matemática',area:'Matemática',annual:true,allowedYears:SIXTH_CORE?[1,2,3,4,5,6]:[1,2,3,4,5]},
