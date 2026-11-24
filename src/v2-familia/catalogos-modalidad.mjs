@@ -158,8 +158,13 @@ const TECH_MAP_AREAS=['Matemática','Lengua y Literatura','Lengua Adicional','Ci
  'Educación Física','Educación Artística','Tecnología de la Representación','Taller del Primer Ciclo'];
 function technicalContentArea(section,field,year,subjects){
  const name=text(section.asignatura);
- const subject=subjects.find(x=>x.name===name&&(!year||x.year===year))||subjects.find(x=>x.name===name);
- const area=text(subject?.area);
+ // Los documentos usan tanto «Tecnología» como «Tecnologías» de la
+ // Representación; la denominación no debe esconder los contenidos de Nivel II.
+ const normalized=canonContent(name);
+ const representacion=/^tecnologias? de la representacion$/.test(normalized);
+ const subject=subjects.find(x=>canonContent(x.name)===normalized&&Number(x.year)===Number(year))||
+   subjects.find(x=>canonContent(x.name)===normalized);
+ const area=representacion?'Tecnología de la Representación':text(subject?.area);
  if(area==='Taller del Primer Ciclo'&&Number(subject?.year)>=3)return'Formación Técnico-Específica';
  if(TECH_MAP_AREAS.includes(area))return area;
  if(field==='formacion_cientifico_tecnologica')return'Formación Científico-Tecnológica';
