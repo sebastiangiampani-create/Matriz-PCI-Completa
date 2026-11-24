@@ -302,6 +302,14 @@ async function mediaFlow(page,record){
   await openPci(page,ids.media);
   assert.equal(await page.locator('#matrix .grid.levels .level').count(),5);
   await page.locator('#v2MigrationNotice').waitFor({state:'visible'});
+  const layout=await page.evaluate(()=>{
+    const panel=document.querySelector('#pciMediaCierre');
+    const validation=document.querySelector('#validation');
+    const toolbar=document.querySelector('#offer .matrix-toolbar');
+    return {pvfElement:panel?.tagName,validationNearToolbar:validation?.previousElementSibling===toolbar};
+  });
+  assert.equal(layout.pvfElement,'DETAILS','Articulación de 5.º debe poder minimizarse');
+  assert.equal(layout.validationNearToolbar,true,'La validación no debe aparecer al final de la articulación');
   const before=await snapshot(page);
   assert.equal(before.maps[before.active].migracionLegado,undefined,'Preparar el aviso no incorpora datos.');
   assert.equal(before.maps[before.active].phase2V28?.groups?.['socialB-c5']?.contents?.length||0,0);
@@ -321,6 +329,12 @@ async function mediaFlow(page,record){
   await page.evaluate(()=>PCIAplicacionV2.prepareMigration());
   assert.deepEqual((await snapshot(page)).maps[track].migracionLegado,acceptedMarker,'Preparar otra vez no duplica la aceptación.');
   record.coberturaSoloEnPrimero=await coverage(page,false);
+  // Los botones internos regresan al panel del mismo PCI, nunca a otra escuela.
+  await page.locator('#offer [data-go="panel"]').click();
+  await page.locator('#panel.active').waitFor({state:'visible'});
+  assert.equal(new URL(page.url()).searchParams.get('pci'),ids.media);
+  await page.locator('#openOffer').click();
+  await page.locator('#offer.active').waitFor({state:'visible'});
   await page.locator('#matrix .drop[data-slot="socialB-c5"]').scrollIntoViewIfNeeded();
   await capture(page,record.dispositivo+'-media-mapa.png');
   await area(page,'Ciencias Sociales');
