@@ -201,8 +201,25 @@ async function ready(page,pciId){
 }
 const snapshot=page=>page.evaluate(()=>PCIAplicacionV2.snapshot());
 async function schoolHome(page){
-  await page.locator('#pciV2BackSchool').click();
+  const back=page.locator('#pciV2BackSchool');
+  const original=new URL(page.url());
+  const id=original.searchParams.get('pci');
+  assert.ok(id,'La navegación debe iniciarse en un PCI identificado.');
+  assert.equal(original.searchParams.get('school'),String(school.school_id));
+  // Desde Mapa, Desarrollo o Gestión, «Volver» no cambia de escuela ni de PCI.
+  if(!(await page.locator('#panel.active').count())){
+    assert.match(await back.innerText(),/Volver al panel de este PCI/);
+    await back.click();
+    await page.locator('#panel.active').waitFor({state:'visible'});
+    const previous=new URL(page.url());
+    assert.equal(previous.searchParams.get('pci'),id,'El regreso debe conservar el mismo PCI.');
+    assert.equal(previous.searchParams.get('school'),String(school.school_id));
+    assert.equal(previous.searchParams.get('view'),'panel');
+  }
+  assert.match(await back.innerText(),/Volver a la organización curricular/);
+  await back.click();
   await page.waitForURL(url=>url.pathname==='/pci-orientaciones.html'&&!url.searchParams.has('pci'));
+  assert.equal(new URL(page.url()).searchParams.get('school'),String(school.school_id));
   await page.locator('#schoolPciCards .school-offer-card').first().waitFor();
   await nativeShell(page);
 }
