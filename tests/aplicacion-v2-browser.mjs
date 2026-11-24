@@ -305,11 +305,11 @@ async function mediaFlow(page,record){
   const layout=await page.evaluate(()=>{
     const panel=document.querySelector('#pciMediaCierre');
     const validation=document.querySelector('#validation');
-    const toolbar=document.querySelector('#offer .matrix-toolbar');
-    return {pvfElement:panel?.tagName,validationNearToolbar:validation?.previousElementSibling===toolbar};
+    return {pvfElement:panel?.tagName,
+      validationBeforePvf:!!validation&&!!panel&&Boolean(validation.compareDocumentPosition(panel)&Node.DOCUMENT_POSITION_FOLLOWING)};
   });
   assert.equal(layout.pvfElement,'DETAILS','Articulación de 5.º debe poder minimizarse');
-  assert.equal(layout.validationNearToolbar,true,'La validación no debe aparecer al final de la articulación');
+  assert.equal(layout.validationBeforePvf,true,'La validación no debe aparecer al final de la articulación');
   const before=await snapshot(page);
   assert.equal(before.maps[before.active].migracionLegado,undefined,'Preparar el aviso no incorpora datos.');
   assert.equal(before.maps[before.active].phase2V28?.groups?.['socialB-c5']?.contents?.length||0,0);
