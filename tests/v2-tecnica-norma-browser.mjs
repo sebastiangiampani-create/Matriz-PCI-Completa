@@ -32,6 +32,29 @@ try{
   for(const label of ['Taller de la Especialidad (anual)','Espacios de integración de la Especialidad','Espacio anual de la especialidad','Taller del 1.er ciclo (anual)'])
     assert.ok(rows.includes(label),'Falta la fila '+label);
 
+  const formatos=await page.evaluate(()=>{
+    const rows=window.V2ModalMap.rowDefs();
+    const groups=window.PCIPhase2V28.groups();
+    const getRow=k=>rows.find(r=>r.k===k);
+    const getGroup=id=>groups.find(g=>g.id===id);
+    return {
+      representacionFila:getRow('representacion')?.format,
+      representacionDesarrollo:getGroup('representacion-n2')?.type,
+      primerCiclo:getRow('taller1')?.format,
+      tallerEspecialidadFila:getRow('foTaller5')?.format,
+      tallerEspecialidadDesarrollo:getGroup('foTaller5-n3')?.type,
+      integracionEspecialidad:getRow('foN3')?.format
+    };
+  });
+  assert.deepEqual(formatos,{
+    representacionFila:'formativo',
+    representacionDesarrollo:'formativo',
+    primerCiclo:'formativo',
+    tallerEspecialidadFila:'taller_especialidad',
+    tallerEspecialidadDesarrollo:'taller_especialidad',
+    integracionEspecialidad:'integracion'
+  },'Anexo II 2026: Taller de la Especialidad NO es espacio formativo; representación sí lo es.');
+
   const checks=await page.evaluate(()=>{
     const M=window.V2ModalMap,S=window.__V2_MODAL.subjects;
     const by=(n,y)=>S.find(s=>s.name===n&&s.year===y);
