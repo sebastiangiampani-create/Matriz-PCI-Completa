@@ -126,3 +126,13 @@ test('BA+15: no dividir enunciados unitarios por comas si no hay enumeración ex
  assert.deepEqual(fragmentarContenidoFuente(original),[],
   'Comas gramaticales no equivalen a saberes autónomos ni habilitan corte automático');
 });
+
+
+test('BA+15: lista curricular con dos puntos se separa fuera de paréntesis',()=>{
+ const original='Introducción a la producción en comunicación aplicada a la actividad turística: gráfica (periódicos y revistas institucionales o comunitarias, destinatarios y circulación), radial (guiones, programas para una radio local o para ser subidos a Internet), audiovisual (guiones, trabajo en diversos géneros: noticiero, magazine, espectáculo deportivo, ficciones, animaciones, documentales), digital (propuestas y recursos multimediales para conocer el patrimonio cultural y turístico de la región).';
+ const parts=fragmentarContenidoFuente(original);
+ assert.ok(parts.length>=2,'La lista de medios declarada explícitamente debe desagregarse');
+ assert.equal(parts.join(' '),original,'Respetar íntegramente delimitadores y paréntesis');
+ assert.ok(parts.some(p=>p.includes('noticiero, magazine')),
+  'No separar comas que pertenecen a un mismo paréntesis');
+});
