@@ -267,6 +267,7 @@ const st=document.createElement('style');st.textContent=`
  .subject[data-sub]{cursor:grab}.subject[data-sub]:active{cursor:grabbing}
  .subject[data-sub]:focus-visible{outline:2px solid var(--md,#237a6a)}
  .modal-bag-empty{font-size:.75rem;color:var(--muted);padding:9px 0}
+ #bagContent .year[hidden],#bagContent .subject[hidden]{display:none!important}
  `;document.head.appendChild(st);
 rowDefs=function(){return profileRows};
 label=function(k,t){const row=profileRow(k);return row?row.l+' · C'+t:'C'+t};
