@@ -758,13 +758,19 @@ function renderTechPrescriptionPanel(){
    }).join('')+
    (stillPending.length>80?'<li>… y '+(stillPending.length-80)+' referencias adicionales. Consultar el catálogo completo.</li>':'')+
    '</ul></details>':'';
- panel.innerHTML='<div class="subhead">Composición por especialidad · Anexo II</div>'+
-  '<strong>'+esc(TECH_PROFILE.name)+'</strong><p>'+esc(stateDesc)+'</p>'+
+ panel.innerHTML='<div class="subhead">Educación Técnica · Anexo II</div>'+
+  '<div class="v2-compact-summary"><strong>'+esc(TECH_PROFILE.name)+'</strong> · '+
+  (TECH_ANNUALS.length?TECH_ANNUALS.length+' materia(s) anual(es) prescripta(s)':'Plan anual a revisar')+
+  (check?.issues?.length?' · '+check.issues.length+' observación(es)':'')+'</div>'+
+  '<details class="v2-compact-detail"><summary>Ver prescripciones, fuentes y auditoría de contenidos</summary>'+
+  '<p>'+esc(stateDesc)+'</p>'+
   (rows?'<ul class="norma-list">'+rows+'</ul>':'')+warnings+sourceLine+atomLine+detailPending+
-  '<p>Matemática y Lengua Adicional: '+TECH_PROFILE.troncales.matematica.length+
+  '<p><strong>Composición:</strong> Matemática y Lengua Adicional: '+TECH_PROFILE.troncales.matematica.length+
   ' años. Sociales: '+TECH_PROFILE.sociales.total+' integraciones ('+
   TECH_PROFILE.sociales.obligatorios+' obligatorias y '+TECH_PROFILE.sociales.electivos+
-  ' electivas). Para talleres, integraciones y prácticas, confirmar con el plan de la especialidad las composiciones específicas. No se exige consignar horas para construir el mapa. La integración de la Especialidad está exceptuada del máximo general de 9 HC; Sociales y Naturales conservan ese límite.</p>';
+  ' electivas). Para talleres, integraciones y prácticas, contrastar con el plan particular. '+
+  'La integración de la Especialidad está exceptuada del máximo general de 9 HC; '+
+  'Sociales y Naturales conservan ese límite.</p></details>';
 }
 function renderBa15OrientationPanel(){
  if(CFG.model!=='ba15'||!BA_FO_PLAN.length)return;
@@ -785,17 +791,16 @@ function renderBa15OrientationPanel(){
    '<li>Nivel '+['','I','II','III','IV'][x.anio-1]+' · '+esc(x.estado==='cotejado_fuente_primaria'?
     (x.sumaHorasNes+' HC NES cotejadas · '+x.fuente.norma):
     'horas individuales pendientes de fuente oficial')+'</li>').join('')+'</ul>':'';
- panel.innerHTML='<div class="subhead">Formación Orientada · Resolución 1375/2025</div>'+
-  '<p>Composición prescripta por nivel; el Anexo I (6.3) fija las cargas horarias, '+
-  'pero las materias específicas dependen del diseño NES de la orientación de esta escuela.</p>'+
+ panel.innerHTML='<div class="subhead">BA +15 · Formación Orientada</div>'+
+  '<div class="v2-compact-summary"><strong>'+esc(state.active)+'</strong> · alternativa '+esc(activeAlt)+
+  ' · cuatro niveles y ocho cuatrimestres. Las materias NES son de referencia hasta su adaptación al régimen BA +15.</div>'+
+  '<details class="v2-compact-detail"><summary>Ver cargas horarias por nivel y cotejo NES</summary>'+
+  '<p>El Anexo I (6.3) fija los cupos; las materias se contrastan con el diseño NES de esta orientación.</p>'+
   '<ul class="norma-list">'+rows.join('')+'</ul>'+
-  '<p><strong>Fase 1:</strong> la bolsa FO muestra las materias NES por orientación, año y alternativa A/B. '+
-  'Las horas NES documentadas se distinguen de las que faltan cotejar y no implican homologación automática BA +15.</p>'+
+  '<p><strong>Fase 1:</strong> bolsa NES por año y alternativa. Horas de fuente, sin homologación automática.</p>'+
   '<p><strong>Alternativa '+esc(activeAlt)+' · evidencia NES:</strong></p>'+auditList+
-  '<p><strong>Fase 2:</strong> los bloques FO de Media V2 son referencias de contenidos para vincular '+
-  'a las materias; no se consideran materias homologadas del régimen BA +15.</p>'+
-  '<p><small>El CCC corresponde a la acreditación de saberes previos de 1.º año NES '+
-  'y no suma cuatrimestres ni materias a este mapa C1–C8.</small></p>';
+  '<p><strong>Fase 2:</strong> bloques de referencia FO de Media, para desarrollo de contenidos. No constituyen materias homologadas.</p>'+
+  '<p><small>El CCC acredita saberes previos; no agrega cuatrimestres a C1–C8.</small></p></details>';
 }
 function renderBa15VirtualPanel(){
  if(CFG.model!=='ba15')return;
@@ -807,11 +812,10 @@ function renderBa15VirtualPanel(){
  }
  const open=[...panel.querySelectorAll('details[open]')].map(x=>Number(x.dataset.c));
  const config=baVirtualState(),audit=baVirtualAudit();
- let html='<div class="subhead">Presencialidad y actividades virtuales · RES-105/SSGDA/2026</div>'+
-  '<p><strong>27 HC presenciales + 11 HC asincrónicas semanales</strong>: '+
-  'se aplica solo al turno noche de las escuelas incluidas en el Anexo II. '+
-  'Las actividades asincrónicas no son obligatoriamente videollamadas en vivo.</p>'+
-  '<label for="ba15AmbientesAlcance">¿Está alcanzada esta escuela y turno?</label> '+
+ let html='<div class="subhead">BA +15 · Presencialidad y virtualidad</div>'+
+  '<div class="v2-compact-summary">Solo para escuelas y turnos alcanzados por RES-105/2026: '+
+  '<strong>27 HC presenciales + 11 asincrónicas</strong>.</div>'+
+  '<label for="ba15AmbientesAlcance">Aplicación del Anexo II: </label> '+
   '<select id="ba15AmbientesAlcance">'+[
    ['pendiente_confirmacion','Pendiente de confirmar con Anexo II'],
    ['aplica_anexo_ii_turno_noche','Sí, turno noche incluido en Anexo II'],
@@ -819,6 +823,8 @@ function renderBa15VirtualPanel(){
   ].map(([value,label])=>'<option value="'+value+'"'+
    (config.aplicacion===value?' selected':'')+'>'+esc(label)+'</option>').join('')+
   '</select>';
+ html+='<details class="v2-compact-detail"><summary>Alcance de la resolución y condiciones de actividades asincrónicas</summary>'+
+   '<p>Solo corresponde al turno noche de las escuelas incluidas en el Anexo II de RES-105/SSGDA/2026. Las horas asincrónicas no requieren videollamadas simultáneas. Confirmá la inclusión institucional antes de completar la distribución.</p></details>';
  if(audit.aplica){
   const passed=audit.periodos.filter(x=>x.completo&&x.presenciales===27&&x.asincronicas===11).length;
   html+='<p>Ingresá las <strong>horas asincrónicas</strong> de cada espacio. Las presenciales '+
