@@ -78,6 +78,8 @@
     if (!target) return;
     target.textContent = message;
     target.dataset.error = failed ? 'true' : 'false';
+    const retry=document.getElementById('pciV2RetrySave');
+    if(retry)retry.hidden=!failed;
   }
 
   function reportDraft(document, force = false) {
@@ -92,7 +94,7 @@
       if (seq !== draftSequence) return !draftFailure;
       reported = serial;
       draftFailure = false;
-      status(publicContext.remotoDisponible ? 'Borrador confirmado en Supabase y respaldado en este navegador' : 'Borrador guardado en este navegador');
+      status(publicContext.remotoDisponible ? 'Guardado en Supabase · versión confirmada' : 'Borrador guardado en este navegador');
       window.dispatchEvent(new CustomEvent('pci-borrador-local', { detail: {
         pciId: publicContext.pci.pci_id, guardado: true
       } }));
@@ -140,7 +142,7 @@
     const conserved = editable ? await save() : true;
     if (!conserved || draftFailure) {
       leaving = false;
-      status('No se conservó el borrador. Permanecé en el PCI y volvé a intentar guardar.', true);
+      status('No se confirmó el guardado remoto. El borrador local se mantiene cuando el navegador lo permite. Reintentá antes de salir.', true);
       return false;
     }
     location.assign(config.volver);
@@ -229,6 +231,16 @@
     draft.setAttribute('role', 'status');
     draft.textContent = editable ? 'Borrador local · sin guardado en línea' : 'Consulta del PCI de la escuela';
     block.append(school, pci, draft);
+    if(editable){
+      const retry=document.createElement('button');
+      retry.type='button';retry.id='pciV2RetrySave';retry.className='btn soft';
+      retry.textContent='Reintentar guardado';retry.hidden=true;
+      retry.onclick=async()=>{retry.disabled=true;try{
+        const ok=await save();
+        if(ok&&!draftFailure)retry.hidden=true;
+      }finally{retry.disabled=false}};
+      block.append(retry);
+    }
     header.querySelector('.brand')?.appendChild(block);
     const back = document.createElement('a');
     back.href = config.volver;
@@ -241,7 +253,10 @@
     css.textContent = `
       #pciV2Identity{display:grid;gap:3px;min-width:0;color:var(--ink);font-size:.64rem;line-height:1.35}
       #pciV2Identity strong{font-size:.76rem}#pciV2Identity span{color:var(--muted)}
-      #pciV2DraftStatus{font-size:.58rem;color:#126e65}#pciV2DraftStatus[data-error="true"]{color:var(--danger)}
+      #pciV2DraftStatus{font-size:.62rem;color:#126e65;line-height:1.45}
+      #pciV2DraftStatus[data-error="true"]{color:var(--danger);font-weight:800}
+      #pciV2RetrySave{justify-self:start;font-size:.64rem;padding:5px 10px;min-height:30px}
+      #pciV2RetrySave[hidden]{display:none!important}
       /* V42 agrega .site-top con altura fija: la identidad escolar requiere
          que ambas filas participen de la altura real del encabezado. */
       header.top,header.top.site-top{height:auto;min-height:68px;gap:16px;padding-block:10px}
