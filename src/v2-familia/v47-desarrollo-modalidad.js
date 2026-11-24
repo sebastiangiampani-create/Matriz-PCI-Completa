@@ -80,7 +80,8 @@ function groups(){const out=[];
 const ga=a=>groups().filter(g=>g.area===a),gb=id=>groups().find(g=>g.id===id),members=g=>g.subjectIds.map(byId).filter(Boolean),hasFO=g=>g.area==='Formación Orientada'||members(g).some(s=>s.origin==='FO');
 function allowed(c,g){
  if(c.component==='CUSTOM')return c.groupId===g.id;
- if(c.component==='FO')return hasFO(g)&&c.area===g.area&&
+ if(c.atomicParent)return false;
+ if(c.component==='FO')return (CFG.model==='tecnica'||hasFO(g))&&c.area===g.area&&
    (!c.year||Number(c.year)===Number(g.year));
  if(c.component!=='FG'||Number(c.year)!==Number(g.year))return false;
  if(c.area===g.area)return true;
@@ -91,7 +92,7 @@ function memberKeys(g){return new Set((g.subjectIds||[]).map(byId).filter(Boolea
 const oriContents=()=>FO.get(fkey())||[],customContents=()=>p2().customContents||[],findContent=id=>[...(FG||[]),...oriContents(),...customContents()].find(c=>c.id===id),locations=id=>groups().filter(g=>(g.data.contents||[]).includes(id)).map(g=>g.data.name||g.name),developed=g=>!!((g.data.contents||[]).length||String(g.data.objectives||'').trim()||String(g.data.context||'').trim()||String(g.data.practice||'').trim()||String(g.data.synopsis||'').trim()),termText=g=>String(g.term||'').includes('-')?`C${g.term.split('-')[0]}–C${g.term.split('-')[1]} · anual`:`C${g.term}`;
 function pool(a){
  const gs=ga(a),hasFoSpace=gs.some(hasFO),names=new Set(gs.flatMap(g=>[...memberKeys(g)]));
- const years=new Set(gs.filter(hasFO).map(g=>Number(g.year)));
+ const years=new Set(gs.filter(g=>CFG.model==='tecnica'||hasFO(g)).map(g=>Number(g.year)));
  return[...(FG||[]),...oriContents()].filter(c=>{
   if(c.atomicParent)return false;
   if(c.component==='FO')return (hasFoSpace||CFG.model==='tecnica')&&c.area===a&&
