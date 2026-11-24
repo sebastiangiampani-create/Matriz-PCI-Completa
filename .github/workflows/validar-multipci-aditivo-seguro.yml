@@ -39,6 +39,7 @@ jobs:
                           $2 == "tests/aplicacion-v2-admin-browser.mjs" ||
                           $2 == "tests/aplicacion-v2-browser.mjs" ||
                           $2 == "tests/pci-multipci-v2-contract.test.mjs" ||
+                          $2 == "tests/pci-navegacion-admin.test.mjs" ||
                           $2 == ".github/workflows/rescate-constructor-v2.yml" ||
                           $2 == "src/admin-escuelas-panel.mjs" ||
                           $2 == "panel-general.html" ||
