@@ -18,7 +18,8 @@ export function montarAvisoAceptacionV2({ host, getState, applyState,
   host.id = 'v2MigrationNotice';
   host.className = 'card panel';
   host.hidden = true;
-  host.style.marginBottom = '20px';
+  host.style.marginBottom = '8px';
+  host.style.padding = '10px 14px';
   host.style.scrollMarginTop = '88px';
   // El histórico puede contener palabras o referencias sin espacios.
   host.style.overflowWrap = 'anywhere';
@@ -98,6 +99,7 @@ export function montarAvisoAceptacionV2({ host, getState, applyState,
     host.hidden = false;
     host.dataset.estado = estado;
     host.replaceChildren();
+    host.style.padding = '10px 14px';
     const title = element('h2', estado === 'aceptada'
       ? 'Trabajo anterior incorporado al borrador' : 'Incorporar el trabajo anterior a este PCI');
     title.id = 'v2MigrationTitle';
@@ -115,6 +117,26 @@ export function montarAvisoAceptacionV2({ host, getState, applyState,
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
     host.append(status);
+    // Sin trabajo previo no hay operación posible: evitar un panel de 9
+    // contadores vacíos y botones que parecen habilitados.
+    if (estado === 'sin-aplicables' && revision) {
+      const omitted = Number(revision.resumen?.omitidosVacios || 0);
+      title.textContent = 'Trabajo anterior · sin contenido para incorporar';
+      status.textContent = omitted
+        ? 'No hay trabajo desarrollado para migrar. Se detectaron '+omitted+' agrupamientos vacíos, que no se incorporan.'
+        : 'No hay trabajo anterior disponible para incorporar.';
+      const info = element('details');
+      info.id = 'v2MigrationDetails';
+      info.append(element('summary', 'Ver diagnóstico del trabajo anterior'));
+      const count = element('p', omitted+' agrupamientos vacíos omitidos; 0 planes y 0 contenidos para incorporar.', 'help');
+      info.append(count);
+      const data = revision.detalles || {};
+      detailList(info, 'Agrupamientos vacíos omitidos', data.omitidosVacios || [],
+        item => ({ name: (item.area || 'Área') + ' · nivel ' + (item.nivel ?? 'sin indicar'),
+          reason: (item.planesPlantilla || 0) + ' plantillas sin desarrollo.' }));
+      host.append(info);
+      return;
+    }
     if (estado === 'cancelada') {
       const reopen = element('button', 'Volver a revisar', 'btn soft');
       reopen.id = 'v2MigrationReview';
@@ -125,7 +147,7 @@ export function montarAvisoAceptacionV2({ host, getState, applyState,
     }
     if (!revision || estado === 'error') return;
     const metrics = element('div');
-    metrics.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin:18px 0';
+    metrics.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px;margin:8px 0';
     const applied = estado === 'aceptada';
     for (const [key, label] of [
       ['agrupamientos', applied ? 'Agrupamientos incorporados' : 'Agrupamientos por incorporar'],
@@ -138,7 +160,11 @@ export function montarAvisoAceptacionV2({ host, getState, applyState,
       ['sinUbicar', 'Elementos sin ubicación'],
       ['omitidosVacios', 'Agrupamientos vacíos omitidos']
     ]) metric(metrics, key, label);
-    host.append(metrics);
+    const summary = element('details');
+    summary.id = 'v2MigrationSummary';
+    summary.append(element('summary', 'Ver resumen de la migración'));
+    summary.append(metrics);
+    host.append(summary);
     if (revision.social?.propuesta) {
       const labs = option => option === 'B' ? 12 : 10;
       host.append(element('p', revision.social.conflicto
@@ -163,8 +189,10 @@ export function montarAvisoAceptacionV2({ host, getState, applyState,
       item => ({ name: `${item.area} · nivel ${item.nivel ?? 'sin indicar'}`,
         reason: `${item.planesPlantilla || 0} plantillas de planes bimestrales sin desarrollo.` }));
     host.append(details);
-    host.append(element('p', 'Un plan por bimestre: dos en cada espacio cuatrimestral y cuatro en cada espacio anual.', 'help'));
-    host.append(element('p', 'La incorporación no valida el mapa ni aprueba las equivalencias pendientes. El guardado en línea es un paso separado.', 'help'));
+    const rules = element('details');
+    rules.append(element('summary', 'Condiciones de incorporación y guardado'));
+    rules.append(element('p', 'Dos planes por espacio cuatrimestral y cuatro por espacio anual. La incorporación no valida equivalencias y el guardado remoto debe confirmarse.', 'help'));
+    host.append(rules);
     if (estado === 'aceptada' || estado === 'ya-aplicada') {
       const completed = element('button', 'Incorporación ya registrada', 'btn mint');
       completed.id = 'v2MigrationAccept';
