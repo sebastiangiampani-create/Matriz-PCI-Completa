@@ -15,6 +15,7 @@ import {cargarBaseTecnicaReconstruida} from '../tecnica/base-contenidos-2026.mjs
 import {BA15_NIVELES} from '../ba15/reglas-curriculares.mjs';
 import {BA15_AMBIENTES_105} from '../ba15/ambientes-virtuales-105-2026.mjs';
 import {BA15_FO_NORMA,auditarHorasFoBa15} from '../ba15/formacion-orientada-norma.mjs';
+import {atomizarCatalogoBa15} from '../ba15/atomizacion-contenidos.mjs';
 import {construirMateriasOrientadasNesBa15} from '../ba15/materias-orientacion-nes.mjs';
 import {loadBa15FgBase,BA15_FG_LEVEL_MAP} from '../ba15/priorizados-base.mjs';
 import {loadV2Fo,selectFoByOrientation} from '../integracion-curricular/catalogos.js';
