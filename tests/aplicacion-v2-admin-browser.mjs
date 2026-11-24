@@ -160,7 +160,12 @@ async function exercise(page,record){
   assert.match(await page.locator('#openPci').getAttribute('href'),/pci-orientaciones\.html\?school=1709&from=panel-general/);
   await page.locator('#pciPortfolioBody .pci-summary').first().waitFor({state:'visible'});
   assert.match(await page.locator('#pciPortfolioBody').innerText(),/PCI simulado · Administración/);
-  assert.match(await page.locator('#pciPortfolioBody a[href*="pci="]').getAttribute('href'),/view=oferta/);
+  const portfolioMap=page.locator('#pciPortfolioBody a[href*="view=oferta"]').first();
+  const portfolioDevelopment=page.locator('#pciPortfolioBody a[href*="view=desarrollo"]').first();
+  assert.match(await portfolioMap.getAttribute('href'),/from=panel-general/);
+  assert.match(await portfolioMap.getAttribute('href'),/view=oferta/);
+  assert.match(await portfolioDevelopment.getAttribute('href'),/view=desarrollo/);
+  assert.match(await portfolioDevelopment.getAttribute('href'),/from=panel-general/);
   await capture(page,record,'panel-institucional');
   await page.locator('#backAdmin').click();
   await page.waitForURL(url=>url.pathname==='/panel-general.html');
