@@ -222,8 +222,19 @@ export async function cargarAplicacionV2({ contexto, estadoInicial = null, vista
     ejecutar(core, corePath);
     // Antes de los módulos: fija identidad, restauración completa, prearmado y save.
     ejecutar(runtime, 'src/aplicacion-v2/runtime-v2.js');
-    for (let index = 0; index < modules.length; index++)
-      ejecutar(localizarRecursos(sources[index], RAIZ.href), modules[index].archivo);
+    for (let index = 0; index < modules.length; index++) {
+      let scriptSource = localizarRecursos(sources[index], RAIZ.href);
+      // V31 busca #printBtn dentro del encabezado, pero ese botón está en
+      // la matriz del mapa. Al volver al panel insertBefore fallaba porque
+      // la referencia no pertenece al mismo padre. Vendor V2 sigue intacto.
+      if (modules[index].modulo === 'v31-integration-hours-print') {
+        scriptSource = reemplazarUnaVez(scriptSource,
+          'row.insertBefore(b,print||null);',
+          'row.insertBefore(b,print?.parentElement===row?print:null);',
+          'la navegación de carga docente V31');
+      }
+      ejecutar(scriptSource, modules[index].archivo);
+    }
     if (modal) {
       const style = document.createElement('style');
       style.textContent = '.v48-course-grid,.v57-label-grid,.v72-course-years{grid-template-columns:repeat(' +
