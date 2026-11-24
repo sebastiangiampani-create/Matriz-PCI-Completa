@@ -80,6 +80,7 @@ jobs:
                           $2 == "src/v2-familia/v19-mapa-modalidad.js" ||
                           $2 == "tests/v2-ba15-norma-browser.mjs" ||
                           $2 == "tests/v2-familia-modalidades-browser.mjs" ||
+                          $2 == "tests/v2-tecnica-norma-browser.mjs" ||
                           $2 ~ /^tests\/multipci-portal-browser\.mjs$/ ||
                           $2 == ".github/workflows/validar-multipci-aditivo-seguro.yml" ||
                           $2 == ".github/workflows/verificar-publicacion-multipci.yml") { next }
