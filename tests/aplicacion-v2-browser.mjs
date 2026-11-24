@@ -406,7 +406,7 @@ async function modalFlow(page,record,model,levels){
       assert.match(await page.locator('#matrix [data-slot="anualEsp-n'+slot.year+'"] [data-space-name]').innerText(),/Fija/);
     }
     assert.match(prescription.panelText,/Computación/);
-    assert.match(prescription.panelText,/confirmar con el plan/i);
+    assert.match(prescription.panelText,/contrastar con el plan particular/i);
     assert.match(prescription.panelText,/Base curricular reconstruida/i);
     assert.match(prescription.panelText,/contenidos individualizados directamente de los PDF oficiales/i);
     assert.match(prescription.panelText,/conservaron.*IDs de contenidos anteriores/i);
