@@ -306,7 +306,7 @@ async function mediaFlow(page,record){
     const panel=document.querySelector('#pciMediaCierre');
     const validation=document.querySelector('#validation');
     return {pvfElement:panel?.tagName,
-      validationBeforePvf:!!validation&&!!panel&&Boolean(validation.compareDocumentPosition(panel)&Node.DOCUMENT_POSITION_FOLLOWING)};
+      validationBeforePvf:!!validation&&!!panel&&validation.getBoundingClientRect().bottom<=panel.getBoundingClientRect().top};
   });
   assert.equal(layout.pvfElement,'DETAILS','Articulación de 5.º debe poder minimizarse');
   assert.equal(layout.validationBeforePvf,true,'La validación no debe aparecer al final de la articulación');
