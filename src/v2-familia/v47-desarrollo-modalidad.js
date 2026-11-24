@@ -29,7 +29,13 @@ const st=document.createElement('style');st.textContent=`
 `;document.head.appendChild(st);
 async function unzip(txt){const b=Uint8Array.from(atob(txt.trim()),c=>c.charCodeAt(0)),s=new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'));return JSON.parse(await new Response(s).text())}
 function stableId(prefix,parts){const s=parts.map(v=>String(v??'')).join('\u241f');let h1=0x811c9dc5,h2=0x9e3779b9;for(let i=0;i<s.length;i++){const n=s.charCodeAt(i);h1=Math.imul(h1^n,0x01000193);h2=Math.imul(h2^(n+i),0x85ebca6b)}return`${prefix}:${(h1>>>0).toString(16).padStart(8,'0')}${(h2>>>0).toString(16).padStart(8,'0')}`}
-async function loadFG(){if(!FG)FG=window.__V2_MODAL.contents.fg.map(x=>({...x}));return FG}
+async function loadFG(){if(!FG){
+ const catalog=window.__V2_MODAL.contents.fg;
+ const atoms=CFG.model==='ba15'?CFG.atomizedContents?.fg:null;
+ const parents=new Set(atoms?.parents||[]);
+ FG=[...catalog.map(x=>({...x,atomicParent:parents.has(x.id)})),
+     ...(atoms?.rows||[]).map(x=>({...x}))];
+}return FG}
 async function loadFOAll(){if(!FO_ALL)FO_ALL=window.__V2_MODAL.contents.fo.map(x=>({...x}));return FO_ALL}
 const fkey=()=>String(state.active||'');
 async function loadFO(){if(FO.has(fkey()))return FO.get(fkey());const rows=await loadFOAll();FO.set(fkey(),rows);return rows}
