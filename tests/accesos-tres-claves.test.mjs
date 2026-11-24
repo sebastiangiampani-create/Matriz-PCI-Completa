@@ -82,3 +82,49 @@ test('la clave PCI jamás recibe enlaces administrativos en la navegación curri
  assert.ok(client.includes('if(!permisosSesion(session).puedeDeclarar)'),
   'El alta institucional debe bloquearse también en el cliente.');
 });
+
+
+test('aislamiento entre escuelas: solo administración global o cuentas expresamente habilitadas pueden cambiar institución',()=>{
+ const start=edge.indexOf('function isScoped(s,sid){');
+ const end=edge.indexOf('function actor(s){',start);
+ assert.ok(start>=0&&end>start,'Debe existir el control de alcance por escuela en Edge.');
+ const {isScoped}=vm.runInNewContext(edge.slice(start,end)+'\n({isScoped})');
+ const local=1017,ajena=1001;
+ const casos=[
+  ['Administración general',{role:'admin'},true,true],
+  ['Clave PCI',{role:'editor',school_id:local},true,false],
+  ['Clave DIR',{role:'school_admin',school_id:local},true,false],
+  ['Editor personalizado',{role:'user',school_ids:[local],all_schools:false,permissions:['pci.view','pci.edit']},true,false],
+  ['Conducción personalizada',{role:'user',school_ids:[local],all_schools:false,permissions:['institutional.view','pci.view','keys.manage']},true,false],
+  ['Sin escuelas',{role:'user',school_ids:[],all_schools:false,permissions:['pci.view']},false,false],
+  ['Administración global explícita',{role:'user',school_ids:[local],all_schools:true,permissions:['dashboard.view','institutional.view','pci.view']},true,true]
+ ];
+ for(const [label,session,mia,otra] of casos){
+  assert.equal(isScoped(session,local),mia,label+' en la escuela vinculada');
+  assert.equal(isScoped(session,ajena),otra,label+' en una escuela no vinculada');
+ }
+ assert.match(edge,/if\(!validSchool\(sid\)\|\|!isScoped\(s,sid\)\|\|!canRead\(s\)\)/,
+   'Las acciones por escuela deben denegar alcance ajeno antes de despachar.');
+ assert.match(edge,/if\(!validSchool\(sid\)\|\|!validUuid\(pci_id\)\|\|!isScoped\(s,sid\)/,
+   'Lectura y guardado de PCI deben verificar escuela y UUID.');
+ assert.match(edge,/const p=await authorizedPci\(s,body,saving\)/,
+   'El guardado del PCI no puede depender solo de los botones de la interfaz.');
+});
+
+test('el selector global aparece únicamente cuando la sesión contiene varias escuelas autorizadas',async()=>{
+ const [screen,client]=await Promise.all([
+  read('src/aplicacion-v2/escuela.mjs'),
+  read('src/aplicacion-v2/datos-escuela.mjs')
+ ]);
+ assert.match(screen,/const authorizedSchools=escuelas\.length\?escuelas:\[school\]/);
+ assert.match(screen,/schoolChooser\.hidden=authorizedSchools\.length===1/,
+   'Para DIR y PCI de escuela única se oculta completamente el selector.');
+ assert.match(screen,/if\(!authorizedSchools\.some\(item=>schoolIdOf\(item\)===next\)\)/,
+   'Ni manipulando el selector se admite una escuela ajena.');
+ assert.match(client,/if\(\['editor','school_admin'\]\.includes\(s\.role\)\)/,
+   'El cliente no debe pedir el listado general para claves escolares.');
+ assert.match(client,/const id=scope\(s\.school_id\)/,
+   'Las claves escolares se vinculan al school_id firmado.');
+ assert.match(client,/for\(const school of result\.schools\)scope\(school\.school_id\)/,
+   'Una respuesta inconsistente del servidor debe rechazarse también en el cliente.');
+});
