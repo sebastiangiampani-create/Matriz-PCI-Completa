@@ -75,7 +75,7 @@ test('la función SQL agrupa las ofertas nuevas sin actualizar matriz histórica
  assert.match(sql,/REVOKE ALL ON FUNCTION/);
  assert.match(sql,/service_role/);
  assert.doesNotMatch(sql,/\b(UPDATE|DELETE|TRUNCATE)\s+(pci_proposals|pci_workspace)/i);
- assert.doesNotMatch(sql.split('AS $sql
+ assert.doesNotMatch(sql.split('  SELECT COALESCE(')[1],/pci_proposals\.data/,'La consulta SQL no debe leer la matriz histórica.');
 });
 
 test('solo una sesión administrativa con alcance escolar obtiene el inventario actual',()=>{
