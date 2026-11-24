@@ -30,6 +30,24 @@ function agruparEnunciados(items,{target=115}={}){
  return out;
 }
 
+// Solo listas anunciadas explícitamente con dos puntos. El corte por coma
+// se hace a nivel superior (nunca dentro de paréntesis), sin reescribir
+// los ítems. No se aplica a comas gramaticales de un enunciado corriente.
+function listaDeclaradaConDosPuntos(raw){
+ if(raw.length<260)return [];
+ const colon=raw.indexOf(':'),lead=raw.slice(0,colon);
+ if(colon<0||colon>230||!/(por ejemplo|tales como|siguientes|conceptos|funciones|expresiones|producci[oó]n|medios|recursos|prácticas|comunicaci[oó]n|itinerarios|temas)/i.test(lead))return [];
+ const parts=[];let depth=0,from=0;
+ for(let i=colon+1;i<raw.length;i++){
+  const ch=raw[i];
+  if(ch==='(')depth++;else if(ch===')')depth=Math.max(depth-1,0);
+  if(ch===','&&depth===0&&/^\s+\p{L}/u.test(raw.slice(i+1,i+12))){
+   parts.push(raw.slice(from,i+1));from=i+1;
+  }
+ }
+ parts.push(raw.slice(from));
+ return parts.length>=3?parts:[];
+}
 /** Extrae literalmente oraciones/subenunciados; retorna [] si el corte no es seguro. */
 export function fragmentarContenidoFuente(value,{minLength=145,maxFragments=12}={}){
  const raw=text(value);
@@ -62,7 +80,8 @@ export function fragmentarContenidoFuente(value,{minLength=145,maxFragments=12}=
   historic,
   raw.split(/\s+(?=[•●▪‣\-–—]\s+\S)/u),
   raw.split(/\s+(?=(?:[0-9]{1,2}[.)]|[a-z][.)])\s+[A-ZÁÉÍÓÚÑ])/u),
-  raw.split(/\n\s*\n/u)
+  raw.split(/\n\s*\n/u),
+  listaDeclaradaConDosPuntos(raw)
  ];
  const validNew=parts=>parts.length>=2&&parts.length<=Math.max(maxFragments,64)&&
   parts.every(p=>p.length>=MIN&&p.split(/\s+/).length>=5);
