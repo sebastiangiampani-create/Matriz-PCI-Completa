@@ -183,6 +183,24 @@ try{
     await page.locator('#v28matrix #v28mback').evaluate(el=>el.click());
     await page.locator('#v28home:not([hidden])').waitFor({state:'visible',timeout:12000});
   }
+  if(model==='ba15'){
+    await page.locator('#v28home [data-area="Formación Orientada"]').click();
+    await page.locator('#v28board:not([hidden])').waitFor({timeout:20000});
+    const long=page.locator('#v28list .v28-long-text');
+    assert.ok(await long.count()>0,'Los textos largos de BA+15 deben ser desplegables sin ocupar toda la bolsa');
+    await long.first().locator('summary').click();
+    const full=await long.first().evaluate(el=>{
+      const id=el.closest('[data-c]')?.dataset.c;
+      return {open:el.open,original:window.PCIPhase2V28.findContent(id)?.text,
+        displayed:el.querySelector('p')?.textContent};
+    });
+    assert.equal(full.open,true,'El lector debe poder abrir el contenido íntegro');
+    assert.equal(full.displayed,full.original,'No acortar el contenido original almacenado');
+    assert.match(await page.locator('#v28count').innerText(),/^0 seleccionados$/,
+      'Abrir el detalle no debe seleccionar accidentalmente el contenido');
+    await page.locator('#v28back').evaluate(el=>el.click());
+    await page.locator('#v28home:not([hidden])').waitFor({state:'visible'});
+  }
   await page.locator('#v28home [data-area]').filter({hasText:probe.area}).first().click();
   await page.locator('#v28board:not([hidden])').waitFor({timeout:20000});
   const group=page.locator('#v28groups [data-g="'+probe.gid+'"]');

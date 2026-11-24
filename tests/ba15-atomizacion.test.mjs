@@ -1,6 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {atomizarCatalogoBa15,fragmentarContenidoFuente} from '../src/ba15/atomizacion-contenidos.mjs';
+// Comportamiento publicado antes de esta mejora: sirve de patrón para
+// demostrar que ningún fragmento ya utilizado en un PCI cambia de ID.
+function fragmentosPublicadosV1(value){
+ const raw=String(value??'').trim(),clean=t=>String(t||'').replace(/\s+/g,' ').trim();
+ if(raw.length<145)return [];
+ const valid=a=>a.length>=2&&a.length<=12&&a.every(p=>p.length>=34&&p.split(/\s+/).length>=5);
+ const historic=raw.split(/(?<=[.;!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])|\n(?=\s*[•●▪‣]|\s*[0-9]+[.)]\s)/u).map(clean).filter(Boolean);
+ const semicolon=raw.split(/;\s+(?=\S)/u).map(clean).filter(Boolean);
+ const bullets=raw.split(/\s+(?=[-–•]\s+[A-ZÁÉÍÓÚÑ])/u).map(clean).filter(Boolean);
+ const parts=valid(historic)?historic:valid(semicolon)?semicolon:valid(bullets)?bullets:[];
+ return parts.length&&clean(raw)===parts.join(parts===semicolon?'; ':' ')?parts:[];
+}
 const text='Interpretación y comunicación de información técnica mediante códigos convencionales y representaciones gráficas. Construcción y lectura de planos de objetos técnicos, empleando criterios compartidos de representación. Desarrollo de croquis y bocetos para explicar soluciones y procesos de diseño en distintos contextos.';
 const row={id:'nes-fg-primario-001',component:'FG',year:2,area:'Formación General',
  subject:'Tecnologías',axis:'Representación',subaxis:'Sistemas',text,
@@ -62,4 +74,106 @@ test('desagrega listas con guiones sin reescribir ni eliminar los marcadores del
  const result=atomizarCatalogoBa15(rows,{component:'FO'});
  assert.equal(result.fragmentos.length,3);
  assert.ok(result.fragmentos.every(x=>x.referenceOnly&&x.atomizedFrom==='ba15-listado-con-guiones'));
+});
+
+
+test('auditoría documental de longitud FG y FO BA+15',async()=>{
+ const {loadV2Fg,loadV2Fo}=await import('../src/integracion-curricular/catalogos.js');
+ const {readFile}=await import('node:fs/promises');
+ const {buildBa15FgBase}=await import('../src/ba15/priorizados-base.mjs');
+ const fetchFn=async url=>{
+   try {const body=await readFile(url,'utf8');return {ok:true,text:async()=>body}}
+   catch{return {ok:false,text:async()=>''}}
+ };
+ const fg=buildBa15FgBase(await loadV2Fg({fetchFn}));
+ const fo=await loadV2Fo({fetchFn});
+ for(const [component,rows] of [['FG',fg],['FO',fo]]){
+   const pending=rows.filter(r=>r.text.length>=180&&fragmentarContenidoFuente(r.text).length<2);
+   const parsed=atomizarCatalogoBa15(rows,{component});
+   const top=[...pending].sort((a,b)=>b.text.length-a.text.length).slice(0,4)
+     .map(x=>({id:x.id,subject:x.subject,len:x.text.length,text:x.text.slice(0,350)}));
+   console.log('BA15_AUDIT '+JSON.stringify({component,rows:rows.length,
+     long180:rows.filter(r=>r.text.length>=180).length,
+     long280:rows.filter(r=>r.text.length>=280).length,
+     pending180:pending.length,
+     pending280:pending.filter(r=>r.text.length>=280).length,
+     pending400:pending.filter(r=>r.text.length>=400).length,
+     atomized:parsed.resumen,visibleLong180:[...rows.filter(r=>!parsed.padres.includes(r.id)),...parsed.fragmentos].filter(r=>r.text.length>=180).length,top}));
+   assert.equal(parsed.resumen.origenes,rows.length);
+   assert.ok(pending.length<=(component==='FG'?16:47),
+     'No puede empeorar la atomización comprobada de catálogos reales BA+15');
+   const {stableContentId}=await import('../src/integracion-curricular/catalogos.js');
+   const fragmentsByParent=new Map();
+   for(const fragment of parsed.fragmentos){
+     if(!fragmentsByParent.has(fragment.atomizedFrom))fragmentsByParent.set(fragment.atomizedFrom,[]);
+     fragmentsByParent.get(fragment.atomizedFrom).push(fragment);
+   }
+   let historicalParents=0;
+   for(const original of rows){
+     const parts=fragmentsByParent.get(original.id)||[];
+     if(!parts.length)continue;
+     const recovered=parts.map(r=>r.text),joined=recovered.join(' '),semis=recovered.join('; ');
+     const normalized=original.text.replace(/\s+/g,' ').trim();
+     assert.ok(joined===normalized||semis===normalized,
+       'No perder un carácter del priorizado '+original.id);
+     assert.equal(new Set(parts.map(r=>r.id)).size,parts.length);
+     const legacy=fragmentosPublicadosV1(original.text);
+     if(legacy.length){
+       historicalParents++;
+       assert.deepEqual(recovered,legacy,'Textos publicados inmutables: '+original.id);
+       assert.deepEqual(parts.map(x=>x.id),legacy.map((fragment,i)=>
+         stableContentId('ba15-atom',[component,original.id,fragment,i+1])),
+         'IDs publicados inmutables: '+original.id);
+     }
+     if(component==='FO')assert.ok(parts.every(x=>x.referenceOnly===true&&!x.confirmedBa15Subject));
+   }
+   assert.equal(historicalParents,component==='FG'?30:128,
+     'Los fragmentos históricos BA+15 se mantienen 1:1');
+ }
+});
+
+
+test('BA+15: enumera actos de habla cortos sin descartar una lista larga por fragmentos breves',()=>{
+ const original='Funciones comunicativas: '+[
+  'pedir y dar información personal', 'expresar opiniones y sentimientos',
+  'pedir consejo', 'comparar objetos, personas y lugares',
+  'formular preguntas a otras personas', 'organizar y describir actividades cotidianas',
+  'explicar preferencias y gustos personales', 'describir escenas y situaciones sociales',
+  'dar y seguir instrucciones sencillas', 'proponer actividades con otras personas',
+  'argumentar en conversaciones cotidianas', 'expresar acuerdos y desacuerdos',
+  'interpretar mensajes del entorno', 'comunicar situaciones de interés personal'
+ ].join('; ');
+ const parts=fragmentarContenidoFuente(original);
+ assert.ok(parts.length>=3,'Una enumeración explícita larga debe producir varios saberes');
+ assert.equal(parts.join(' '),original,'Preservar cada carácter y delimitador tras normalizar espacios');
+ assert.ok(parts.every(p=>p.length<=195),'Las listas de saberes breves se agrupan en tarjetas cortas');
+ const rows=[{...row,id:'fg-lista-nes-corta',text:original}];
+ const result=atomizarCatalogoBa15(rows,{component:'FG'});
+ assert.equal(result.fragmentos.length,parts.length);
+ assert.deepEqual(rows,[{...row,id:'fg-lista-nes-corta',text:original}],
+   'El catálogo de referencia y su ID no se tocan');
+});
+
+test('BA+15: oraciones cortas y extensas conviven en un mismo contenido de origen',()=>{
+ const original='La enseñanza de las artes. El pensamiento y la acción de diversos referentes culturales en la construcción de instituciones y espacios dedicados a la educación artística. La participación de colectivos y organizaciones en proyectos culturales que vinculan territorio, memoria y producción artística. Reflexión sobre las formas contemporáneas de aprendizaje y transmisión de prácticas culturales.';
+ const parts=fragmentarContenidoFuente(original);
+ assert.ok(parts.length>=2,'No descartar todo el párrafo porque la primera oración sea breve');
+ assert.equal(parts.join(' '),original);
+ assert.ok(parts.every(p=>p.split(' ').length>=5));
+});
+
+test('BA+15: no dividir enunciados unitarios por comas si no hay enumeración explícita segura',()=>{
+ const original='Modelización de situaciones con variables numéricas, distintas representaciones, análisis de las relaciones entre magnitudes y revisión de resultados a partir del contexto del problema, atendiendo a la precisión y a las estrategias matemáticas elegidas para justificar una respuesta.';
+ assert.deepEqual(fragmentarContenidoFuente(original),[],
+  'Comas gramaticales no equivalen a saberes autónomos ni habilitan corte automático');
+});
+
+
+test('BA+15: lista curricular con dos puntos se separa fuera de paréntesis',()=>{
+ const original='Introducción a la producción en comunicación aplicada a la actividad turística: gráfica (periódicos y revistas institucionales o comunitarias, destinatarios y circulación), radial (guiones, programas para una radio local o para ser subidos a Internet), audiovisual (guiones, trabajo en diversos géneros: noticiero, magazine, espectáculo deportivo, ficciones, animaciones, documentales), digital (propuestas y recursos multimediales para conocer el patrimonio cultural y turístico de la región).';
+ const parts=fragmentarContenidoFuente(original);
+ assert.ok(parts.length>=2,'La lista de medios declarada explícitamente debe desagregarse');
+ assert.equal(parts.join(' '),original,'Respetar íntegramente delimitadores y paréntesis');
+ assert.ok(parts.some(p=>p.includes('noticiero, magazine')),
+  'No separar comas que pertenecen a un mismo paréntesis');
 });
