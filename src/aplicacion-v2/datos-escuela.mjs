@@ -12,7 +12,11 @@ export function permisosSesion(session){
   const permissions=Array.isArray(session?.permissions)?session.permissions:[];
   const puedeEditar=['admin','editor'].includes(session?.role)||
     session?.role==='user'&&permissions.includes('pci.edit');
-  return {puedeEditar,puedeDeclarar:puedeEditar||session?.role==='school_admin'};
+  // Editar contenidos con PCI no habilita la gestión de la oferta DIR.
+  const puedeDeclarar=['admin','school_admin'].includes(session?.role)||
+    session?.role==='user'&&permissions.includes('institutional.view')&&
+      permissions.includes('keys.manage');
+  return {puedeEditar,puedeDeclarar};
 }
 
 function schoolIdOf(value){

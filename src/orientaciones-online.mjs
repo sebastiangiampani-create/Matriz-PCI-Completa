@@ -76,9 +76,12 @@ function showAuthRequired(reason='Ingresá con las credenciales habituales de la
 }
 function canEdit(){return !!session && (session.role==='admin'||session.role==='editor'||session.role==='user'&&(session.permissions||[]).includes('pci.edit'));}
 function canDeclareOrientations(){
-  // El referente institucional puede INFORMAR orientaciones y turnos de
-  // su propia escuela, pero no editar contenidos, FG ni planes de aprendizaje.
-  return canEdit()||session?.role==='school_admin';
+  // DIR administra oferta, turnos y orientaciones. La clave PCI solo permite
+  // editar mapas, contenidos y planes sin crear oferta institucional.
+  const permissions=session?.permissions||[];
+  return session?.role==='admin'||session?.role==='school_admin'||
+    session?.role==='user'&&permissions.includes('institutional.view')&&
+      permissions.includes('keys.manage');
 }
 function hasUnsaved(){
   return !!(fgDirty||foDirty||offerDirty||historicLinksUI.isDirty||technical.isDirty()||ba15Controller?.isDirty()||v2Original?.dirty||v2Original?.saving||busy);
@@ -496,7 +499,7 @@ function renderSchoolHome(){
       const start=elem('button','Crear primer PCI y comenzar','btn primary');
       start.id='startFirstPci';start.type='button';
       start.onclick=openPciForm;box.append(start);
-    }else note('p','Solicitá a administración o a la conducción con permisos de edición la creación del primer PCI.','muted',box);
+    }else note('p','Solicitá a la conducción de la escuela (clave DIR) o a administración la creación del primer PCI.','muted',box);
     const preservation=elem('p',undefined,'muted');
     preservation.textContent='Si la institución tiene una Formación General anterior, se conserva por separado y no se borra al crear el nuevo PCI.';
     box.append(preservation);
