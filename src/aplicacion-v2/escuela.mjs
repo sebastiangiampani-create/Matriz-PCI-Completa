@@ -254,6 +254,11 @@ export function montarEscuela({contexto,escuelas=[],pcis=[],vinculos=null,client
     option.value=String(schoolIdOf(item));
   }
   selector.value=String(schoolId);selector.disabled=authorizedSchools.length===1;
+  // Los accesos DIR y PCI tienen una única escuela autorizada. Ocultar
+  // el selector evita sugerir que pueden consultar otras instituciones.
+  // Administración mantiene la lista, limitada por la respuesta autorizada.
+  const schoolChooser=selector.closest('.school-chooser');
+  if(schoolChooser)schoolChooser.hidden=authorizedSchools.length===1;
   $('schoolLabel').textContent=school.cue?'CUE '+school.cue:'';
   $('schoolOverviewName').textContent=school.name||'Oferta curricular de la escuela';
   // El logo lleva al inicio de organización curricular. «Volver» conduce
