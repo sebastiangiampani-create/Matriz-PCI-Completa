@@ -166,6 +166,16 @@ try{
     await page.waitForTimeout(200);
     await page.locator('#v28full').click();
     await page.locator('#v28matrix:not([hidden]) #v28mback').waitFor({state:'visible'});
+    // Cambia únicamente el rótulo visible: códigos, áreas y reglas quedan intactos.
+    const labels=await page.locator('#v28matrix .v28-mlabel').allTextContents();
+    assert.ok(labels.some(label=>label.trim().startsWith('Especialidad')),
+      'La matriz Técnica debe mostrar Especialidad como nombre comprensible del área');
+    assert.ok(!labels.some(label=>label.includes('Formación Técnico-Específica')),
+      'No mostrar el nombre normativo largo en el rótulo principal');
+    assert.ok(await page.evaluate(()=>window.V2ModalMap.rowDefs()
+      .filter(r=>['foTaller5','anualEsp','foN3'].includes(r.k))
+      .every(r=>r.area==='Formación Técnico-Específica')),
+      'La nomenclatura interna que usa la validación no debe cambiar');
     const terms=await page.locator('#v28matrix .v28-term').allTextContents();
     assert.equal(terms.length,12,'Fase 2 técnica debe mostrar sus doce cuatrimestres completos');
     assert.equal(terms[0],'C1');
