@@ -168,10 +168,16 @@ test('un registro local mal ubicado o ilegible se rechaza y permanece conservado
 });
 
 test('permisos institucionales no convierten school_admin ni perfiles V2 en editores',()=>{
-  for(const role of ['admin','editor'])assert.deepEqual(permisosSesion({role}),{puedeEditar:true,puedeDeclarar:true});
-  assert.deepEqual(permisosSesion({role:'school_admin'}),{puedeEditar:false,puedeDeclarar:true});
+  assert.deepEqual(permisosSesion({role:'admin'}),{puedeEditar:true,puedeDeclarar:true});
+  assert.deepEqual(permisosSesion({role:'editor'}),{puedeEditar:true,puedeDeclarar:false},
+    'La clave PCI edita, pero no crea oferta ni turnos de la escuela.');
+  assert.deepEqual(permisosSesion({role:'school_admin'}),{puedeEditar:false,puedeDeclarar:true},
+    'La clave DIR declara oferta, pero no cambia contenidos curriculares.');
   assert.deepEqual(permisosSesion({role:'user',permissions:['pci.view']}),{puedeEditar:false,puedeDeclarar:false});
-  assert.deepEqual(permisosSesion({role:'user',permissions:['pci.edit']}),{puedeEditar:true,puedeDeclarar:true});
+  assert.deepEqual(permisosSesion({role:'user',permissions:['pci.edit']}),{puedeEditar:true,puedeDeclarar:false});
+  assert.deepEqual(permisosSesion({role:'user',permissions:['institutional.view','keys.manage','pci.view']}),{puedeEditar:false,puedeDeclarar:true});
+  assert.deepEqual(permisosSesion({role:'user',permissions:['institutional.view','pci.view']}),{puedeEditar:false,puedeDeclarar:false},
+    'Un auditor con lectura institucional no administra la oferta.');
   for(const role of ['coordinator','teacher',undefined])
     assert.deepEqual(permisosSesion({role}),{puedeEditar:false,puedeDeclarar:false});
 });
