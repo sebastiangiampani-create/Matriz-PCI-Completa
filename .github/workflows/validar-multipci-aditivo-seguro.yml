@@ -89,6 +89,13 @@ jobs:
           node --check tests/vinculos-historicos.test.mjs
           node --check tests/vinculos-historicos-browser.mjs
           node --check src/pci-router.mjs
+          node --check src/ba15/atomizacion-contenidos.mjs
+          node --check src/aplicacion-v2/persistencia-cola.mjs
+          node --check tests/ba15-atomizacion.test.mjs
+          node --check tests/cola-guardado-v2.test.mjs
+          node --check src/v2-familia/catalogos-modalidad.mjs
+          node --check src/v2-familia/v47-desarrollo-modalidad.js
+          node --check src/v2-familia/v19-mapa-modalidad.js
           node --check src/admin-escuelas-panel.mjs
           node --check tests/pci-navegacion-admin.test.mjs
           node --check src/pci-flujo-fases.mjs
