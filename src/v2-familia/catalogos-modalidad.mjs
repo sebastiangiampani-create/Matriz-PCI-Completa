@@ -15,6 +15,7 @@ import {cargarBaseTecnicaReconstruida} from '../tecnica/base-contenidos-2026.mjs
 import {BA15_NIVELES} from '../ba15/reglas-curriculares.mjs';
 import {BA15_AMBIENTES_105} from '../ba15/ambientes-virtuales-105-2026.mjs';
 import {BA15_FO_NORMA,auditarHorasFoBa15} from '../ba15/formacion-orientada-norma.mjs';
+import {atomizarCatalogoBa15} from '../ba15/atomizacion-contenidos.mjs';
 import {construirMateriasOrientadasNesBa15} from '../ba15/materias-orientacion-nes.mjs';
 import {loadBa15FgBase,BA15_FG_LEVEL_MAP} from '../ba15/priorizados-base.mjs';
 import {loadV2Fo,selectFoByOrientation} from '../integracion-curricular/catalogos.js';
@@ -117,6 +118,16 @@ export async function loadBa15V2Profile(orientationId){
  }));
  const profile=common('ba15',oriName,4,subjects,fgContents,foContents,
   'FG: 1126 contenidos NES 1+2→I, 3→II, 4→III, 5→IV. FO: materias del plan NES por orientación y alternativa A/B (3.º→II, 4.º→III, 5.º→IV), con cupos 4, 9 y 12+2+2 HC. Fase 2 usa bloques FO de referencia; no se declara homologación BA +15.');
+ // La bolsa de Fase 2 muestra los fragmentos literales cuando el origen
+ // agrupa varios saberes; los 1.126 IDs NES y los bloques FO previos permanecen
+ // inmutables para recuperar asignaciones y desarrollos ya guardados.
+ const atomicFg=atomizarCatalogoBa15(fgContents,{component:'FG'});
+ const atomicFo=atomizarCatalogoBa15(foContents,{component:'FO'});
+ profile.atomizedContents={
+  fg:{parents:atomicFg.padres,rows:atomicFg.fragmentos},
+  fo:{parents:atomicFo.padres,rows:atomicFo.fragmentos}
+ };
+ profile.atomizationSummary={fg:atomicFg.resumen,fo:atomicFo.resumen};
  profile.foPlan=clone(BA15_FO_NORMA);
  profile.ambientesVirtualesNorma=clone(BA15_AMBIENTES_105);
  profile.foHoursAudit=clone(foHours);
@@ -205,8 +216,13 @@ export async function loadTechnicalV2Profile(specialtyId){
    const section= document.asignaturas.find(x=>x.id===atomic.sourceReference.split('@p')[0]);
    if(!section)throw Error('Falta la sección oficial del contenido '+atomic.id);
    const area=technicalContentArea(section,atomic.field,atomic.year,subjects);
-   const row={...atomic,area,subject:text(section.asignatura)};
-   (atomic.component==='FG'?fgContents:foContents).push(row);
+   // Tecnología(s) de la Representación es un espacio propio del mapa
+   // técnico; no debe quedar escondido dentro de la bolsa FO genérica.
+   // Se conservan los mismos IDs, fuentes, años y textos de cada contenido.
+   const isRepresentation=area==='Tecnología de la Representación';
+   const row={...atomic,area,subject:text(section.asignatura),
+     component:isRepresentation?'FG':atomic.component};
+   (row.component==='FG'?fgContents:foContents).push(row);
  }
  if(!subjects.length)throw Error('Catálogo técnico sin materias.');
  // Lengua Adicional 1.º–5.º: troncal en Técnica (IF-2026-51169092, pág. 13).

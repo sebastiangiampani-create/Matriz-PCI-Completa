@@ -56,7 +56,7 @@ try{
   }
   if(model==='ba15'){
     const fg=await page.evaluate(async()=>{const p=window.PCIPhase2V28;await p.loadCurriculum();return p.getFGCatalog().length;});
-    assert.equal(fg,1126,'BA15 conserva 1126 IDs FG originales reindexados');
+    assert.ok(fg>=1126,'BA15 conserva los 1126 IDs FG originales y añade saberes desagregados');
   }
   const bank=page.locator('#bagContent [data-sub]');
   assert.ok(await bank.count()>2,'Bolsa V2 debe ofrecer materias del nivel');

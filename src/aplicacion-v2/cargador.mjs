@@ -190,8 +190,16 @@ export async function cargarAplicacionV2({ contexto, estadoInicial = null, vista
     if (!phase2Source.includes('function areaPool') || !phase2Source.includes('window.PCIPhase2V28='))
       throw Error('La Fase 2 cargada no corresponde a la versión curricular aprobada.');
     const storageKey = ['pci-aplicacion-v2', publico.school.id, pci.pci_id, pci.model, 'estado-v1'].join('::');
-    const volver = new URL('pci-orientaciones.html', RAIZ);
+    // Volver siempre al punto institucional real que abrió el PCI.
+    // Admin -> Panel de su escuela en modo administración; DIR -> Panel DIR;
+    // PCI -> selector de PCI de la escuela. Ningún token viaja por URL.
+    const from = new URLSearchParams(location.search).get('from');
+    const volver = new URL(
+      from==='panel-escuela'||from==='panel-general'?'panel-escuela.html':'pci-orientaciones.html',
+      RAIZ
+    );
     volver.searchParams.set('school', String(publico.school.id));
+    if(from==='panel-general')volver.searchParams.set('admin','1');
     if (modal) window.__V2_MODAL = modal;
     if (pci.model === 'tecnica') window.__PCI_NORMA = await import('../normativa/composicion-pci-20261117.mjs');
     window.__V2_PARIDAD = { model: media ? 'media' : pci.model, cargados: copiar(modules),

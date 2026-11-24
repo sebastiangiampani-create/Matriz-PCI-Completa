@@ -39,7 +39,11 @@ const lockedAnnual=(slot,id)=>{
   return !!(String(slot)==='anualEsp-n'+year&&spec&&subject&&
     prescribedForSubject(subject) && subject.origin==='FO'&&fieldOf(subject)==='formacion_tecnica_especifica');
 };
-const techRepresentationYears=[1,2,...(TECH_PROFILE?.planParticularVerificado===true && (CFG.subjects||[]).some(x=>x.year===3&&/representaci/i.test(x.name))?[3]:[])];
+// El PDF puede contener representación en 3.º. Permitir trabajarla
+// como opción visible y PROVISIONAL, sin declararla prescripta si el plan
+// particular todavía no está verificado.
+const techRepresentationThird=Boolean((CFG.subjects||[]).some(x=>x.year===3&&/representaci/i.test(x.name)));
+const techRepresentationYears=[1,2,...(techRepresentationThird?[3]:[])];
 const profileRows=CFG.model==='tecnica'?[
  {k:'lengua',l:'Lengua y Literatura',area:'Lengua y Literatura',annual:true,allowedYears:[1,2,3,4,5]},
  {k:'matematica',l:'Matemática',area:'Matemática',annual:true,allowedYears:SIXTH_CORE?[1,2,3,4,5,6]:[1,2,3,4,5]},
@@ -220,6 +224,8 @@ function decodePayload(raw){
  if(raw.startsWith('move:')){const rest=raw.slice(5),i=rest.indexOf(':');if(i<0)return null;return{kind:'move',from:decodeURIComponent(rest.slice(0,i)),id:decodeURIComponent(rest.slice(i+1))}}
  return {kind:'subject',id:raw};
 }
+let modalBagQuery='';
+const modalWritable=()=>window.__PCI_APLICACION_CONFIG?.contexto?.permissions?.puedeEditar!==false;
 function bindTouchDrag(handle,payload,label){
  if(!handle)return;
  handle.onpointerdown=e=>{
@@ -228,13 +234,13 @@ function bindTouchDrag(handle,payload,label){
   ghost.className='drag-ghost';ghost.textContent=label;document.body.append(ghost);
   const move=ev=>{ghost.style.left=ev.clientX+'px';ghost.style.top=ev.clientY+'px'};
   const cleanup=()=>{ghost.remove();handle.removeEventListener('pointermove',move);handle.removeEventListener('pointerup',up);handle.removeEventListener('pointercancel',cancel)};
-  const up=ev=>{const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-slot]');cleanup();if(target){if(payload.kind==='move')moveModal(payload.from,target.dataset.slot,payload.id);else assignModal(target.dataset.slot,payload.id)}};
+  const up=ev=>{const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-slot]');cleanup();if(target){if(payload.kind==='move')moveModal(payload.from,target.dataset.slot,payload.id);else assignModal(target.dataset.slot,payload.id)}else if(payload.kind==='subject'){picked=payload.id;toast('Materia seleccionada. Tocá una celda del mapa para ubicarla.')}};
   const cancel=()=>cleanup();move(e);handle.setPointerCapture?.(e.pointerId);
   handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',up);handle.addEventListener('pointercancel',cancel);
  };
 }
 const st=document.createElement('style');st.textContent=`
- .bag-filter{display:grid;grid-template-columns:repeat(${LV},1fr);gap:5px;margin:8px 0 10px}
+ .bag-filter{display:grid;grid-template-columns:repeat(auto-fit,minmax(44px,1fr));gap:5px;margin:8px 0 10px}
  .bag-filter button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:7px 3px;font-size:.62rem;font-weight:900}
  .bag-filter button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
  .drag-handle,.map-grip{font-weight:900;cursor:grab;touch-action:none;user-select:none}
@@ -245,6 +251,23 @@ const st=document.createElement('style');st.textContent=`
  .legacy-out{outline:2px dashed var(--danger,#b42318);background:var(--danger-soft,#fdecee)}
  .legacy-strip{margin:4px 0 8px;padding:8px;border:1px dashed var(--danger,#b42318);border-radius:9px;font-size:.78rem}
  .norma-list{margin:6px 0 0 18px;padding:0}.norma-list li{margin:2px 0}
+ .v2-compact-detail{border-top:1px solid var(--line,#dae4e9);padding:7px 0;margin-top:8px;font-size:.8rem}
+ .v2-compact-detail summary{cursor:pointer;color:var(--ink);font-weight:850;padding:7px 0}
+ .v2-compact-detail[open] summary{margin-bottom:8px}
+ .v2-compact-summary{font-size:.82rem;line-height:1.45;color:var(--ink);margin:5px 0 3px}
+ #techSpecialtyPrescription,#ba15OrientationPlan,#ba15VirtualPanel{padding:12px 16px;margin:8px 0}
+ #techSpecialtyPrescription p,#ba15OrientationPlan p,#ba15VirtualPanel p{margin:8px 0;font-size:.78rem;line-height:1.45}
+ #techSpecialtyPrescription .subhead,#ba15OrientationPlan .subhead,#ba15VirtualPanel .subhead{font-size:.67rem;margin-bottom:3px}
+ #ba15VirtualPanel select{max-width:100%;min-height:35px;font-size:.78rem}
+ .mod-bag-search{display:block;margin:8px 0;font-size:.72rem;font-weight:850}
+ .mod-bag-search input{display:block;width:100%;padding:10px 12px;margin-top:4px;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--ink);font:inherit}
+ .mod-bag-help{font-size:.7rem;line-height:1.4;margin:4px 0 11px;color:var(--muted)}
+ .mod-drag-target{min-height:56px}
+ .mod-drag-target.ready{outline:3px dashed var(--md,#237a6a);outline-offset:-4px;background:#e8f8f4}
+ .subject[data-sub]{cursor:grab}.subject[data-sub]:active{cursor:grabbing}
+ .subject[data-sub]:focus-visible{outline:2px solid var(--md,#237a6a)}
+ .modal-bag-empty{font-size:.75rem;color:var(--muted);padding:9px 0}
+ #bagContent .year[hidden],#bagContent .subject[hidden]{display:none!important}
  `;document.head.appendChild(st);
 rowDefs=function(){return profileRows};
 label=function(k,t){const row=profileRow(k);return row?row.l+' · C'+t:'C'+t};
@@ -257,13 +280,13 @@ placed=function(slot){return (cur().placements[slot]||[]).map(id=>{
  (fixed?'<small style="display:inline-block;margin-left:6px">Fija</small>':'<button data-rm="'+esc(id)+'" data-slot="'+esc(slot)+'">×</button>')+'</div>'
 }).join('')};
 renderBag=function(){
- const box=$id('bagContent'),m=cur(),year=Math.min(LV,Math.max(1,Number(m.bagYear)||1));m.bagYear=year;
+ const box=$id('bagContent'),m=cur(),raw=Number(m.bagYear??0),year=Number.isSafeInteger(raw)&&raw>=0&&raw<=LV?raw:0;m.bagYear=year;
  const alternative=String(m.alt||'A');
- const set=allSubjects().filter(s=>s.year===year&&!s.isOrientationHourBucket&&!s.legacyReference&&
+ const set=allSubjects().filter(s=>(year===0||s.year===year)&&!s.isOrientationHourBucket&&!s.legacyReference&&
   (!s.alternative||s.alternative===alternative));
  let h='<div class="subhead">Materias de la modalidad · filtrar por nivel</div>'+
   (CFG.model==='tecnica'?'<p class="modal-rule-note">Materias extraídas de los contenidos priorizados oficiales 2026. Elegí el nivel y arrastrá cada materia al espacio correspondiente. Las agrupaciones se definen según las reglas de la especialidad; no se solicita carga horaria para armar el mapa.</p>':'')+
-  '<div class="bag-filter">'+range(LV).map(n=>'<button type="button" data-bag-year="'+n+'" class="'+(n===year?'active':'')+'">'+n+'.º</button>').join('')+'</div>';
+  '<div class="bag-filter"><button type="button" data-bag-year="0" class="'+(year===0?'active':'')+'">Todos</button>'+range(LV).map(n=>'<button type="button" data-bag-year="'+n+'" class="'+(n===year?'active':'')+'">'+n+'.º</button>').join('')+'</div>';
  if(CFG.model==='ba15'){
   h+='<p class="modal-rule-note">Materias de la orientación NES: 3.º→Nivel II, 4.º→III y 5.º→IV. Sus contenidos se consultan en Fase 2; todavía no se homologan automáticamente para BA +15.</p>';
   if((CFG.foAlternatives||[]).length>1)
@@ -274,9 +297,13 @@ renderBag=function(){
    h+='<p class="modal-rule-note"><strong>Advertencia sobre la fuente:</strong> '+
     esc(CFG.foWarnings.join(' · '))+'</p>';
  }
- const groups=[{origin:'FG',label:'Formación General',list:set.filter(s=>s.origin==='FG')},{origin:'FO',label:CFG.model==='tecnica'?'Científico-Tecnológica y Técnico-Específica':'Formación Orientada',list:set.filter(s=>s.origin==='FO')},{origin:'CUSTOM',label:'Materias agregadas por la escuela',list:set.filter(s=>s.origin==='CUSTOM')}];
+ h+='<label class="mod-bag-search" for="modBagQuery">Buscar materia de este nivel<input type="search" id="modBagQuery" placeholder="Nombre, área o campo" autocomplete="off"></label>'+
+    '<p class="mod-bag-help">Arrastrá ⠿ hasta una celda. Alternativa accesible: seleccioná la materia y tocá el destino.</p>';
+ const rootGroups=[{origin:'FG',label:'Formación General',list:set.filter(s=>s.origin==='FG')},{origin:'FO',label:CFG.model==='tecnica'?'Científico-Tecnológica y Técnico-Específica':'Formación Orientada',list:set.filter(s=>s.origin==='FO')},{origin:'CUSTOM',label:'Materias agregadas por la escuela',list:set.filter(s=>s.origin==='CUSTOM')}];
+ const groups=year?[...rootGroups.map(g=>({...g,level:year}))]:
+  rootGroups.flatMap(g=>range(LV).map(level=>({...g,level,list:g.list.filter(s=>s.year===level)})));
  for(const group of groups)if(group.list.length){
-  h+='<section class="year"><div class="year-head"><strong>'+group.label+' · Nivel '+year+'</strong><span>C'+(year*2-1)+' / C'+year*2+'</span></div>';
+  h+='<section class="year"><div class="year-head"><strong>'+group.label+' · Nivel '+group.level+'</strong><span>C'+(group.level*2-1)+' / C'+group.level*2+'</span></div>';
   h+=group.list.map(s=>{
    const used=usage(s.id);
    return '<div class="subject '+(used.size>=2?'used-two':'')+'" draggable="true" data-sub="'+esc(s.id)+'"><span class="drag-handle">⠿</span><span><strong>'+esc(s.name)+'</strong><small>'+esc(CFG.model==='tecnica'?({'formacion_cientifico_tecnologica':'Científico-Tecnológica','formacion_tecnica_especifica':'Técnico-Específica','practicas_profesionalizantes':'Prácticas Profesionalizantes'}[s.field]||'Formación General'):(s.origin==='FO'?'Materia NES '+s.sourceYear+'º · '+(s.alternative?'alternativa '+s.alternative:'común')+
@@ -295,10 +322,43 @@ renderBag=function(){
   toast('Alternativa '+next+': se conserva el mapa anterior para revisar, sin sobrescribir asignaciones.');
  });
  box.querySelectorAll('[data-sub]').forEach(el=>{const id=el.dataset.sub;
-  el.ondragstart=e=>e.dataTransfer.setData('text/plain','subject:'+encodeURIComponent(id));
-  el.onclick=()=>{picked=id;box.querySelectorAll('.subject').forEach(x=>x.classList.toggle('selected',x===el));toast('Materia seleccionada: tocá el destino del mapa')};
-  bindTouchDrag(el.querySelector('.drag-handle'),{kind:'subject',id},byIdInMap(id)?.name||id);
+  el.setAttribute('tabindex','0');
+  el.ondragstart=e=>{
+   if(!modalWritable()){e.preventDefault();return}
+   e.dataTransfer.effectAllowed='copy';
+   e.dataTransfer.setData('text/plain','subject:'+encodeURIComponent(id));
+   e.dataTransfer.setData('application/x-pci-subject',id);
+  };
+  el.ondragend=()=>document.querySelectorAll('.mod-drag-target.ready').forEach(z=>z.classList.remove('ready'));
+  const pick=()=>{picked=id;box.querySelectorAll('.subject').forEach(x=>x.classList.toggle('selected',x===el));toast('Materia seleccionada. Elegí el espacio de destino.')};
+  el.onclick=pick;
+  el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick()}};
+  if(modalWritable())bindTouchDrag(el,{kind:'subject',id},byIdInMap(id)?.name||id);
  });
+ const search=$id('modBagQuery');
+ if(search){
+  search.value=modalBagQuery;
+  const filter=()=>{
+   modalBagQuery=search.value;
+   const q=normalizeTechnical(modalBagQuery);
+   let shown=0;
+   box.querySelectorAll('.year').forEach(section=>{
+    let inSection=0;
+    section.querySelectorAll('[data-sub]').forEach(tile=>{
+     const subject=byIdInMap(tile.dataset.sub);
+     const text=[subject?.name,subject?.area,subject?.field].join(' ');
+     const visible=!q||normalizeTechnical(text).includes(q);
+     tile.hidden=!visible;if(visible){inSection++;shown++}
+    });
+    section.hidden=!inSection;
+   });
+   let empty=box.querySelector('.modal-bag-empty');
+   if(!shown){if(!empty){empty=document.createElement('p');empty.className='modal-bag-empty';box.appendChild(empty)}empty.textContent='No hay materias con ese nombre en este nivel. Probá otro año o término.'}
+   else empty?.remove();
+  };
+  search.oninput=filter;
+  filter();
+ }
 };
 renderMatrix=function(){
  let html='<div class="grid levels"><div></div>';
@@ -311,7 +371,8 @@ renderMatrix=function(){
   if(r.annual){
    for(let year=1;year<=LV;year++){
     if(canSeeRow(r,year)){
-     const slot=r.k+'-n'+year,defaultName=r.l+' · Nivel '+year;
+     const slot=r.k+'-n'+year,defaultName=r.l+' · Nivel '+year+
+       (r.k==='representacion'&&year===3&&TECH_PROFILE?.planParticularVerificado!==true?' · Sujeto al plan particular':'');
      const fixed=CFG.model==='tecnica'&&r.k==='anualEsp'?prescribedAnnual(year):null;
      const name=fixed?fixed.name+' · Materia prescripta · Fija':
        cur().phase2V28?.groups?.[slot]?.name||defaultName;
@@ -339,15 +400,16 @@ renderMatrix=function(){
  html+=renderLegacyScientificField();
  $id('matrix').innerHTML=html;
  $id('matrix').querySelectorAll('[data-slot]').forEach(el=>{
-  el.ondragover=e=>{e.preventDefault();e.stopPropagation();el.classList.add('ready')};
+  el.classList.add('mod-drag-target');
+  el.ondragover=e=>{if(!modalWritable())return;e.preventDefault();e.stopPropagation();el.classList.add('ready');e.dataTransfer.dropEffect='copy'};
   el.ondragleave=()=>el.classList.remove('ready');
-  el.ondrop=e=>{e.preventDefault();e.stopPropagation();el.classList.remove('ready');const p=decodePayload(e.dataTransfer.getData('text/plain'));if(!p)return;if(p.kind==='move')moveModal(p.from,el.dataset.slot,p.id);else assignModal(el.dataset.slot,p.id)};
+  el.ondrop=e=>{e.preventDefault();e.stopPropagation();el.classList.remove('ready');if(!modalWritable())return;const p=decodePayload(e.dataTransfer.getData('text/plain'));if(!p)return;if(p.kind==='move')moveModal(p.from,el.dataset.slot,p.id);else assignModal(el.dataset.slot,p.id)};
   el.onclick=e=>{if(e.target.closest('[data-rm]'))return;if(picked)assignModal(el.dataset.slot,picked)};
  });
  $id('matrix').querySelectorAll('[data-rm]').forEach(el=>el.onclick=e=>{e.stopPropagation();removeModal(el.dataset.slot,el.dataset.rm)});
  $id('matrix').querySelectorAll('[data-map-id]').forEach(el=>{
   const id=el.dataset.mapId,from=el.dataset.from;
-  el.ondragstart=e=>e.dataTransfer.setData('text/plain','move:'+encodeURIComponent(from)+':'+encodeURIComponent(id));
+  el.ondragstart=e=>{if(!modalWritable()){e.preventDefault();return}e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','move:'+encodeURIComponent(from)+':'+encodeURIComponent(id))};
   bindTouchDrag(el.querySelector('.map-grip'),{kind:'move',from,id},byIdInMap(id)?.name||id)
  });
 };
@@ -704,13 +766,19 @@ function renderTechPrescriptionPanel(){
    }).join('')+
    (stillPending.length>80?'<li>… y '+(stillPending.length-80)+' referencias adicionales. Consultar el catálogo completo.</li>':'')+
    '</ul></details>':'';
- panel.innerHTML='<div class="subhead">Composición por especialidad · Anexo II</div>'+
-  '<strong>'+esc(TECH_PROFILE.name)+'</strong><p>'+esc(stateDesc)+'</p>'+
+ panel.innerHTML='<div class="subhead">Educación Técnica · Anexo II</div>'+
+  '<div class="v2-compact-summary"><strong>'+esc(TECH_PROFILE.name)+'</strong> · '+
+  (TECH_ANNUALS.length?TECH_ANNUALS.length+' materia(s) anual(es) prescripta(s)':'Plan anual a revisar')+
+  (check?.issues?.length?' · '+check.issues.length+' observación(es)':'')+'</div>'+
+  '<details class="v2-compact-detail"><summary>Ver prescripciones, fuentes y auditoría de contenidos</summary>'+
+  '<p>'+esc(stateDesc)+'</p>'+
   (rows?'<ul class="norma-list">'+rows+'</ul>':'')+warnings+sourceLine+atomLine+detailPending+
-  '<p>Matemática y Lengua Adicional: '+TECH_PROFILE.troncales.matematica.length+
+  '<p><strong>Composición:</strong> Matemática y Lengua Adicional: '+TECH_PROFILE.troncales.matematica.length+
   ' años. Sociales: '+TECH_PROFILE.sociales.total+' integraciones ('+
   TECH_PROFILE.sociales.obligatorios+' obligatorias y '+TECH_PROFILE.sociales.electivos+
-  ' electivas). Para talleres, integraciones y prácticas, confirmar con el plan de la especialidad las composiciones específicas. No se exige consignar horas para construir el mapa. La integración de la Especialidad está exceptuada del máximo general de 9 HC; Sociales y Naturales conservan ese límite.</p>';
+  ' electivas). Para talleres, integraciones y prácticas, contrastar con el plan particular. '+
+  'La integración de la Especialidad está exceptuada del máximo general de 9 HC; '+
+  'Sociales y Naturales conservan ese límite.</p></details>';
 }
 function renderBa15OrientationPanel(){
  if(CFG.model!=='ba15'||!BA_FO_PLAN.length)return;
@@ -731,17 +799,16 @@ function renderBa15OrientationPanel(){
    '<li>Nivel '+['','I','II','III','IV'][x.anio-1]+' · '+esc(x.estado==='cotejado_fuente_primaria'?
     (x.sumaHorasNes+' HC NES cotejadas · '+x.fuente.norma):
     'horas individuales pendientes de fuente oficial')+'</li>').join('')+'</ul>':'';
- panel.innerHTML='<div class="subhead">Formación Orientada · Resolución 1375/2025</div>'+
-  '<p>Composición prescripta por nivel; el Anexo I (6.3) fija las cargas horarias, '+
-  'pero las materias específicas dependen del diseño NES de la orientación de esta escuela.</p>'+
+ panel.innerHTML='<div class="subhead">BA +15 · Formación Orientada</div>'+
+  '<div class="v2-compact-summary"><strong>'+esc(state.active)+'</strong> · alternativa '+esc(activeAlt)+
+  ' · cuatro niveles y ocho cuatrimestres. Las materias NES son de referencia hasta su adaptación al régimen BA +15.</div>'+
+  '<details class="v2-compact-detail"><summary>Ver cargas horarias por nivel y cotejo NES</summary>'+
+  '<p>El Anexo I (6.3) fija los cupos; las materias se contrastan con el diseño NES de esta orientación.</p>'+
   '<ul class="norma-list">'+rows.join('')+'</ul>'+
-  '<p><strong>Fase 1:</strong> la bolsa FO muestra las materias NES por orientación, año y alternativa A/B. '+
-  'Las horas NES documentadas se distinguen de las que faltan cotejar y no implican homologación automática BA +15.</p>'+
+  '<p><strong>Fase 1:</strong> bolsa NES por año y alternativa. Horas de fuente, sin homologación automática.</p>'+
   '<p><strong>Alternativa '+esc(activeAlt)+' · evidencia NES:</strong></p>'+auditList+
-  '<p><strong>Fase 2:</strong> los bloques FO de Media V2 son referencias de contenidos para vincular '+
-  'a las materias; no se consideran materias homologadas del régimen BA +15.</p>'+
-  '<p><small>El CCC corresponde a la acreditación de saberes previos de 1.º año NES '+
-  'y no suma cuatrimestres ni materias a este mapa C1–C8.</small></p>';
+  '<p><strong>Fase 2:</strong> bloques de referencia FO de Media, para desarrollo de contenidos. No constituyen materias homologadas.</p>'+
+  '<p><small>El CCC acredita saberes previos; no agrega cuatrimestres a C1–C8.</small></p></details>';
 }
 function renderBa15VirtualPanel(){
  if(CFG.model!=='ba15')return;
@@ -753,11 +820,10 @@ function renderBa15VirtualPanel(){
  }
  const open=[...panel.querySelectorAll('details[open]')].map(x=>Number(x.dataset.c));
  const config=baVirtualState(),audit=baVirtualAudit();
- let html='<div class="subhead">Presencialidad y actividades virtuales · RES-105/SSGDA/2026</div>'+
-  '<p><strong>27 HC presenciales + 11 HC asincrónicas semanales</strong>: '+
-  'se aplica solo al turno noche de las escuelas incluidas en el Anexo II. '+
-  'Las actividades asincrónicas no son obligatoriamente videollamadas en vivo.</p>'+
-  '<label for="ba15AmbientesAlcance">¿Está alcanzada esta escuela y turno?</label> '+
+ let html='<div class="subhead">BA +15 · Presencialidad y virtualidad</div>'+
+  '<div class="v2-compact-summary">Solo para escuelas y turnos alcanzados por RES-105/2026: '+
+  '<strong>27 HC presenciales + 11 asincrónicas</strong>.</div>'+
+  '<label for="ba15AmbientesAlcance">Aplicación del Anexo II: </label> '+
   '<select id="ba15AmbientesAlcance">'+[
    ['pendiente_confirmacion','Pendiente de confirmar con Anexo II'],
    ['aplica_anexo_ii_turno_noche','Sí, turno noche incluido en Anexo II'],
@@ -765,6 +831,8 @@ function renderBa15VirtualPanel(){
   ].map(([value,label])=>'<option value="'+value+'"'+
    (config.aplicacion===value?' selected':'')+'>'+esc(label)+'</option>').join('')+
   '</select>';
+ html+='<details class="v2-compact-detail"><summary>Alcance de la resolución y condiciones de actividades asincrónicas</summary>'+
+   '<p>Solo corresponde al turno noche de las escuelas incluidas en el Anexo II de RES-105/SSGDA/2026. Las horas asincrónicas no requieren videollamadas simultáneas. Confirmá la inclusión institucional antes de completar la distribución.</p></details>';
  if(audit.aplica){
   const passed=audit.periodos.filter(x=>x.completo&&x.presenciales===27&&x.asincronicas===11).length;
   html+='<p>Ingresá las <strong>horas asincrónicas</strong> de cada espacio. Las presenciales '+
