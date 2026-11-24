@@ -276,6 +276,36 @@ test('BA +15: Informática registra dos talleres cuatrimestrales en un único cu
  assert.equal(seminars.length,2);
  assert.ok(seminars.every(s=>s.sourceWeeklyHours===2));
 });
+test('BA +15: desagregación literal mantiene los 1126 ID originales y conserva su trazabilidad',async()=>{
+ const p=await loadV2ModalProfile({model:'ba15',orientation:'lenguas'});
+ assert.equal(p.contents.fg.length,1126);
+ const atom=p.atomizedContents;
+ assert.ok(atom&&atom.fg&&atom.fo);
+ const validIds=new Set([...p.contents.fg,...p.contents.fo].map(row=>row.id));
+ for(const [component,origin] of [['fg',p.contents.fg],['fo',p.contents.fo]]){
+  const root=new Map(origin.map(row=>[row.id,row]));
+  const ids=new Set();
+  for(const row of atom[component].rows){
+   assert.equal(ids.has(row.id)||validIds.has(row.id),false,'ID desagregado duplicado');
+   ids.add(row.id);
+   const base=root.get(row.atomizedFrom);
+   assert.ok(base,'Cada saber debe conservar una fuente original');
+   assert.equal(row.subject,base.subject);assert.equal(row.axis,base.axis);
+   assert.equal(row.source,base.source);
+   assert.equal(row.atomVersion,'ba15-referencias-desagregadas/1');
+  }
+ }
+ assert.ok(p.atomizationSummary.fg.fragmentos>=0);
+});
+test('Técnica Jardinería: Tecnología de la Representación carga contenidos en el área propia',async()=>{
+ const p=await loadV2ModalProfile({model:'tecnica',specialty:'jardineria_paisajismo_produccion_vegetal'});
+ const material=p.contents.fg.filter(row=>row.area==='Tecnología de la Representación');
+ assert.ok(material.length>0,'Faltan los contenidos de Representación en FG');
+ assert.ok(material.every(row=>row.component==='FG'));
+ assert.ok(material.every(row=>Number.isInteger(row.year)&&row.year>=1&&row.year<=6));
+ assert.ok(material.some(row=>/representaci[oó]n/i.test(row.subject)));
+ assert.equal(new Set(p.contents.fg.map(row=>row.id)).size,p.contents.fg.length);
+});
 test('Técnica: todas las especialidades cargan seis niveles con formación técnico-específica', async()=>{
   const ids=(await readdir(new URL('../data/tecnica/priorizados/',import.meta.url))).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5)).filter(id=>id!=='tecnologia_representacion');
   assert.ok(ids.length>=26);
