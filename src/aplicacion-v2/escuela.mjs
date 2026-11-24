@@ -256,7 +256,22 @@ export function montarEscuela({contexto,escuelas=[],pcis=[],vinculos=null,client
   selector.value=String(schoolId);selector.disabled=authorizedSchools.length===1;
   $('schoolLabel').textContent=school.cue?'CUE '+school.cue:'';
   $('schoolOverviewName').textContent=school.name||'Oferta curricular de la escuela';
-  for(const id of ['schoolHomeLink','brandHomeLink'])$(id).href=href();
+  // El logo lleva al inicio de organización curricular. «Volver» conduce
+  // al panel desde el que se abrió la escuela y nunca a la página actual.
+  $('brandHomeLink').href=href();
+  const from=new URLSearchParams(location.search).get('from');
+  const back=$('schoolHomeLink');
+  if(from==='panel-general'){
+    back.hidden=false;
+    back.href='panel-general.html';
+    back.textContent='← Volver a Administración';
+  }else if(from==='panel-escuela'){
+    back.hidden=false;
+    back.href='panel-escuela.html?school='+encodeURIComponent(schoolId);
+    back.textContent='← Volver al panel institucional';
+  }else{
+    back.hidden=true;
+  }
   const permissions=Array.isArray(session.permissions)?session.permissions:[];
   const admin=session.role==='admin'||session.role==='user'&&
     (permissions.includes('dashboard.view')||permissions.includes('institutional.view'));
