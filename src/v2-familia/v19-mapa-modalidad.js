@@ -368,7 +368,8 @@ renderMatrix=function(){
   if(r.annual){
    for(let year=1;year<=LV;year++){
     if(canSeeRow(r,year)){
-     const slot=r.k+'-n'+year,defaultName=r.l+' · Nivel '+year;
+     const slot=r.k+'-n'+year,defaultName=r.l+' · Nivel '+year+
+       (r.k==='representacion'&&year===3&&TECH_PROFILE?.planParticularVerificado!==true?' · Sujeto al plan particular':'');
      const fixed=CFG.model==='tecnica'&&r.k==='anualEsp'?prescribedAnnual(year):null;
      const name=fixed?fixed.name+' · Materia prescripta · Fija':
        cur().phase2V28?.groups?.[slot]?.name||defaultName;
