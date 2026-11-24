@@ -16,11 +16,19 @@ const SPLIT=/(?<=[.;!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])|\n(?=\s*[•●▪‣]|\s*[
 export function fragmentarContenidoFuente(value,{minLength=145,maxFragments=12}={}){
  const raw=text(value);
  if(raw.length<minLength)return [];
- const parts=raw.split(SPLIT).map(cleanSpace).filter(Boolean);
- if(parts.length<2||parts.length>maxFragments||
-    parts.some(p=>p.length<MIN||p.split(/\s+/).length<5))return [];
+ const valid=parts=>parts.length>=2&&parts.length<=maxFragments&&
+   parts.every(p=>p.length>=MIN&&p.split(/\s+/).length>=5);
+ // Primero respetar exactamente la fragmentación histórica. Si ya existían
+ // fragmentos, conservar sus textos e IDs para no perder asignaciones.
+ const historic=raw.split(SPLIT).map(cleanSpace).filter(Boolean);
+ // Los contenidos enumerados mediante punto y coma también pueden dividirse
+ // literalmente sin inferir ni reescribir saberes. Solo se aplica a padres
+ // que no habían sido desagregados por las reglas anteriores.
+ const semicolon=raw.split(/;\s+(?=\S)/u).map(cleanSpace).filter(Boolean);
+ const parts=valid(historic)?historic:valid(semicolon)?semicolon:[];
+ if(!parts.length)return [];
  // Comprobación: no se incorporó ninguna palabra que no estuviera en el texto.
- const original=cleanSpace(raw),joined=parts.join(' ');
+ const original=cleanSpace(raw),joined=parts.join(parts===semicolon?'; ':' ');
  if(original!==joined)return [];
  return parts;
 }
