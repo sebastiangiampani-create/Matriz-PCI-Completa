@@ -51,3 +51,15 @@ test('fragmenta enumeraciones separadas por punto y coma preservando literalment
  assert.equal(atoms.fragmentos.length,3);
  assert.ok(atoms.fragmentos.every(x=>x.atomizedFrom==='nes-fg-lista-semis'));
 });
+
+test('desagrega listas con guiones sin reescribir ni eliminar los marcadores del texto fuente',()=>{
+ const original='La participación en intercambios orales para describir objetos personas y actividades en diferentes contextos de comunicación - La producción de relatos sencillos para compartir experiencias y acontecimientos cotidianos con destinatarios concretos - La revisión de las producciones personales a partir de intercambios entre pares y docentes para mejorar su claridad';
+ const parts=fragmentarContenidoFuente(original);
+ assert.equal(parts.length,3);
+ assert.equal(parts.join(' '),original);
+ assert.ok(parts[1].startsWith('- La producción'));
+ const rows=[{...row,id:'ba15-listado-con-guiones',text:original}];
+ const result=atomizarCatalogoBa15(rows,{component:'FO'});
+ assert.equal(result.fragmentos.length,3);
+ assert.ok(result.fragmentos.every(x=>x.referenceOnly&&x.atomizedFrom==='ba15-listado-con-guiones'));
+});
