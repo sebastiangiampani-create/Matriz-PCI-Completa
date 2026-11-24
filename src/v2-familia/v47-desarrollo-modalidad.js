@@ -36,7 +36,13 @@ async function loadFG(){if(!FG){
  FG=[...catalog.map(x=>({...x,atomicParent:parents.has(x.id)})),
      ...(atoms?.rows||[]).map(x=>({...x}))];
 }return FG}
-async function loadFOAll(){if(!FO_ALL)FO_ALL=window.__V2_MODAL.contents.fo.map(x=>({...x}));return FO_ALL}
+async function loadFOAll(){if(!FO_ALL){
+ const catalog=window.__V2_MODAL.contents.fo;
+ const atoms=CFG.model==='ba15'?CFG.atomizedContents?.fo:null;
+ const parents=new Set(atoms?.parents||[]);
+ FO_ALL=[...catalog.map(x=>({...x,atomicParent:parents.has(x.id)})),
+         ...(atoms?.rows||[]).map(x=>({...x}))];
+}return FO_ALL}
 const fkey=()=>String(state.active||'');
 async function loadFO(){if(FO.has(fkey()))return FO.get(fkey());const rows=await loadFOAll();FO.set(fkey(),rows);return rows}
 async function loadCurriculum(){await Promise.all([loadFG(),loadFO()]);return{fg:FG||[],fo:oriContents()}}
