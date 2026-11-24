@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {parsePciRoute,pciRouteHref,samePciRoute} from '../src/pci-router.mjs';
 import {normalizeCue,validateSchoolDraft} from '../src/admin-escuelas-panel.mjs';
 const uuid='00000000-0000-4000-8000-000000000001';
@@ -35,4 +36,14 @@ test('Alta administrativa valida CUE y detecta duplicados antes de escribir',()=
 test('Los archivos históricos y el constructor no almacenan claves de Supabase en enlaces',()=>{
  const route=pciRouteHref('https://escuela.example/pci-orientaciones.html?from=panel-escuela',{schoolId:1017,pciId:uuid,view:'fo'});
  assert.ok(!/token|secret|service_role|apikey/i.test(route));
+});
+
+test('La portada distingue modelos de consulta de constructores institucionales y no anuncia modalidades activas como Próximamente',()=>{
+ const index=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ assert.match(index,/Educación Técnica y BA\+15/);
+ assert.match(index,/Modelos de consulta, sin clave/);
+ assert.doesNotMatch(index,/Bachilleratos NES<span class="tag">Próximamente/);
+ assert.doesNotMatch(index,/DET<span class="tag">Próximamente/);
+ assert.match(index,/function schoolDestination/);
+ assert.match(index,/pci-orientaciones\.html\?school=/);
 });
