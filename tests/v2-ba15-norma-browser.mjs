@@ -29,7 +29,7 @@ try{
   await page.locator('#offer.active').waitFor({timeout:30000});
   assert.equal(await page.locator('#offer #ba15OrientationPlan,#offer #ba15VirtualPanel').count(),0,
     'Los anexos normativos de BA+15 no deben ocupar lugar dentro del mapa');
-  await page.locator('#rulesBtn').click();
+  await page.locator('#ba15RulesAccess').click();
   await page.locator('#ba15OrientationPlan').evaluate(el=>{el.open=true});
   await page.locator('#ba15OrientationPlan details').evaluate(el=>{el.open=true});
   const foPlan=await page.locator('#ba15OrientationPlan').innerText();
@@ -124,7 +124,7 @@ try{
   assert.match(rules,/CCC acredita equivalencias/);
   assert.match(rules,/formatos cuatrimestrales se organizan por separado/);
   // La virtualidad de RES-105/26 no se activa automáticamente en todas las escuelas.
-  await page.locator('#rulesBtn').click();
+  await page.locator('#ba15RulesAccess').click();
   await page.locator('#ba15VirtualPanel').evaluate(el=>{el.open=true});
   assert.equal(await page.locator('#ba15AmbientesAlcance').inputValue(),'pendiente_confirmacion');
   assert.equal(await page.evaluate(()=>window.V2ModalVirtual.evaluate().aplica),false);
