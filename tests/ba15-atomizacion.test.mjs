@@ -41,3 +41,13 @@ test('no inventar saberes si el texto no contiene cortes semánticos explícitos
  'Un texto muy largo que enumera información sin puntos seguidos ni incisos suficientemente separados para realizar un corte correcto y reproducible manteniendo exactamente las palabras de origen y sin interpretaciones añadidas por el motor.'
  ])assert.deepEqual(fragmentarContenidoFuente(s),[]);
 });
+
+test('fragmenta enumeraciones separadas por punto y coma preservando literalmente la fuente',()=>{
+ const original='Construcción y lectura de planos de objetos técnicos empleando criterios compartidos de representación; Interpretación de información técnica con códigos y convenciones gráficas de aplicación escolar; Producción de croquis y bocetos para comunicar soluciones técnicas en diferentes situaciones de trabajo';
+ const parts=fragmentarContenidoFuente(original);
+ assert.equal(parts.length,3);
+ assert.equal(parts.join('; '),original);
+ const atoms=atomizarCatalogoBa15([{...row,id:'nes-fg-lista-semis',text:original}],{component:'FG'});
+ assert.equal(atoms.fragmentos.length,3);
+ assert.ok(atoms.fragmentos.every(x=>x.atomizedFrom==='nes-fg-lista-semis'));
+});
