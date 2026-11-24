@@ -295,7 +295,8 @@ test('BA +15: desagregación literal mantiene los 1126 ID originales y conserva 
    assert.equal(row.atomVersion,'ba15-referencias-desagregadas/1');
   }
  }
- assert.ok(p.atomizationSummary.fg.fragmentos>=0);
+ assert.ok(p.atomizationSummary.fg.fragmentos>0,'Los contenidos FG BA +15 con varios enunciados deben desagregarse.');
+ assert.ok(p.atomizationSummary.fo.fragmentos>=0);
 });
 test('Técnica Jardinería: Tecnología de la Representación carga contenidos en el área propia',async()=>{
  const p=await loadV2ModalProfile({model:'tecnica',specialty:'jardineria_paisajismo_produccion_vegetal'});
