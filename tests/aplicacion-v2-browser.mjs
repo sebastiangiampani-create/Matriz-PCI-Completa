@@ -306,6 +306,10 @@ async function login(page,record){
   await page.locator('#email').fill('prueba@escuela.example');await page.locator('#schoolSubmit').click();
   await page.locator('#schoolPciCards .school-offer-card').first().waitFor();
   assert.equal(await page.locator('#schoolOverviewName').innerText(),school.name);
+  assert.equal(await page.locator('.school-chooser').isVisible(),false,
+    'La clave PCI limitada a una escuela no muestra el selector global');
+  assert.deepEqual(await page.locator('#school option').allTextContents(),[school.name],
+    'La clave escolar no recibe ni siquiera opciones de otras instituciones');
   assert.equal(await page.locator('#schoolPciCards .school-offer-card').count(),4);
   await nativeShell(page);
   await page.locator('#turnFilter').selectOption('tarde');
