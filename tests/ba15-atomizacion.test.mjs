@@ -1,6 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {atomizarCatalogoBa15,fragmentarContenidoFuente} from '../src/ba15/atomizacion-contenidos.mjs';
+// Comportamiento publicado antes de esta mejora: sirve de patrón para
+// demostrar que ningún fragmento ya utilizado en un PCI cambia de ID.
+function fragmentosPublicadosV1(value){
+ const raw=String(value??'').trim(),clean=t=>String(t||'').replace(/\s+/g,' ').trim();
+ if(raw.length<145)return [];
+ const valid=a=>a.length>=2&&a.length<=12&&a.every(p=>p.length>=34&&p.split(/\s+/).length>=5);
+ const historic=raw.split(/(?<=[.;!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])|\n(?=\s*[•●▪‣]|\s*[0-9]+[.)]\s)/u).map(clean).filter(Boolean);
+ const semicolon=raw.split(/;\s+(?=\S)/u).map(clean).filter(Boolean);
+ const bullets=raw.split(/\s+(?=[-–•]\s+[A-ZÁÉÍÓÚÑ])/u).map(clean).filter(Boolean);
+ const parts=valid(historic)?historic:valid(semicolon)?semicolon:valid(bullets)?bullets:[];
+ return parts.length&&clean(raw)===parts.join(parts===semicolon?'; ':' ')?parts:[];
+}
 const text='Interpretación y comunicación de información técnica mediante códigos convencionales y representaciones gráficas. Construcción y lectura de planos de objetos técnicos, empleando criterios compartidos de representación. Desarrollo de croquis y bocetos para explicar soluciones y procesos de diseño en distintos contextos.';
 const row={id:'nes-fg-primario-001',component:'FG',year:2,area:'Formación General',
  subject:'Tecnologías',axis:'Representación',subaxis:'Sistemas',text,
@@ -78,7 +90,7 @@ test('auditoría documental de longitud FG y FO BA+15',async()=>{
  for(const [component,rows] of [['FG',fg],['FO',fo]]){
    const pending=rows.filter(r=>r.text.length>=180&&fragmentarContenidoFuente(r.text).length<2);
    const parsed=atomizarCatalogoBa15(rows,{component});
-   const top=[...pending].sort((a,b)=>b.text.length-a.text.length).slice(0,15)
+   const top=[...pending].sort((a,b)=>b.text.length-a.text.length).slice(0,4)
      .map(x=>({id:x.id,subject:x.subject,len:x.text.length,text:x.text.slice(0,350)}));
    console.log('BA15_AUDIT '+JSON.stringify({component,rows:rows.length,
      long180:rows.filter(r=>r.text.length>=180).length,
@@ -88,6 +100,35 @@ test('auditoría documental de longitud FG y FO BA+15',async()=>{
      pending400:pending.filter(r=>r.text.length>=400).length,
      atomized:parsed.resumen,visibleLong180:[...rows.filter(r=>!parsed.padres.includes(r.id)),...parsed.fragmentos].filter(r=>r.text.length>=180).length,top}));
    assert.equal(parsed.resumen.origenes,rows.length);
+   assert.ok(pending.length<=(component==='FG'?16:47),
+     'No puede empeorar la atomización comprobada de catálogos reales BA+15');
+   const {stableContentId}=await import('../src/integracion-curricular/catalogos.js');
+   const fragmentsByParent=new Map();
+   for(const fragment of parsed.fragmentos){
+     if(!fragmentsByParent.has(fragment.atomizedFrom))fragmentsByParent.set(fragment.atomizedFrom,[]);
+     fragmentsByParent.get(fragment.atomizedFrom).push(fragment);
+   }
+   let historicalParents=0;
+   for(const original of rows){
+     const parts=fragmentsByParent.get(original.id)||[];
+     if(!parts.length)continue;
+     const recovered=parts.map(r=>r.text),joined=recovered.join(' '),semis=recovered.join('; ');
+     const normalized=original.text.replace(/\s+/g,' ').trim();
+     assert.ok(joined===normalized||semis===normalized,
+       'No perder un carácter del priorizado '+original.id);
+     assert.equal(new Set(parts.map(r=>r.id)).size,parts.length);
+     const legacy=fragmentosPublicadosV1(original.text);
+     if(legacy.length){
+       historicalParents++;
+       assert.deepEqual(recovered,legacy,'Textos publicados inmutables: '+original.id);
+       assert.deepEqual(parts.map(x=>x.id),legacy.map((fragment,i)=>
+         stableContentId('ba15-atom',[component,original.id,fragment,i+1])),
+         'IDs publicados inmutables: '+original.id);
+     }
+     if(component==='FO')assert.ok(parts.every(x=>x.referenceOnly===true&&!x.confirmedBa15Subject));
+   }
+   assert.equal(historicalParents,component==='FG'?30:128,
+     'Los fragmentos históricos BA+15 se mantienen 1:1');
  }
 });
 
