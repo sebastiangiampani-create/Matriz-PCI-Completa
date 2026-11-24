@@ -240,7 +240,7 @@ function bindTouchDrag(handle,payload,label){
  };
 }
 const st=document.createElement('style');st.textContent=`
- .bag-filter{display:grid;grid-template-columns:repeat(${LV},1fr);gap:5px;margin:8px 0 10px}
+ .bag-filter{display:grid;grid-template-columns:repeat(auto-fit,minmax(44px,1fr));gap:5px;margin:8px 0 10px}
  .bag-filter button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:7px 3px;font-size:.62rem;font-weight:900}
  .bag-filter button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
  .drag-handle,.map-grip{font-weight:900;cursor:grab;touch-action:none;user-select:none}
@@ -280,13 +280,13 @@ placed=function(slot){return (cur().placements[slot]||[]).map(id=>{
  (fixed?'<small style="display:inline-block;margin-left:6px">Fija</small>':'<button data-rm="'+esc(id)+'" data-slot="'+esc(slot)+'">×</button>')+'</div>'
 }).join('')};
 renderBag=function(){
- const box=$id('bagContent'),m=cur(),year=Math.min(LV,Math.max(1,Number(m.bagYear)||1));m.bagYear=year;
+ const box=$id('bagContent'),m=cur(),raw=Number(m.bagYear??0),year=Number.isSafeInteger(raw)&&raw>=0&&raw<=LV?raw:0;m.bagYear=year;
  const alternative=String(m.alt||'A');
- const set=allSubjects().filter(s=>s.year===year&&!s.isOrientationHourBucket&&!s.legacyReference&&
+ const set=allSubjects().filter(s=>(year===0||s.year===year)&&!s.isOrientationHourBucket&&!s.legacyReference&&
   (!s.alternative||s.alternative===alternative));
  let h='<div class="subhead">Materias de la modalidad · filtrar por nivel</div>'+
   (CFG.model==='tecnica'?'<p class="modal-rule-note">Materias extraídas de los contenidos priorizados oficiales 2026. Elegí el nivel y arrastrá cada materia al espacio correspondiente. Las agrupaciones se definen según las reglas de la especialidad; no se solicita carga horaria para armar el mapa.</p>':'')+
-  '<div class="bag-filter">'+range(LV).map(n=>'<button type="button" data-bag-year="'+n+'" class="'+(n===year?'active':'')+'">'+n+'.º</button>').join('')+'</div>';
+  '<div class="bag-filter"><button type="button" data-bag-year="0" class="'+(year===0?'active':'')+'">Todos</button>'+range(LV).map(n=>'<button type="button" data-bag-year="'+n+'" class="'+(n===year?'active':'')+'">'+n+'.º</button>').join('')+'</div>';
  if(CFG.model==='ba15'){
   h+='<p class="modal-rule-note">Materias de la orientación NES: 3.º→Nivel II, 4.º→III y 5.º→IV. Sus contenidos se consultan en Fase 2; todavía no se homologan automáticamente para BA +15.</p>';
   if((CFG.foAlternatives||[]).length>1)
@@ -299,9 +299,11 @@ renderBag=function(){
  }
  h+='<label class="mod-bag-search" for="modBagQuery">Buscar materia de este nivel<input type="search" id="modBagQuery" placeholder="Nombre, área o campo" autocomplete="off"></label>'+
     '<p class="mod-bag-help">Arrastrá ⠿ hasta una celda. Alternativa accesible: seleccioná la materia y tocá el destino.</p>';
- const groups=[{origin:'FG',label:'Formación General',list:set.filter(s=>s.origin==='FG')},{origin:'FO',label:CFG.model==='tecnica'?'Científico-Tecnológica y Técnico-Específica':'Formación Orientada',list:set.filter(s=>s.origin==='FO')},{origin:'CUSTOM',label:'Materias agregadas por la escuela',list:set.filter(s=>s.origin==='CUSTOM')}];
+ const rootGroups=[{origin:'FG',label:'Formación General',list:set.filter(s=>s.origin==='FG')},{origin:'FO',label:CFG.model==='tecnica'?'Científico-Tecnológica y Técnico-Específica':'Formación Orientada',list:set.filter(s=>s.origin==='FO')},{origin:'CUSTOM',label:'Materias agregadas por la escuela',list:set.filter(s=>s.origin==='CUSTOM')}];
+ const groups=year?[...rootGroups.map(g=>({...g,level:year}))]:
+  rootGroups.flatMap(g=>range(LV).map(level=>({...g,level,list:g.list.filter(s=>s.year===level)})));
  for(const group of groups)if(group.list.length){
-  h+='<section class="year"><div class="year-head"><strong>'+group.label+' · Nivel '+year+'</strong><span>C'+(year*2-1)+' / C'+year*2+'</span></div>';
+  h+='<section class="year"><div class="year-head"><strong>'+group.label+' · Nivel '+group.level+'</strong><span>C'+(group.level*2-1)+' / C'+group.level*2+'</span></div>';
   h+=group.list.map(s=>{
    const used=usage(s.id);
    return '<div class="subject '+(used.size>=2?'used-two':'')+'" draggable="true" data-sub="'+esc(s.id)+'"><span class="drag-handle">⠿</span><span><strong>'+esc(s.name)+'</strong><small>'+esc(CFG.model==='tecnica'?({'formacion_cientifico_tecnologica':'Científico-Tecnológica','formacion_tecnica_especifica':'Técnico-Específica','practicas_profesionalizantes':'Prácticas Profesionalizantes'}[s.field]||'Formación General'):(s.origin==='FO'?'Materia NES '+s.sourceYear+'º · '+(s.alternative?'alternativa '+s.alternative:'común')+
