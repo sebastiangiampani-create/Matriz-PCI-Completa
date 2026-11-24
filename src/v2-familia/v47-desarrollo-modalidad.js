@@ -93,7 +93,8 @@ function pool(a){
  const gs=ga(a),hasFoSpace=gs.some(hasFO),names=new Set(gs.flatMap(g=>[...memberKeys(g)]));
  const years=new Set(gs.filter(hasFO).map(g=>Number(g.year)));
  return[...(FG||[]),...oriContents()].filter(c=>{
-  if(c.component==='FO')return hasFoSpace&&c.area===a&&
+  if(c.atomicParent)return false;
+  if(c.component==='FO')return (hasFoSpace||CFG.model==='tecnica')&&c.area===a&&
    (!c.year||years.has(Number(c.year)));
   if(c.component!=='FG')return false;
   return c.area===a||names.has(norm(c.subject));
