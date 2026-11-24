@@ -91,19 +91,3 @@ test('solo una sesión administrativa con alcance escolar obtiene el inventario 
  assert.match(panel,/#?offerInventoryStatus/);
  assert.match(panel,/action:'list-school-offer-summary'/);
 });
-)[1],/pci_proposals\.data/,'La consulta SQL no debe leer ni alterar el modelo histórico.');
-});
-
-test('solo una sesión administrativa con alcance escolar obtiene el inventario actual',()=>{
- const i=edge.indexOf("if(action==='list-school-offer-summary')");
- assert.ok(i>0,'Falta ruta de resumen de ofertas.');
- const action=edge.slice(i,edge.indexOf("if(action==='create-school-v2')",i));
- assert.match(action,/dashboard\.view/);
- assert.match(action,/isScoped\(s,Number\(row\.school_id\)\)/);
- assert.match(action,/pci_workspace_portfolio_summary_v1/);
- assert.doesNotMatch(action,/\.update\(|\.insert\(|\.delete\(/);
- assert.match(panel,/id="model" disabled/);
- assert.match(panel,/id="origin"/);
- assert.match(panel,/#?offerInventoryStatus/);
- assert.match(panel,/action:'list-school-offer-summary'/);
-});
