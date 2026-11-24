@@ -46,7 +46,7 @@ test('fragmenta enumeraciones separadas por punto y coma preservando literalment
  const original='Construcción y lectura de planos de objetos técnicos empleando criterios compartidos de representación; Interpretación de información técnica con códigos y convenciones gráficas de aplicación escolar; Producción de croquis y bocetos para comunicar soluciones técnicas en diferentes situaciones de trabajo';
  const parts=fragmentarContenidoFuente(original);
  assert.equal(parts.length,3);
- assert.equal(parts.join('; '),original);
+ assert.equal(parts.join(' '),original);
  const atoms=atomizarCatalogoBa15([{...row,id:'nes-fg-lista-semis',text:original}],{component:'FG'});
  assert.equal(atoms.fragmentos.length,3);
  assert.ok(atoms.fragmentos.every(x=>x.atomizedFrom==='nes-fg-lista-semis'));
