@@ -499,7 +499,7 @@ function renderSchoolHome(){
       const start=elem('button','Crear primer PCI y comenzar','btn primary');
       start.id='startFirstPci';start.type='button';
       start.onclick=openPciForm;box.append(start);
-    }else note('p','Solicitá a administración o a la conducción con permisos de edición la creación del primer PCI.','muted',box);
+    }else note('p','Solicitá a la conducción de la escuela (clave DIR) o a administración la creación del primer PCI.','muted',box);
     const preservation=elem('p',undefined,'muted');
     preservation.textContent='Si la institución tiene una Formación General anterior, se conserva por separado y no se borra al crear el nuevo PCI.';
     box.append(preservation);
