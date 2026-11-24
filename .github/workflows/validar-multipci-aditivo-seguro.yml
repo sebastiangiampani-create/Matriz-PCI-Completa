@@ -61,6 +61,7 @@ jobs:
                           $2 == "tests/pci-model.test.js" ||
                           $2 == "src/ba15/atomizacion-contenidos.mjs" ||
                           $2 == "tests/ba15-atomizacion.test.mjs" ||
+                          $2 == "tests/media-cierre.test.mjs" ||
                           $2 == "tests/ba15-priorizados-base.test.mjs" ||
                 $2 == "tests/ba15-constructor.test.mjs" ||
                           $2 == "tests/pci-nueva-escuela-browser.mjs" ||
@@ -130,7 +131,7 @@ jobs:
         run: node --test tests/pci-multipci-v2-contract.test.mjs tests/aplicacion-v2-documentos.test.mjs tests/accesos-tres-claves.test.mjs tests/panel-general-oferta-actual.test.mjs tests/ba15-atomizacion.test.mjs tests/cola-guardado-v2.test.mjs
       - name: Probar currícula y guardado aislado por PCI
         run: |
-          node --test tests/vinculos-historicos.test.mjs tests/pci-navegacion-admin.test.mjs tests/pci-fase-desarrollo-fg.test.mjs tests/pci-flujo-fases.test.mjs tests/constructor-mapa-unificado.test.mjs tests/pci-desarrollo-resumen.test.mjs tests/pci-sociales-opciones-v2.test.mjs tests/ba15-reglas.test.mjs tests/ba15-constructor.test.mjs tests/turnos-modalidades.test.mjs tests/orientaciones-release.test.mjs tests/tecnica-integrada-v2.test.mjs tests/adaptador-media-final-20261117.test.mjs tests/integracion-catalogos.test.js tests/ba15-priorizados-base.test.mjs
+          node --test tests/vinculos-historicos.test.mjs tests/pci-navegacion-admin.test.mjs tests/pci-fase-desarrollo-fg.test.mjs tests/pci-flujo-fases.test.mjs tests/constructor-mapa-unificado.test.mjs tests/pci-desarrollo-resumen.test.mjs tests/pci-sociales-opciones-v2.test.mjs tests/ba15-reglas.test.mjs tests/ba15-constructor.test.mjs tests/turnos-modalidades.test.mjs tests/orientaciones-release.test.mjs tests/tecnica-integrada-v2.test.mjs tests/media-cierre.test.mjs tests/adaptador-media-final-20261117.test.mjs tests/integracion-catalogos.test.js tests/ba15-priorizados-base.test.mjs
   navegador-multi-pci:
     runs-on: ubuntu-24.04
     needs: motor-curricular-y-resguardo
