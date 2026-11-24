@@ -76,7 +76,7 @@ test('auditoría documental de longitud FG y FO BA+15',async()=>{
  const fg=buildBa15FgBase(await loadV2Fg({fetchFn}));
  const fo=await loadV2Fo({fetchFn});
  for(const [component,rows] of [['FG',fg],['FO',fo]]){
-   const pending=rows.filter(r=>r.text.length>=180&&!fragmentarContenidoFuente(r.text));
+   const pending=rows.filter(r=>r.text.length>=180&&fragmentarContenidoFuente(r.text).length<2);
    const parsed=atomizarCatalogoBa15(rows,{component});
    const top=[...pending].sort((a,b)=>b.text.length-a.text.length).slice(0,15)
      .map(x=>({id:x.id,subject:x.subject,len:x.text.length,text:x.text.slice(0,350)}));
