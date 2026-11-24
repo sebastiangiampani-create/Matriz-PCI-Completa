@@ -22,7 +22,7 @@ export function crearColaGuardadoV2({
     onRevision(revision);
     // Conservar la revisión remota nueva en el borrador SOLO si no llegó otra
     // edición mientras se escribía (nunca resucitar un borrador anterior).
-    if(secuencia===seq)guardarLocal(copy(estado),revision);
+    if(secuencia===seq){try{guardarLocal(copy(estado),revision)}catch{/* Guardado remoto confirmado. El respaldo local puede estar lleno; no se descarta la revisión remota. */}}
    }catch(error){
     if(error?.status===409||['stale_revision','CONFLICTO','GUARDADO_NO_CONFIRMADO'].includes(error?.code))
      conflicto=error;
