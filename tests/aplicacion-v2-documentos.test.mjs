@@ -322,7 +322,7 @@ test('los vínculos ajenos y las revisiones sin avance se rechazan',async()=>{
   const wrong=mockClient({handle:()=>({exists:true,revision:1,rows:[],document:{...doc,school_id:1020}})});
   await wrong.cliente.validarSesion();
   await assert.rejects(()=>wrong.cliente.obtenerVinculos(1017),{code:'VINCULOS_AJENOS'});
-  const unchanged=mockClient({handle:()=>({ok:true,revision:2})});await unchanged.cliente.validarSesion();
+  const unchanged=mockClient({verified:{role:'school_admin',permissions:[],school_ids:[],all_schools:false},handle:()=>({ok:true,revision:2})});await unchanged.cliente.validarSesion();
   await assert.rejects(()=>unchanged.cliente.guardarVinculos(1017,{document:doc,expected_revision:2}),
     {code:'GUARDADO_NO_CONFIRMADO'});
   const count=unchanged.calls.length;
