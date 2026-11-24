@@ -103,6 +103,23 @@ try{
   assert.ok(phase2.groups>15,'Fase 2 V2 debe generar agrupamientos desde el mapa del modelo');
   assert.ok(phase2.fg>0,'La Fase 2 debe tener contenidos FG');
   assert.ok(phase2.fo>0,'La Fase 2 debe tener contenidos específicos de la modalidad');
+  if(model==='ba15'){
+    const bags=await page.evaluate(async()=>{
+      const p=window.PCIPhase2V28;
+      await p.loadCurriculum();
+      return {
+        tecnologia:p.getAreaPool('Tecnologías').filter(x=>x.component==='FG').length,
+        artes:p.getAreaPool('Artes').filter(x=>x.component==='FG').length,
+        ef:p.getAreaPool('Educación Física').filter(x=>x.component==='FG').length,
+        areas:window.V2ModalMap.rowDefs().map(x=>x.area)
+      };
+    });
+    assert.ok(bags.tecnologia>0,'BA+15: la bolsa de Educación Tecnológica no debe quedar vacía');
+    assert.ok(bags.artes>0,'BA+15: la bolsa de Artes no debe quedar vacía');
+    assert.ok(bags.ef>0,'BA+15: la bolsa de Educación Física no debe quedar vacía');
+    assert.ok(!bags.areas.includes('Talleres articulados'),'BA+15: no mostrar la categoría ambigua Talleres articulados');
+    assert.ok(!bags.areas.includes('Formación General'),'BA+15: no mostrar Formación General como taller');
+  }
   if(model==='tecnica'){
     const checked=await page.evaluate(async()=>{
       const p=window.PCIPhase2V28;
@@ -121,6 +138,16 @@ try{
       return found;
     });
     assert.ok(checked.length>0,'La Fase 2 Técnica debe cargar contenidos del banco reconstruido.');
+    const representation=await page.evaluate(()=>{
+      const p=window.PCIPhase2V28;
+      return {
+        subjects:window.__V2_MODAL.subjects.filter(x=>x.year===2&&/representaci[oó]n/i.test(x.name)).length,
+        contents:p.getAreaPool('Tecnología de la Representación').filter(x=>Number(x.year)===2).length
+      };
+    });
+    assert.ok(representation.subjects>0,'Técnica: falta la materia de Representación en Nivel 2');
+    assert.ok(representation.contents>0,'Técnica: faltan contenidos priorizados de Representación en Nivel 2');
+  
   }
   await page.screenshot({path:'test-artifacts/v2-modalidades/'+model+'-mapa.png',fullPage:true});
   // Fase 2 V2 real: elegir un contenido desde la bolsa, asignarlo al

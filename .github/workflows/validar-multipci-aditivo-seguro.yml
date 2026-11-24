@@ -57,6 +57,8 @@ jobs:
                           $2 == "src/tecnica/espacio-trabajo-v2.mjs" ||
                           $2 == "tests/constructor-mapa-unificado.test.mjs" ||
                           $2 == "tests/pci-model.test.js" ||
+                          $2 == "src/ba15/atomizacion-contenidos.mjs" ||
+                          $2 == "tests/ba15-atomizacion.test.mjs" ||
                           $2 == "tests/ba15-priorizados-base.test.mjs" ||
                 $2 == "tests/ba15-constructor.test.mjs" ||
                           $2 == "tests/pci-nueva-escuela-browser.mjs" ||
