@@ -63,3 +63,30 @@ test('desagrega listas con guiones sin reescribir ni eliminar los marcadores del
  assert.equal(result.fragmentos.length,3);
  assert.ok(result.fragmentos.every(x=>x.referenceOnly&&x.atomizedFrom==='ba15-listado-con-guiones'));
 });
+
+
+test('auditoría documental de longitud FG y FO BA+15',async()=>{
+ const {loadV2Fg,loadV2Fo}=await import('../src/integracion-curricular/catalogos.js');
+ const {readFile}=await import('node:fs/promises');
+ const {buildBa15FgBase}=await import('../src/ba15/priorizados-base.mjs');
+ const fetchFn=async url=>{
+   try {const body=await readFile(url,'utf8');return {ok:true,text:async()=>body}}
+   catch{return {ok:false,text:async()=>''}}
+ };
+ const fg=buildBa15FgBase(await loadV2Fg({fetchFn}));
+ const fo=await loadV2Fo({fetchFn});
+ for(const [component,rows] of [['FG',fg],['FO',fo]]){
+   const pending=rows.filter(r=>r.text.length>=180&&!fragmentarContenidoFuente(r.text));
+   const parsed=atomizarCatalogoBa15(rows,{component});
+   const top=[...pending].sort((a,b)=>b.text.length-a.text.length).slice(0,15)
+     .map(x=>({id:x.id,subject:x.subject,len:x.text.length,text:x.text.slice(0,350)}));
+   console.log('BA15_AUDIT '+JSON.stringify({component,rows:rows.length,
+     long180:rows.filter(r=>r.text.length>=180).length,
+     long280:rows.filter(r=>r.text.length>=280).length,
+     pending180:pending.length,
+     pending280:pending.filter(r=>r.text.length>=280).length,
+     pending400:pending.filter(r=>r.text.length>=400).length,
+     atomized:parsed.resumen,top}));
+   assert.equal(parsed.resumen.origenes,rows.length);
+ }
+});
