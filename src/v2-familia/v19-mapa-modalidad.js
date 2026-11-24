@@ -784,10 +784,11 @@ function renderTechPrescriptionPanel(){
 }
 function renderBa15OrientationPanel(){
  if(CFG.model!=='ba15'||!BA_FO_PLAN.length)return;
- const hero=$id('offer')?.querySelector('.hero');if(!hero)return;
+ // Los anexos normativos no ocupan el mapa: se consultan desde «Reglas».
+ const rules=$id('rulesModal')?.querySelector('.modal-box');if(!rules)return;
  let panel=$id('ba15OrientationPlan');
- if(!panel){panel=document.createElement('section');panel.id='ba15OrientationPlan';
-  panel.className='card';hero.after(panel);}
+ if(!panel){panel=document.createElement('details');panel.id='ba15OrientationPlan';
+  panel.className='v2-compact-detail';rules.append(panel);}
  const rows=BA_FO_PLAN.map(item=>{
   const fixed=item.materiasFijas||[];
   const extra=fixed.length?' + '+fixed.map(x=>esc(x.nombre)+' '+Number(x.horas)+' HC').join(' + '):'';
@@ -801,7 +802,7 @@ function renderBa15OrientationPanel(){
    '<li>Nivel '+['','I','II','III','IV'][x.anio-1]+' · '+esc(x.estado==='cotejado_fuente_primaria'?
     (x.sumaHorasNes+' HC NES cotejadas · '+x.fuente.norma):
     'horas individuales pendientes de fuente oficial')+'</li>').join('')+'</ul>':'';
- panel.innerHTML='<div class="subhead">BA +15 · Formación Orientada</div>'+
+ panel.innerHTML='<summary>BA +15 · cupos y fuentes de Formación Orientada</summary>'+
   '<div class="v2-compact-summary"><strong>'+esc(state.active)+'</strong> · alternativa '+esc(activeAlt)+
   ' · cuatro niveles y ocho cuatrimestres. Las materias NES son de referencia hasta su adaptación al régimen BA +15.</div>'+
   '<details class="v2-compact-detail"><summary>Ver cargas horarias por nivel y cotejo NES</summary>'+
@@ -814,15 +815,18 @@ function renderBa15OrientationPanel(){
 }
 function renderBa15VirtualPanel(){
  if(CFG.model!=='ba15')return;
- const hero=$id('offer')?.querySelector('.hero');if(!hero)return;
+ // El alcance de RES-105/26 continúa siendo configurable en «Reglas»,
+ // sin exhibir casilleros normativos en cada pantalla del mapa.
+ const rules=$id('rulesModal')?.querySelector('.modal-box');if(!rules)return;
  let panel=$id('ba15VirtualPanel');
  if(!panel){
-  panel=document.createElement('section');panel.id='ba15VirtualPanel';
-  panel.className='card';($id('ba15OrientationPlan')||hero).after(panel);
+  panel=document.createElement('details');panel.id='ba15VirtualPanel';
+  panel.className='v2-compact-detail';rules.append(panel);
  }
+ const expanded=panel.open;
  const open=[...panel.querySelectorAll('details[open]')].map(x=>Number(x.dataset.c));
  const config=baVirtualState(),audit=baVirtualAudit();
- let html='<div class="subhead">BA +15 · Presencialidad y virtualidad</div>'+
+ let html='<summary>BA +15 · presencialidad y virtualidad (RES-105/2026)</summary>'+ 
   '<div class="v2-compact-summary">Solo para escuelas y turnos alcanzados por RES-105/2026: '+
   '<strong>27 HC presenciales + 11 asincrónicas</strong>.</div>'+
   '<label for="ba15AmbientesAlcance">Aplicación del Anexo II: </label> '+
@@ -866,6 +870,7 @@ function renderBa15VirtualPanel(){
  }else if(audit.advertencias.length)
   html+='<p>'+esc(audit.advertencias.map(e=>e.message).join(' '))+'</p>';
  panel.innerHTML=html;
+ panel.open=expanded;
  panel.querySelector('#ba15AmbientesAlcance').onchange=e=>{
   config.aplicacion=e.target.value;cur().valid=false;save();renderBa15VirtualPanel();
  };
