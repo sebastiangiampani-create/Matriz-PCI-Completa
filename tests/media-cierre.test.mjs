@@ -178,3 +178,31 @@ test('articulaciones guardan metadata reversible y preservan los cuatro planes b
   assert.deepEqual(source,previo);
   assert.equal(MEDIA_FO_QUINTO.length,4);
 });
+
+test('articulación PVF se deriva automáticamente al validar sin opciones manuales',()=>{
+  const placements={
+    'proyecto-n5':['fo-economia-pvf'],
+    'foLab5-c9':['fo-economia-5-0','fo-contabilidad-5-1'],
+    'foTaller5-c9':['fo-derecho-5-2','fo-historia-5-3'],
+    'foLab5-c10':['fo-economia-5-0','fo-contabilidad-5-1'],
+    'foTaller5-c10':['fo-derecho-5-2','fo-tecnologias-5-4']
+  };
+  const source=freeze(map(placements,{pvfArticulaciones:{
+    version:MEDIA_ARTICULACION_VERSION,espacios:['foLab5-c9','slot-historico-inexistente']
+  }}));
+  const original=structuredClone(source);
+  const result=auditarCierreMedia(source,inputEco(source));
+  assert.equal(result.valido,true,JSON.stringify(result));
+  assert.deepEqual(result.articulaciones,MEDIA_FO_QUINTO);
+  assert.deepEqual(source,original,'La validación no modifica las relaciones históricas ni el PCI.');
+  const empty=map({});
+  const pending=auditarCierreMedia(empty,inputEco(empty));
+  assert.equal(pending.valido,false);
+  assert.deepEqual(pending.articulaciones,[]);
+});
+test('la interfaz PVF no ofrece casillas manuales: solo presenta advertencias normativas',()=>{
+ const runtime=read('src/aplicacion-v2/media-cierre-runtime.js');
+ assert.doesNotMatch(runtime,/data\\.pvfArticulacion|dataset\\.pvfArticulacion|box\\.type='checkbox'/);
+ assert.match(runtime,/panel\\.hidden=!tieneIncidencias/);
+ assert.match(runtime,/Validar oferta/);
+});
