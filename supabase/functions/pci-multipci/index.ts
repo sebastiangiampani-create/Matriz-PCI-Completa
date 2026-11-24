@@ -69,9 +69,12 @@ function canEdit(s){
    ||(s.role==='user'&&(s.permissions||[]).includes('pci.edit'));
 }
 function canDeclareOrientations(s){
- // El referente institucional puede declarar la oferta (modelo, orientación
- // y turno) de su escuela. NO puede escribir documentos ni planes FG/FO.
- return canEdit(s)||s.role==='school_admin';
+ // Solo la conducción de la escuela (DIR) y la administración institucional
+ // pueden dar de alta orientaciones, modalidades y turnos o asignar históricos.
+ // La clave PCI permite editar contenidos, pero NO crear/modificar oferta.
+ return s.role==='admin'||s.role==='school_admin'||
+   (s.role==='user'&&(s.permissions||[]).includes('institutional.view')&&
+      (s.permissions||[]).includes('keys.manage'));
 }
 function actor(s){
  const id=s.identity||{};
