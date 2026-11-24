@@ -86,7 +86,43 @@ test('auditoría documental de longitud FG y FO BA+15',async()=>{
      pending180:pending.length,
      pending280:pending.filter(r=>r.text.length>=280).length,
      pending400:pending.filter(r=>r.text.length>=400).length,
-     atomized:parsed.resumen,top}));
+     atomized:parsed.resumen,visibleLong180:[...rows.filter(r=>!parsed.padres.includes(r.id)),...parsed.fragmentos].filter(r=>r.text.length>=180).length,top}));
    assert.equal(parsed.resumen.origenes,rows.length);
  }
+});
+
+
+test('BA+15: enumera actos de habla cortos sin descartar una lista larga por fragmentos breves',()=>{
+ const original='Funciones comunicativas: '+[
+  'pedir y dar información personal', 'expresar opiniones y sentimientos',
+  'pedir consejo', 'comparar objetos, personas y lugares',
+  'formular preguntas a otras personas', 'organizar y describir actividades cotidianas',
+  'explicar preferencias y gustos personales', 'describir escenas y situaciones sociales',
+  'dar y seguir instrucciones sencillas', 'proponer actividades con otras personas',
+  'argumentar en conversaciones cotidianas', 'expresar acuerdos y desacuerdos',
+  'interpretar mensajes del entorno', 'comunicar situaciones de interés personal'
+ ].join('; ');
+ const parts=fragmentarContenidoFuente(original);
+ assert.ok(parts.length>=3,'Una enumeración explícita larga debe producir varios saberes');
+ assert.equal(parts.join(' '),original,'Preservar cada carácter y delimitador tras normalizar espacios');
+ assert.ok(parts.every(p=>p.length<=195),'Las listas de saberes breves se agrupan en tarjetas cortas');
+ const rows=[{...row,id:'fg-lista-nes-corta',text:original}];
+ const result=atomizarCatalogoBa15(rows,{component:'FG'});
+ assert.equal(result.fragmentos.length,parts.length);
+ assert.deepEqual(rows,[{...row,id:'fg-lista-nes-corta',text:original}],
+   'El catálogo de referencia y su ID no se tocan');
+});
+
+test('BA+15: oraciones cortas y extensas conviven en un mismo contenido de origen',()=>{
+ const original='La enseñanza de las artes. El pensamiento y la acción de diversos referentes culturales en la construcción de instituciones y espacios dedicados a la educación artística. La participación de colectivos y organizaciones en proyectos culturales que vinculan territorio, memoria y producción artística. Reflexión sobre las formas contemporáneas de aprendizaje y transmisión de prácticas culturales.';
+ const parts=fragmentarContenidoFuente(original);
+ assert.ok(parts.length>=2,'No descartar todo el párrafo porque la primera oración sea breve');
+ assert.equal(parts.join(' '),original);
+ assert.ok(parts.every(p=>p.split(' ').length>=5));
+});
+
+test('BA+15: no dividir enunciados unitarios por comas si no hay enumeración explícita segura',()=>{
+ const original='Modelización de situaciones con variables numéricas, distintas representaciones, análisis de las relaciones entre magnitudes y revisión de resultados a partir del contexto del problema, atendiendo a la precisión y a las estrategias matemáticas elegidas para justificar una respuesta.';
+ assert.deepEqual(fragmentarContenidoFuente(original),[],
+  'Comas gramaticales no equivalen a saberes autónomos ni habilitan corte automático');
 });
