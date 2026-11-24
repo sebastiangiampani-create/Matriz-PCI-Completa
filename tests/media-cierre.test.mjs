@@ -203,6 +203,6 @@ test('articulación PVF se deriva automáticamente al validar sin opciones manua
 test('la interfaz PVF no ofrece casillas manuales: solo presenta advertencias normativas',()=>{
  const runtime=read('src/aplicacion-v2/media-cierre-runtime.js');
  assert.doesNotMatch(runtime,/data\\.pvfArticulacion|dataset\\.pvfArticulacion|box\\.type='checkbox'/);
- assert.match(runtime,/panel\\.hidden=!tieneIncidencias/);
+ assert.ok(runtime.includes('panel.hidden=!tieneIncidencias'));
  assert.match(runtime,/Validar oferta/);
 });
