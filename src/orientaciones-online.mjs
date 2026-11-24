@@ -76,9 +76,12 @@ function showAuthRequired(reason='Ingresá con las credenciales habituales de la
 }
 function canEdit(){return !!session && (session.role==='admin'||session.role==='editor'||session.role==='user'&&(session.permissions||[]).includes('pci.edit'));}
 function canDeclareOrientations(){
-  // El referente institucional puede INFORMAR orientaciones y turnos de
-  // su propia escuela, pero no editar contenidos, FG ni planes de aprendizaje.
-  return canEdit()||session?.role==='school_admin';
+  // DIR administra oferta, turnos y orientaciones. La clave PCI solo permite
+  // editar mapas, contenidos y planes sin crear oferta institucional.
+  const permissions=session?.permissions||[];
+  return session?.role==='admin'||session?.role==='school_admin'||
+    session?.role==='user'&&permissions.includes('institutional.view')&&
+      permissions.includes('keys.manage');
 }
 function hasUnsaved(){
   return !!(fgDirty||foDirty||offerDirty||historicLinksUI.isDirty||technical.isDirty()||ba15Controller?.isDirty()||v2Original?.dirty||v2Original?.saving||busy);
