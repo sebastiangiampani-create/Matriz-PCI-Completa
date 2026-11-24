@@ -112,9 +112,6 @@
       panel.addEventListener('toggle',()=>{articulacionAbierta=panel.open;});
     }
     panel.replaceChildren();
-    const validation=host.querySelector('#validation');
-    const toolbar=host.querySelector('.matrix-toolbar');
-    if(validation&&toolbar&&validation.previousElementSibling!==toolbar)toolbar.after(validation);
     const stateAudit=audit();
     const heading=make('summary','Proyecto de Vinculación · articulación FO 5.º ('+stateAudit.articulaciones.length+' espacios vinculados)');
     const help=make('p','Podés vincular pedagógicamente los laboratorios y talleres de FO con el proyecto anual prescripto. No se trasladan materias ni se fusionan espacios: cada espacio conserva sus planes bimestrales, evaluación, calificación y horas. El proyecto conserva sus cuatro planes bimestrales.');
