@@ -27,6 +27,10 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(origin+'/revision-v2-modalidad.html?model=ba15&orientation=economia_administracion&pci=pci-norma-ba15-economia&school=Escuela+de+prueba',{waitUntil:'domcontentloaded'});
   await page.locator('#offer.active').waitFor({timeout:30000});
+  assert.equal(await page.locator('#offer #ba15OrientationPlan,#offer #ba15VirtualPanel').count(),0,
+    'Los anexos normativos de BA+15 no deben ocupar lugar dentro del mapa');
+  await page.locator('#ba15RulesAccess').click();
+  await page.locator('#ba15OrientationPlan').evaluate(el=>{el.open=true});
   await page.locator('#ba15OrientationPlan details').evaluate(el=>{el.open=true});
   const foPlan=await page.locator('#ba15OrientationPlan').innerText();
   assert.match(foPlan,/Nivel II.*4 HC/);
@@ -35,6 +39,7 @@ try{
   assert.match(foPlan,/Historia Orientada 2 HC/);
   assert.match(foPlan,/Fase 1: bolsa NES por año y alternativa/);
   assert.match(foPlan,/Fase 2: bloques de referencia FO de Media/);
+  await page.locator('#closeModalV2').click();
 
   // La alternativa B se puede inspeccionar sin perder la A ni tocar otros PCI.
   await page.locator('#bagContent [data-bag-year="3"]').click();
@@ -119,6 +124,8 @@ try{
   assert.match(rules,/CCC acredita equivalencias/);
   assert.match(rules,/formatos cuatrimestrales se organizan por separado/);
   // La virtualidad de RES-105/26 no se activa automáticamente en todas las escuelas.
+  await page.locator('#ba15RulesAccess').click();
+  await page.locator('#ba15VirtualPanel').evaluate(el=>{el.open=true});
   assert.equal(await page.locator('#ba15AmbientesAlcance').inputValue(),'pendiente_confirmacion');
   assert.equal(await page.evaluate(()=>window.V2ModalVirtual.evaluate().aplica),false);
   await page.locator('#ba15AmbientesAlcance').selectOption('no_alcanzado');
@@ -151,6 +158,8 @@ try{
   assert.equal(virtualValid.persisted,true);
   assert.deepEqual(virtualValid.totals,Array(8).fill([27,11]));
   assert.match(await page.locator('#ba15VirtualPanel').innerText(),/8 de 8/);
+  await page.locator('#closeModalV2').click();
+  assert.equal(await page.locator('#offer #ba15OrientationPlan,#offer #ba15VirtualPanel').count(),0);
   await mkdir('test-artifacts/v2-modalidades',{recursive:true});
   await page.screenshot({path:'test-artifacts/v2-modalidades/ba15-norma.png',fullPage:true});
   assert.deepEqual(errors,[]);

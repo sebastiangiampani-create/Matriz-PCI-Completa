@@ -127,6 +127,7 @@
   function writeView(view, replace = false) {
     if (!['oferta', 'desarrollo', 'gestion', 'panel'].includes(view)) return;
     activeView = view;
+    updateBackControl();
     if (!ready) return;
     const url = new URL(location.href);
     url.searchParams.set('school', String(publicContext.school.id));
@@ -149,9 +150,30 @@
     return true;
   }
 
+  // «Volver» recorre PCI > organización; nunca abandona el mapa de golpe.
+  function backTarget() {
+    if (activeView === 'panel') return config.volver;
+    const url = new URL(location.href);
+    url.searchParams.set('school', String(publicContext.school.id));
+    url.searchParams.set('pci', publicContext.pci.pci_id);
+    url.searchParams.set('view', 'panel');
+    return url.href;
+  }
+  function updateBackControl() {
+    const back = document.getElementById('pciV2BackSchool');
+    if (!back) return;
+    back.href = backTarget();
+    back.textContent = activeView === 'panel'
+      ? '← Volver a la organización curricular'
+      : '← Volver al panel de este PCI';
+  }
+  function goBack() {
+    return activeView === 'panel' ? returnToSchool() : navigate('panel');
+  }
+
   // Todas las capas posteriores continúan llamando a esta base de navegación.
   screen = function (id) {
-    if (id === 'home' && ready) return returnToSchool();
+    if (id === 'home' && ready) return goBack();
     const out = baseScreen(id);
     const view = { offer: 'oferta', proposal: 'desarrollo', institutional: 'gestion', panel: 'panel' }[id];
     if (view) writeView(view);
@@ -159,7 +181,8 @@
   };
 
   function navigate(view, { replace = false } = {}) {
-    if (['home', 'escuela', 'inicio'].includes(view)) return returnToSchool();
+    if (['home', 'inicio'].includes(view)) return goBack();
+    if (view === 'escuela') return returnToSchool();
     const id = { oferta: 'offer', desarrollo: 'proposal', fg: 'proposal', fo: 'proposal', gestion: 'institutional', panel: 'panel',
       offer: 'offer', proposal: 'proposal', institutional: 'institutional' }[view];
     if (!id) throw Error('La pantalla solicitada no existe en el PCI.');
@@ -246,9 +269,10 @@
     back.href = config.volver;
     back.className = 'btn soft';
     back.id = 'pciV2BackSchool';
-    back.textContent = 'Volver a la escuela';
-    back.onclick = event => { event.preventDefault(); returnToSchool(); };
+    back.textContent = '← Volver al panel de este PCI';
+    back.onclick = event => { event.preventDefault(); goBack(); };
     header.querySelector('.row')?.prepend(back);
+    updateBackControl();
     const css = document.createElement('style');
     css.textContent = `
       #pciV2Identity{display:grid;gap:3px;min-width:0;color:var(--ink);font-size:.64rem;line-height:1.35}
