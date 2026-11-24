@@ -27,13 +27,14 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(origin+'/revision-v2-modalidad.html?model=ba15&orientation=economia_administracion&pci=pci-norma-ba15-economia&school=Escuela+de+prueba',{waitUntil:'domcontentloaded'});
   await page.locator('#offer.active').waitFor({timeout:30000});
+  await page.locator('#ba15OrientationPlan details').evaluate(el=>{el.open=true});
   const foPlan=await page.locator('#ba15OrientationPlan').innerText();
   assert.match(foPlan,/Nivel II.*4 HC/);
   assert.match(foPlan,/Nivel III.*9 HC/);
   assert.match(foPlan,/Nivel IV.*12 HC/);
   assert.match(foPlan,/Historia Orientada 2 HC/);
-  assert.match(foPlan,/bolsa FO muestra las materias NES/);
-  assert.match(foPlan,/Fase 2: los bloques FO de Media son referencias/);
+  assert.match(foPlan,/Fase 1: bolsa NES por año y alternativa/);
+  assert.match(foPlan,/Fase 2: bloques de referencia FO de Media/);
 
   // La alternativa B se puede inspeccionar sin perder la A ni tocar otros PCI.
   await page.locator('#bagContent [data-bag-year="3"]').click();
