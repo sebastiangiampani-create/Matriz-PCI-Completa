@@ -262,6 +262,18 @@ Deno.serve(async req=>{
    return json({schools:(response.data||[]).filter(row=>isScoped(s,Number(row.school_id)))
     .map(row=>({school_id:row.school_id,name:row.data?.schoolName||'Escuela '+row.school_id,cue:row.data?._meta?.cue||'',model:row.data?.profile==='tecnica'?'tecnica':'comun'}))});
   }
+  if(action==='list-school-offer-summary'){
+   // El panel general distingue la matriz histórica (pci_proposals.data.profile)
+   // de los PCI activos en pci_workspace.pcis. Solo lectura, una consulta.
+   const permitted=s.role==='admin'||s.role==='user'&&
+     Array.isArray(s.permissions)&&s.permissions.includes('dashboard.view');
+   if(!permitted)return err('Sin permiso para consultar el panel general.',403);
+   const list=await rpc('pci_workspace_portfolio_summary_v1',{});
+   if(!Array.isArray(list))return err('El inventario de PCI no está disponible.',503);
+   const authorized=list.filter(row=>validSchool(Number(row.school_id))&&
+     isScoped(s,Number(row.school_id)));
+   return json({schools:authorized});
+  }
   if(action==='create-school-v2'){
    if(s.role!=='admin')return err('Solo administración.',403);
    const name=clean(body.name,150),cue=clean(body.cue,35).toUpperCase(),email=clean(body.email,180),year=Number(body.year);

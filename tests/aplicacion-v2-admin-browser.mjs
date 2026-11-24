@@ -85,6 +85,13 @@ async function installMocks(page,record){
     if((access||multi)&&data.token===simulatedToken){
       if(data.action==='session-info')return send(session);
       if(data.action==='list-schools')return send({schools:[school]});
+      if(multi&&data.action==='list-school-offer-summary')return send({schools:[{
+        school_id:school.school_id,pci_count:3,offers:[
+          {model:'comun',count:1,shifts:['manana']},
+          {model:'tecnica',count:1,shifts:['tarde']},
+          {model:'ba15',count:1,shifts:['noche']}
+        ]
+      }]});
       if(Number(data.school_id)===school.school_id){
         if(access&&data.action==='get-school-dashboard')return send({school,progress:school.progress,audit:school.audit});
         if(access&&data.action==='get-audit')return send({events:[]});
@@ -129,6 +136,19 @@ async function exercise(page,record){
   assert.match(await page.locator('#rows').innerText(),/Escuela simulada · Acceso administrativo/);
   assert.match(await page.locator('#sessionLabel').innerText(),/Administración simulada/);
   assert.equal(await page.locator('#login').isVisible(),false);
+  await page.waitForFunction(()=>document.getElementById('model')?.disabled===false);
+  assert.match(await page.locator('#offerInventoryStatus').innerText(),/1 escuelas con PCI creado/);
+  assert.match(await page.locator('#rows').innerText(),/Media · 1 PCI/);
+  assert.match(await page.locator('#rows').innerText(),/Técnica · 1 PCI/);
+  assert.match(await page.locator('#rows').innerText(),/BA \+15 · 1 PCI/);
+  assert.match(await page.locator('#rows').innerText(),/Origen histórico: Común/);
+  for(const modelo of ['comun','tecnica','ba15']){
+    await page.locator('#model').selectOption(modelo);
+    assert.equal(await page.locator('#rows tr').count(),1,'El PCI '+modelo+' debe aparecer aunque la matriz histórica sea Común.');
+  }
+  await page.locator('#model').selectOption('none');
+  assert.match(await page.locator('#rows').innerText(),/No hay escuelas para estos filtros/);
+  await page.locator('#model').selectOption('');
   await capture(page,record,'tablero');
 
   // También debe existir la segunda página que faltaba en la distribución.
