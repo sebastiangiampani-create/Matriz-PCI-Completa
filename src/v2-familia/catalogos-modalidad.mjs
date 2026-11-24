@@ -118,6 +118,16 @@ export async function loadBa15V2Profile(orientationId){
  }));
  const profile=common('ba15',oriName,4,subjects,fgContents,foContents,
   'FG: 1126 contenidos NES 1+2→I, 3→II, 4→III, 5→IV. FO: materias del plan NES por orientación y alternativa A/B (3.º→II, 4.º→III, 5.º→IV), con cupos 4, 9 y 12+2+2 HC. Fase 2 usa bloques FO de referencia; no se declara homologación BA +15.');
+ // La bolsa de Fase 2 muestra los fragmentos literales cuando el origen
+ // agrupa varios saberes; los 1.126 IDs NES y los bloques FO previos permanecen
+ // inmutables para recuperar asignaciones y desarrollos ya guardados.
+ const atomicFg=atomizarCatalogoBa15(fgContents,{component:'FG'});
+ const atomicFo=atomizarCatalogoBa15(foContents,{component:'FO'});
+ profile.atomizedContents={
+  fg:{parents:atomicFg.padres,rows:atomicFg.fragmentos},
+  fo:{parents:atomicFo.padres,rows:atomicFo.fragmentos}
+ };
+ profile.atomizationSummary={fg:atomicFg.resumen,fo:atomicFo.resumen};
  profile.foPlan=clone(BA15_FO_NORMA);
  profile.ambientesVirtualesNorma=clone(BA15_AMBIENTES_105);
  profile.foHoursAudit=clone(foHours);
