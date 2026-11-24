@@ -205,8 +205,13 @@ export async function loadTechnicalV2Profile(specialtyId){
    const section= document.asignaturas.find(x=>x.id===atomic.sourceReference.split('@p')[0]);
    if(!section)throw Error('Falta la sección oficial del contenido '+atomic.id);
    const area=technicalContentArea(section,atomic.field,atomic.year,subjects);
-   const row={...atomic,area,subject:text(section.asignatura)};
-   (atomic.component==='FG'?fgContents:foContents).push(row);
+   // Tecnología(s) de la Representación es un espacio propio del mapa
+   // técnico; no debe quedar escondido dentro de la bolsa FO genérica.
+   // Se conservan los mismos IDs, fuentes, años y textos de cada contenido.
+   const isRepresentation=area==='Tecnología de la Representación';
+   const row={...atomic,area,subject:text(section.asignatura),
+     component:isRepresentation?'FG':atomic.component};
+   (row.component==='FG'?fgContents:foContents).push(row);
  }
  if(!subjects.length)throw Error('Catálogo técnico sin materias.');
  // Lengua Adicional 1.º–5.º: troncal en Técnica (IF-2026-51169092, pág. 13).
