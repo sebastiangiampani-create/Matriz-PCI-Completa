@@ -66,9 +66,9 @@ const profileRows=CFG.model==='tecnica'?[
  {k:'adicional',l:'Lengua Adicional (Inglés)',area:'Lengua Adicional',annual:true,allowedYears:[1,2,3,4]},
  {k:'naturales',l:'Laboratorio de Ciencias Naturales',area:'Ciencias Naturales',format:'laboratorio',a:t=>true},
  {k:'socialA',l:'Laboratorio de Ciencias Sociales',area:'Ciencias Sociales',format:'laboratorio',a:t=>true},
- {k:'artes',l:'Talleres · Artes',area:'Talleres articulados',format:'taller',a:t=>t<=2||t===5||t===6},
- {k:'tecnologias',l:'Talleres · Educación Tecnológica / Tecnologías de la Información',area:'Formación General',format:'taller',a:t=>t<=6},
- {k:'ef',l:'Talleres · Educación Física',area:'Talleres articulados',format:'taller',a:t=>true},
+ {k:'artes',l:'Taller de Artes',area:'Artes',format:'taller',a:t=>t<=2||t===5||t===6},
+ {k:'tecnologias',l:'Educación Tecnológica / Tecnologías de la Información',area:'Tecnologías',format:'taller',a:t=>t<=6},
+ {k:'ef',l:'Educación Física',area:'Educación Física',format:'taller',a:t=>true},
  {k:'foN3',l:'Laboratorio de la Orientación (Área de la Orientación)',area:'Formación Orientada',format:'orientacion',a:t=>t>=3},
  {k:'otros',l:'Tutoría (Nivel I) y EDI (taller)',area:'Otros formatos pedagógicos',format:'otros',a:t=>true}
 ];
@@ -87,8 +87,10 @@ function mappedArea(s){
  if(/matemática/i.test(s.name))return'Matemática';
  if(/lengua y literatura/i.test(s.name))return'Lengua y Literatura';
  if(/lengua adicional/i.test(s.name))return'Lengua Adicional';
- if(/educación física|artes|edi/i.test(s.name))return'Talleres articulados';
- if(/tecnologías/i.test(s.name))return'Formación General';
+ if(/educación física/i.test(s.name))return'Educación Física';
+ if(/^artes$/i.test(s.name))return'Artes';
+ if(/educación tecnológica|tecnologías? de la información/i.test(s.name))return'Tecnologías';
+ if(/edi/i.test(s.name))return'Otros formatos pedagógicos';
  if(/tutoría/i.test(s.name))return'Otros formatos pedagógicos';
  return area;
 }
