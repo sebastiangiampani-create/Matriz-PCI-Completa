@@ -72,7 +72,8 @@ jobs:
                           $2 == "tests/v2-ba15-norma-browser.mjs" ||
                           $2 == "tests/v2-familia-modalidades-browser.mjs" ||
                           $2 ~ /^tests\/multipci-portal-browser\.mjs$/ ||
-                          $2 == ".github/workflows/validar-multipci-aditivo-seguro.yml") { next }
+                          $2 == ".github/workflows/validar-multipci-aditivo-seguro.yml" ||
+                          $2 == ".github/workflows/verificar-publicacion-multipci.yml") { next }
             { print "CAMBIO FUERA DEL MODULO NUEVO:", $0; bad=1 }
             END { exit bad }'
           git diff --quiet origin/main...HEAD -- app.html app.css app.js tecnica/app.html

@@ -2,6 +2,10 @@ name: Comprobar publicacion multi-PCI en GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/verificar-publicacion-multipci.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,31 +17,42 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Comprobar inicio original y nueva ruta sin escribir datos
+      - name: Comprobar en vivo las tres entradas y rutas del PCI sin escribir datos
         run: |
           node --input-type=module <<'NODE'
           const base='https://sebastiangiampani-create.github.io/Matriz-PCI-Completa/';
-          const check=async(path,needle)=>{
-            let last='';
-            for(let i=0;i<15;i++){
-             try{
-              const res=await fetch(base+path+'?check='+Date.now(),{signal:AbortSignal.timeout(8000)});
-              const html=await res.text();
-              if(res.status===200&&html.includes(needle)){
-               console.log('URL OK: '+base+path);return;
-              }
-              last='HTTP '+res.status+' '+path;
-             }catch(error){last=String(error)}
-             if(i<14)await new Promise(resolve=>setTimeout(resolve,5000));
+          // Comprobar los rótulos vigentes, no identificadores eliminados en V2.
+          // Evitar falsos verdes: el control anterior aceptaba una portada vieja.
+          const checks=[
+            ['index.html',['Panel institucional · DIR','Constructor curricular · clave PCI','Administración general']],
+            ['panel-escuela.html',['id="pciPortfolioBody"','Organizar oferta y turnos',"action:'school-admin-login'"]],
+            ['panel-general.html',['Organización curricular</a>']],
+            ['pci-orientaciones.html',['Organización curricular de la escuela']],
+            ['src/orientaciones-online.mjs',['function canDeclareOrientations','permissions.includes(\'keys.manage\')','renderUnifiedConstructor']],
+            ['src/constructor-v2-ui.mjs',['renderUnifiedConstructor']],
+            ['src/integracion-curricular/constructor-mapa-unificado.mjs',['COMPOSITION_VERSION']]
+          ];
+          const check=async(path,needles)=>{
+            let last='sin respuesta';
+            for(let attempt=1;attempt<=12;attempt++){
+              try{
+                const u=new URL(path,base);
+                u.searchParams.set('verify',Date.now().toString()+'-'+attempt);
+                const res=await fetch(u,{headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(10000)});
+                const text=await res.text();
+                const missing=needles.filter(value=>!text.includes(value));
+                if(res.status===200&&missing.length===0){
+                  console.log('PUBLICADO Y VERIFICADO: '+path+' ('+res.status+')');
+                  return;
+                }
+                last='HTTP '+res.status+'; marcas ausentes: '+missing.join(', ');
+              }catch(err){last=String(err)}
+              if(attempt<12)await new Promise(resolve=>setTimeout(resolve,4500));
             }
-            throw Error('La ruta no está disponible: '+last);
+            throw new Error('La versión pública no coincide con main en '+path+': '+last);
           };
-          await check('index.html','Ingresar a una escuela');
-          await check('pci-orientaciones.html','Organización curricular de la escuela');
-          await check('pci-orientaciones.html','constructorSubjectBank');
-          await check('src/orientaciones-online.mjs','renderUnifiedConstructor');
-          await check('src/constructor-v2-ui.mjs','renderUnifiedConstructor');
-          await check('src/integracion-curricular/constructor-mapa-unificado.mjs','COMPOSITION_VERSION');
-          await check('panel-general.html','Organización curricular</a>');
-          await check('panel-escuela.html','Organización curricular</a>');
+          const results=await Promise.allSettled(checks.map(([path,needles])=>check(path,needles)));
+          const errors=results.filter(r=>r.status==='rejected').map(r=>r.reason.message);
+          if(errors.length)throw new Error(errors.join('\n'));
+          console.log('PUBLICACION OK: 7 rutas, 3 accesos diferenciados, 0 escrituras remotas.');
           NODE
