@@ -7,7 +7,7 @@ const AREAS=[...new Set(window.V2ModalMap.rowDefs().map(r=>r.area).filter(Boolea
 const COLORS={'Lengua y Literatura':'#ef9f8f','Matemática':'#8ec5ef','Lenguas Adicionales':'#b6a2df','Ciencias Sociales':'#f3c969','Ciencias Naturales':'#7fd0a4','Artes':'#e9a9d1','Tecnologías':'#83ded3','Educación Física':'#f0a672','Formación Orientada':'#83ded3','Artes':'#e9a9d1','Educación Física':'#f0a672','Tecnología de la Representación':'#83ded3','Formación Científico-Tecnológica':'#83ded3','Formación Técnico-Específica':'#b6d37c','Otros formatos pedagógicos':'#b6d37c'};
 const FGFILES=Array.from({length:9},(_,i)=>`data/curriculum_v103/fg-all-p${i+1}.txt?v=${VERSION}`);
 const FOFILES=['fo_all.txt',...Array.from({length:10},(_,i)=>`fo_part${String(i+2).padStart(2,'0')}.txt`)].map(x=>`data/curriculum_v96/${x}?v=${VERSION}`);
-const FG_AREA={'Artes Visuales':'Artes','Música':'Artes','Teatro':'Artes','Biología':'Ciencias Naturales','Física':'Ciencias Naturales','Físico-Química':'Ciencias Naturales','Química':'Ciencias Naturales','Economía':'Ciencias Sociales','Formación Ética y Ciudadana':'Ciencias Sociales','Geografía':'Ciencias Sociales','Historia':'Ciencias Sociales','Filosofía':'Ciencias Sociales','Educación Física':'Educación Física','Educación Sexual Integral':'Otros formatos pedagógicos','Educación Tecnológica':'Tecnologías','Tecnologías de la Información':'Tecnologías','Lengua y Literatura':'Lengua y Literatura','Lenguas Adicionales':'Lenguas Adicionales','Matemática':'Matemática','Tutoría':'Otros formatos pedagógicos'};
+const FG_AREA={'Artes Visuales':'Artes','Música':'Artes','Teatro':'Artes','Biología':'Ciencias Naturales','Física':'Ciencias Naturales','Físico-Química':'Ciencias Naturales','Química':'Ciencias Naturales','Economía':'Ciencias Sociales','Formación Ética y Ciudadana':'Ciencias Sociales','Geografía':'Ciencias Sociales','Historia':'Ciencias Sociales','Filosofía':'Ciencias Sociales','Educación Física':'Educación Física','Educación Sexual Integral':'Otros formatos pedagógicos','Educación Tecnológica':'Tecnologías','Tecnologías de la Información':'Tecnologías','Lengua y Literatura':'Lengua y Literatura','Lenguas Adicionales':'Lengua Adicional','Matemática':'Matemática','Tutoría':'Otros formatos pedagógicos'};
 let FG=null,FO_ALL=null,FO=new Map(),activeArea=null,targetGroup=null,selected=new Set(),source='FG';
 let accessScope={role:'admin',teacherId:'',allowedAreasByOrientation:{},editableAreasByOrientation:{},editableSubjectsByOrientation:{}};
 const allowedAreasFor=(orientation=state.active)=>['admin','coordinator'].includes(accessScope.role)?new Set(AREAS):new Set(accessScope.allowedAreasByOrientation?.[orientation]||[]);
@@ -78,6 +78,8 @@ function groups(){const out=[];
  return out;
 }
 const ga=a=>groups().filter(g=>g.area===a),gb=id=>groups().find(g=>g.id===id),members=g=>g.subjectIds.map(byId).filter(Boolean),hasFO=g=>g.area==='Formación Orientada'||members(g).some(s=>s.origin==='FO');
+const catalogArea=c=>CFG.model==='ba15'&&c?.component==='FG'?
+  (FG_AREA[c.subject]||c.area):c?.area;
 function allowed(c,g){
  if(c.component==='CUSTOM')return c.groupId===g.id;
  if(c.atomicParent)return false;
@@ -85,7 +87,7 @@ function allowed(c,g){
    (c.area===g.area||(CFG.model==='tecnica'&&memberKeys(g).has(norm(c.subject))))&&
    (!c.year||Number(c.year)===Number(g.year));
  if(c.component!=='FG'||Number(c.year)!==Number(g.year))return false;
- if(c.area===g.area)return true;
+ if(catalogArea(c)===g.area)return true;
  const members=memberKeys(g);
  return members.has(norm(c.subject))||[...members].some(m=>m.includes(norm(c.subject))||norm(c.subject).includes(m));
 }
@@ -100,7 +102,7 @@ function pool(a){
    (c.area===a||(CFG.model==='tecnica'&&names.has(norm(c.subject))))&&
    (!c.year||years.has(Number(c.year)));
   if(c.component!=='FG')return false;
-  return c.area===a||names.has(norm(c.subject));
+  return catalogArea(c)===a||names.has(norm(c.subject));
  });
 }
 function areaPool(a){const rows=pool(a);return[...new Map(rows.map(c=>[c.id,c])).values()]}
