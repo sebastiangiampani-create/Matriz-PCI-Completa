@@ -410,6 +410,15 @@ async function modalFlow(page,record,model,levels){
   assert.equal(await page.locator('#matrix .grid.levels .level').count(),levels);
   assert.equal(await page.locator('#matrix .term').count(),levels*2+1);
   assert.equal(await page.evaluate(()=>window.__V2_MODAL.model),model);
+  if(model==='ba15'){
+    assert.equal(await page.locator('#offer #ba15OrientationPlan,#offer #ba15VirtualPanel').count(),0,
+      'Los recuadros normativos BA+15 no se muestran en el Mapa de la Oferta');
+    await page.locator('#ba15RulesAccess').click();
+    await page.locator('#rulesModal.open').waitFor({state:'visible'});
+    assert.equal(await page.locator('#rulesModal #ba15VirtualPanel').count(),1);
+    assert.equal(await page.locator('#rulesModal #ba15OrientationPlan').count(),1);
+    await page.locator('#closeModalV2').click();
+  }
   if(model==='tecnica'){
     const original=await snapshot(page);
     const prescription=await page.evaluate(()=>{
