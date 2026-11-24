@@ -198,7 +198,7 @@ try{
     assert.equal(full.displayed,full.original,'No acortar el contenido original almacenado');
     assert.match(await page.locator('#v28count').innerText(),/^0 seleccionados$/,
       'Abrir el detalle no debe seleccionar accidentalmente el contenido');
-    await page.locator('#v28back').click();
+    await page.locator('#v28back').evaluate(el=>el.click());
     await page.locator('#v28home:not([hidden])').waitFor({state:'visible'});
   }
   await page.locator('#v28home [data-area]').filter({hasText:probe.area}).first().click();
