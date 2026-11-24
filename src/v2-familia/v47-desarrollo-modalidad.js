@@ -83,8 +83,7 @@ const catalogArea=c=>CFG.model==='ba15'&&c?.component==='FG'?
 function allowed(c,g){
  if(c.component==='CUSTOM')return c.groupId===g.id;
  if(c.atomicParent)return false;
- if(c.component==='FO')return (CFG.model==='tecnica'||hasFO(g))&&
-   (c.area===g.area||(CFG.model==='tecnica'&&memberKeys(g).has(norm(c.subject))))&&
+ if(c.component==='FO')return (CFG.model==='tecnica'||hasFO(g))&&c.area===g.area&&
    (!c.year||Number(c.year)===Number(g.year));
  if(c.component!=='FG'||Number(c.year)!==Number(g.year))return false;
  if(catalogArea(c)===g.area)return true;
@@ -98,8 +97,7 @@ function pool(a){
  const years=new Set(gs.filter(g=>CFG.model==='tecnica'||hasFO(g)).map(g=>Number(g.year)));
  return[...(FG||[]),...oriContents()].filter(c=>{
   if(c.atomicParent)return false;
-  if(c.component==='FO')return (hasFoSpace||CFG.model==='tecnica')&&
-   (c.area===a||(CFG.model==='tecnica'&&names.has(norm(c.subject))))&&
+  if(c.component==='FO')return (hasFoSpace||CFG.model==='tecnica')&&c.area===a&&
    (!c.year||years.has(Number(c.year)));
   if(c.component!=='FG')return false;
   return catalogArea(c)===a||names.has(norm(c.subject));
