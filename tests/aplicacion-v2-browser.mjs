@@ -115,7 +115,7 @@ await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port;
 
 async function installNetwork(page,record){
-  page.on('pageerror',error=>record.errores.push(error.message));
+  page.on('pageerror',error=>record.errores.push(error.stack||error.message));
   page.on('response',response=>{if(response.url().startsWith(origin)&&response.status()>=400)
     record.recursosFallidos.push({url:response.url(),status:response.status()});});
   page.on('dialog',dialog=>{record.dialogos.push({tipo:dialog.type(),mensaje:dialog.message()});void dialog.dismiss();});
