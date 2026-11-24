@@ -32,6 +32,8 @@ jobs:
                           $2 == "src/aplicacion-v2/datos-escuela.mjs" ||
                           $2 == "src/aplicacion-v2/entrada.mjs" ||
                           $2 == "src/aplicacion-v2/runtime-v2.js" ||
+                          $2 == "src/aplicacion-v2/media-cierre-runtime.js" ||
+                          $2 == "src/migracion/aviso-aceptacion-v2.mjs" ||
                           $2 == "tests/aplicacion-v2-documentos.test.mjs" ||
                           $2 == "tests/aplicacion-v2-admin-browser.mjs" ||
                           $2 == "tests/aplicacion-v2-browser.mjs" ||

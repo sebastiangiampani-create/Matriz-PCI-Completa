@@ -115,7 +115,7 @@ await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port;
 
 async function installNetwork(page,record){
-  page.on('pageerror',error=>record.errores.push(error.message));
+  page.on('pageerror',error=>record.errores.push(error.stack||error.message));
   page.on('response',response=>{if(response.url().startsWith(origin)&&response.status()>=400)
     record.recursosFallidos.push({url:response.url(),status:response.status()});});
   page.on('dialog',dialog=>{record.dialogos.push({tipo:dialog.type(),mensaje:dialog.message()});void dialog.dismiss();});
@@ -302,6 +302,14 @@ async function mediaFlow(page,record){
   await openPci(page,ids.media);
   assert.equal(await page.locator('#matrix .grid.levels .level').count(),5);
   await page.locator('#v2MigrationNotice').waitFor({state:'visible'});
+  const layout=await page.evaluate(()=>{
+    const panel=document.querySelector('#pciMediaCierre');
+    const validation=document.querySelector('#validation');
+    return {pvfElement:panel?.tagName,
+      validationBeforePvf:!!validation&&!!panel&&validation.getBoundingClientRect().bottom<=panel.getBoundingClientRect().top};
+  });
+  assert.equal(layout.pvfElement,'DETAILS','Articulación de 5.º debe poder minimizarse');
+  assert.equal(layout.validationBeforePvf,true,'La validación no debe aparecer al final de la articulación');
   const before=await snapshot(page);
   assert.equal(before.maps[before.active].migracionLegado,undefined,'Preparar el aviso no incorpora datos.');
   assert.equal(before.maps[before.active].phase2V28?.groups?.['socialB-c5']?.contents?.length||0,0);
@@ -321,6 +329,12 @@ async function mediaFlow(page,record){
   await page.evaluate(()=>PCIAplicacionV2.prepareMigration());
   assert.deepEqual((await snapshot(page)).maps[track].migracionLegado,acceptedMarker,'Preparar otra vez no duplica la aceptación.');
   record.coberturaSoloEnPrimero=await coverage(page,false);
+  // Los botones internos regresan al panel del mismo PCI, nunca a otra escuela.
+  await page.locator('#offer [data-go="panel"]').click();
+  await page.locator('#panel.active').waitFor({state:'visible'});
+  assert.equal(new URL(page.url()).searchParams.get('pci'),ids.media);
+  await page.locator('#openOffer').click();
+  await page.locator('#offer.active').waitFor({state:'visible'});
   await page.locator('#matrix .drop[data-slot="socialB-c5"]').scrollIntoViewIfNeeded();
   await capture(page,record.dispositivo+'-media-mapa.png');
   await area(page,'Ciencias Sociales');
