@@ -252,7 +252,7 @@
     const draft = document.createElement('small');
     draft.id = 'pciV2DraftStatus';
     draft.setAttribute('role', 'status');
-    draft.textContent = editable ? 'Borrador local · sin guardado en línea' : 'Consulta del PCI de la escuela';
+    draft.textContent = !editable ? 'Consulta del PCI de la escuela' : publicContext.remotoDisponible ? 'Conectado · los cambios se guardan en línea' : 'Solo en este navegador · sin guardado en línea';
     block.append(school, pci, draft);
     if(editable){
       const retry=document.createElement('button');
@@ -371,10 +371,10 @@
     hydrating = false;
     const initialSnapshot = snapshot();
     const initialSerial = JSON.stringify(initialSnapshot);
-    if (config.modelo === 'media' && editable) {
-      reported = restoredSerial;
-      if (initialSerial !== restoredSerial) await reportDraft(initialSnapshot);
-    } else reported = initialSerial;
+    // Abrir un PCI no escribe: la normalización inicial de Media se conserva
+    // en memoria y viaja con el primer cambio real de la persona usuaria.
+    reported = config.modelo === 'media' && editable ? restoredSerial : initialSerial;
+    void initialSerial;
     writeView(activeView, true);
     if (config.fuenteLegado) await prepareMigration();
     window.addEventListener('popstate', () => {
