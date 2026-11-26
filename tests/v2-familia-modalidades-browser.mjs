@@ -202,7 +202,20 @@ try{
     await page.locator('#v28home:not([hidden])').waitFor({state:'visible'});
   }
   await page.locator('#v28home [data-area]').filter({hasText:probe.area}).first().click();
-  await page.locator('#v28board:not([hidden])').waitFor({timeout:20000});
+  try {
+    await page.locator('#v28board:not([hidden])').waitFor({timeout:20000});
+  } catch(error) {
+    const diagnostic=await page.evaluate(()=>({
+      homeHidden:document.querySelector('#v28home')?.hidden,
+      boardHidden:document.querySelector('#v28board')?.hidden,
+      homeAreas:[...document.querySelectorAll('#v28home [data-area]')].map(el=>({area:el.dataset.area,label:el.textContent?.slice(0,80)})).slice(0,24),
+      currentScreen:document.querySelector('#proposal')?.className,
+      bodyTail:document.body.innerText.slice(-350)
+    }));
+    console.error('FASE2_AREA_DIAGNOSTIC',JSON.stringify({model,probe,diagnostic,errors,requests}));
+    await page.screenshot({path:'test-artifacts/v2-modalidades/'+model+'-fallo-desarrollo.png',fullPage:false});
+    throw error;
+  }
   const group=page.locator('#v28groups [data-g="'+probe.gid+'"]');
   await group.waitFor({timeout:12000});
   await group.evaluate(el=>el.click());
