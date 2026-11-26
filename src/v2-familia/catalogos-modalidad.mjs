@@ -167,7 +167,8 @@ function technicalContentArea(section,field,year,subjects){
  const area=representacion?'Tecnología de la Representación':text(subject?.area);
  if(area==='Taller del Primer Ciclo'&&Number(subject?.year)>=3)return'Formación Técnico-Específica';
  if(TECH_MAP_AREAS.includes(area))return area;
- if(field==='formacion_cientifico_tecnologica')return'Formación Científico-Tecnológica';
+ // Campo, no área del mapa: se desarrolla dentro de la Especialidad (mismo ID y fuente).
+ if(field==='formacion_cientifico_tecnologica')return'Formación Técnico-Específica';
  if(field==='formacion_tecnica_especifica')return'Formación Técnico-Específica';
  if(field==='practicas_profesionalizantes')return'Prácticas Profesionalizantes';
  return area||'Formación General';

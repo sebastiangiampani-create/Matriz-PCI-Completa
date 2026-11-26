@@ -78,7 +78,10 @@ function mappedArea(s){
  if(CFG.model==='tecnica'){
   if(['Matemática','Lengua y Literatura','Lengua Adicional','Ciencias Naturales','Ciencias Sociales','Educación Física','Educación Artística','Tecnología de la Representación','Taller del Primer Ciclo'].includes(area))return area;
   if(/^tecnolog[ií]as? de la representaci/i.test(s.name))return'Tecnología de la Representación';
-  if(fieldOf(s)==='formacion_cientifico_tecnologica')return'Formación Científico-Tecnológica';
+  // El campo Científico-Tecnológico no es una fila propia del mapa: sus materias
+  // se ubican en los espacios de la Especialidad (integración o anual).
+  // Se conserva field='formacion_cientifico_tecnologica' para trazabilidad.
+  if(fieldOf(s)==='formacion_cientifico_tecnologica')return'Formación Técnico-Específica';
   if(fieldOf(s)==='formacion_tecnica_especifica')return'Formación Técnico-Específica';
   if(fieldOf(s)==='practicas_profesionalizantes')return'Prácticas Profesionalizantes';
   return area;

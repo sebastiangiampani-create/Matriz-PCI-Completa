@@ -25,12 +25,15 @@ jobs:
           git fetch origin main
           git diff --name-status origin/main...HEAD | awk '
             $1 == "A" { next }
+            $1 == "D" && $2 == ".github/workflows/importar-base.yml" { next }
             $1 == "M" && ($2 == "index.html" ||
                           $2 == "escuela-online.html" ||
                           $2 == "supabase/functions/pci-multipci/index.ts" ||
                           $2 == "src/aplicacion-v2/cargador.mjs" ||
                           $2 == "src/aplicacion-v2/datos-escuela.mjs" ||
                           $2 == "src/aplicacion-v2/entrada.mjs" ||
+                          $2 == "src/aplicacion-v2/documentos.mjs" ||
+                          $2 == "src/aplicacion-v2/persistencia-cola.mjs" ||
                           $2 == "src/aplicacion-v2/escuela.mjs" ||
                           $2 == "src/aplicacion-v2/runtime-v2.js" ||
                           $2 == "src/aplicacion-v2/media-cierre-runtime.js" ||
@@ -101,7 +104,13 @@ jobs:
           node --check tests/vinculos-historicos-browser.mjs
           node --check src/pci-router.mjs
           node --check src/ba15/atomizacion-contenidos.mjs
+          node --check src/aplicacion-v2/entrada.mjs
+          node --check src/aplicacion-v2/documentos.mjs
+          node --check src/aplicacion-v2/runtime-v2.js
           node --check src/aplicacion-v2/persistencia-cola.mjs
+          node --check tests/borrador-sincronizado.test.mjs
+          node --check tests/c1-dos-equipos-browser.mjs
+          node --check tests/tecnica-contenidos-visibles.test.mjs
           node --check tests/ba15-atomizacion.test.mjs
           node --check tests/cola-guardado-v2.test.mjs
           node --check src/v2-familia/catalogos-modalidad.mjs
@@ -133,7 +142,7 @@ jobs:
           grep -q 'if(!canDeclareOrientations(s))' supabase/functions/pci-multipci/index.ts
           grep -q 'authorizedPci(s,body,saving)' supabase/functions/pci-multipci/index.ts
       - name: Verificar contrato remoto y autorizaciones de la unidad V2
-        run: node --test tests/pci-multipci-v2-contract.test.mjs tests/aplicacion-v2-documentos.test.mjs tests/accesos-tres-claves.test.mjs tests/panel-general-oferta-actual.test.mjs tests/ba15-atomizacion.test.mjs tests/cola-guardado-v2.test.mjs
+        run: node --test tests/pci-multipci-v2-contract.test.mjs tests/aplicacion-v2-documentos.test.mjs tests/accesos-tres-claves.test.mjs tests/panel-general-oferta-actual.test.mjs tests/ba15-atomizacion.test.mjs tests/cola-guardado-v2.test.mjs tests/borrador-sincronizado.test.mjs tests/tecnica-contenidos-visibles.test.mjs
       - name: Probar currícula y guardado aislado por PCI
         run: |
           node --test tests/vinculos-historicos.test.mjs tests/pci-navegacion-admin.test.mjs tests/pci-fase-desarrollo-fg.test.mjs tests/pci-flujo-fases.test.mjs tests/constructor-mapa-unificado.test.mjs tests/pci-desarrollo-resumen.test.mjs tests/pci-sociales-opciones-v2.test.mjs tests/ba15-reglas.test.mjs tests/ba15-constructor.test.mjs tests/turnos-modalidades.test.mjs tests/orientaciones-release.test.mjs tests/tecnica-integrada-v2.test.mjs tests/media-cierre.test.mjs tests/adaptador-media-final-20261117.test.mjs tests/integracion-catalogos.test.js tests/ba15-priorizados-base.test.mjs
@@ -160,6 +169,7 @@ jobs:
           node tests/aplicacion-v2-browser.mjs
           node tests/aplicacion-v2-admin-browser.mjs
           node tests/vinculos-historicos-browser.mjs
+          node tests/c1-dos-equipos-browser.mjs
       - name: Conservar captura del recorrido
         if: always()
         uses: actions/upload-artifact@v4

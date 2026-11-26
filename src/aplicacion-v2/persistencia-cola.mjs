@@ -22,7 +22,7 @@ export function crearColaGuardadoV2({
     onRevision(revision);
     // Conservar la revisión remota nueva en el borrador SOLO si no llegó otra
     // edición mientras se escribía (nunca resucitar un borrador anterior).
-    if(secuencia===seq){try{guardarLocal(copy(estado),revision)}catch{/* Guardado remoto confirmado. El respaldo local puede estar lleno; no se descarta la revisión remota. */}}
+    if(secuencia===seq){try{guardarLocal(copy(estado),revision,true)}catch{/* Guardado remoto confirmado. El respaldo local puede estar lleno; no se descarta la revisión remota. */}}
    }catch(error){
     if(error?.status===409||['stale_revision','CONFLICTO','GUARDADO_NO_CONFIRMADO'].includes(error?.code))
      conflicto=error;
@@ -34,7 +34,7 @@ export function crearColaGuardadoV2({
  function guardar(estado){
   const snapshot=copy(estado),seq=++secuencia;
   let falloLocal;
-  try{guardarLocal(copy(snapshot),revision)}catch(error){falloLocal=error}
+  try{guardarLocal(copy(snapshot),revision,false)}catch(error){falloLocal=error}
   if(!remotoDisponible){
    if(falloLocal)throw falloLocal;
    return Promise.resolve(true);
