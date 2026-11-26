@@ -104,15 +104,57 @@ export function leerBorrador(contexto,storage=globalThis.localStorage){
   return validarDocumentoV2(record,contexto);
 }
 
-/** Escribe sólo en el navegador y devuelve el registro completo que escribió. */
+/**
+ * Escribe sólo en el navegador y devuelve el registro completo que escribió.
+ * sincronizado=true: el mismo estado ya fue confirmado por el servidor en
+ * revisionRemota. sincronizado=false: hay cambios locales aún no confirmados.
+ */
 export function guardarBorrador(contexto,estado,
-  {storage=globalThis.localStorage,revisionRemota=0}={}){
+  {storage=globalThis.localStorage,revisionRemota=0,sincronizado=false}={}){
   revisionValida(revisionRemota);
   const record={...crearDocumentoV2(estado,contexto),borradorVersion:BORRADOR_VERSION,
-    revisionRemota,fecha:new Date().toISOString()};
+    revisionRemota,sincronizado:sincronizado===true,fecha:new Date().toISOString()};
   const key=claveBorrador(contexto),serialized=JSON.stringify(record);
   if(typeof storage?.setItem!=='function')
     fail('ALMACENAMIENTO_NO_DISPONIBLE','El navegador no permite conservar el borrador local.');
   storage.setItem(key,serialized);
   return copy(record);
+}
+
+const RESGUARDO_PREFIJO='pci-aplicacion-v2-resguardo/1::';
+
+/** true si el borrador no aporta nada que el servidor no tenga. */
+export function borradorSincronizadoCon(borrador,unidad){
+  if(!borrador)return true;
+  if(borrador.sincronizado===true&&unidad?.exists&&
+    Number(borrador.revisionRemota)<=Number(unidad.revision))return true;
+  // Borradores anteriores a este cambio no tienen la marca: se comparan por contenido.
+  try{return !!unidad?.document?.v2&&JSON.stringify(borrador.v2)===JSON.stringify(unidad.document.v2);}
+  catch{return false;}
+}
+
+/**
+ * Mueve el borrador vigente a una clave de resguardo con fecha, sin borrarlo
+ * nunca. Devuelve la clave de resguardo. El borrador original queda intacto
+ * en el resguardo y puede descargarse o restaurarse.
+ */
+export function resguardarBorrador(contexto,storage=globalThis.localStorage){
+  const key=claveBorrador(contexto),raw=storage.getItem(key);
+  if(raw===null)return null;
+  const destino=RESGUARDO_PREFIJO+key+'::'+new Date().toISOString();
+  storage.setItem(destino,raw);
+  if(storage.getItem(destino)!==raw)
+    fail('RESGUARDO_FALLIDO','No se pudo resguardar el borrador local. No se modificó nada.');
+  storage.removeItem(key);
+  return destino;
+}
+
+/** Resguardos locales de este PCI, del más reciente al más antiguo. */
+export function listarResguardos(contexto,storage=globalThis.localStorage){
+  const prefix=RESGUARDO_PREFIJO+claveBorrador(contexto)+'::',out=[];
+  for(let i=0;i<storage.length;i++){
+    const key=storage.key(i);
+    if(key?.startsWith(prefix))out.push({clave:key,fecha:key.slice(prefix.length)});
+  }
+  return out.sort((a,b)=>b.fecha.localeCompare(a.fecha));
 }
