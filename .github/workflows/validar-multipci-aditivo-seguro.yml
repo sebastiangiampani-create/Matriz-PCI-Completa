@@ -109,6 +109,7 @@ jobs:
           node --check src/aplicacion-v2/runtime-v2.js
           node --check src/aplicacion-v2/persistencia-cola.mjs
           node --check tests/borrador-sincronizado.test.mjs
+          node --check tests/c1-dos-equipos-browser.mjs
           node --check tests/tecnica-contenidos-visibles.test.mjs
           node --check tests/ba15-atomizacion.test.mjs
           node --check tests/cola-guardado-v2.test.mjs
@@ -168,6 +169,7 @@ jobs:
           node tests/aplicacion-v2-browser.mjs
           node tests/aplicacion-v2-admin-browser.mjs
           node tests/vinculos-historicos-browser.mjs
+          node tests/c1-dos-equipos-browser.mjs
       - name: Conservar captura del recorrido
         if: always()
         uses: actions/upload-artifact@v4
