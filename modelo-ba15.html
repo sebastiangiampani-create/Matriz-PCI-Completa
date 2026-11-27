@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modelo BA+15 · PCI V2</title>
+</head>
+<body>
+<p style="font-family:Archivo,system-ui,sans-serif;padding:24px">Abriendo el modelo curricular V2 de BA+15…</p>
+<p style="font-family:Archivo,system-ui,sans-serif;padding:0 24px"><a href="modelos-v2.html?model=ba15">Elegir otra orientación o especialidad</a></p>
+<script type="module">
+import {rutaConsultaV2} from './src/modelos-consulta-v2.mjs';
+const opcion=new URLSearchParams(location.search).get('orientation');
+try { location.replace(rutaConsultaV2('ba15',opcion)); }
+catch { location.replace('modelos-v2.html?model=ba15'); }
+</script>
+<noscript><p>Se requiere JavaScript para abrir el modelo V2.</p><a href="modelos-v2.html?model=ba15">Elegir un modelo</a></noscript>
+</body>
+</html>

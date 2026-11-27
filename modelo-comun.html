@@ -1,4 +1,18 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Escuela 1 · Matriz Común</title></head><body><script>
-try{localStorage.setItem('pciAppV2',JSON.stringify({schoolName:'Escuela 1',areas:{},current:null}));}catch{}
-location.replace(`app.html?v=modelo-comun-${Date.now()}`);
-</script><noscript>Necesitás habilitar JavaScript para abrir la Matriz Común.</noscript></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modelo Secundaria Común (Media) · PCI V2</title>
+</head>
+<body>
+<p style="font-family:Archivo,system-ui,sans-serif;padding:24px">Abriendo el modelo curricular V2 de Secundaria Común (Media)…</p>
+<p style="font-family:Archivo,system-ui,sans-serif;padding:0 24px"><a href="modelos-v2.html?model=comun">Elegir otra orientación o especialidad</a></p>
+<script type="module">
+import {rutaConsultaV2} from './src/modelos-consulta-v2.mjs';
+const opcion=new URLSearchParams(location.search).get('orientation');
+try { location.replace(rutaConsultaV2('comun',opcion)); }
+catch { location.replace('modelos-v2.html?model=comun'); }
+</script>
+<noscript><p>Se requiere JavaScript para abrir el modelo V2.</p><a href="modelos-v2.html?model=comun">Elegir un modelo</a></noscript>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#12395c">
+<title>Modelos curriculares V2 · Secundaria Aprende</title>
+<link rel="stylesheet" href="assets/fonts/archivo-caveat.css">
+<style>
+:root{--ink:#12395c;--blue:#2c5da6;--muted:#5f7382;--line:#d8e1e8;--band:#edf3f8}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font-family:Archivo,Inter,system-ui,sans-serif}
+header{padding:20px max(4vw,20px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px}
+header img{height:40px;max-width:65vw}
+header a, .back{color:var(--ink);font-weight:700;text-decoration:none}
+main{width:min(820px,94vw);margin:35px auto 70px}
+h1{font-size:clamp(1.6rem,3vw,2.2rem);margin:0 0 10px}
+p{line-height:1.5}
+.muted{color:var(--muted);font-size:.88rem}
+.card{border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 8px 22px rgba(18,57,92,.05)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:20px 0}
+.model{background:white;cursor:pointer;min-height:88px;border:1.5px solid var(--ink);border-radius:11px;color:var(--ink);padding:13px;text-align:left;font:inherit;font-weight:800}
+.model[aria-pressed="true"]{border-color:var(--blue);background:var(--band)}
+.model small{display:block;font-size:.72rem;color:var(--muted);margin-top:5px;font-weight:600}
+label{display:grid;gap:8px;font-size:.87rem;font-weight:800}
+select{min-height:45px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font:inherit;color:var(--ink);background:#fff;width:100%}
+.btn{display:inline-block;border:1.5px solid var(--blue);background:var(--blue);border-radius:9px;padding:13px 18px;color:#fff;font:inherit;font-weight:800;cursor:pointer;text-decoration:none;margin-top:16px}
+.btn:disabled{opacity:.55;cursor:wait}
+.note{background:var(--band);border-radius:9px;padding:12px;margin-top:18px;font-size:.83rem;line-height:1.5}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.model{min-height:65px}header img{height:34px}main{margin-top:23px}}
+</style>
+</head>
+<body>
+<header><a href="index.html"><img src="assets/em-logo-header.svg?v=20260902" alt="Escuela de Maestros"></a><a href="index.html">← Volver</a></header>
+<main>
+<h1>Modelos curriculares V2</h1>
+<p class="muted">Elegí modalidad y orientación o especialidad para explorar el constructor vigente, sin ingresar con la clave de una escuela.</p>
+<section class="card" aria-label="Selector de modelos">
+<div id="modelOptions" class="grid" role="group" aria-label="Modalidad curricular">
+<button type="button" class="model" data-model="comun" aria-pressed="true">Secundaria Común (Media)<small>5 años · 10 cuatrimestres</small></button>
+<button type="button" class="model" data-model="tecnica" aria-pressed="false">Secundaria Técnica<small>6 años · 12 cuatrimestres</small></button>
+<button type="button" class="model" data-model="ba15" aria-pressed="false">BA+15<small>4 niveles · 8 cuatrimestres</small></button>
+</div>
+<label for="orientationSelect"><span id="optionLabel">Orientación</span><select id="orientationSelect"></select></label>
+<a id="openModel" class="btn" href="#" aria-disabled="true">Abrir modelo curricular V2</a>
+<div class="note">Versión de consulta y práctica. Los cambios quedan solamente en el almacenamiento de este navegador; no se guardan en el PCI institucional ni modifican información de las escuelas. Para trabajar un PCI real, ingresá desde la portada con tu clave PCI.</div>
+<p id="error" class="muted" role="alert" hidden></p>
+</section>
+</main>
+<script type="module">
+import {MODELOS_PUBLICOS_V2,opcionesConsultaV2,rutaConsultaV2} from './src/modelos-consulta-v2.mjs';
+const modelOptions=document.getElementById('modelOptions');
+const selector=document.getElementById('orientationSelect');
+const open=document.getElementById('openModel');
+const error=document.getElementById('error');
+const params=new URLSearchParams(location.search);
+let active=MODELOS_PUBLICOS_V2.some(m=>m.id===params.get('model'))?params.get('model'):'comun';
+function render(){
+ const config=MODELOS_PUBLICOS_V2.find(x=>x.id===active);
+ for(const button of modelOptions.querySelectorAll('[data-model]'))
+   button.setAttribute('aria-pressed',String(button.dataset.model===active));
+ document.getElementById('optionLabel').textContent=config.tipoOpcion;
+ selector.replaceChildren();
+ for(const opcion of opcionesConsultaV2(active)){
+   const option=document.createElement('option');
+   option.value=opcion.id;option.textContent=opcion.nombre;
+   selector.add(option);
+ }
+ const requested=params.get(config.id==='tecnica'?'specialty':'orientation');
+ selector.value=opcionesConsultaV2(active).some(o=>o.id===requested)?requested:config.opcionInicial;
+ updateLink();
+}
+function updateLink(){
+ try{
+   open.href=rutaConsultaV2(active,selector.value);
+   open.removeAttribute('aria-disabled');open.removeAttribute('disabled');
+   error.hidden=true;
+ }catch(e){
+   open.removeAttribute('href');open.setAttribute('aria-disabled','true');
+   error.textContent=e.message;error.hidden=false;
+ }
+}
+modelOptions.addEventListener('click',e=>{
+ const b=e.target.closest('[data-model]');if(!b)return;
+ active=b.dataset.model;params.delete('orientation');params.delete('specialty');
+ history.replaceState(null,'',location.pathname+'?model='+active);
+ render();
+});
+selector.addEventListener('change',updateLink);
+render();
+</script>
+</body>
+</html>
