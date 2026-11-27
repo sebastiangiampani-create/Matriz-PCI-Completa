@@ -13,25 +13,26 @@ async function tokenFor(payload,secret){
  return body+'.'+base64url(signature);
 }
 test('solo hay tres modalidades V2 y no se mezclan con escuelas',()=>{
- assert.deepEqual([...PLAN_MODELS],['comun','tecnica','ba15']);
+ assert.deepEqual([...PLAN_MODELS],['general','comun','tecnica','ba15']);
  assert.equal(BUCKET,'pci-modelos-planes-v2');
  for(const model of PLAN_MODELS)assert.equal(validModel(model),true);
  assert.equal(validModel('comun; drop table'),false);
  assert.equal(validUuid('123'),false);
 });
-test('archivo PDF/DOCX/XLSX limitado a 8 MB, con extensión, MIME y firma',()=>{
+test('solo PDFs modélicos de hasta 8 MB: extensión, MIME y firma',()=>{
  assert.equal(FILE_LIMIT,8388608);
- for(const [name,type,magic] of [['modelo.pdf','application/pdf','pdf'],['modelo.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document','zip'],['modelo.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','zip']]){
-  const meta=fileMeta({name,size:200,type});
-  assert.equal(meta.magic,magic);
- }
- assert.throws(()=>fileMeta({name:'malicioso.html',size:55,type:'text/html'}),/Formato permitido/);
+ const pdf=fileMeta({name:'Plan modélico.pdf',size:200,type:'application/pdf'});
+ assert.equal(pdf.ext,'pdf');assert.equal(pdf.mime,'application/pdf');assert.equal(pdf.magic,'pdf');
+ for(const [name,type] of [
+  ['modelo.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  ['modelo.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+  ['modelo.html','text/html']])
+  assert.throws(()=>fileMeta({name,size:200,type}),/Solamente se admiten documentos PDF/);
  assert.throws(()=>fileMeta({name:'modelo.pdf',size:8388609,type:'application/pdf'}),/8 MB/);
  assert.throws(()=>fileMeta({name:'modelo.pdf',size:200,type:'text/html'}),/tipo de archivo/);
  verifyMagic(new Uint8Array([37,80,68,70,45,20]),'pdf');
- verifyMagic(new Uint8Array([80,75,3,4,20]),'zip');
- assert.throws(()=>verifyMagic(new Uint8Array([60,104,116,109,108]),'pdf'));
- assert.equal(cleanText('  Modelo \n de planes  ',140),'Modelo   de planes');
+ assert.throws(()=>verifyMagic(new Uint8Array([80,75,3,4,20]),'pdf'));
+ assert.equal(cleanText('  Plan \n modélico  ',140),'Plan   modélico');
 });
 test('solo el token HMAC válido del superadmin puede cargar modelos; una clave PCI no sirve',async()=>{
  const secret='solo-en-pruebas-este-secret-no-existe-en-supabase';
@@ -69,17 +70,28 @@ test('biblioteca pública solo obtiene registros publicados; cambios exclusivame
  assert.doesNotMatch(edge,/from\(['"]pci_proposals|from\(['"]pci_workspace/);
  assert.doesNotMatch(edge,/school_id|primary_code|edit_code/);
 });
-test('el panel carga y publica documentos; no muestra el listado de planes escolares',async()=>{
- const admin=await read('panel-general.html'),module=await read('src/modelos-planes-admin.mjs'),publicPage=await read('modelos-v2.html'),publicModule=await read('src/modelos-planes-publicos.mjs');
- assert.match(admin,/Administrar modelos de planes/);
- assert.match(admin,/id="publicModelFile"/);
+test('solo PDF y separación total de los modelos curriculares PCI',async()=>{
+ const admin=await read('panel-general.html');
+ const mod=await read('src/modelos-planes-admin.mjs');
+ const publicPage=await read('planes-modelicos.html');
+ const publicModule=await read('src/modelos-planes-publicos.mjs');
+ const v2=await read('modelos-v2.html');
+ const migration=await read('supabase/sql/planes_modelicos_solo_pdf_v2.sql');
+ assert.match(admin,/Administrar planes modélicos/);
+ assert.match(admin,/accept="\.pdf,application\/pdf"/);
+ assert.doesNotMatch(admin,/id="publicModelType"|id="publicModelFilter"/);
  assert.match(admin,/session\.role==='admin'/);
- assert.doesNotMatch(admin,/id="plansSchool"|data-plan-school|action:'list-school-pcis'/);
- for(const action of ['listar-modelos','guardar-modelo','archivar-modelo','restaurar-modelo','cargar-modelo'])assert.ok(module.includes(action));
- assert.match(module,/new FormData\(\)/);
- assert.match(module,/file\.size>8\*1024\*1024/);
- assert.match(publicPage,/Modelos de planes publicados/);
+ for(const action of ['listar-modelos','guardar-modelo','archivar-modelo','restaurar-modelo','cargar-modelo'])assert.ok(mod.includes(action));
+ assert.match(mod,/file\.size>8\*1024\*1024/);
+ assert.match(mod,/file\.name\.toLowerCase\(\)\.endsWith\('\.pdf'\)/);
+ assert.match(publicPage,/<h1>Planes modélicos<\/h1>/);
  assert.match(publicModule,/action:'listar-publicos'/);
- assert.doesNotMatch(publicModule,/token:|pci_proposals|list-school-pcis/);
- assert.match(publicModule,/new URL\(input\)/);
+ assert.match(publicModule,/tipo_archivo==='application\/pdf'/);
+ assert.doesNotMatch(publicModule,/MODELOS_PUBLICOS_V2|rutaConsultaV2|token:/);
+ assert.doesNotMatch(publicPage,/MODELOS_PUBLICOS_V2|rutaConsultaV2/);
+ assert.match(v2,/MODELOS_PUBLICOS_V2/);
+ assert.doesNotMatch(v2,/publicModelDocuments|Modelos de planes publicados/);
+ assert.match(migration,/tipo_archivo = 'application\/pdf'/);
+ assert.match(migration,/allowed_mime_types=ARRAY\['application\/pdf'\]/);
+ assert.doesNotMatch(migration,/ALTER TABLE public\.pci_proposals|UPDATE public\.pci_proposals|DELETE FROM public\.pci_proposals|UPDATE pci_workspace/);
 });
