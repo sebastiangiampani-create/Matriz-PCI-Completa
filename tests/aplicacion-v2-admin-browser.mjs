@@ -117,8 +117,8 @@ async function capture(page,record,name){
 
 async function exercise(page,record){
   await page.goto(origin+'/index.html',{waitUntil:'domcontentloaded'});
-  // Administración general permanece accesible, ahora discretamente en el pie.
-  await page.locator('footer a.admin-muted[href="panel-general.html"]').click();
+  // Administración general es un enlace accesible y discreto en el encabezado.
+  await page.locator('header a.admin-top-link[href="panel-general.html"]').click();
   await page.waitForURL(url=>url.pathname==='/panel-general.html');
   await page.locator('#login').waitFor({state:'visible'});
   await page.locator('#user').fill(simulatedUser);
