@@ -52,6 +52,7 @@ jobs:
                           $2 == ".github/workflows/rescate-constructor-v2.yml" ||
                           $2 == "src/admin-escuelas-panel.mjs" ||
                           $2 == "panel-general.html" ||
+                          $2 == "modelos-v2.html" ||
                           $2 == "panel-escuela.html" ||
                           $2 == "panel-accesos.html" ||
                           $2 == "panel-usuarios.html" ||
@@ -128,6 +129,11 @@ jobs:
           node --check tests/modelos-publicos-v2.test.mjs
           node --check tests/pci-navegacion-admin.test.mjs
           node --test tests/modelos-publicos-v2.test.mjs
+          node --check src/modelos-planes-admin.mjs
+          node --check src/modelos-planes-publicos.mjs
+          node --check supabase/functions/pci-modelos-publicos/validaciones.mjs
+          node --check tests/modelos-planes-biblioteca.test.mjs
+          node --test tests/modelos-planes-biblioteca.test.mjs
           node --check src/pci-flujo-fases.mjs
           node --check src/pci-fase-desarrollo-fg.mjs
           node --check tests/pci-fase-desarrollo-fg.test.mjs
