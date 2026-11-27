@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#12395c">
+<title>Planes modélicos · Biblioteca de consulta</title>
+<link rel="stylesheet" href="assets/fonts/archivo-caveat.css">
+<style>
+:root{--ink:#12395c;--blue:#2c5da6;--muted:#5f7382;--line:#d8e1e8;--band:#edf3f8}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font-family:Archivo,Inter,system-ui,sans-serif}
+header{border-bottom:1px solid var(--line);padding:20px max(4vw,20px);display:flex;align-items:center;justify-content:space-between;gap:15px}
+header img{height:40px;max-width:60vw}header a{color:var(--ink);font-size:.88rem;font-weight:700;text-decoration:none}
+main{width:min(1000px,94vw);margin:36px auto 68px}h1{font-size:clamp(1.6rem,3vw,2.25rem);margin:0 0 8px}
+p{line-height:1.55}.muted{color:var(--muted);font-size:.9rem}
+.library{border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 8px 22px rgba(18,57,92,.05);margin-top:22px}
+.filter{display:grid;gap:8px;font-size:.84rem;font-weight:800;max-width:440px;margin:18px 0 14px}
+.filter input{min-height:45px;padding:9px 12px;font:inherit;font-size:.88rem;border:1px solid var(--line);border-radius:9px;color:var(--ink);width:100%}
+.public-doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:12px;margin-top:16px}
+.public-plan{padding:18px;border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.public-plan h3{font-size:1.05rem;line-height:1.4;margin:0}.public-plan p{margin:0}
+.public-plan small,.public-plan-desc{color:var(--muted);font-size:.78rem;overflow-wrap:anywhere}
+.public-plan-desc{white-space:pre-wrap}
+.pdf-type{display:inline-block;font-size:.7rem;font-weight:800;padding:4px 9px;background:var(--band);border-radius:99px}
+.public-plan-link{margin-top:auto;display:inline-flex;color:#fff;background:var(--blue);font-size:.84rem;font-weight:800;border-radius:9px;padding:10px 15px;text-decoration:none}
+.public-plan-link:focus-visible,.public-plan-link:hover{background:var(--ink)}
+.empty-plans{grid-column:1/-1;padding:18px;background:var(--band);border-radius:11px;color:var(--muted);font-size:.85rem}
+@media(max-width:650px){header img{height:34px}.library{padding:15px}}
+</style>
+</head>
+<body>
+<header><a href="index.html"><img src="assets/em-logo-header.svg?v=20260902" alt="Escuela de Maestros"></a><a href="index.html">← Volver a la portada</a></header>
+<main>
+<h1>Planes modélicos</h1>
+<p class="muted">Biblioteca de ejemplos de planificación en PDF. Acceso libre para leer y descargar, sin clave ni registro.</p>
+<section class="library" aria-labelledby="libraryHeading">
+<h2 id="libraryHeading">PDF disponibles para consulta</h2>
+<label class="filter" for="publicPlanSearch">Buscar un plan por título o descripción
+<input id="publicPlanSearch" type="search" placeholder="Buscar un plan modélico…" autocomplete="off"></label>
+<p id="publicPlanStatus" class="muted" role="status" aria-live="polite">Consultando los planes publicados…</p>
+<div id="publicModelDocuments" class="public-doc-grid"></div>
+</section>
+</main>
+<script type="module">
+import {initPublicPlanModels} from './src/modelos-planes-publicos.mjs';
+initPublicPlanModels();
+</script>
+</body>
+</html>
