@@ -1,0 +1,36 @@
+name: Auditoría integral de las tres modalidades sin escrituras
+on:
+  pull_request:
+    paths:
+      - 'scripts/qa-lanzamiento-curricular-integral.mjs'
+      - '.github/workflows/auditoria-curricular-y-piloto-aislado.yml'
+      - 'docs/informe-validacion-curricular-20261127.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  auditoria-curricular:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Revisar sintaxis de auditoría y tests sin conexión a Supabase
+        run: |
+          node --check scripts/qa-lanzamiento-curricular-integral.mjs
+          node --test tests/ba15-reglas.test.mjs tests/ba15-priorizados-base.test.mjs tests/ba15-atomizacion.test.mjs tests/flujo-constructor-tres-modalidades.test.mjs tests/tecnica-contenidos-visibles.test.mjs tests/pci-multipci-v2-contract.test.mjs
+      - name: Comprobar 26 especialidades, 16 orientaciones, 1126 FG, FO y horas oficiales BA15
+        run: node scripts/qa-lanzamiento-curricular-integral.mjs
+      - name: Auditar priorizados técnicos por las 26 especialidades sin homologación automática
+        run: node scripts/qa-tecnica-priorizados.mjs
+      - name: Guardar informes íntegros con pendientes pedagógicos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auditoria-curricular-informe-20261127
+          path: |
+            test-artifacts/auditoria-curricular/**
+            test-artifacts/tecnica/auditoria-pendientes-2026.json
+          if-no-files-found: warn
