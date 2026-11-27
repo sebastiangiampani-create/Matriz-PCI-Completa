@@ -58,3 +58,14 @@ test('La portada indica Panel institucional DIR para configurar las tres modalid
  assert.match(index,/function schoolDestination/);
  assert.match(index,/pci-orientaciones\.html\?school=/);
 });
+
+test('El acceso a modelos de planes reutiliza la clave PCI y la organización existente',()=>{
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ assert.match(html,/<h2>Acceso a modelos de planes<\/h2>/);
+ assert.match(html,/href="index\.html\?continuar=planes#schoolForm"/);
+ assert.match(html,/get\('continuar'\)==='planes'/);
+ assert.match(html,/if\(continueToPlans\)return 'pci-orientaciones\.html\?school='\+encodeURIComponent\(s\.school_id\)\+'&from=modelos-planes'/);
+ assert.match(html,/return 'pci-orientaciones\.html\?school='\+encodeURIComponent\(s\.school_id\)\+'&nuevo=1'/);
+ assert.match(html,/action:'school-login'/);
+ assert.doesNotMatch(html,/action:'create-school-pci'/);
+});
