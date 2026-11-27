@@ -121,6 +121,7 @@ test('Administración consulta modelos de planes por escuela y modalidad sin esc
  let calls=0;
  const scope={
   schools:schools,session:{role:'admin',token:'token-simulado'},
+  MULTIPCI_API:'https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-multipci',
   has:p=>p==='pci.view',
   $:id=>nodes[id],
   esc:v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
