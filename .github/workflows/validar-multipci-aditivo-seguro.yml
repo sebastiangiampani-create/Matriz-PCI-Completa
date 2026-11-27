@@ -53,6 +53,7 @@ jobs:
                           $2 == "src/admin-escuelas-panel.mjs" ||
                           $2 == "panel-general.html" ||
                           $2 == "modelos-v2.html" ||
+                          $2 == "scripts/preparar-publicacion-aplicacion-v2.mjs" ||
                           $2 == "panel-escuela.html" ||
                           $2 == "panel-accesos.html" ||
                           $2 == "panel-usuarios.html" ||
