@@ -38,12 +38,15 @@ test('Los archivos históricos y el constructor no almacenan claves de Supabase 
  assert.ok(!/token|secret|service_role|apikey/i.test(route));
 });
 
-test('La portada distingue modelos de consulta de constructores institucionales y no anuncia modalidades activas como Próximamente',()=>{
+test('La portada indica Panel institucional DIR para configurar las tres modalidades y no ofrece demos públicas',()=>{
  const index=readFileSync(new URL('../index.html',import.meta.url),'utf8');
- assert.match(index,/Educación Técnica y BA\+15/);
- assert.match(index,/Modelos de consulta, sin clave/);
- assert.doesNotMatch(index,/Bachilleratos NES<span class="tag">Próximamente/);
- assert.doesNotMatch(index,/DET<span class="tag">Próximamente/);
+ const card=index.match(/<aside class="card"><h2>Modelos curriculares<\/h2>([\s\S]*?)<\/aside>/);
+ assert.ok(card,'La portada debe conservar el recuadro de modelos curriculares');
+ assert.match(card[1],/Cada escuela deberá ingresar al/);
+ assert.match(card[1],/href="panel-escuela.html">Panel institucional · DIR/);
+ for(const nombre of ['Secundaria Común (Media)','Secundaria Técnica','BA+15'])
+   assert.ok(card[1].includes(nombre),nombre+' no figura como modelo curricular');
+ assert.doesNotMatch(card[1],/modelo-comun\.html|modelo-tecnica\.html|modelos-v2\.html|modelo-ba15\.html/);
  assert.match(index,/function schoolDestination/);
  assert.match(index,/pci-orientaciones\.html\?school=/);
 });
