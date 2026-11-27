@@ -1,50 +1,59 @@
-// Documentos PUBLICADOS por Administración. No lee PCI de escuelas.
+// Biblioteca pública de PDF modélicos; independiente de los modelos curriculares V2.
 const API='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-modelos-publicos';
 const container=document.getElementById('publicModelDocuments');
 const status=document.getElementById('publicPlanStatus');
-let models=[],active=()=> 'comun';
-function node(tag,text,klass){
- const el=document.createElement(tag);if(text!==undefined)el.textContent=String(text);
- if(klass)el.className=klass;return el;
-}
-function safeUrl(input){
- try{const u=new URL(input);return u.protocol==='https:'&&u.hostname==='agmebsotbuurbnldxewf.supabase.co'?u.href:''}
- catch{return''}
-}
+const search=document.getElementById('publicPlanSearch');
+let planes=[];
+const node=(tag,text,klass)=>{
+ const el=document.createElement(tag);
+ if(text!==undefined)el.textContent=String(text);
+ if(klass)el.className=klass;
+ return el;
+};
+const urlSeguro=input=>{
+ try{
+  const u=new URL(String(input||''));
+  return u.protocol==='https:'&&u.hostname==='agmebsotbuurbnldxewf.supabase.co'&&u.pathname.includes('/storage/v1/object/sign/')?u.href:'';
+ }catch{return''}
+};
 export function showPublicPlanModels(){
  if(!container)return;
- const current=active(),list=models.filter(m=>m.modalidad===current);
+ const q=(search?.value||'').trim().toLocaleLowerCase('es');
+ const visibles=planes.filter(p=>(p.titulo+' '+(p.descripcion||'')).toLocaleLowerCase('es').includes(q));
  container.replaceChildren();
- if(!list.length){
-  container.append(node('p','Todavía no hay documentos de modelos publicados en esta modalidad. Podés utilizar el constructor V2 de consulta que aparece arriba.','empty-plans'));
+ if(!visibles.length){
+  container.append(node('p',planes.length?'No hay planes que coincidan con la búsqueda.':'Todavía no hay PDF de planes modélicos publicados.','empty-plans'));
   return;
  }
- for(const item of list){
+ for(const p of visibles){
   const card=node('article',undefined,'public-plan');
-  card.append(node('h3',item.titulo));
-  if(item.descripcion)card.append(node('p',item.descripcion,'public-plan-desc'));
-  card.append(node('small','Archivo: '+item.archivo_nombre));
-  const url=safeUrl(item.url);
+  card.append(node('span','PDF · Plan modélico','pdf-type'));
+  card.append(node('h3',p.titulo));
+  if(p.descripcion)card.append(node('p',p.descripcion,'public-plan-desc'));
+  const url=urlSeguro(p.url);
   if(url){
-   const link=node('a','Consultar documento publicado','public-plan-link');
+   const name=node('small',p.archivo_nombre||'Documento PDF');
+   card.append(name);
+   const link=node('a','Ver o descargar PDF','public-plan-link');
    link.href=url;link.target='_blank';link.rel='noopener noreferrer';
    card.append(link);
   }
   container.append(card);
  }
 }
-export async function initPublicPlanModels(activeGetter){
- active=activeGetter;
+export async function initPublicPlanModels(){
  if(!container)return;
- status.textContent='Consultando los materiales publicados…';
+ search?.addEventListener('input',showPublicPlanModels);
+ status.textContent='Consultando los planes modélicos publicados…';
  try{
-  const response=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'listar-publicos'}),cache:'no-store'});
+  const response=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({action:'listar-publicos'}),cache:'no-store'});
   const data=await response.json().catch(()=>({}));
-  if(!response.ok||!Array.isArray(data.modelos))throw Error('La biblioteca pública no está disponible.');
-  models=data.modelos.filter(m=>m.publicado&&!m.archivado&&['comun','tecnica','ba15'].includes(m.modalidad));
-  status.textContent=models.length?models.length+' documentos de consulta publicados.':'Aún no se cargaron documentos de planes.';
+  if(!response.ok||!Array.isArray(data.modelos))throw Error('La biblioteca no está disponible.');
+  planes=data.modelos.filter(p=>p.publicado===true&&p.archivado===false&&p.tipo_archivo==='application/pdf');
+  status.textContent=planes.length?planes.length+' planes modélicos en PDF disponibles.':'Todavía no se publicaron planes modélicos.';
  }catch(e){
-  status.textContent='No se pudieron consultar los documentos publicados. El constructor V2 sigue disponible.';
+  planes=[];status.textContent='No se pudo consultar la biblioteca. Podés volver a intentar al actualizar la página.';
  }
  showPublicPlanModels();
 }
