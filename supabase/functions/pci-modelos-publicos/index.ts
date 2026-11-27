@@ -29,16 +29,16 @@ async function listModels(admin:boolean){
   return Promise.all((data||[]).map(signed));
 }
 function prepare(input:any){
-  const modalidad=String(input.modalidad||'');
+  const modalidad=String(input.modalidad||'general');
   const titulo=cleanText(input.titulo,140);
   const descripcion=cleanText(input.descripcion,2500);
-  if(!validModel(modalidad))throw Error('Elegí Media, Técnica o BA+15.');
+  if(!validModel(modalidad))throw Error('Categoría de plan no válida.');
   if(titulo.length<3)throw Error('Ingresá un título de al menos 3 caracteres.');
   return {modalidad,titulo,descripcion,publicado:input.publicado===true||input.publicado==='true'||input.publicado==='1',updated_at:new Date().toISOString()};
 }
 async function upload(form:FormData){
   const file=form.get('archivo');
-  if(!(file instanceof File))return fail('Seleccioná un documento para cargar.');
+  if(!(file instanceof File))return fail('Seleccioná un PDF de plan modélico para cargar.');
   const meta=fileMeta(file);
   const payload=prepare(Object.fromEntries(form.entries()));
   const bytes=new Uint8Array(await file.arrayBuffer());
@@ -110,7 +110,7 @@ Deno.serve(async(request:Request)=>{
     return fail('Acción no válida.');
   }catch(e){
     const m=String(e instanceof Error?e.message:'Error inesperado');
-    if(/Elegí|Ingresá|formato|archivo|Archivo|tipo de archivo|extensión|permitido/i.test(m))return fail(m);
+    if(/Elegí|Ingresá|Solamente|PDF|formato|archivo|Archivo|tipo de archivo|extensión|permitido/i.test(m))return fail(m);
     console.error('pci-modelos-publicos:',m);
     return fail('No se pudo completar la operación. No se modificaron los PCI escolares.',500);
   }

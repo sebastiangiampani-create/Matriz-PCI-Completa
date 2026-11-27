@@ -53,6 +53,11 @@ jobs:
                           $2 == "src/admin-escuelas-panel.mjs" ||
                           $2 == "panel-general.html" ||
                           $2 == "modelos-v2.html" ||
+                          $2 == "src/modelos-planes-admin.mjs" ||
+                          $2 == "src/modelos-planes-publicos.mjs" ||
+                          $2 == "supabase/functions/pci-modelos-publicos/index.ts" ||
+                          $2 == "supabase/functions/pci-modelos-publicos/validaciones.mjs" ||
+                          $2 == "tests/modelos-planes-biblioteca.test.mjs" ||
                           $2 == "scripts/preparar-publicacion-aplicacion-v2.mjs" ||
                           $2 == "panel-escuela.html" ||
                           $2 == "panel-accesos.html" ||

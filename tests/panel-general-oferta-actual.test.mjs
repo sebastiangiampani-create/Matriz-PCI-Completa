@@ -92,16 +92,19 @@ test('solo una sesión administrativa con alcance escolar obtiene el inventario 
  assert.match(panel,/action:'list-school-offer-summary'/);
 });
 
-test('Administración gestiona únicamente modelos públicos, no planes de las escuelas',()=>{
+test('Administración carga solo PDF modélicos y no ve planes de las escuelas',()=>{
  assert.match(panel,/id="planModels" class="card plans-monitor hidden"/);
- assert.match(panel,/<h3 id="planModelsTitle">Administrar modelos de planes<\/h3>/);
- for(const id of ['publicModelForm','publicModelType','publicModelTitle','publicModelDescription','publicModelFile','publicModelPublished','publicModelSubmit','publicModelList','publicModelFilter'])
+ assert.match(panel,/<h3 id="planModelsTitle">Administrar planes modélicos<\/h3>/);
+ for(const id of ['publicModelForm','publicModelTitle','publicModelDescription','publicModelFile','publicModelPublished','publicModelSubmit','publicModelList'])
   assert.match(panel,new RegExp('id="'+id+'"'));
+ assert.doesNotMatch(panel,/id="publicModelType"|id="publicModelFilter"/);
+ assert.match(panel,/accept="\.pdf,application\/pdf"/);
+ assert.match(panel,/href="planes-modelicos\.html"/);
  assert.match(panel,/session\.role==='admin'/);
  assert.match(panel,/initPublicPlanAdmin\(\(\)=>session\)/);
  assert.doesNotMatch(panel,/data-plan-school|id="plansSchool"|id="plansSearch"|id="plansRefresh"/);
  assert.doesNotMatch(panel,/action:'list-school-pcis'/);
- const s=panel.slice(panel.indexOf('<section id="planModels"'),panel.indexOf('<section class="card analytics">'));
- assert.doesNotMatch(s,/planes creados por cada escuela|Ver mapa|school_id|id="plansSchool"|data-plan-school|PCI de Comunicación/);
- assert.match(s,/No se muestran ni modifican los PCI de las escuelas/);
+ const section=panel.slice(panel.indexOf('<section id="planModels"'),panel.indexOf('<section class="card analytics">'));
+ assert.doesNotMatch(section,/Ver mapa|school_id|data-plan-school|PCI de Comunicación/);
+ assert.match(section,/no contiene ni modifica PCI escolares/);
 });

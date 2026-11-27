@@ -59,17 +59,16 @@ test('La portada indica Panel institucional DIR para configurar las tres modalid
  assert.match(index,/pci-orientaciones\.html\?school=/);
 });
 
-test('Acceso público a modelos de planes V2 sin clave; rutas escolares siguen protegidas',()=>{
+test('acceso público a PDFs de planes modélicos, separado del ingreso PCI',()=>{
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
- const selector=readFileSync(new URL('../modelos-v2.html',import.meta.url),'utf8');
+ const pdfPage=readFileSync(new URL('../planes-modelicos.html',import.meta.url),'utf8');
  const card=html.slice(html.indexOf('<div class="card plans-access">'),html.indexOf('</div></section>',html.indexOf('<div class="card plans-access">')));
- assert.match(card,/<h2>Acceso a modelos de planes<\/h2>/);
- assert.match(card,/href="modelos-v2\.html"/);
- assert.match(card,/No necesitás clave/);
- assert.doesNotMatch(card,/continuar=planes|schoolForm/);
- assert.match(html,/if\(continueToPlans\)location\.replace\('modelos-v2\.html'\)/);
+ assert.match(card,/<h2>Planes modélicos<\/h2>/);
+ assert.match(card,/href="planes-modelicos\.html"/);
+ assert.match(card,/no son modelos curriculares ni PCI/i);
+ assert.match(html,/if\(continueToPlans\)location\.replace\('planes-modelicos\.html'\)/);
  assert.match(html,/action:'school-login'/);
  assert.match(html,/return 'pci-orientaciones\.html\?school='\+encodeURIComponent\(s\.school_id\)\+'&nuevo=1'/);
- assert.match(selector,/MODELOS_PUBLICOS_V2/);
- assert.match(selector,/no se guardan en el PCI institucional/);
+ assert.match(pdfPage,/Biblioteca de ejemplos de planificación en PDF/);
+ assert.doesNotMatch(pdfPage,/rutaConsultaV2|MODELOS_PUBLICOS_V2/);
 });
