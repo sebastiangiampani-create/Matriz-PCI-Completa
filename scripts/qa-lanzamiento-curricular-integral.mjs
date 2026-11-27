@@ -6,6 +6,7 @@
  */
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {gunzipSync} from 'node:zlib';
 import {resolve} from 'node:path';
 import {SPECIALTIES} from '../src/tecnica/pautas-pci-20261005.mjs';
 import {resolverPerfilEspecialidadTecnica} from '../src/tecnica/perfil-especialidad-2026.mjs';
@@ -81,12 +82,25 @@ assert.deepEqual(BA15_NIVELES.map(items=>items.reduce((n,item)=>n+item.horas,0))
 assert.equal(validarBa15().valido,true,'La estructura básica BA+15 incumple la norma');
 const auditedHours=auditarHorasFoBa15(BA15_NIVELES);
 assert.ok(auditedHours.every(x=>x.valido),'Horas FO BA+15 incumplen la norma');
-const foByOrientation=ORIENTATIONS.map(o=>({
- id:o.id,nombre:o.name,
- foReferences:selectFoByOrientation(fo,o.id,ORIENTATIONS).length
-}));
+const foByOrientation=[];
+for(const o of ORIENTATIONS){
+  const primary=selectFoByOrientation(fo,o.id,ORIENTATIONS);
+  let rows=primary,source='v2-fo-v96',fallbackCount=0;
+  if(!rows.length){
+    try{
+      const encoded=await readFile(new URL('vendor/pci-sec-aprende-v2/data/orientaciones/'+o.id+'.txt',root),'utf8');
+      const unpacked=JSON.parse(gunzipSync(Buffer.from(encoded.trim(),'base64')).toString('utf8'));
+      assert.ok(Array.isArray(unpacked),'El respaldo de orientación no contiene un catálogo');
+      rows=unpacked.filter(x=>String(x?.id||'').trim()&&String(x?.text||'').trim());
+      fallbackCount=rows.length;
+      source='v2-orientacion-'+o.id;
+    }catch(e){issues.push('No se pudo leer FO V2 alternativa '+o.id+': '+String(e.message||e));}
+  }
+  foByOrientation.push({id:o.id,nombre:o.name,foReferences:rows.length,
+    referenciasFuentePrimaria:primary.length,referenciasFallback:fallbackCount,fuente:source});
+}
 const emptyFo=foByOrientation.filter(row=>row.foReferences===0);
-if(emptyFo.length)issues.push('Orientaciones sin contenidos FO referencia V2: '+emptyFo.map(r=>r.id).join(', '));
+if(emptyFo.length)issues.push('Orientaciones sin ninguna fuente FO V2: '+emptyFo.map(r=>r.id).join(', '));
 const report={
  schema:'pci-auditoria-curricular-cierre/1',
  fecha:'2026-11-27',
@@ -120,6 +134,7 @@ console.log('AUDITORIA_CURRICULAR_RESUMEN='+JSON.stringify({
  ba15Fg:fg.length,ba15Fo:fo.length,
  ba15NivelesHoras:report.ba15.horasPorNivel,
  orientacionesFoVacias:emptyFo.length,
+ orientacionesConFallback:foByOrientation.filter(x=>x.referenciasFallback>0).length,
  observaciones:issues.length,habilitacionMasiva:false
 }));
 console.log('AUDITORIA_CURRICULAR_OBSERVACIONES='+JSON.stringify(issues));
