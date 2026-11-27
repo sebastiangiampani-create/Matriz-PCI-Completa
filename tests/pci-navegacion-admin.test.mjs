@@ -42,8 +42,14 @@ test('La portada indica Panel institucional DIR para configurar las tres modalid
  const index=readFileSync(new URL('../index.html',import.meta.url),'utf8');
  const card=index.match(/<aside class="card"><h2>Modelos curriculares<\/h2>([\s\S]*?)<\/aside>/);
  assert.ok(card,'La portada debe conservar el recuadro de modelos curriculares');
- assert.match(card[1],/Cada escuela deberá ingresar al/);
- assert.match(card[1],/href="panel-escuela.html">Panel institucional · DIR/);
+ assert.match(card[1],/Para configurar los modelos de PCI/);
+ assert.doesNotMatch(card[1],/href="panel-escuela.html"/);
+ const belowCard=index.slice(index.indexOf('</aside>',index.indexOf('<aside class="card"><h2>Modelos curriculares')));
+ assert.match(belowCard,/href="panel-escuela.html">Panel institucional · DIR<\/a>/);
+ const header=index.match(/<header class="site-top">([\s\S]*?)<\/header>/)?.[1]||'';
+ const footer=index.match(/<footer class="site-footer">([\s\S]*?)<\/footer>/)?.[1]||'';
+ assert.doesNotMatch(header,/panel-general\.html|panel-escuela\.html/);
+ assert.match(footer,/class="admin-muted" href="panel-general.html">Administración general/);
  for(const nombre of ['Secundaria Común (Media)','Secundaria Técnica','BA+15'])
    assert.ok(card[1].includes(nombre),nombre+' no figura como modelo curricular');
  assert.doesNotMatch(card[1],/modelo-comun\.html|modelo-tecnica\.html|modelos-v2\.html|modelo-ba15\.html/);
