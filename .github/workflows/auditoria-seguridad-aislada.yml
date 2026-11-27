@@ -40,5 +40,7 @@ jobs:
         run: |
           psql --version
           psql -X -v ON_ERROR_STOP=1 -c 'SELECT current_database(), version()'
+      - name: Verificar límite de intentos C3 sin credenciales ni servicios externos
+        run: node --test tests/seguridad-ci/limite-intentos.test.mjs
       - name: Ensayar y revertir migraciones de seguridad con datos ficticios
         run: bash scripts/ensayar-auditoria-seguridad.sh
