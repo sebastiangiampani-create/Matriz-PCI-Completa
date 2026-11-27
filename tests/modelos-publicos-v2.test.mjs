@@ -44,7 +44,7 @@ test('rutas anteriores redirigen al motor V2 sin borrar almacenamientos históri
    const source=await read(path);
    assert.match(source,new RegExp("rutaConsultaV2\\('"+model+"'"));
    assert.doesNotMatch(source,/localStorage\\.(setItem|removeItem|clear)/);
-   assert.doesNotMatch(source,/location\\.replace\\(`?(?:app\\.html|tecnica\\/app\\.html)/);
+   assert.equal(source.includes('app.html?v=modelo-'),false);
  }
  const selector=await read('modelos-v2.html');
  assert.match(selector,/opcionesConsultaV2/);
