@@ -65,7 +65,7 @@ test('biblioteca pública solo obtiene registros publicados; cambios exclusivame
  assert.match(edge,/validAdminToken\(form\.get\('token'\),tokenSecret\)/);
  assert.match(edge,/\.createSignedUrl\(row\.archivo_ruta,20\*60\)/);
  assert.match(edge,/if\(action==='listar-modelos'\)/);
- assert.match(edge,/if\(action==='cargar-modelo'\)/);
+ assert.match(edge,/form\.get\('action'\)!=='cargar-modelo'/);
  assert.doesNotMatch(edge,/from\(['"]pci_proposals|from\(['"]pci_workspace/);
  assert.doesNotMatch(edge,/school_id|primary_code|edit_code/);
 });
