@@ -16,6 +16,7 @@ import {BA15_FO_NORMA,auditarHorasFoBa15} from '../src/ba15/formacion-orientada-
 import {buildBa15FgBase,summarizeBa15FgBase} from '../src/ba15/priorizados-base.mjs';
 import {loadV2Fg,loadV2Fo,selectFoByOrientation} from '../src/integracion-curricular/catalogos.js';
 import {ORIENTATIONS} from '../src/integracion-curricular/bridge.js';
+import {loadBa15V2Profile,loadTechnicalV2Profile} from '../src/v2-familia/catalogos-modalidad.mjs';
 
 const root=new URL('../',import.meta.url);
 const load=async path=>JSON.parse(await readFile(new URL(path,root),'utf8'));
@@ -101,6 +102,54 @@ for(const o of ORIENTATIONS){
 }
 const emptyFo=foByOrientation.filter(row=>row.foReferences===0);
 if(emptyFo.length)issues.push('Orientaciones sin ninguna fuente FO V2: '+emptyFo.map(r=>r.id).join(', '));
+// Prueba de los perfiles REALES que usa el constructor en el navegador.
+// Red estrictamente anulada: solo archivos estáticos del mismo repositorio.
+const realFetch=globalThis.fetch;
+globalThis.fetch=async (input)=>{
+  const path=typeof input==='string'?input:String(input?.url??input);
+  if(!path||/^[a-z]+:\/\//i.test(path)||path.startsWith('/')||path.includes('..'))
+    throw Error('La auditoría no puede conectar con servicios externos: '+path);
+  try{
+    const contents=await readFile(new URL(path,root));
+    return new Response(contents,{status:200});
+  }catch(error){
+    if(error?.code==='ENOENT')return new Response('Archivo local no encontrado',{status:404});
+    throw error;
+  }
+};
+const perfilesAbiertos={ba15:[],tecnica:[]};
+try{
+  for(const o of ORIENTATIONS){
+    try{
+      const profile=await loadBa15V2Profile(o.id);
+      assert.equal(profile.levels,4);
+      assert.equal(profile.terms,8);
+      assert.equal(profile.contents.fg.length,1126);
+      assert.ok(profile.contents.fo.length>0,'Sin FO para '+o.id);
+      assert.ok(profile.subjects.length>0,'Sin materias para '+o.id);
+      assert.equal(profile.verified,false,'No declarar homologación automática');
+      perfilesAbiertos.ba15.push({id:o.id,materias:profile.subjects.length,
+        fg:profile.contents.fg.length,fo:profile.contents.fo.length,
+        cotejosNes:profile.foEvidenciaResumen});
+    }catch(e){issues.push('Error cargando perfil real BA+15 '+o.id+': '+String(e.message||e));}
+  }
+  for(const spec of SPECIALTIES){
+    try{
+      const profile=await loadTechnicalV2Profile(spec.id);
+      assert.equal(profile.levels,6);
+      assert.equal(profile.terms,12);
+      assert.ok(profile.subjects.length>0,'Sin materias de '+spec.id);
+      assert.ok(profile.contents.fg.length+profile.contents.fo.length>0,'Sin contenidos de '+spec.id);
+      assert.equal(profile.verified,false,'No declarar homologación automática');
+      perfilesAbiertos.tecnica.push({id:spec.id,materias:profile.subjects.length,
+        fg:profile.contents.fg.length,fo:profile.contents.fo.length});
+    }catch(e){issues.push('Error cargando perfil real Técnica '+spec.id+': '+String(e.message||e));}
+  }
+}finally{globalThis.fetch=realFetch;}
+if(perfilesAbiertos.ba15.length!==16)issues.push('No abrieron los 16 perfiles BA+15');
+if(perfilesAbiertos.tecnica.length!==26)issues.push('No abrieron los 26 perfiles técnicos');
+// Fallar CI cuando un perfil real no es abrible; mantener el reporte JSON.
+const fallosDeApertura=issues.filter(x=>/Error cargando perfil real|No abrieron/.test(x));
 const report={
  schema:'pci-auditoria-curricular-cierre/1',
  fecha:'2026-11-27',
@@ -112,6 +161,7 @@ const report={
    fg:summary,horasFo:auditedHours,foPorOrientacion:foByOrientation,
    orientacionesSinFo:emptyFo.map(x=>x.id),
    requiereDocumentarArticulaciones:true,homologacionMateriasOrientacionAutomatica:false},
+ perfilesReales:{...perfilesAbiertos,fallos:fallosDeApertura},
  tecnica:{especialidades:technical.length,cuatrimestres:12,
    prescripcionesAnuales:annualCounts,referenciasDocumentales:totalReferences,
    catalogoOriginal:originalIndex.totales,
@@ -138,3 +188,5 @@ console.log('AUDITORIA_CURRICULAR_RESUMEN='+JSON.stringify({
  observaciones:issues.length,habilitacionMasiva:false
 }));
 console.log('AUDITORIA_CURRICULAR_OBSERVACIONES='+JSON.stringify(issues));
+console.log('AUDITORIA_PERFILES_REALES='+JSON.stringify({ba15:perfilesAbiertos.ba15.length,tecnica:perfilesAbiertos.tecnica.length,fallos:fallosDeApertura}));
+if(fallosDeApertura.length)process.exitCode=1;
