@@ -53,3 +53,17 @@ test('rutas anteriores redirigen al motor V2 sin borrar almacenamientos históri
  assert.match(selector,/rutaConsultaV2/);
  assert.match(selector,/no se guardan en el PCI institucional/);
 });
+
+test('el acceso a modelos de planes desde portada es libre sin abrir PCI escolares',async()=>{
+ const homepage=await read('index.html');
+ const card=homepage.slice(homepage.indexOf('<div class="card plans-access">'),homepage.indexOf('</div></section>',homepage.indexOf('<div class="card plans-access">')));
+ assert.match(card,/Acceso a modelos de planes/);
+ assert.match(card,/href="modelos-v2\.html"/);
+ assert.match(card,/No necesitás clave/);
+ assert.doesNotMatch(card,/continuar=planes|href="panel-escuela\.html"/);
+ const selector=await read('modelos-v2.html');
+ assert.match(selector,/MODELOS_PUBLICOS_V2/);
+ assert.match(selector,/rutaConsultaV2/);
+ assert.match(selector,/no se guardan en el PCI institucional/);
+ assert.doesNotMatch(selector,/action:'school-login'|action:'admin-login'|SUPABASE_SERVICE_ROLE_KEY/);
+});
