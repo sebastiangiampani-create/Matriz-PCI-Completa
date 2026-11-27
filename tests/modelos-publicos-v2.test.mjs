@@ -4,14 +4,15 @@ import {readFile} from 'node:fs/promises';
 import {MODELOS_PUBLICOS_V2,opcionesConsultaV2,rutaConsultaV2} from '../src/modelos-consulta-v2.mjs';
 
 const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
-test('la portada ofrece Media, Técnica y BA+15 usando la selección curricular V2',async()=>{
+test('la portada informa los tres modelos y dirige al Panel institucional DIR sin enlaces de consulta',async()=>{
  const html=await read('index.html');
- for(const m of MODELOS_PUBLICOS_V2){
-   assert.match(html,new RegExp('href="modelos-v2\\.html\\?model='+m.id+'"'));
- }
- assert.doesNotMatch(html,/Matriz Técnica · en blanco|Matriz Común · en blanco/);
+ const aside=html.slice(html.indexOf('<aside class="card"><h2>Modelos curriculares</h2>'),html.indexOf('</aside>')+8);
+ assert.ok(aside.length>80);
+ for(const n of ['Secundaria Común (Media)','Secundaria Técnica','BA+15'])
+   assert.ok(aside.includes(n),'Falta el modelo '+n);
+ assert.match(aside,/href="panel-escuela.html">Panel institucional · DIR/);
+ assert.doesNotMatch(aside,/href="modelos-v2\.html|href="modelo-comun\.html|href="modelo-tecnica\.html|href="modelo-ba15\.html/);
  assert.match(html,/Constructor curricular · clave PCI/);
- assert.match(html,/href="panel-escuela.html">Panel institucional · DIR/);
 });
 test('los tres modelos usan reglas de 10, 12 y 8 cuatrimestres y catálogos completos',()=>{
  assert.deepEqual(MODELOS_PUBLICOS_V2.map(x=>x.cuatrimestres),[10,12,8]);
