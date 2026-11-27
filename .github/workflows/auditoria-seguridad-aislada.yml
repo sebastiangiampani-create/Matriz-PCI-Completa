@@ -1,0 +1,46 @@
+name: Auditoría SQL reversible - PostgreSQL 17 aislado (sin Supabase)
+on:
+  pull_request:
+    paths:
+      - 'auditoria/seguridad-20261126/**'
+      - 'tests/seguridad-ci/**'
+      - 'scripts/ensayar-auditoria-seguridad.sh'
+      - '.github/workflows/auditoria-seguridad-aislada.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ensayo-sql:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_DB: pci_auditoria_descartable
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d pci_auditoria_descartable"
+          --health-interval 3s
+          --health-timeout 4s
+          --health-retries 15
+    env:
+      CI: 'true'
+      PCI_AUDIT_EPHEMERAL_DB: pci_auditoria_descartable
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: test-only
+      PGDATABASE: pci_auditoria_descartable
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar PostgreSQL de prueba
+        run: |
+          psql --version
+          psql -X -v ON_ERROR_STOP=1 -c 'SELECT current_database(), version()'
+      - name: Verificar límite de intentos C3 sin credenciales ni servicios externos
+        run: node --test tests/seguridad-ci/limite-intentos.test.mjs
+      - name: Ensayar y revertir migraciones de seguridad con datos ficticios
+        run: bash scripts/ensayar-auditoria-seguridad.sh
