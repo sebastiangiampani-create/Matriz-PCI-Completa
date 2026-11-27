@@ -10,7 +10,8 @@ test('la portada informa los tres modelos y dirige al Panel institucional DIR si
  assert.ok(aside.length>80);
  for(const n of ['Secundaria Común (Media)','Secundaria Técnica','BA+15'])
    assert.ok(aside.includes(n),'Falta el modelo '+n);
- assert.match(aside,/href="panel-escuela.html">Panel institucional · DIR/);
+ assert.match(html,/class="btn primary dir-access" href="panel-escuela.html">Panel institucional · DIR/);
+ assert.doesNotMatch(aside,/href="panel-escuela.html"/);
  assert.doesNotMatch(aside,/href="modelos-v2\.html|href="modelo-comun\.html|href="modelo-tecnica\.html|href="modelo-ba15\.html/);
  assert.match(html,/Constructor curricular · clave PCI/);
 });
