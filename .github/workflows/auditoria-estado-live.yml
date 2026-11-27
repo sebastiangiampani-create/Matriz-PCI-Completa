@@ -32,11 +32,14 @@ jobs:
             let data;try{data=await response.json()}catch{data=null}
             return{status:response.status,data};
           }
+          // health de pci-access exige sesión; no modificar su política.
           const access=await invoke('pci-access',{action:'health'});
-          assert.equal(access.status,200,'pci-access no respondió correctamente');
-          assert.equal(access.data?.ok,true,'Salud de pci-access no confirmada');
-          assert.ok(access.data.real_schools>=235,'El catálogo histórico no coincide');
-          console.log('OK pci-access: salud 200, al menos 235 escuelas reales');
+          assert.equal(access.status,401,'pci-access no debe exponer health sin sesión');
+          assert.match(String(access.data?.error||''),/Sesión inválida o vencida/);
+          const catalog=await invoke('pci-access',{action:'public-catalog'});
+          assert.equal(catalog.status,200,'El catálogo público de pci-access debe responder');
+          assert.ok(Array.isArray(catalog.data?.schools)&&catalog.data.schools.length>=235,'Faltan escuelas en catálogo público');
+          console.log('OK pci-access: sesión requerida y catálogo público disponible');
           const invalid=await invoke('pci-access',{action:'school-login',school_id:0,code:'',first_name:'',last_name:'',email:''});
           assert.equal(invalid.status,400,'Una escuela inválida no debe producir login');
           console.log('OK pci-access: ingreso escolar inválido rechazado 400');
