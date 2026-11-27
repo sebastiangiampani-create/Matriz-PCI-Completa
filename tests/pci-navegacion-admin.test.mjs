@@ -48,8 +48,10 @@ test('La portada indica Panel institucional DIR para configurar las tres modalid
  assert.match(belowCard,/href="panel-escuela.html">Panel institucional · DIR<\/a>/);
  const header=index.match(/<header class="site-top">([\s\S]*?)<\/header>/)?.[1]||'';
  const footer=index.match(/<footer class="site-footer">([\s\S]*?)<\/footer>/)?.[1]||'';
- assert.doesNotMatch(header,/panel-general\.html|panel-escuela\.html/);
- assert.match(footer,/class="admin-muted" href="panel-general.html">Administración general/);
+ assert.match(header,/class="admin-top-link" href="panel-general.html">Administración general/);
+ assert.doesNotMatch(header,/class="pill-btn" href="panel-general\.html"/);
+ assert.doesNotMatch(header,/panel-escuela\.html/);
+ assert.doesNotMatch(footer,/panel-general\.html|panel-escuela\.html/);
  for(const nombre of ['Secundaria Común (Media)','Secundaria Técnica','BA+15'])
    assert.ok(card[1].includes(nombre),nombre+' no figura como modelo curricular');
  assert.doesNotMatch(card[1],/modelo-comun\.html|modelo-tecnica\.html|modelos-v2\.html|modelo-ba15\.html/);
