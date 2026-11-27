@@ -102,6 +102,6 @@ test('Administración gestiona únicamente modelos públicos, no planes de las e
  assert.doesNotMatch(panel,/data-plan-school|id="plansSchool"|id="plansSearch"|id="plansRefresh"/);
  assert.doesNotMatch(panel,/action:'list-school-pcis'/);
  const s=panel.slice(panel.indexOf('<section id="planModels"'),panel.indexOf('<section class="card analytics">'));
- assert.doesNotMatch(s,/planes creados por cada escuela|Ver mapa|school_id|cue|PCI de Comunicación/);
+ assert.doesNotMatch(s,/planes creados por cada escuela|Ver mapa|school_id|id="plansSchool"|data-plan-school|PCI de Comunicación/);
  assert.match(s,/No se muestran ni modifican los PCI de las escuelas/);
 });
