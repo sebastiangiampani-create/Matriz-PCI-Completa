@@ -1,0 +1,54 @@
+name: Auditoría en vivo - endpoints protegidos y motor PCI
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/auditoria-estado-live.yml'
+      - 'auditoria/cierre-20261127.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/auditoria-estado-live.yml'
+      - 'auditoria/cierre-20261127.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Comprobar funciones desplegadas sin credenciales ni escrituras
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          const root='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/';
+          async function invoke(name,body,method='POST'){
+            const options={method,signal:AbortSignal.timeout(15000),headers:{'content-type':'application/json','cache-control':'no-cache'}};
+            if(method==='POST')options.body=JSON.stringify(body);
+            const response=await fetch(root+name,options);
+            let data;try{data=await response.json()}catch{data=null}
+            return{status:response.status,data};
+          }
+          const access=await invoke('pci-access',{action:'health'});
+          assert.equal(access.status,200,'pci-access no respondió correctamente');
+          assert.equal(access.data?.ok,true,'Salud de pci-access no confirmada');
+          assert.ok(access.data.real_schools>=235,'El catálogo histórico no coincide');
+          console.log('OK pci-access: salud 200, al menos 235 escuelas reales');
+          const invalid=await invoke('pci-access',{action:'school-login',school_id:0,code:'',first_name:'',last_name:'',email:''});
+          assert.equal(invalid.status,400,'Una escuela inválida no debe producir login');
+          console.log('OK pci-access: ingreso escolar inválido rechazado 400');
+          const multi=await invoke('pci-multipci',{action:'health'});
+          assert.equal(multi.status,200);
+          assert.equal(multi.data?.ok,true);
+          assert.equal(multi.data?.legacy_writes,false);
+          console.log('OK pci-multipci: salud 200, sin escrituras históricas');
+          const master=await invoke('pci-master',{action:'health'});
+          assert.equal(master.status,404,'El endpoint maestro debe estar deshabilitado');
+          const masterGet=await invoke('pci-master',null,'GET');
+          assert.equal(masterGet.status,404,'También GET maestro debe ser 404');
+          console.log('OK pci-master: endpoint 404 en GET y POST');
+          console.log('AUDITORIA EN VIVO APROBADA: 3 servicios, 0 credenciales reales, 0 guardados escolares.');
+          NODE
