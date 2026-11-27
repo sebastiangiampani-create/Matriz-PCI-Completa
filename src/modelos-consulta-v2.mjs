@@ -11,7 +11,7 @@ export const MODELOS_PUBLICOS_V2=Object.freeze([
     tipoOpcion:'Orientación',opcionInicial:'comunicacion'}),
   Object.freeze({id:'tecnica',nombre:'Secundaria Técnica',niveles:6,cuatrimestres:12,
     tipoOpcion:'Especialidad',opcionInicial:'computacion'}),
-  Object.freeze({id:'ba15',nombre:'Educación Técnica y Bachillerato BA+15'.replace('Educación Técnica y Bachillerato ',''),
+  Object.freeze({id:'ba15',nombre:'BA+15',
     niveles:4,cuatrimestres:8,tipoOpcion:'Orientación',opcionInicial:'economia_administracion'})
 ]);
 
