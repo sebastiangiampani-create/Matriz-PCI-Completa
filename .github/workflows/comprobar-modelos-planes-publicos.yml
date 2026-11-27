@@ -1,0 +1,41 @@
+name: Verificar biblioteca pública de modelos (sin credenciales)
+on:
+  pull_request:
+    paths:
+      - 'supabase/functions/pci-modelos-publicos/**'
+      - 'supabase/sql/pci_modelos_planes_publicos_v1.sql'
+      - 'modelos-v2.html'
+      - 'panel-general.html'
+      - 'src/modelos-planes-*.mjs'
+      - '.github/workflows/comprobar-modelos-planes-publicos.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  http:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Verificar lectura libre y escritura bloqueada en Supabase
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          const api='https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-modelos-publicos';
+          async function call(payload) {
+            const resp=await fetch(api,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)});
+            const data=await resp.json();
+            return {resp,data};
+          }
+          const pub=await call({action:'listar-publicos'});
+          assert.equal(pub.resp.status,200,'La biblioteca libre debe responder 200');
+          assert.ok(Array.isArray(pub.data.modelos),'Debe devolver un listado de materiales');
+          assert.ok(pub.data.modelos.every(x=>x.publicado===true&&x.archivado===false),'No pueden aparecer borradores o archivados');
+          assert.ok(pub.data.modelos.every(x=>['comun','tecnica','ba15'].includes(x.modalidad)),'Solo tres modelos');
+          const admin=await call({action:'listar-modelos'});
+          assert.equal(admin.resp.status,403,'Sin sesión no se puede entrar al administrador');
+          const falseToken=await call({action:'guardar-modelo',token:'token-invalido',id:'00000000-0000-0000-0000-000000000000'});
+          assert.equal(falseToken.resp.status,403,'No debe aceptar tokens inventados');
+          const options=await fetch(api,{method:'OPTIONS',signal:AbortSignal.timeout(15000)});
+          assert.equal(options.status,204);
+          console.log('OK: catálogo libre y administración protegida. No se escribieron datos escolares.');
+          JS

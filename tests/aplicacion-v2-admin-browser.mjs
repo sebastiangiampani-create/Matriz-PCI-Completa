@@ -76,6 +76,10 @@ async function installMocks(page,record){
     if(request.method()!=='POST'||!data)return send({error:'Solicitud simulada inválida.'},400);
     const access=url.pathname==='/functions/v1/pci-access';
     const multi=url.pathname==='/functions/v1/pci-multipci';
+    const modelos=url.pathname==='/functions/v1/pci-modelos-publicos';
+    // Biblioteca global: solo lectura simulada con sesión administradora.
+    if(modelos&&data.action==='listar-modelos'&&data.token===simulatedToken)
+      return send({modelos:[]});
     if(access&&data.action==='public-catalog')return send({schools:[school]});
     if(access&&data.action==='admin-login'){
       if(data.username===simulatedUser&&data.password===simulatedPassword)
@@ -199,6 +203,9 @@ async function exercise(page,record){
   assert.deepEqual(logins.map(action=>action.status),[401,200]);
   assert.deepEqual(record.errores,[],'Sin excepciones de JavaScript.');
   assert.deepEqual(record.recursosFallidos,[],'El paquete contiene todos los recursos solicitados.');
+  const modelos=report.acciones.filter(a=>a.dispositivo===record.dispositivo&&a.endpoint==='/functions/v1/pci-modelos-publicos');
+  assert.ok(modelos.length>=1,'La biblioteca de modelos públicos debe consultarse desde Administración general.');
+  assert.ok(modelos.every(a=>a.action==='listar-modelos'&&a.status===200),'La biblioteca solo debe realizar lectura autorizada.');
   assert.deepEqual(record.accionesInesperadas,[],'El recorrido sólo pide autenticación y lecturas previstas.');
   assert.deepEqual(record.dialogos,[],'No se activan confirmaciones ni acciones de regeneración.');
   record.resultado='aprobado';

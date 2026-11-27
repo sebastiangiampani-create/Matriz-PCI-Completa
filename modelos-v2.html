@@ -27,6 +27,7 @@ select{min-height:45px;padding:9px 10px;border:1px solid var(--line);border-radi
 .btn:disabled{opacity:.55;cursor:wait}
 .note{background:var(--band);border-radius:9px;padding:12px;margin-top:18px;font-size:.83rem;line-height:1.5}
 @media(max-width:650px){.grid{grid-template-columns:1fr}.model{min-height:65px}header img{height:34px}main{margin-top:23px}}
+.plan-library{margin-top:16px}.plan-library h2{font-size:1.05rem;margin:0 0 5px}.public-doc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.public-plan{border:1px solid var(--line);border-radius:12px;padding:14px}.public-plan h3{margin:0 0 8px;font-size:.96rem}.public-plan-desc{font-size:.82rem;color:var(--muted);margin:0 0 7px;white-space:pre-wrap}.public-plan small{display:block;color:var(--muted);margin:8px 0;overflow-wrap:anywhere}.public-plan-link{display:inline-flex;color:#fff;background:var(--blue);font-size:.83rem;font-weight:800;border-radius:8px;padding:10px 13px;text-decoration:none}.empty-plans{padding:13px;background:var(--band);border-radius:9px;font-size:.82rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -45,9 +46,11 @@ select{min-height:45px;padding:9px 10px;border:1px solid var(--line);border-radi
 <div class="note">Versión de consulta y práctica. Los cambios quedan solamente en el almacenamiento de este navegador; no se guardan en el PCI institucional ni modifican información de las escuelas. Para trabajar un PCI real, ingresá desde la portada con tu clave PCI.</div>
 <p id="error" class="muted" role="alert" hidden></p>
 </section>
+<section class="card plan-library" aria-labelledby="publicPlanTitle"><h2 id="publicPlanTitle">Modelos de planes publicados</h2><p class="muted">Documentos de consulta cargados por Administración general. Acceso libre, sin clave ni registro.</p><p class="muted" id="publicPlanStatus" role="status" aria-live="polite">Consultando materiales…</p><div id="publicModelDocuments" class="public-doc-grid"></div></section>
 </main>
 <script type="module">
 import {MODELOS_PUBLICOS_V2,opcionesConsultaV2,rutaConsultaV2} from './src/modelos-consulta-v2.mjs';
+import {initPublicPlanModels,showPublicPlanModels} from './src/modelos-planes-publicos.mjs';
 const modelOptions=document.getElementById('modelOptions');
 const selector=document.getElementById('orientationSelect');
 const open=document.getElementById('openModel');
@@ -68,6 +71,7 @@ function render(){
  const requested=params.get(config.id==='tecnica'?'specialty':'orientation');
  selector.value=opcionesConsultaV2(active).some(o=>o.id===requested)?requested:config.opcionInicial;
  updateLink();
+ showPublicPlanModels();
 }
 function updateLink(){
  try{
@@ -87,6 +91,7 @@ modelOptions.addEventListener('click',e=>{
 });
 selector.addEventListener('change',updateLink);
 render();
+initPublicPlanModels(()=>active);
 </script>
 </body>
 </html>

@@ -92,63 +92,16 @@ test('solo una sesión administrativa con alcance escolar obtiene el inventario 
  assert.match(panel,/action:'list-school-offer-summary'/);
 });
 
-test('Administración consulta modelos de planes por escuela y modalidad sin escrituras',async()=>{
- const start=panel.indexOf('const PLAN_MODELS=');
- const end=panel.indexOf('function organizationUrl(s)',start);
- assert.ok(start>0&&end>start,'La pantalla debe implementar un seguimiento de modelos.');
- const code=panel.slice(start,end);
+test('Administración gestiona únicamente modelos públicos, no planes de las escuelas',()=>{
  assert.match(panel,/id="planModels" class="card plans-monitor hidden"/);
- assert.match(panel,/id="plansSchool"/);
- assert.match(panel,/id="plansModel"/);
- assert.match(panel,/id="plansRefresh"/);
- assert.match(code,/action:'list-school-pcis'/);
- assert.match(code,/token:session.token,school_id:sid/);
- assert.match(code,/pci-orientaciones\.html\?/);
- assert.doesNotMatch(code,/\.(?:insert|update|delete|upsert)\s*\(/);
- const nodes={
-  plansSchool:{value:'1002'},
-  plansModel:{value:''},
-  plansRefresh:{disabled:false},
-  plansTotal:{textContent:''},
-  plansStatus:{textContent:''},
-  plansList:{innerHTML:''}
- };
- const records=[
-  {school_id:1002,pci_id:'00000000-0000-0000-0000-000000000021',model:'tecnica',shift_id:'tarde',title:'Plan <inseguro>',status:'borrador',curriculum_status:'pending_rules',updated_at:'2026-11-27T12:00:00Z'},
-  {school_id:1002,pci_id:'00000000-0000-0000-0000-000000000022',model:'comun',shift_id:'manana',title:'PCI de Comunicación',status:'en_revision',curriculum_status:'ready'},
-  {school_id:1001,pci_id:'00000000-0000-0000-0000-000000000023',model:'ba15',shift_id:'noche',title:'No autorizado en esta vista'}
- ];
- let calls=0;
- const scope={
-  schools:schools,session:{role:'admin',token:'token-simulado'},
-  MULTIPCI_API:'https://agmebsotbuurbnldxewf.supabase.co/functions/v1/pci-multipci',
-  has:p=>p==='pci.view',
-  $:id=>nodes[id],
-  esc:v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
-  fmt:v=>String(v||'—'),
-  fetch:async(url,init)=>{
-   calls++;assert.match(url,/functions\/v1\/pci-multipci/);
-   const request=JSON.parse(init.body);
-   assert.equal(request.action,'list-school-pcis');
-   assert.equal(request.school_id,1002);
-   assert.equal(request.token,'token-simulado');
-   assert.equal(init.cache,'no-store');
-   return{ok:true,json:async()=>({pcis:records})};
-  },
-  Date,Number,URLSearchParams
- };
- const api=vm.runInNewContext(code+'\n({loadSelectedPlans,renderPlanItems})',scope);
- await api.loadSelectedPlans();
- assert.equal(calls,1,'No debe consultar todas las escuelas en bloque.');
- assert.match(nodes.plansTotal.textContent,/2 planes/);
- assert.match(nodes.plansList.innerHTML,/Validación normativa pendiente/);
- assert.match(nodes.plansList.innerHTML,/view=desarrollo/);
- assert.match(nodes.plansList.innerHTML,/view=oferta/);
- assert.match(nodes.plansList.innerHTML,/from=panel-general/);
- assert.doesNotMatch(nodes.plansList.innerHTML,/<inseguro>/,'Los títulos deben escaparse.');
- assert.doesNotMatch(nodes.plansList.innerHTML,/No autorizado en esta vista/);
- nodes.plansModel.value='tecnica';
- api.renderPlanItems();
- assert.match(nodes.plansList.innerHTML,/Plan &lt;inseguro&gt;/);
- assert.doesNotMatch(nodes.plansList.innerHTML,/PCI de Comunicación/);
+ assert.match(panel,/<h3 id="planModelsTitle">Administrar modelos de planes<\/h3>/);
+ for(const id of ['publicModelForm','publicModelType','publicModelTitle','publicModelDescription','publicModelFile','publicModelPublished','publicModelSubmit','publicModelList','publicModelFilter'])
+  assert.match(panel,new RegExp('id="'+id+'"'));
+ assert.match(panel,/session\.role==='admin'/);
+ assert.match(panel,/initPublicPlanAdmin\(\(\)=>session\)/);
+ assert.doesNotMatch(panel,/data-plan-school|id="plansSchool"|id="plansSearch"|id="plansRefresh"/);
+ assert.doesNotMatch(panel,/action:'list-school-pcis'/);
+ const s=panel.slice(panel.indexOf('<section id="planModels"'),panel.indexOf('<section class="card analytics">'));
+ assert.doesNotMatch(s,/planes creados por cada escuela|Ver mapa|school_id|id="plansSchool"|data-plan-school|PCI de Comunicación/);
+ assert.match(s,/No se muestran ni modifican los PCI de las escuelas/);
 });
